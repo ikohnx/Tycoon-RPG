@@ -149,6 +149,38 @@ class GameEngine:
         conn.close()
         return players
     
+    def get_scenario_by_id(self, scenario_id: int) -> dict:
+        """Get a specific scenario by ID."""
+        conn = get_connection()
+        cur = conn.cursor()
+        
+        cur.execute("SELECT * FROM scenario_master WHERE scenario_id = %s", (scenario_id,))
+        scenario = cur.fetchone()
+        
+        cur.close()
+        conn.close()
+        
+        return dict(scenario) if scenario else None
+    
+    def is_scenario_completed(self, scenario_id: int) -> bool:
+        """Check if a scenario has been completed by the current player."""
+        if not self.current_player:
+            return False
+        
+        conn = get_connection()
+        cur = conn.cursor()
+        
+        cur.execute("""
+            SELECT 1 FROM completed_scenarios 
+            WHERE player_id = %s AND scenario_id = %s
+        """, (self.current_player.player_id, scenario_id))
+        result = cur.fetchone()
+        
+        cur.close()
+        conn.close()
+        
+        return result is not None
+    
     def get_available_scenarios(self, discipline: str = None) -> list:
         """Get scenarios available for the current player based on their level."""
         if not self.current_player:

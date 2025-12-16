@@ -79,16 +79,15 @@ def play_scenario(scenario_id):
         return redirect(url_for('index'))
     
     engine.load_player(player_id)
-    scenarios = engine.get_available_scenarios()
     
-    scenario = None
-    for s in scenarios:
-        if s['scenario_id'] == scenario_id:
-            scenario = s
-            break
+    if engine.is_scenario_completed(scenario_id):
+        flash("You've already completed this scenario!")
+        return redirect(url_for('hub'))
+    
+    scenario = engine.get_scenario_by_id(scenario_id)
     
     if not scenario:
-        flash("Scenario not available!")
+        flash("Scenario not found!")
         return redirect(url_for('hub'))
     
     return render_template('play.html', scenario=scenario)
@@ -100,16 +99,15 @@ def make_choice(scenario_id, choice):
         return redirect(url_for('index'))
     
     engine.load_player(player_id)
-    scenarios = engine.get_available_scenarios()
     
-    scenario = None
-    for s in scenarios:
-        if s['scenario_id'] == scenario_id:
-            scenario = s
-            break
+    if engine.is_scenario_completed(scenario_id):
+        flash("You've already completed this scenario!")
+        return redirect(url_for('hub'))
+    
+    scenario = engine.get_scenario_by_id(scenario_id)
     
     if not scenario:
-        flash("Scenario not available!")
+        flash("Scenario not found!")
         return redirect(url_for('hub'))
     
     result = engine.process_choice(scenario, choice)
