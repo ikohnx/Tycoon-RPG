@@ -95,3 +95,9 @@ The game runs as a web application on port 5000.
 - 2024-12: Added cartoon-style graphics (world backgrounds, avatars, scenario illustrations)
 - 2024-12: Implemented world-specific theming across all pages
 - 2024-12: Added CSS animations and visual polish
+- 2025-12: Added RPG character stats system (Charisma, Intelligence, Luck, Negotiation)
+- 2025-12: Implemented achievement/badge system with 6 unlockable achievements
+- 2025-12: Created inventory system with item shop (8 items: consumables and equipment)
+- 2025-12: Built NPC relationship system with 5 characters and dialogue interactions
+- 2025-12: Added quest system with Main and Side quest tracking
+- 2025-12: Implemented CSRF protection via Flask-WTF for security
