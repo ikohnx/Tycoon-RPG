@@ -3350,6 +3350,508 @@ def seed_operations_curriculum():
     conn.close()
 
 
+def seed_hr_curriculum():
+    """Seed the complete 10-level Human Resources Curriculum across 3 worlds (30 scenarios total).
+    
+    Curriculum Structure:
+    - L1-L3: Acquisition & Compliance (Job Description, Legal Hiring, Onboarding)
+    - L4-L6: Performance & Engagement (Performance Management, Compensation, Employee Morale)
+    - L7-L8: Conflict & Legal Risk (Conflict Resolution, Termination)
+    - L9-L10: Strategy & Mastery (Succession Planning, Labor Relations)
+    """
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM scenario_master WHERE discipline = 'Human Resources' AND scenario_title LIKE 'L%:%'")
+    result = cur.fetchone()
+    if result['count'] >= 30:
+        print("HR curriculum already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    scenarios = [
+        # ========== LEVEL 1: Job Description & Needs Analysis ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Human Resources", "required_level": 1,
+         "scenario_title": "L1: Job Description & Needs Analysis", 
+         "scenario_narrative": "Your head chef just quit unexpectedly. Before posting the job, you need to clearly define what skills and responsibilities are needed. A vague job description will attract the wrong candidates.",
+         "choice_a_text": "Write a detailed job description listing required skills, experience levels, daily duties, and reporting structure", 
+         "choice_a_exp_reward": 50, "choice_a_cash_change": 0, "choice_a_reputation_change": 3,
+         "choice_a_feedback": "Excellent talent identification! A clear job description attracts qualified candidates who understand the role. Defining exact skills (knife work, menu development) and responsibilities (inventory, staff scheduling) filters out poor fits before interviews begin.",
+         "choice_b_text": "Post 'Head Chef Wanted - Great Pay!' and see who applies", 
+         "choice_b_exp_reward": 20, "choice_b_cash_change": -500, "choice_b_reputation_change": 0,
+         "choice_b_feedback": "Vague postings attract vague candidates! You'll waste time interviewing unqualified applicants. Talent identification requires defining needs BEFORE searching. What cuisine experience? What management skills?",
+         "choice_c_text": "Promote the sous chef immediately - they already know the kitchen", 
+         "choice_c_exp_reward": 35, "choice_c_cash_change": 0, "choice_c_reputation_change": 2,
+         "choice_c_feedback": "Internal promotion can work, but did you analyze if the sous chef has HEAD chef skills? Managing a team is different from assisting. Always conduct a needs analysis even for internal candidates.", 
+         "subskill_focus": "Talent Identification"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Human Resources", "required_level": 1,
+         "scenario_title": "L1: Job Description & Needs Analysis", 
+         "scenario_narrative": "Your tavern needs a new Brewmaster after the previous one departed to join an adventuring party. The Guild requires you to register the position with specific skill requirements before recruiting.",
+         "choice_a_text": "Document requirements: brewing expertise, ingredient knowledge, quality testing, apprentice training responsibilities", 
+         "choice_a_exp_reward": 50, "choice_a_cash_change": 0, "choice_a_reputation_change": 3,
+         "choice_a_feedback": "Proper talent identification! The Guild approves your detailed posting. By specifying that candidates need experience with both common ales AND exotic magical brews, you'll attract masters, not novices.",
+         "choice_b_text": "Ask the Guild to send anyone who can brew - we're desperate", 
+         "choice_b_exp_reward": 20, "choice_b_cash_change": -200, "choice_b_reputation_change": 0,
+         "choice_b_feedback": "Desperation leads to poor hires! The Guild sends an apprentice who can make basic mead but not your signature Dragon Fire Ale. Define requirements clearly to find the right talent.",
+         "choice_c_text": "Offer the position to a regular customer who claims to know brewing", 
+         "choice_c_exp_reward": 25, "choice_c_cash_change": -300, "choice_c_reputation_change": -1,
+         "choice_c_feedback": "Drinking ale doesn't mean one can brew it! Without a proper needs analysis, you hired based on claims, not verified skills. First batch ruins your reputation.", 
+         "subskill_focus": "Talent Identification"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Human Resources", "required_level": 1,
+         "scenario_title": "L1: Job Description & Needs Analysis", 
+         "scenario_narrative": "Your Chief Mining Engineer is transferring to a competitor. The Galactic HR Registry requires all positions be defined with specific competency matrices before recruitment can begin.",
+         "choice_a_text": "Create detailed competency matrix: zero-G mining experience, exotic materials certification, drone fleet management, safety protocols", 
+         "choice_a_exp_reward": 50, "choice_a_cash_change": 0, "choice_a_reputation_change": 3,
+         "choice_a_feedback": "Comprehensive talent identification! The Registry approves immediately. Your competency matrix clearly distinguishes between planetary and asteroid mining experience - critical for this role.",
+         "choice_b_text": "Copy the job description from when we hired the previous engineer 10 years ago", 
+         "choice_b_exp_reward": 30, "choice_b_cash_change": 0, "choice_b_reputation_change": 1,
+         "choice_b_feedback": "Technology has changed! That old description doesn't mention drone fleet management or quantum extraction techniques. Needs analysis must reflect CURRENT requirements, not historical ones.",
+         "choice_c_text": "Let the algorithm auto-generate requirements based on industry averages", 
+         "choice_c_exp_reward": 35, "choice_c_cash_change": 0, "choice_c_reputation_change": 1,
+         "choice_c_feedback": "Algorithms provide baselines but miss your unique needs! Your operation mines rare isotopes requiring specialized certifications. Generic requirements attract generic candidates.", 
+         "subskill_focus": "Talent Identification"},
+
+        # ========== LEVEL 2: Legal & Ethical Hiring ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Human Resources", "required_level": 2,
+         "scenario_title": "L2: Legal & Ethical Hiring", 
+         "scenario_narrative": "You're interviewing candidates for a server position. During the interview, you're tempted to ask about family plans, age, and religious observances that might affect scheduling. These questions seem practical but could violate Equal Employment Opportunity (EEO) laws.",
+         "choice_a_text": "Stick to job-related questions only: availability, experience, skills - never ask about protected characteristics", 
+         "choice_a_exp_reward": 60, "choice_a_cash_change": 0, "choice_a_reputation_change": 4,
+         "choice_a_feedback": "EEO compliance achieved! Anti-discrimination law prohibits questions about age, religion, family status, pregnancy, and other protected characteristics. Ask about availability directly without probing reasons. 'Can you work weekends?' is legal; 'Do you go to church on Sundays?' is not.",
+         "choice_b_text": "Ask about family plans to ensure they can commit long-term", 
+         "choice_b_exp_reward": 15, "choice_b_cash_change": -2000, "choice_b_reputation_change": -3,
+         "choice_b_feedback": "EEO violation! Asking about family plans is illegal because it can discriminate against women and parents. Even if you don't intend discrimination, the question itself creates legal liability. Small fine issued.",
+         "choice_c_text": "Have a manager casually ask these questions 'off the record'", 
+         "choice_c_exp_reward": 10, "choice_c_cash_change": -3000, "choice_c_reputation_change": -4,
+         "choice_c_feedback": "Attempting to circumvent the law makes it worse! 'Off the record' questions are still illegal and show intentional violation. Larger fine and possible lawsuit from rejected candidate.", 
+         "subskill_focus": "Employment Law"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Human Resources", "required_level": 2,
+         "scenario_title": "L2: Legal & Ethical Hiring", 
+         "scenario_narrative": "The Guild enforces fair hiring practices across all races and magical alignments. A highly qualified elf applies for your bouncer position, but some customers prefer human-only staff. An equally qualified dwarf also applies.",
+         "choice_a_text": "Evaluate all candidates purely on job-relevant qualifications: strength, conflict resolution skills, experience", 
+         "choice_a_exp_reward": 60, "choice_a_cash_change": 0, "choice_a_reputation_change": 4,
+         "choice_a_feedback": "Guild-compliant hiring! Discrimination based on race (human, elf, dwarf) or magical alignment violates Guild law. The elf with superior conflict resolution skills gets the job. Some customers grumble but most respect fair treatment.",
+         "choice_b_text": "Hire the human to avoid customer complaints", 
+         "choice_b_exp_reward": 20, "choice_b_cash_change": -500, "choice_b_reputation_change": -2,
+         "choice_b_feedback": "Guild violation! Customer preference doesn't justify discrimination. The Guild fines you and word spreads that your tavern discriminates. You lose more customers than you kept.",
+         "choice_c_text": "Create separate 'human nights' and 'all-races nights' to satisfy everyone", 
+         "choice_c_exp_reward": 15, "choice_c_cash_change": -800, "choice_c_reputation_change": -3,
+         "choice_c_feedback": "Segregation violates Guild principles! Separate is not equal. Heavy fine and required diversity training for all staff.", 
+         "subskill_focus": "Employment Law"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Human Resources", "required_level": 2,
+         "scenario_title": "L2: Legal & Ethical Hiring", 
+         "scenario_narrative": "You're hiring for a hazardous asteroid extraction role. Two candidates apply: a Terran human and a Synthetic (android) worker. The Galactic Employment Act prohibits discrimination based on species or origin, including artificial beings.",
+         "choice_a_text": "Evaluate both on job qualifications: safety record, technical skills, team compatibility - regardless of origin", 
+         "choice_a_exp_reward": 60, "choice_a_cash_change": 0, "choice_a_reputation_change": 4,
+         "choice_a_feedback": "Full compliance with Galactic Employment Act! The Synthetic has a superior safety record and doesn't require life support, making them ideal for vacuum work. Merit-based hiring wins.",
+         "choice_b_text": "Hire the human - organics work better with the current crew", 
+         "choice_b_exp_reward": 20, "choice_b_cash_change": -5000, "choice_b_reputation_change": -2,
+         "choice_b_feedback": "Species discrimination! The Galactic Employment Board investigates and issues a citation. 'Cultural fit' cannot mask discrimination. If crews don't work well with Synthetics, train the crew.",
+         "choice_c_text": "Ask the Synthetic about their 'creation date' to assess experience", 
+         "choice_c_exp_reward": 25, "choice_c_cash_change": -2000, "choice_c_reputation_change": -1,
+         "choice_c_feedback": "Creation date questions are equivalent to asking a human's age - discriminatory! Ask about years of experience in the field, not existence. Citation issued.", 
+         "subskill_focus": "Employment Law"},
+
+        # ========== LEVEL 3: Onboarding & Training ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Human Resources", "required_level": 3,
+         "scenario_title": "L3: Onboarding & Training", 
+         "scenario_narrative": "Your new line cook starts Monday. Without proper onboarding, new hires often feel lost, make mistakes, and quit within weeks. You need a structured integration process covering systems, culture, and safety.",
+         "choice_a_text": "Create a 3-day training program: Day 1 orientation/safety, Day 2 systems training, Day 3 shadowing experienced staff", 
+         "choice_a_exp_reward": 70, "choice_a_cash_change": 300, "choice_a_reputation_change": 4,
+         "choice_a_feedback": "Excellent onboarding structure! New hires who receive proper training become productive faster and stay longer. Your program covers safety protocols (preventing injuries), POS systems (preventing errors), and culture (building team connection).",
+         "choice_b_text": "Just have them watch and learn - cooking is hands-on", 
+         "choice_b_exp_reward": 25, "choice_b_cash_change": -200, "choice_b_reputation_change": 0,
+         "choice_b_feedback": "Sink-or-swim causes drowning! Without structured training, new hires don't learn safety protocols, make avoidable mistakes, and feel unsupported. Many quit within the first month.",
+         "choice_c_text": "Give them the employee handbook and have them start immediately", 
+         "choice_c_exp_reward": 30, "choice_c_cash_change": 0, "choice_c_reputation_change": 1,
+         "choice_c_feedback": "Reading isn't doing! Handbooks provide reference but don't replace hands-on training. New cook makes errors because reading about the kitchen isn't the same as learning it.", 
+         "subskill_focus": "Employee Integration"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Human Resources", "required_level": 3,
+         "scenario_title": "L3: Onboarding & Training", 
+         "scenario_narrative": "A new apprentice joins your tavern. The Guild requires all establishments to provide proper craft training, but many tavern owners just throw apprentices into service unprepared.",
+         "choice_a_text": "Design a week-long apprenticeship program: Guild traditions, brewing basics, customer service, safety around magical ingredients", 
+         "choice_a_exp_reward": 70, "choice_a_cash_change": -100, "choice_a_reputation_change": 4,
+         "choice_a_feedback": "Exemplary onboarding! The Guild commends your training program. Apprentices learn proper handling of enchanted ingredients (preventing accidents), brewing fundamentals (ensuring quality), and customer customs (avoiding conflicts).",
+         "choice_b_text": "Assign them to follow the senior barmaid - they'll learn by watching", 
+         "choice_b_exp_reward": 35, "choice_b_cash_change": 0, "choice_b_reputation_change": 1,
+         "choice_b_feedback": "Observation has limits. The barmaid is busy serving, not teaching. Apprentice learns bad habits alongside good ones. No structured progression means inconsistent skills.",
+         "choice_c_text": "Send them to the Guild training center - let them handle it", 
+         "choice_c_exp_reward": 40, "choice_c_cash_change": -200, "choice_c_reputation_change": 2,
+         "choice_c_feedback": "Guild training covers fundamentals but not YOUR specific methods! They return knowing generic skills but not your special recipes or customer base. Internal onboarding is still essential.", 
+         "subskill_focus": "Employee Integration"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Human Resources", "required_level": 3,
+         "scenario_title": "L3: Onboarding & Training", 
+         "scenario_narrative": "New zero-gravity extraction technicians arrive at your orbital station. The Galactic Safety Authority requires documented training before they can operate equipment. Proper onboarding prevents accidents and regulatory violations.",
+         "choice_a_text": "Implement comprehensive program: safety certification, equipment simulation, emergency protocols, cultural integration with existing crew", 
+         "choice_a_exp_reward": 70, "choice_a_cash_change": -2000, "choice_a_reputation_change": 4,
+         "choice_a_feedback": "Industry-leading onboarding! Safety Authority approves your training documentation. Simulation prevents costly real-equipment mistakes. Emergency protocol training could save lives. Well-integrated crews work better together.",
+         "choice_b_text": "Fast-track them through safety videos so they can start producing immediately", 
+         "choice_b_exp_reward": 25, "choice_b_cash_change": -5000, "choice_b_reputation_change": -2,
+         "choice_b_feedback": "Videos aren't verification! First week, undertrained tech causes equipment damage. Safety Authority audit finds inadequate documentation. Fines exceed what you saved by rushing.",
+         "choice_c_text": "Partner them with experienced operators for on-the-job training only", 
+         "choice_c_exp_reward": 40, "choice_c_cash_change": 0, "choice_c_reputation_change": 2,
+         "choice_c_feedback": "OJT is valuable but insufficient for documentation. Safety Authority requires CERTIFIED training, not just experience. You'll need to supplement with formal certification anyway.", 
+         "subskill_focus": "Employee Integration"},
+
+        # ========== LEVEL 4: Performance Management ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Human Resources", "required_level": 4,
+         "scenario_title": "L4: Performance Management", 
+         "scenario_narrative": "Quarterly reviews are approaching. Some servers have no clear goals to measure against, making evaluations subjective and contentious. You need to implement SMART goals (Specific, Measurable, Achievable, Relevant, Time-bound).",
+         "choice_a_text": "Set SMART goals for each position: 'Achieve 95% customer satisfaction scores this quarter' instead of 'be friendly'", 
+         "choice_a_exp_reward": 80, "choice_a_cash_change": 500, "choice_a_reputation_change": 4,
+         "choice_a_feedback": "Performance management excellence! SMART goals remove subjectivity. '95% satisfaction' is measurable; 'be friendly' is opinion. Staff know exactly what success looks like and can track their progress.",
+         "choice_b_text": "Use general ratings: Excellent/Good/Needs Improvement based on manager opinion", 
+         "choice_b_exp_reward": 35, "choice_b_cash_change": 0, "choice_b_reputation_change": 1,
+         "choice_b_feedback": "Subjective ratings cause disputes! What's 'Excellent' to one manager is 'Good' to another. Without specific metrics, employees feel unfairly judged and reviews become arguments.",
+         "choice_c_text": "Skip formal goals - just address problems when they arise", 
+         "choice_c_exp_reward": 20, "choice_c_cash_change": -300, "choice_c_reputation_change": 0,
+         "choice_c_feedback": "Reactive management fails! Without goals, staff don't know expectations until they're already failing. Proactive goal-setting prevents problems rather than just punishing them.", 
+         "subskill_focus": "Goal Setting"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Human Resources", "required_level": 4,
+         "scenario_title": "L4: Performance Management", 
+         "scenario_narrative": "The Guild requires annual performance assessments for all journeymen. Your staff have been working without clear objectives, making evaluations arbitrary. You need measurable criteria.",
+         "choice_a_text": "Establish clear guild-standard metrics: drinks served per shift, customer complaints, recipe mastery demonstrations", 
+         "choice_a_exp_reward": 80, "choice_a_cash_change": 200, "choice_a_reputation_change": 4,
+         "choice_a_feedback": "Proper performance management! Measurable standards let journeymen track their own progress toward master status. 'Brew 50 barrels with less than 2% waste' is a clear target to hit.",
+         "choice_b_text": "Base evaluations on seniority - longer service means better performance", 
+         "choice_b_exp_reward": 30, "choice_b_cash_change": 0, "choice_b_reputation_change": 0,
+         "choice_b_feedback": "Seniority isn't skill! A 10-year employee coasting produces less than an ambitious 2-year journeyman. Performance management must measure actual performance, not just time served.",
+         "choice_c_text": "Let each staff member set their own goals however they wish", 
+         "choice_c_exp_reward": 40, "choice_c_cash_change": 0, "choice_c_reputation_change": 1,
+         "choice_c_feedback": "Self-set goals vary wildly! One sets 'work harder' while another sets 'maintain current level.' Goals must align with tavern objectives and be comparable across staff.", 
+         "subskill_focus": "Goal Setting"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Human Resources", "required_level": 4,
+         "scenario_title": "L4: Performance Management", 
+         "scenario_narrative": "Your extraction teams have no standardized performance metrics. Some supervisors reward ore quantity while others prioritize safety. The inconsistency causes confusion and resentment among workers.",
+         "choice_a_text": "Implement balanced scorecard: extraction volume, safety incidents, equipment maintenance, team collaboration scores", 
+         "choice_a_exp_reward": 80, "choice_a_cash_change": 1000, "choice_a_reputation_change": 4,
+         "choice_a_feedback": "Comprehensive performance management! Balanced scorecards prevent gaming single metrics. Teams can't sacrifice safety for volume or neglect equipment for short-term gains. All objectives matter.",
+         "choice_b_text": "Focus purely on ore extracted - that's what generates revenue", 
+         "choice_b_exp_reward": 40, "choice_b_cash_change": 2000, "choice_b_reputation_change": -1,
+         "choice_b_feedback": "Single-metric focus backfires! Teams cut corners on safety and maintenance to maximize volume. Equipment failures and injuries soon exceed productivity gains. Balance matters.",
+         "choice_c_text": "Let each team lead define their own performance standards", 
+         "choice_c_exp_reward": 35, "choice_c_cash_change": 0, "choice_c_reputation_change": 1,
+         "choice_c_feedback": "Inconsistent standards cause unfairness! Workers transferring between teams face different expectations. Corporation-wide standards ensure equity and clarity.", 
+         "subskill_focus": "Goal Setting"},
+
+        # ========== LEVEL 5: Compensation & Benefits ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Human Resources", "required_level": 5,
+         "scenario_title": "L5: Compensation & Benefits", 
+         "scenario_narrative": "Your mid-level kitchen staff are receiving offers from competitors. To retain talent, you need to design a competitive total rewards package balancing salary, bonuses, and benefits like health insurance and paid time off.",
+         "choice_a_text": "Create tiered benefits package: health insurance, performance bonuses, PTO, and meal allowances - analyze competitor offerings first", 
+         "choice_a_exp_reward": 90, "choice_a_cash_change": -1000, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Total rewards strategy! Compensation isn't just salary. Health insurance, bonuses, and PTO have real value to employees. Your competitive analysis ensures you match market without overspending.",
+         "choice_b_text": "Just increase base salary - that's what people really care about", 
+         "choice_b_exp_reward": 50, "choice_b_cash_change": -2000, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "Salary alone is expensive! A $3/hour raise costs more than equivalent health benefits. Many employees value stability (insurance) over marginal cash. Understand total compensation value.",
+         "choice_c_text": "Offer minimal benefits and hire replacements when people leave", 
+         "choice_c_exp_reward": 25, "choice_c_cash_change": -500, "choice_c_reputation_change": -2,
+         "choice_c_feedback": "Turnover is expensive! Recruiting, hiring, and training replacements costs more than retention benefits. High turnover also hurts service quality and team morale.", 
+         "subskill_focus": "Total Rewards"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Human Resources", "required_level": 5,
+         "scenario_title": "L5: Compensation & Benefits", 
+         "scenario_narrative": "Other taverns are luring away your trained staff with better compensation. You need to design a rewards package that competes while controlling costs. Gold isn't the only currency of value.",
+         "choice_a_text": "Offer combination: competitive wages, profit sharing on busy nights, room and board, and Guild certification sponsorship", 
+         "choice_a_exp_reward": 90, "choice_a_cash_change": -300, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Creative total rewards! Room and board has real value without cash outlay. Guild sponsorship invests in their future. Profit sharing aligns their success with yours. Staff stay for the whole package.",
+         "choice_b_text": "Match competitor wages exactly - gold for gold", 
+         "choice_b_exp_reward": 50, "choice_b_cash_change": -600, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "Wage wars drain gold! If competitors raise wages again, you must match again. Non-cash benefits create differentiation that pure salary can't. Think beyond gold.",
+         "choice_c_text": "Remind staff of their loyalty obligations under Guild apprenticeship oaths", 
+         "choice_c_exp_reward": 20, "choice_c_cash_change": 0, "choice_c_reputation_change": -2,
+         "choice_c_feedback": "Guilt doesn't retain talent! Oaths cover basic obligations, not enthusiasm. Resentful staff who feel trapped provide poor service. Earn loyalty through fair treatment.", 
+         "subskill_focus": "Total Rewards"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Human Resources", "required_level": 5,
+         "scenario_title": "L5: Compensation & Benefits", 
+         "scenario_narrative": "Your skilled technicians receive offers from competing corps. In space, benefits packages must address unique needs: hazard pay, family communication allowances, return-to-Earth leave, and medical coverage.",
+         "choice_a_text": "Design comprehensive space-worker package: hazard differentials, quarterly Earth leave, family video credits, full medical with evacuation coverage", 
+         "choice_a_exp_reward": 90, "choice_a_cash_change": -5000, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Industry-leading total rewards! Space workers value different things than planet-based staff. Family connection and evacuation insurance address psychological and safety needs that pure salary can't buy.",
+         "choice_b_text": "Maximize cash compensation - let workers buy what they need", 
+         "choice_b_exp_reward": 50, "choice_b_cash_change": -8000, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "Cash can't buy everything in space! Individual workers can't negotiate evacuation insurance or family communication satellites. Corporate benefits have collective purchasing power.",
+         "choice_c_text": "Remind them how few opportunities exist for their specialized skills", 
+         "choice_c_exp_reward": 20, "choice_c_cash_change": 0, "choice_c_reputation_change": -3,
+         "choice_c_feedback": "Threats breed resentment! Yes, space mining skills are specialized, but that cuts both ways - you need them too. Competitors will gladly take disgruntled experts.", 
+         "subskill_focus": "Total Rewards"},
+
+        # ========== LEVEL 6: Employee Relations & Morale ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Human Resources", "required_level": 6,
+         "scenario_title": "L6: Employee Relations & Morale", 
+         "scenario_narrative": "Staff turnover has increased and shift-swap requests are constant. Anonymous feedback suggests burnout and low morale, especially during rush hours. You need to measure and improve engagement.",
+         "choice_a_text": "Conduct formal engagement survey, analyze results, implement top 3 requested changes, and follow up with staff", 
+         "choice_a_exp_reward": 100, "choice_a_cash_change": 800, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Engagement excellence! Surveys measure sentiment scientifically. Acting on feedback shows you listen. Staff requested flexible scheduling, break room improvements, and recognition programs - all implemented. Turnover drops.",
+         "choice_b_text": "Host a team party to boost morale", 
+         "choice_b_exp_reward": 45, "choice_b_cash_change": -500, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "Parties are nice but don't address root causes! Staff enjoy the pizza but still face the same scheduling stress Monday morning. Engagement requires systemic changes, not just events.",
+         "choice_c_text": "Tell managers to be more positive and encouraging", 
+         "choice_c_exp_reward": 35, "choice_c_cash_change": 0, "choice_c_reputation_change": 1,
+         "choice_c_feedback": "Surface positivity without action feels hollow. 'Great job!' rings false when real concerns go unaddressed. Listen first, then respond with genuine changes.", 
+         "subskill_focus": "Engagement"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Human Resources", "required_level": 6,
+         "scenario_title": "L6: Employee Relations & Morale", 
+         "scenario_narrative": "After a challenging quest resulted in a team injury, staff morale is low. Workers are anxious about dangers and question whether the risks are worth it. You need to restore confidence and engagement.",
+         "choice_a_text": "Host a Guild Feast to honor the injured, review safety protocols together, and implement staff-suggested improvements", 
+         "choice_a_exp_reward": 100, "choice_a_cash_change": -200, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Masterful engagement! The feast honors sacrifice while creating community. Collaborative safety review shows you take concerns seriously. Staff-suggested improvements give them ownership. Morale rebounds.",
+         "choice_b_text": "Increase danger pay to compensate for the risks", 
+         "choice_b_exp_reward": 50, "choice_b_cash_change": -400, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "Gold doesn't heal fear! Extra pay acknowledges risk but doesn't address the underlying safety concerns. Staff remain anxious even with fatter purses. Address the root issue.",
+         "choice_c_text": "Replace anxious staff with adventurers who don't mind danger", 
+         "choice_c_exp_reward": 30, "choice_c_cash_change": -300, "choice_c_reputation_change": -1,
+         "choice_c_feedback": "Replacement isn't leadership! Loyal staff dismissed for legitimate concerns tells everyone their feelings don't matter. Adventurers may accept danger but lack your trained skills.", 
+         "subskill_focus": "Engagement"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Human Resources", "required_level": 6,
+         "scenario_title": "L6: Employee Relations & Morale", 
+         "scenario_narrative": "Crew morale is deteriorating after 8 months of deep space operations. Psychological reports show isolation effects, interpersonal conflicts, and declining productivity. You must address engagement before the mission extends.",
+         "choice_a_text": "Implement holistic engagement program: virtual reality Earth experiences, conflict mediation, rotation of duties, enhanced communication bandwidth home", 
+         "choice_a_exp_reward": 100, "choice_a_cash_change": -10000, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Comprehensive engagement strategy! Space psychology requires addressing isolation, variety, and connection. VR Earth experiences combat homesickness. Mediation resolves conflicts before they escalate. Productivity and morale recover.",
+         "choice_b_text": "Promise large bonuses upon mission completion", 
+         "choice_b_exp_reward": 45, "choice_b_cash_change": 0, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "Future bonuses don't fix present misery! Crew need support now, not promises later. Someone experiencing psychological distress isn't motivated by distant rewards.",
+         "choice_c_text": "Remind crew of contractual obligations and mission importance", 
+         "choice_c_exp_reward": 30, "choice_c_cash_change": 0, "choice_c_reputation_change": -1,
+         "choice_c_feedback": "Contractual reminders increase resentment! Crew know their obligations. What they need is support, not lectures. Psychological health requires proactive engagement, not legal threats.", 
+         "subskill_focus": "Engagement"},
+
+        # ========== LEVEL 7: Conflict Resolution ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Human Resources", "required_level": 7,
+         "scenario_title": "L7: Conflict Resolution", 
+         "scenario_narrative": "A heated dispute erupts between your production manager and quality control manager. Production accuses QC of slowing output with excessive inspections; QC accuses Production of cutting corners on food safety. Both threaten to resign.",
+         "choice_a_text": "Facilitate structured mediation: hear both sides separately, identify shared goals, negotiate agreed standards with documented resolution", 
+         "choice_a_exp_reward": 110, "choice_a_cash_change": 500, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Mediation mastery! Separating emotions from issues reveals both want restaurant success. Agreed inspection standards balance speed and safety. Documented resolution prevents future disputes. Both managers stay.",
+         "choice_b_text": "Side with Production - speed is essential for profitability", 
+         "choice_b_exp_reward": 40, "choice_b_cash_change": 300, "choice_b_reputation_change": -2,
+         "choice_b_feedback": "Taking sides escalates conflict! QC manager resigns, feeling undermined. Without proper oversight, food safety incident follows. Short-term speed gain causes long-term damage.",
+         "choice_c_text": "Fire both and start fresh with new managers who can get along", 
+         "choice_c_exp_reward": 30, "choice_c_cash_change": -2000, "choice_c_reputation_change": -1,
+         "choice_c_feedback": "Avoidance isn't resolution! You lose institutional knowledge and trained staff. New managers face the same structural tension. Fix the system, not just the people.", 
+         "subskill_focus": "Mediation"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Human Resources", "required_level": 7,
+         "scenario_title": "L7: Conflict Resolution", 
+         "scenario_narrative": "Your head brewer and head cook are in bitter dispute over cellar space. The brewer needs temperature-controlled storage for aging ales; the cook needs it for meat curing. Both claim seniority rights.",
+         "choice_a_text": "Mediate: assess actual space needs, propose shared schedule or partitioning, have both sign formal agreement", 
+         "choice_a_exp_reward": 110, "choice_a_cash_change": 200, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Wise mediation! Careful analysis shows the brewer needs constant temperature; the cook needs circulation. Different zones within the cellar serve both needs. Formal agreement prevents future conflict.",
+         "choice_b_text": "Award the space to whoever has worked here longer", 
+         "choice_b_exp_reward": 40, "choice_b_cash_change": 0, "choice_b_reputation_change": -1,
+         "choice_b_feedback": "Seniority doesn't solve resource conflicts! The 'loser' feels unfairly treated regardless of tenure. Business needs, not arrival dates, should drive decisions.",
+         "choice_c_text": "Let them fight it out between themselves", 
+         "choice_c_exp_reward": 25, "choice_c_cash_change": -300, "choice_c_reputation_change": -2,
+         "choice_c_feedback": "Unmediated conflicts escalate! Without intervention, the dispute spreads to their teams. Kitchen and brewery staff take sides. Service suffers as cooperation collapses.", 
+         "subskill_focus": "Mediation"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Human Resources", "required_level": 7,
+         "scenario_title": "L7: Conflict Resolution", 
+         "scenario_narrative": "Tension explodes between the human extraction team and the Synthetic maintenance crew. Humans accuse Synthetics of prioritizing equipment over worker safety; Synthetics counter that humans damage equipment through careless operation.",
+         "choice_a_text": "Conduct joint investigation, establish cross-team safety committee, create integrated protocols that address both equipment and personnel", 
+         "choice_a_exp_reward": 110, "choice_a_cash_change": 0, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Cross-cultural mediation success! Investigation shows both groups have valid points. Joint committee builds understanding between species. Integrated protocols align incentives. Cooperation replaces blame.",
+         "choice_b_text": "Separate the teams completely to prevent further conflict", 
+         "choice_b_exp_reward": 45, "choice_b_cash_change": -5000, "choice_b_reputation_change": 1,
+         "choice_b_feedback": "Separation breeds division! Teams that don't interact develop worse stereotypes. Equipment handoffs become tense. The underlying conflict remains unresolved, just hidden.",
+         "choice_c_text": "Mandate that Synthetics defer to human judgment on all safety matters", 
+         "choice_c_exp_reward": 30, "choice_c_cash_change": -2000, "choice_c_reputation_change": -2,
+         "choice_c_feedback": "Species preference violates Galactic Employment Act! Synthetics file grievance. Equipment damage increases as their expertise is ignored. Favoritism solves nothing.", 
+         "subskill_focus": "Mediation"},
+
+        # ========== LEVEL 8: Termination & Severance ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Human Resources", "required_level": 8,
+         "scenario_title": "L8: Termination & Severance", 
+         "scenario_narrative": "After multiple documented performance issues, you must terminate a long-tenured employee who has threatened 'legal action' if fired. You need to handle this properly to minimize wrongful termination lawsuit risk.",
+         "choice_a_text": "Review documentation, conduct formal exit meeting with witness, offer severance in exchange for release, provide written termination letter with appeal process", 
+         "choice_a_exp_reward": 120, "choice_a_cash_change": -2000, "choice_a_reputation_change": 4,
+         "choice_a_feedback": "Legally sound termination! Documentation proves cause, witness prevents he-said-she-said, severance with release protects against lawsuit, appeal process shows fairness. Clean separation protects the business.",
+         "choice_b_text": "Fire them immediately before they cause more problems", 
+         "choice_b_exp_reward": 40, "choice_b_cash_change": -8000, "choice_b_reputation_change": -3,
+         "choice_b_feedback": "Hasty termination invites litigation! Without proper process, their lawyer argues wrongful termination. Settlement costs far exceed what proper severance would have cost.",
+         "choice_c_text": "Make their job so unpleasant they quit voluntarily", 
+         "choice_c_exp_reward": 25, "choice_c_cash_change": -5000, "choice_c_reputation_change": -4,
+         "choice_c_feedback": "Constructive dismissal is illegal! Creating hostile conditions to force resignation is recognized by courts as wrongful termination. Lawsuit is stronger because you showed deliberate misconduct.", 
+         "subskill_focus": "Separation Law"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Human Resources", "required_level": 8,
+         "scenario_title": "L8: Termination & Severance", 
+         "scenario_narrative": "A senior guild member must be dismissed for stealing from the till. However, improper expulsion violates Guild law and could result in sanctions against your establishment. The employee knows powerful people.",
+         "choice_a_text": "Document evidence thoroughly, notify the Guild, conduct formal hearing per Guild procedures, offer fair separation terms", 
+         "choice_a_exp_reward": 120, "choice_a_cash_change": -500, "choice_a_reputation_change": 4,
+         "choice_a_feedback": "Guild-compliant termination! Evidence proves theft beyond dispute. Guild procedures protect you from retaliation by their connections. Fair separation terms show you're just, not vindictive.",
+         "choice_b_text": "Quietly dismiss them and avoid Guild involvement to prevent embarrassment", 
+         "choice_b_exp_reward": 45, "choice_b_cash_change": -1000, "choice_b_reputation_change": -1,
+         "choice_b_feedback": "Secrecy backfires! Without Guild documentation, they claim wrongful dismissal to their powerful friends. You're accused of framing a respected member. Proper procedures protect everyone.",
+         "choice_c_text": "Confront them publicly to shame them into leaving", 
+         "choice_c_exp_reward": 30, "choice_c_cash_change": -800, "choice_c_reputation_change": -3,
+         "choice_c_feedback": "Public shaming violates dignity requirements! Even thieves have procedural rights. The Guild sanctions you for improper conduct. Handle separations privately and formally.", 
+         "subskill_focus": "Separation Law"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Human Resources", "required_level": 8,
+         "scenario_title": "L8: Termination & Severance", 
+         "scenario_narrative": "A high-risk employee with access to proprietary extraction algorithms must be terminated for breach of conduct. They've hinted at selling information to competitors. Improper handling could compromise trade secrets.",
+         "choice_a_text": "Coordinate with Legal and Security: immediate access revocation, exit interview with NDA reinforcement, competitive severance contingent on confidentiality", 
+         "choice_a_exp_reward": 120, "choice_a_cash_change": -20000, "choice_a_reputation_change": 4,
+         "choice_a_feedback": "High-stakes termination excellence! Access revocation prevents data theft. Competitive severance incentivizes honoring confidentiality. Legal documentation strengthens any future enforcement. Clean, professional separation.",
+         "choice_b_text": "Terminate immediately and have security escort them off-station", 
+         "choice_b_exp_reward": 50, "choice_b_cash_change": -5000, "choice_b_reputation_change": -1,
+         "choice_b_feedback": "Aggressive termination creates enemies! Humiliated employee has every incentive to sell secrets for revenge. Without negotiated severance, they owe you nothing. Handle exits professionally.",
+         "choice_c_text": "Keep them employed but reassigned until the threat passes", 
+         "choice_c_exp_reward": 40, "choice_c_cash_change": -10000, "choice_c_reputation_change": 0,
+         "choice_c_feedback": "Delay increases risk! Every day they remain employed, they can access more information. If conduct breach justifies termination, act decisively with proper protections.", 
+         "subskill_focus": "Separation Law"},
+
+        # ========== LEVEL 9: Succession Planning & Development ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Human Resources", "required_level": 9,
+         "scenario_title": "L9: Succession Planning & Development", 
+         "scenario_narrative": "Your executive chef is retiring in 18 months. Without a succession plan, you'll face a leadership vacuum. You need to identify high-potential employees and create development pathways to prepare them for leadership.",
+         "choice_a_text": "Identify 2-3 high-potential candidates, create individualized development plans, rotate them through leadership experiences, have chef mentor the top candidate", 
+         "choice_a_exp_reward": 130, "choice_a_cash_change": 0, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Talent pipeline established! Multiple candidates ensure backup options. Individualized development addresses each person's gaps. Leadership rotation builds practical skills. Mentorship transfers institutional knowledge. Smooth transition assured.",
+         "choice_b_text": "Assume the sous chef will naturally step up when the time comes", 
+         "choice_b_exp_reward": 45, "choice_b_cash_change": 0, "choice_b_reputation_change": 1,
+         "choice_b_feedback": "Assumptions aren't planning! The sous chef may not want leadership or may lack key skills. What if they leave before transition? Succession requires deliberate development, not hope.",
+         "choice_c_text": "Start external recruitment now to find the best replacement", 
+         "choice_c_exp_reward": 55, "choice_c_cash_change": -3000, "choice_c_reputation_change": 2,
+         "choice_c_feedback": "External hires have downsides! They don't know your systems, culture, or recipes. Internal candidates who were passed over may resign. External search PLUS internal development is ideal.", 
+         "subskill_focus": "Talent Pipeline"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Human Resources", "required_level": 9,
+         "scenario_title": "L9: Succession Planning & Development", 
+         "scenario_narrative": "Your Guild Master approaches retirement. Guild tradition requires a trained successor, but your journeymen lack leadership experience. You must design a management training program to prepare future leaders.",
+         "choice_a_text": "Create structured apprenticeship to mastery pathway: rotating guild responsibilities, mentorship pairs, leadership challenges, formal certification", 
+         "choice_a_exp_reward": 130, "choice_a_cash_change": -500, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Guild-worthy succession planning! Rotating responsibilities exposes apprentices to all aspects of leadership. Mentorship transfers wisdom. Leadership challenges test decision-making under pressure. Multiple prepared successors.",
+         "choice_b_text": "Simply promote the most senior journeyman when the time comes", 
+         "choice_b_exp_reward": 40, "choice_b_cash_change": 0, "choice_b_reputation_change": 0,
+         "choice_b_feedback": "Seniority doesn't guarantee leadership ability! The most senior may be excellent at craft but terrible at management. Develop leaders deliberately, don't assume experience equals capability.",
+         "choice_c_text": "Request the Guild send a trained Master from another tavern", 
+         "choice_c_exp_reward": 50, "choice_c_cash_change": -300, "choice_c_reputation_change": 1,
+         "choice_c_feedback": "Outside Masters don't know your traditions! Every tavern has unique recipes and customs. External placement also demoralizes your journeymen who see no advancement path.", 
+         "subskill_focus": "Talent Pipeline"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Human Resources", "required_level": 9,
+         "scenario_title": "L9: Succession Planning & Development", 
+         "scenario_narrative": "Your Station Commander is being promoted to corporate. The role requires rare expertise combining technical knowledge, crisis management, and diplomatic skills. You have 12 months to develop a successor from your officer corps.",
+         "choice_a_text": "Implement leadership accelerator: cross-functional rotations, crisis simulation training, diplomatic missions, executive coaching, board shadowing", 
+         "choice_a_exp_reward": 130, "choice_a_cash_change": -15000, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Executive development excellence! Accelerated program compresses years of learning into months. Crisis simulations build confidence without real risk. Board shadowing provides strategic perspective. Ready successor identified.",
+         "choice_b_text": "Let officers compete for the role through normal performance reviews", 
+         "choice_b_exp_reward": 45, "choice_b_cash_change": 0, "choice_b_reputation_change": 1,
+         "choice_b_feedback": "Reviews measure past performance, not future potential! Commander role requires skills not tested in current positions. Without targeted development, even top performers may lack key capabilities.",
+         "choice_c_text": "Recruit an experienced commander from a competitor", 
+         "choice_c_exp_reward": 55, "choice_c_cash_change": -30000, "choice_c_reputation_change": 1,
+         "choice_c_feedback": "External recruitment is expensive and risky! Competitor commanders bring different cultures. Your officers may resent being passed over. Internal development plus external benchmarking is better.", 
+         "subskill_focus": "Talent Pipeline"},
+
+        # ========== LEVEL 10: Organizational Structure & Labor Relations ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Human Resources", "required_level": 10,
+         "scenario_title": "L10: Organizational Structure & Labor Relations", 
+         "scenario_narrative": "The Kitchen Workers Union is demanding wage increases and better scheduling practices. A strike would shut down your restaurant during peak season. You must negotiate a complex labor agreement that satisfies workers while maintaining profitability.",
+         "choice_a_text": "Engage in good-faith negotiation: review their demands objectively, propose counter-offers with data, find creative solutions like profit-sharing, reach documented agreement", 
+         "choice_a_exp_reward": 150, "choice_a_cash_change": -2000, "choice_a_reputation_change": 6,
+         "choice_a_feedback": "Labor relations mastery! Good-faith bargaining builds long-term trust. Data-based proposals are harder to reject. Creative solutions like profit-sharing align interests. Documented agreement provides stability for years.",
+         "choice_b_text": "Refuse all demands and prepare to replace striking workers", 
+         "choice_b_exp_reward": 50, "choice_b_cash_change": -20000, "choice_b_reputation_change": -5,
+         "choice_b_feedback": "Hardball backfires! Strike shuts you down during peak season. Replacement workers lack training. Community supports strikers. Legal costs mount. You eventually settle for worse terms than initial demands.",
+         "choice_c_text": "Accept all union demands immediately to avoid conflict", 
+         "choice_c_exp_reward": 60, "choice_c_cash_change": -15000, "choice_c_reputation_change": 3,
+         "choice_c_feedback": "Total capitulation isn't sustainable! Accepting unrealistic demands strains finances. Next negotiation, union expects same easy victory. Negotiate fairly - both sides should feel they achieved something.", 
+         "subskill_focus": "Union Negotiation"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Human Resources", "required_level": 10,
+         "scenario_title": "L10: Organizational Structure & Labor Relations", 
+         "scenario_narrative": "The Local Craftsmen's Guild is demanding collective bargaining terms that would standardize wages and working conditions across all taverns. Resistance could mean work stoppages; acceptance means less flexibility.",
+         "choice_a_text": "Negotiate collaboratively: acknowledge legitimate concerns, propose tiered standards based on establishment size, agree to joint oversight committee, sign binding compact", 
+         "choice_a_exp_reward": 150, "choice_a_cash_change": -1000, "choice_a_reputation_change": 6,
+         "choice_a_feedback": "Guild relations mastery! Tiered standards recognize that small taverns can't match large inn wages. Joint oversight builds trust. Binding compact provides predictability. Your leadership role in negotiations raises reputation.",
+         "choice_b_text": "Organize other tavern owners to reject Guild demands collectively", 
+         "choice_b_exp_reward": 50, "choice_b_cash_change": -5000, "choice_b_reputation_change": -4,
+         "choice_b_feedback": "Owner coalition triggers worker coalition! Full Guild work stoppage affects all food service. Kingdom officials intervene, imposing terms worse than negotiated settlement would have been.",
+         "choice_c_text": "Secretly hire non-Guild workers to reduce dependence", 
+         "choice_c_exp_reward": 40, "choice_c_cash_change": -2000, "choice_c_reputation_change": -5,
+         "choice_c_feedback": "Guild discovers your betrayal! All Guild workers walk out. Non-Guild replacements lack training. Your tavern is blacklisted. Underhanded tactics destroy reputation for years.", 
+         "subskill_focus": "Union Negotiation"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Human Resources", "required_level": 10,
+         "scenario_title": "L10: Organizational Structure & Labor Relations", 
+         "scenario_narrative": "The Autonomous Drone Workers Collective (representing Synthetic workers) and the Human Crew Union are both demanding representation in operational decisions. Their interests sometimes conflict, and you must structure an organization that gives voice to both.",
+         "choice_a_text": "Design dual-representation structure: joint labor council with equal voice, binding arbitration for conflicts, transparent decision processes, documented charter", 
+         "choice_a_exp_reward": 150, "choice_a_cash_change": -8000, "choice_a_reputation_change": 6,
+         "choice_a_feedback": "Organizational design excellence! Equal representation prevents species hierarchy. Binding arbitration resolves conflicts before they escalate. Transparent processes build trust. Your station becomes a model for interspecies labor relations.",
+         "choice_b_text": "Favor human workers since they're the majority of the workforce", 
+         "choice_b_exp_reward": 50, "choice_b_cash_change": 0, "choice_b_reputation_change": -4,
+         "choice_b_feedback": "Species discrimination! Synthetics file Galactic Employment Board complaint. Even if humans outnumber Synthetics, minority rights must be protected. Heavy fines and mandated restructuring.",
+         "choice_c_text": "Keep labor groups separate and negotiate with each independently", 
+         "choice_c_exp_reward": 65, "choice_c_cash_change": -3000, "choice_c_reputation_change": 1,
+         "choice_c_feedback": "Divide-and-conquer breeds resentment! Groups eventually realize you're playing them against each other. United front forms. Joint representation was inevitable - better to structure it yourself.", 
+         "subskill_focus": "Union Negotiation"},
+    ]
+    
+    for scenario in scenarios:
+        cur.execute("""
+            INSERT INTO scenario_master (world_type, industry, discipline, required_level, scenario_title, scenario_narrative,
+                choice_a_text, choice_a_exp_reward, choice_a_cash_change, choice_a_reputation_change, choice_a_feedback,
+                choice_b_text, choice_b_exp_reward, choice_b_cash_change, choice_b_reputation_change, choice_b_feedback,
+                choice_c_text, choice_c_exp_reward, choice_c_cash_change, choice_c_reputation_change, choice_c_feedback,
+                subskill_focus)
+            VALUES (%(world_type)s, %(industry)s, %(discipline)s, %(required_level)s, %(scenario_title)s, %(scenario_narrative)s,
+                %(choice_a_text)s, %(choice_a_exp_reward)s, %(choice_a_cash_change)s, %(choice_a_reputation_change)s, %(choice_a_feedback)s,
+                %(choice_b_text)s, %(choice_b_exp_reward)s, %(choice_b_cash_change)s, %(choice_b_reputation_change)s, %(choice_b_feedback)s,
+                %(choice_c_text)s, %(choice_c_exp_reward)s, %(choice_c_cash_change)s, %(choice_c_reputation_change)s, %(choice_c_feedback)s,
+                %(subskill_focus)s)
+        """, scenario)
+    
+    conn.commit()
+    print(f"Seeded {len(scenarios)} HR Curriculum scenarios (Levels 1-10, 3 worlds)!")
+    cur.close()
+    conn.close()
+
+
 if __name__ == "__main__":
     init_database()
     seed_scenarios()
@@ -3372,3 +3874,4 @@ if __name__ == "__main__":
     seed_finance_curriculum()
     seed_legal_curriculum()
     seed_operations_curriculum()
+    seed_hr_curriculum()

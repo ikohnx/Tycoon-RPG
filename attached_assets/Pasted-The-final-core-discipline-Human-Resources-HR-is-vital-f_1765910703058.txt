@@ -1,0 +1,36 @@
+The final core discipline, Human Resources (HR), is vital for any successful business, particularly in an RPG where the player's success hinges on the performance and morale of their team. HR skills move the player beyond managing finances and processes to managing people, which involves complex legal and emotional challenges.
+We will structure the 10 levels of the HR Curriculum to move a beginner from basic hiring and compliance to advanced talent development, compensation strategy, and conflict resolution across the 3 worlds.
+Here is the complete Human Resources (HR) Curriculum, designed to progressively teach talent management, labor law, and organizational development.
+👥 Human Resources (HR) Curriculum: The 10-Level Masterclass
+Tier 1: Acquisition & Compliance (Levels 1-3)
+Goal: Mastering the basic legal process of finding, hiring, and onboarding staff while ensuring fairness.
+| Level | Key Learning Objective | Concept Taught (Real-World Skill) |
+|---|---|---|
+| L1 | Job Description & Needs Analysis | Talent Identification: Defining the exact skills and responsibilities needed for a role before hiring. Scenario: Drafting a clear job posting that attracts the right candidates. |
+| L2 | Legal & Ethical Hiring | Anti-Discrimination Law (EEO): Understanding and avoiding illegal questions in interviews and ensuring the hiring process is fair and merit-based. Scenario: Rejecting an applicant based on protected characteristics leads to a small fine. |
+| L3 | Onboarding & Training | Integration: Creating a standardized process to train new employees on systems, culture, and safety protocols to ensure productivity starts quickly. Scenario: Designing a 3-day training module for all new hires. |
+Tier 2: Performance & Engagement (Levels 4-6)
+Goal: Managing performance, conducting reviews, and understanding the motivators of the workforce.
+| Level | Key Learning Objective | Concept Taught (Real-World Skill) |
+|---|---|---|
+| L4 | Performance Management | Goal Setting (SMART): Establishing clear, measurable objectives for employees to track and evaluate their success against (SMART Goals). Scenario: Setting productivity targets for the sales team for the next quarter. |
+| L5 | Compensation & Benefits | Total Rewards: Understanding that compensation includes salary, bonuses, and benefits (health insurance, vacation time). Scenario: Designing a competitive, cost-effective benefits package to retain mid-level staff. |
+| L6 | Employee Relations & Morale | Engagement: Measuring and actively improving employee job satisfaction and morale to reduce turnover. Scenario: Conducting a staff survey and implementing changes based on feedback. |
+Tier 3: Conflict & Legal Risk (Levels 7-8)
+Goal: Mastering conflict resolution, handling disciplinary issues, and minimizing legal risks associated with separation.
+| Level | Key Learning Objective | Concept Taught (Real-World Skill) |
+|---|---|---|
+| L7 | Conflict Resolution | Mediation & Discipline: Using formal steps for disciplinary action (warnings, suspensions) and mediating disputes between co-workers or departments. Scenario: Mediating a heated dispute between the production manager and the quality control manager. |
+| L8 | Termination & Severance | Separation Law: Handling involuntary termination correctly to minimize the risk of wrongful termination lawsuits. Scenario: Drafting a legal severance agreement and handling an exit interview with a high-risk employee. |
+Tier 4: Strategy & Mastery (Levels 9-10)
+Goal: Strategic talent planning, organizational design, and adapting to global labor laws.
+| Level | Key Learning Objective | Concept Taught (Real-World Skill) |
+|---|---|---|
+| L9 | Succession Planning & Development | Talent Pipeline: Identifying high-potential employees and creating structured career paths and training to prepare them for leadership roles. Scenario: Designing a management training program to fill future executive roles. |
+| L10 | Organizational Structure & Labor Relations | Union Negotiation & Design: Structuring the company for maximum efficiency and managing high-stakes relations with organized labor (unions) or large groups of employees. Scenario: Negotiating a complex labor agreement to avert a major worker strike. |
+Implementation Across the 3 Worlds
+| Level | Skill Taught | Modern World (Restaurant) | Fantasy World (Magic Shop) | Sci-Fi World (Construction) |
+|---|---|---|---|---|
+| L2 | Legal & Ethical Hiring | Avoiding questions about family status or religion in interviews. | Ensuring fair hiring regardless of race (human, elf, dwarf) or magical alignment (light vs. dark). | Ensuring fair hiring regardless of species (Terran, Martian, or Synthetic) or citizen status. |
+| L6 | Employee Morale | Hosting staff team-building events and managing burnout during rush hours. | Hosting a "Guild Feast" and managing morale after a challenging quest results in a team injury. | Managing the psychological effects of long-duration deep space missions and zero-gravity isolation. |
+| L10 | Labor Relations | Negotiating wage increases and working conditions with a Kitchen Workers Union. | Negotiating collective bargaining terms with the Local Craftsmen's Guild to avert a work stoppage. | Negotiating the terms of service and pay rates with the Autonomous Drone Workers Collective or human crew. |
