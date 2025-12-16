@@ -129,3 +129,6 @@ The game runs as a web application on port 5000.
 - 2025-12: Added "SELECTED" badge indicators on new game selection cards
 - 2025-12: Fixed core gameplay - added 15 new scenarios for Modern/Restaurant covering all 6 disciplines
 - 2025-12: Each discipline now has real business education content with choices, feedback, and consequences
+- 2025-12: Implemented illustrated backdrop graphics (Kingshot-style) for all pages
+- 2025-12: Added world-specific background images: Modern office, Industrial factory, Fantasy tavern, Sci-Fi starship
+- 2025-12: Created epic RPG title screen backdrop with fantasy kingdom cityscape
