@@ -109,6 +109,10 @@ The game runs as a web application on port 5000.
 - 2025-12: Implemented Rival NPC system with 5 competing businesses
 - 2025-12: Added Weekly Challenges with reward tracking
 - 2025-12: Built Avatar Customization system (hair, outfit, accessories, colors)
+- 2025-12: Complete mobile-first UI redesign for all key pages
+- 2025-12: Built visual SVG-based Campaign Map with snake-path node layout
+- 2025-12: Added mobile bottom navigation bar with quick access buttons
+- 2025-12: Implemented touch-friendly controls throughout the game
 - 2025-12: Expanded Fantasy World with 3 tavern-themed scenarios
 - 2025-12: Added Industrial Age world with Steel Mill, Textile Factory, and Railroad industries
 - 2025-12: Created 10 Industrial scenarios covering Operations, HR, Finance, Strategy, Marketing, Legal
