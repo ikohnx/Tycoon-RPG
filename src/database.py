@@ -248,6 +248,141 @@ def init_database():
         );
     """)
     
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS random_events (
+            event_id SERIAL PRIMARY KEY,
+            event_code VARCHAR(50) UNIQUE NOT NULL,
+            event_name VARCHAR(100) NOT NULL,
+            event_description TEXT NOT NULL,
+            event_type VARCHAR(50) NOT NULL,
+            world_type VARCHAR(50) NOT NULL,
+            industry VARCHAR(100),
+            choice_a_text TEXT NOT NULL,
+            choice_a_cash_change DECIMAL(10, 2) DEFAULT 0,
+            choice_a_reputation_change INTEGER DEFAULT 0,
+            choice_a_feedback TEXT NOT NULL,
+            choice_b_text TEXT NOT NULL,
+            choice_b_cash_change DECIMAL(10, 2) DEFAULT 0,
+            choice_b_reputation_change INTEGER DEFAULT 0,
+            choice_b_feedback TEXT NOT NULL,
+            rarity VARCHAR(20) DEFAULT 'common',
+            min_level INTEGER DEFAULT 1
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_event_history (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            event_id INTEGER REFERENCES random_events(event_id) ON DELETE CASCADE,
+            choice_made CHAR(1) NOT NULL,
+            occurred_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS weekly_challenges (
+            challenge_id SERIAL PRIMARY KEY,
+            challenge_code VARCHAR(50) UNIQUE NOT NULL,
+            challenge_name VARCHAR(100) NOT NULL,
+            challenge_description TEXT NOT NULL,
+            challenge_type VARCHAR(50) NOT NULL,
+            target_value INTEGER NOT NULL,
+            exp_reward INTEGER DEFAULT 0,
+            cash_reward DECIMAL(10, 2) DEFAULT 0,
+            start_date DATE,
+            end_date DATE,
+            is_active BOOLEAN DEFAULT TRUE
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_challenge_progress (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            challenge_id INTEGER REFERENCES weekly_challenges(challenge_id) ON DELETE CASCADE,
+            current_progress INTEGER DEFAULT 0,
+            completed BOOLEAN DEFAULT FALSE,
+            completed_at TIMESTAMP,
+            UNIQUE(player_id, challenge_id)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS avatar_options (
+            option_id SERIAL PRIMARY KEY,
+            option_type VARCHAR(50) NOT NULL,
+            option_code VARCHAR(50) UNIQUE NOT NULL,
+            option_name VARCHAR(100) NOT NULL,
+            option_image VARCHAR(255),
+            unlock_cost DECIMAL(10, 2) DEFAULT 0,
+            unlock_level INTEGER DEFAULT 1
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_avatar (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            hair_style VARCHAR(50) DEFAULT 'default',
+            outfit VARCHAR(50) DEFAULT 'default',
+            accessory VARCHAR(50) DEFAULT 'none',
+            color_scheme VARCHAR(50) DEFAULT 'blue',
+            UNIQUE(player_id)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS rivals (
+            rival_id SERIAL PRIMARY KEY,
+            rival_code VARCHAR(50) UNIQUE NOT NULL,
+            rival_name VARCHAR(100) NOT NULL,
+            rival_business VARCHAR(100) NOT NULL,
+            rival_description TEXT,
+            world_type VARCHAR(50) NOT NULL,
+            industry VARCHAR(100) NOT NULL,
+            difficulty_level INTEGER DEFAULT 1,
+            avatar_image VARCHAR(255)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_rival_status (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            rival_id INTEGER REFERENCES rivals(rival_id) ON DELETE CASCADE,
+            competition_score INTEGER DEFAULT 0,
+            times_beaten INTEGER DEFAULT 0,
+            times_lost INTEGER DEFAULT 0,
+            is_active BOOLEAN DEFAULT TRUE,
+            UNIQUE(player_id, rival_id)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS business_milestones (
+            milestone_id SERIAL PRIMARY KEY,
+            milestone_code VARCHAR(50) UNIQUE NOT NULL,
+            milestone_name VARCHAR(100) NOT NULL,
+            milestone_description TEXT NOT NULL,
+            milestone_type VARCHAR(50) NOT NULL,
+            target_value DECIMAL(15, 2) NOT NULL,
+            exp_reward INTEGER DEFAULT 0,
+            cash_reward DECIMAL(10, 2) DEFAULT 0,
+            badge_icon VARCHAR(50) DEFAULT 'award'
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_milestones (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            milestone_id INTEGER REFERENCES business_milestones(milestone_id) ON DELETE CASCADE,
+            achieved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(player_id, milestone_id)
+        );
+    """)
+    
     conn.commit()
     cur.close()
     conn.close()
@@ -673,6 +808,282 @@ def seed_quests():
     conn.close()
 
 
+def seed_random_events():
+    """Seed the database with random business events."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM random_events")
+    result = cur.fetchone()
+    if result['count'] > 0:
+        print("Random events already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    events = [
+        {"code": "health_inspection", "name": "Surprise Health Inspection", "description": "The health inspector just walked in unannounced! Your kitchen is 80% up to code, but there are a few issues.", "type": "challenge", "world": "Modern", "industry": "Restaurant",
+         "choice_a_text": "Be honest about the issues and promise immediate fixes", "choice_a_cash": -500, "choice_a_rep": 5, "choice_a_feedback": "The inspector appreciates your honesty and gives you a week to fix issues.",
+         "choice_b_text": "Try to distract them and hide the problems", "choice_b_cash": 0, "choice_b_rep": -10, "choice_b_feedback": "They noticed your evasiveness. You got a warning and a return visit scheduled.", "rarity": "common", "min_level": 1},
+        {"code": "viral_review", "name": "Your Restaurant Goes Viral!", "description": "A famous food blogger just posted a glowing review of your restaurant. Customers are flooding in!", "type": "opportunity", "world": "Modern", "industry": "Restaurant",
+         "choice_a_text": "Raise prices slightly to capitalize", "choice_a_cash": 2000, "choice_a_rep": -3, "choice_a_feedback": "Smart business move, but some regulars complained about the increase.",
+         "choice_b_text": "Keep prices stable and handle the rush", "choice_b_cash": 1000, "choice_b_rep": 10, "choice_b_feedback": "Customers loved your consistency! Many became regulars.", "rarity": "rare", "min_level": 2},
+        {"code": "equipment_failure", "name": "Kitchen Equipment Breakdown", "description": "Your main oven just broke down during lunch rush! You need to act fast.", "type": "crisis", "world": "Modern", "industry": "Restaurant",
+         "choice_a_text": "Pay for emergency same-day repair ($800)", "choice_a_cash": -800, "choice_a_rep": 0, "choice_a_feedback": "Expensive, but you kept the kitchen running smoothly.",
+         "choice_b_text": "Close the kitchen temporarily and offer discounts", "choice_b_cash": -200, "choice_b_rep": -5, "choice_b_feedback": "You saved money but lost some customer trust.", "rarity": "common", "min_level": 1},
+        {"code": "celebrity_visit", "name": "Celebrity Sighting!", "description": "A local celebrity just walked into your restaurant with their entourage. All eyes are on you!", "type": "opportunity", "world": "Modern", "industry": "Restaurant",
+         "choice_a_text": "Offer a complimentary meal and VIP treatment", "choice_a_cash": -300, "choice_a_rep": 15, "choice_a_feedback": "They posted about it! Free publicity worth thousands.",
+         "choice_b_text": "Treat them like any other customer", "choice_b_cash": 200, "choice_b_rep": 2, "choice_b_feedback": "Professional approach. They paid and left a decent tip.", "rarity": "rare", "min_level": 3},
+        {"code": "supplier_deal", "name": "Bulk Discount Opportunity", "description": "Your supplier offers a 40% discount if you buy 3 months of inventory upfront.", "type": "decision", "world": "Modern", "industry": "Restaurant",
+         "choice_a_text": "Take the deal and stock up ($5,000)", "choice_a_cash": -5000, "choice_a_rep": 0, "choice_a_feedback": "You'll save money long-term if you can use it all before it expires.",
+         "choice_b_text": "Decline and maintain flexible ordering", "choice_b_cash": 0, "choice_b_rep": 0, "choice_b_feedback": "Staying agile. You can adapt to menu changes more easily.", "rarity": "common", "min_level": 2},
+        {"code": "staff_dispute", "name": "Employee Conflict", "description": "Two of your best employees are having a heated argument in the kitchen. Other staff are taking sides.", "type": "crisis", "world": "Modern", "industry": "Restaurant",
+         "choice_a_text": "Pull them aside immediately for mediation", "choice_a_cash": 0, "choice_a_rep": 3, "choice_a_feedback": "Good leadership! You resolved it professionally.",
+         "choice_b_text": "Let them work it out themselves", "choice_b_cash": 0, "choice_b_rep": -5, "choice_b_feedback": "The tension escalated. One of them called in sick the next day.", "rarity": "common", "min_level": 1},
+        {"code": "weather_event", "name": "Severe Weather Warning", "description": "A major storm is predicted for tonight. You have reservations booked and staff scheduled.", "type": "decision", "world": "Modern", "industry": "Restaurant",
+         "choice_a_text": "Close early and send staff home safely", "choice_a_cash": -500, "choice_a_rep": 5, "choice_a_feedback": "Your staff appreciated the concern. Loyalty increased.",
+         "choice_b_text": "Stay open - customers might still come", "choice_b_cash": 300, "choice_b_rep": -2, "choice_b_feedback": "A few customers braved the storm. Staff were grumpy though.", "rarity": "common", "min_level": 1},
+        {"code": "competitor_closes", "name": "Competitor Shutting Down", "description": "The restaurant across the street is closing! Their chef and equipment are available.", "type": "opportunity", "world": "Modern", "industry": "Restaurant",
+         "choice_a_text": "Hire their head chef ($2,000 signing bonus)", "choice_a_cash": -2000, "choice_a_rep": 5, "choice_a_feedback": "Great acquisition! Their regulars might follow.",
+         "choice_b_text": "Buy their kitchen equipment at auction ($3,000)", "choice_b_cash": -3000, "choice_b_rep": 0, "choice_b_feedback": "Quality equipment at a discount. Your kitchen just got an upgrade.", "rarity": "rare", "min_level": 3},
+    ]
+    
+    for event in events:
+        cur.execute("""
+            INSERT INTO random_events (event_code, event_name, event_description, event_type, world_type, industry,
+                choice_a_text, choice_a_cash_change, choice_a_reputation_change, choice_a_feedback,
+                choice_b_text, choice_b_cash_change, choice_b_reputation_change, choice_b_feedback,
+                rarity, min_level)
+            VALUES (%(code)s, %(name)s, %(description)s, %(type)s, %(world)s, %(industry)s,
+                %(choice_a_text)s, %(choice_a_cash)s, %(choice_a_rep)s, %(choice_a_feedback)s,
+                %(choice_b_text)s, %(choice_b_cash)s, %(choice_b_rep)s, %(choice_b_feedback)s,
+                %(rarity)s, %(min_level)s)
+        """, event)
+    
+    conn.commit()
+    print(f"Seeded {len(events)} random events successfully!")
+    cur.close()
+    conn.close()
+
+
+def seed_rivals():
+    """Seed the database with rival businesses."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM rivals")
+    result = cur.fetchone()
+    if result['count'] > 0:
+        print("Rivals already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    rivals = [
+        {"code": "bistro_bella", "name": "Marco Bellini", "business": "Bistro Bella", "description": "A charming Italian bistro known for its authentic pasta. Marco trained in Rome and has a loyal following.", "world": "Modern", "industry": "Restaurant", "difficulty": 2},
+        {"code": "fusion_kings", "name": "Chef Kim", "business": "Fusion Kings", "description": "An innovative fusion restaurant that's always on the cutting edge. Chef Kim has been featured in food magazines.", "world": "Modern", "industry": "Restaurant", "difficulty": 3},
+        {"code": "quick_bites", "name": "Tommy Thompson", "business": "Quick Bites Express", "description": "A fast-casual chain that competes on speed and price. Tommy's backed by investors.", "world": "Modern", "industry": "Restaurant", "difficulty": 1},
+        {"code": "farm_table", "name": "Sarah Greenfield", "business": "Farm to Table Fresh", "description": "An organic restaurant focused on locally-sourced ingredients. Sarah has strong community ties.", "world": "Modern", "industry": "Restaurant", "difficulty": 2},
+        {"code": "gourmet_palace", "name": "Chef Alexandre", "business": "Le Gourmet Palace", "description": "A fine dining establishment with a Michelin-star chef. The biggest competitor in the upscale market.", "world": "Modern", "industry": "Restaurant", "difficulty": 5},
+    ]
+    
+    for rival in rivals:
+        cur.execute("""
+            INSERT INTO rivals (rival_code, rival_name, rival_business, rival_description, world_type, industry, difficulty_level)
+            VALUES (%(code)s, %(name)s, %(business)s, %(description)s, %(world)s, %(industry)s, %(difficulty)s)
+        """, rival)
+    
+    conn.commit()
+    print(f"Seeded {len(rivals)} rivals successfully!")
+    cur.close()
+    conn.close()
+
+
+def seed_milestones():
+    """Seed the database with business milestones."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM business_milestones")
+    result = cur.fetchone()
+    if result['count'] > 0:
+        print("Milestones already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    milestones = [
+        {"code": "first_profit", "name": "In the Black", "description": "Earn your first $1,000 in profit", "type": "cash", "target": 1000, "exp": 100, "cash": 100, "icon": "piggy-bank"},
+        {"code": "five_k_club", "name": "5K Club", "description": "Accumulate $5,000 in cash", "type": "cash", "target": 5000, "exp": 250, "cash": 250, "icon": "cash-stack"},
+        {"code": "ten_k_milestone", "name": "Five Figures", "description": "Reach $10,000 in total cash", "type": "cash", "target": 10000, "exp": 500, "cash": 500, "icon": "wallet2"},
+        {"code": "fifty_k_empire", "name": "Growing Empire", "description": "Amass $50,000 in cash", "type": "cash", "target": 50000, "exp": 1000, "cash": 1000, "icon": "building"},
+        {"code": "hundred_k_mogul", "name": "Business Mogul", "description": "Achieve $100,000 in total wealth", "type": "cash", "target": 100000, "exp": 2500, "cash": 2500, "icon": "gem"},
+        {"code": "rep_50", "name": "Getting Known", "description": "Reach 50 reputation", "type": "reputation", "target": 50, "exp": 100, "cash": 0, "icon": "star"},
+        {"code": "rep_75", "name": "Local Legend", "description": "Achieve 75 reputation", "type": "reputation", "target": 75, "exp": 250, "cash": 250, "icon": "star-fill"},
+        {"code": "rep_100", "name": "Industry Icon", "description": "Max out your reputation at 100", "type": "reputation", "target": 100, "exp": 1000, "cash": 1000, "icon": "trophy"},
+        {"code": "scenario_10", "name": "Decision Maker", "description": "Complete 10 business scenarios", "type": "scenarios", "target": 10, "exp": 200, "cash": 100, "icon": "check-circle"},
+        {"code": "scenario_25", "name": "Seasoned Veteran", "description": "Complete 25 business scenarios", "type": "scenarios", "target": 25, "exp": 500, "cash": 250, "icon": "check-all"},
+        {"code": "level_5", "name": "Skilled Professional", "description": "Reach Level 5 in any discipline", "type": "level", "target": 5, "exp": 500, "cash": 250, "icon": "graph-up"},
+        {"code": "level_10", "name": "Master of the Trade", "description": "Reach Level 10 in any discipline", "type": "level", "target": 10, "exp": 2000, "cash": 1000, "icon": "mortarboard"},
+    ]
+    
+    for milestone in milestones:
+        cur.execute("""
+            INSERT INTO business_milestones (milestone_code, milestone_name, milestone_description, milestone_type, target_value, exp_reward, cash_reward, badge_icon)
+            VALUES (%(code)s, %(name)s, %(description)s, %(type)s, %(target)s, %(exp)s, %(cash)s, %(icon)s)
+        """, milestone)
+    
+    conn.commit()
+    print(f"Seeded {len(milestones)} milestones successfully!")
+    cur.close()
+    conn.close()
+
+
+def seed_weekly_challenges():
+    """Seed the database with weekly challenges."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM weekly_challenges")
+    result = cur.fetchone()
+    if result['count'] > 0:
+        print("Weekly challenges already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    from datetime import date, timedelta
+    today = date.today()
+    week_end = today + timedelta(days=7)
+    
+    challenges = [
+        {"code": "weekly_scenarios", "name": "Weekly Warrior", "description": "Complete 5 scenarios this week", "type": "scenarios_completed", "target": 5, "exp": 300, "cash": 500},
+        {"code": "weekly_exp", "name": "Knowledge Seeker", "description": "Earn 500 EXP this week", "type": "exp_earned", "target": 500, "exp": 200, "cash": 300},
+        {"code": "weekly_profit", "name": "Profit Hunter", "description": "Earn $2,000 in profit this week", "type": "cash_earned", "target": 2000, "exp": 250, "cash": 400},
+    ]
+    
+    for challenge in challenges:
+        challenge['start'] = today
+        challenge['end'] = week_end
+        cur.execute("""
+            INSERT INTO weekly_challenges (challenge_code, challenge_name, challenge_description, challenge_type, target_value, exp_reward, cash_reward, start_date, end_date)
+            VALUES (%(code)s, %(name)s, %(description)s, %(type)s, %(target)s, %(exp)s, %(cash)s, %(start)s, %(end)s)
+        """, challenge)
+    
+    conn.commit()
+    print(f"Seeded {len(challenges)} weekly challenges successfully!")
+    cur.close()
+    conn.close()
+
+
+def seed_avatar_options():
+    """Seed the database with avatar customization options."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM avatar_options")
+    result = cur.fetchone()
+    if result['count'] > 0:
+        print("Avatar options already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    options = [
+        {"type": "hair", "code": "hair_default", "name": "Classic", "cost": 0, "level": 1},
+        {"type": "hair", "code": "hair_slick", "name": "Slick Back", "cost": 100, "level": 1},
+        {"type": "hair", "code": "hair_curly", "name": "Curly", "cost": 100, "level": 1},
+        {"type": "hair", "code": "hair_mohawk", "name": "Mohawk", "cost": 250, "level": 3},
+        {"type": "hair", "code": "hair_bald", "name": "Clean Shaven", "cost": 50, "level": 1},
+        {"type": "outfit", "code": "outfit_default", "name": "Business Casual", "cost": 0, "level": 1},
+        {"type": "outfit", "code": "outfit_suit", "name": "Power Suit", "cost": 500, "level": 2},
+        {"type": "outfit", "code": "outfit_chef", "name": "Chef's Whites", "cost": 300, "level": 2},
+        {"type": "outfit", "code": "outfit_casual", "name": "Startup Casual", "cost": 200, "level": 1},
+        {"type": "outfit", "code": "outfit_luxury", "name": "Designer Luxury", "cost": 2000, "level": 5},
+        {"type": "accessory", "code": "acc_none", "name": "None", "cost": 0, "level": 1},
+        {"type": "accessory", "code": "acc_glasses", "name": "Reading Glasses", "cost": 100, "level": 1},
+        {"type": "accessory", "code": "acc_sunglasses", "name": "Sunglasses", "cost": 200, "level": 2},
+        {"type": "accessory", "code": "acc_watch", "name": "Luxury Watch", "cost": 1000, "level": 4},
+        {"type": "accessory", "code": "acc_hat", "name": "Chef's Hat", "cost": 150, "level": 2},
+        {"type": "color", "code": "color_blue", "name": "Professional Blue", "cost": 0, "level": 1},
+        {"type": "color", "code": "color_red", "name": "Power Red", "cost": 100, "level": 1},
+        {"type": "color", "code": "color_green", "name": "Money Green", "cost": 100, "level": 1},
+        {"type": "color", "code": "color_purple", "name": "Royal Purple", "cost": 250, "level": 3},
+        {"type": "color", "code": "color_gold", "name": "Golden Success", "cost": 500, "level": 5},
+    ]
+    
+    for opt in options:
+        cur.execute("""
+            INSERT INTO avatar_options (option_type, option_code, option_name, unlock_cost, unlock_level)
+            VALUES (%(type)s, %(code)s, %(name)s, %(cost)s, %(level)s)
+        """, opt)
+    
+    conn.commit()
+    print(f"Seeded {len(options)} avatar options successfully!")
+    cur.close()
+    conn.close()
+
+
+def seed_fantasy_scenarios():
+    """Seed Fantasy World scenarios for tavern industry."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM scenario_master WHERE world_type = 'Fantasy'")
+    result = cur.fetchone()
+    if result['count'] > 0:
+        print("Fantasy scenarios already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    scenarios = [
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Marketing", "required_level": 1,
+         "scenario_title": "The Tavern Sign", "scenario_narrative": "Your tavern needs a sign to attract adventurers. A dwarf craftsman offers an iron sign, while an elf artist proposes a magical glowing sign.",
+         "choice_a_text": "Commission the iron sign (50 gold)", "choice_a_exp_reward": 75, "choice_a_cash_change": -50, "choice_a_reputation_change": 2,
+         "choice_a_feedback": "Sturdy and reliable! Dwarven craftsmanship never disappoints.",
+         "choice_b_text": "Order the magical glowing sign (150 gold)", "choice_b_exp_reward": 110, "choice_b_cash_change": -150, "choice_b_reputation_change": 8,
+         "choice_b_feedback": "Brilliant! Adventurers from leagues away can spot your tavern now.",
+         "choice_c_text": "Paint your own sign (10 gold for supplies)", "choice_c_exp_reward": 60, "choice_c_cash_change": -10, "choice_c_reputation_change": 0,
+         "choice_c_feedback": "Budget-friendly, but it shows. Maybe invest in better marketing later.", "subskill_focus": "Brand Identity"},
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Marketing", "required_level": 1,
+         "scenario_title": "Bard for Hire", "scenario_narrative": "A traveling bard offers to perform at your tavern. Entertainment could draw crowds, but bards require payment and lodging.",
+         "choice_a_text": "Hire the bard for a week (100 gold + room)", "choice_a_exp_reward": 100, "choice_a_cash_change": -100, "choice_a_reputation_change": 10,
+         "choice_a_feedback": "The bard's tales of heroes brought adventurers seeking glory!",
+         "choice_b_text": "Offer performance for tips only", "choice_b_exp_reward": 80, "choice_b_cash_change": 0, "choice_b_reputation_change": 5,
+         "choice_b_feedback": "The bard agreed but put in minimal effort. Still better than silence.",
+         "choice_c_text": "Decline - focus on food and drink", "choice_c_exp_reward": 50, "choice_c_cash_change": 0, "choice_c_reputation_change": 0,
+         "choice_c_feedback": "Your tavern remains quiet. Some patrons prefer the peace.", "subskill_focus": "Campaign Planning"},
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Marketing", "required_level": 2,
+         "scenario_title": "The Adventurer's Guild", "scenario_narrative": "The local Adventurer's Guild is looking for an official tavern partner. Competition is fierce with two other taverns bidding.",
+         "choice_a_text": "Offer a 20% discount to guild members", "choice_a_exp_reward": 150, "choice_a_cash_change": 0, "choice_a_reputation_change": 15,
+         "choice_a_feedback": "Deal secured! Guild members flood in, and word spreads quickly.",
+         "choice_b_text": "Promise to host guild meetings with free mead", "choice_b_exp_reward": 175, "choice_b_cash_change": -200, "choice_b_reputation_change": 12,
+         "choice_b_feedback": "The guild loves the hospitality! This could be a long-term partnership.",
+         "choice_c_text": "Decline - don't want to be tied to one faction", "choice_c_exp_reward": 75, "choice_c_cash_change": 0, "choice_c_reputation_change": -5,
+         "choice_c_feedback": "The guild chose a competitor. Some adventurers avoid your tavern now.", "subskill_focus": "Partnership Marketing"},
+    ]
+    
+    for scenario in scenarios:
+        cur.execute("""
+            INSERT INTO scenario_master (world_type, industry, discipline, required_level, scenario_title, scenario_narrative,
+                choice_a_text, choice_a_exp_reward, choice_a_cash_change, choice_a_reputation_change, choice_a_feedback,
+                choice_b_text, choice_b_exp_reward, choice_b_cash_change, choice_b_reputation_change, choice_b_feedback,
+                choice_c_text, choice_c_exp_reward, choice_c_cash_change, choice_c_reputation_change, choice_c_feedback,
+                subskill_focus)
+            VALUES (%(world_type)s, %(industry)s, %(discipline)s, %(required_level)s, %(scenario_title)s, %(scenario_narrative)s,
+                %(choice_a_text)s, %(choice_a_exp_reward)s, %(choice_a_cash_change)s, %(choice_a_reputation_change)s, %(choice_a_feedback)s,
+                %(choice_b_text)s, %(choice_b_exp_reward)s, %(choice_b_cash_change)s, %(choice_b_reputation_change)s, %(choice_b_feedback)s,
+                %(choice_c_text)s, %(choice_c_exp_reward)s, %(choice_c_cash_change)s, %(choice_c_reputation_change)s, %(choice_c_feedback)s,
+                %(subskill_focus)s)
+        """, scenario)
+    
+    conn.commit()
+    print(f"Seeded {len(scenarios)} Fantasy scenarios successfully!")
+    cur.close()
+    conn.close()
+
+
 if __name__ == "__main__":
     init_database()
     seed_scenarios()
@@ -680,3 +1091,9 @@ if __name__ == "__main__":
     seed_items()
     seed_npcs()
     seed_quests()
+    seed_random_events()
+    seed_rivals()
+    seed_milestones()
+    seed_weekly_challenges()
+    seed_avatar_options()
+    seed_fantasy_scenarios()

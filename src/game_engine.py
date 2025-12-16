@@ -210,6 +210,11 @@ class GameEngine:
             VALUES (%s, 5, 5, 5, 5, 3)
         """, (player_id,))
         
+        cur.execute("""
+            INSERT INTO player_avatar (player_id, hair_style, outfit, accessory, color_scheme)
+            VALUES (%s, 'default', 'default', 'none', 'blue')
+        """, (player_id,))
+        
         conn.commit()
         cur.close()
         conn.close()
@@ -633,6 +638,241 @@ class GameEngine:
         cur.close()
         conn.close()
         return achievements
+
+    def get_random_event(self) -> dict:
+        """Get a random event for the player based on their level and world."""
+        if not self.current_player:
+            return None
+        
+        import random
+        conn = get_connection()
+        cur = conn.cursor()
+        
+        max_level = max([d['level'] for d in self.current_player.discipline_progress.values()], default=1)
+        
+        cur.execute("""
+            SELECT * FROM random_events 
+            WHERE world_type = %s 
+            AND (industry = %s OR industry IS NULL)
+            AND min_level <= %s
+            ORDER BY RANDOM() LIMIT 1
+        """, (self.current_player.world, self.current_player.industry, max_level))
+        
+        event = cur.fetchone()
+        cur.close()
+        conn.close()
+        
+        return dict(event) if event else None
+
+    def process_random_event(self, event_id: int, choice: str) -> dict:
+        """Process a random event choice."""
+        if not self.current_player:
+            return {"error": "No player loaded"}
+        
+        conn = get_connection()
+        cur = conn.cursor()
+        
+        cur.execute("SELECT * FROM random_events WHERE event_id = %s", (event_id,))
+        event = cur.fetchone()
+        
+        if not event:
+            cur.close()
+            conn.close()
+            return {"error": "Event not found"}
+        
+        if choice.upper() == 'A':
+            cash_change = float(event['choice_a_cash_change'])
+            rep_change = event['choice_a_reputation_change']
+            feedback = event['choice_a_feedback']
+        else:
+            cash_change = float(event['choice_b_cash_change'])
+            rep_change = event['choice_b_reputation_change']
+            feedback = event['choice_b_feedback']
+        
+        self.current_player.cash += cash_change
+        self.current_player.reputation = max(0, min(100, self.current_player.reputation + rep_change))
+        self.current_player.save_to_db()
+        
+        cur.execute("""
+            INSERT INTO player_event_history (player_id, event_id, choice_made)
+            VALUES (%s, %s, %s)
+        """, (self.current_player.player_id, event_id, choice.upper()))
+        
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        return {
+            "event_name": event['event_name'],
+            "feedback": feedback,
+            "cash_change": cash_change,
+            "reputation_change": rep_change
+        }
+
+    def get_milestones(self) -> dict:
+        """Get all milestones with earned status."""
+        if not self.current_player:
+            return {"earned": [], "available": []}
+        
+        conn = get_connection()
+        cur = conn.cursor()
+        
+        cur.execute("""
+            SELECT m.*, 
+                   CASE WHEN pm.player_id IS NOT NULL THEN TRUE ELSE FALSE END as earned
+            FROM business_milestones m
+            LEFT JOIN player_milestones pm ON m.milestone_id = pm.milestone_id AND pm.player_id = %s
+            ORDER BY m.target_value
+        """, (self.current_player.player_id,))
+        
+        all_milestones = [dict(row) for row in cur.fetchall()]
+        cur.close()
+        conn.close()
+        
+        earned = [m for m in all_milestones if m['earned']]
+        available = [m for m in all_milestones if not m['earned']]
+        
+        return {"earned": earned, "available": available}
+
+    def get_financial_history(self) -> list:
+        """Get financial history for dashboard charts."""
+        if not self.current_player:
+            return []
+        
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT * FROM financial_metrics 
+            WHERE player_id = %s 
+            ORDER BY month_number DESC LIMIT 12
+        """, (self.current_player.player_id,))
+        history = [dict(row) for row in cur.fetchall()]
+        cur.close()
+        conn.close()
+        return history
+
+    def get_rivals(self) -> list:
+        """Get all rivals with competition status."""
+        if not self.current_player:
+            return []
+        
+        conn = get_connection()
+        cur = conn.cursor()
+        
+        cur.execute("""
+            SELECT r.*, 
+                   COALESCE(prs.competition_score, 0) as score,
+                   COALESCE(prs.times_beaten, 0) as wins,
+                   COALESCE(prs.times_lost, 0) as losses
+            FROM rivals r
+            LEFT JOIN player_rival_status prs ON r.rival_id = prs.rival_id AND prs.player_id = %s
+            WHERE r.world_type = %s AND r.industry = %s
+            ORDER BY r.difficulty_level
+        """, (self.current_player.player_id, self.current_player.world, self.current_player.industry))
+        
+        rivals = [dict(row) for row in cur.fetchall()]
+        cur.close()
+        conn.close()
+        return rivals
+
+    def get_weekly_challenges(self) -> dict:
+        """Get weekly challenges with progress."""
+        if not self.current_player:
+            return {"active": [], "completed": []}
+        
+        conn = get_connection()
+        cur = conn.cursor()
+        
+        cur.execute("""
+            SELECT wc.*, 
+                   COALESCE(pcp.current_progress, 0) as progress,
+                   COALESCE(pcp.completed, FALSE) as is_completed
+            FROM weekly_challenges wc
+            LEFT JOIN player_challenge_progress pcp ON wc.challenge_id = pcp.challenge_id AND pcp.player_id = %s
+            WHERE wc.is_active = TRUE
+            ORDER BY wc.challenge_id
+        """, (self.current_player.player_id,))
+        
+        all_challenges = [dict(row) for row in cur.fetchall()]
+        cur.close()
+        conn.close()
+        
+        active = [c for c in all_challenges if not c['is_completed']]
+        completed = [c for c in all_challenges if c['is_completed']]
+        
+        return {"active": active, "completed": completed}
+
+    def get_avatar_options(self) -> dict:
+        """Get all avatar customization options."""
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM avatar_options ORDER BY option_type, unlock_level, unlock_cost")
+        options = [dict(row) for row in cur.fetchall()]
+        cur.close()
+        conn.close()
+        
+        categorized = {"hair": [], "outfit": [], "accessory": [], "color": []}
+        for opt in options:
+            opt_type = opt['option_type']
+            if opt_type in categorized:
+                categorized[opt_type].append(opt)
+        
+        return categorized
+
+    def get_player_avatar(self) -> dict:
+        """Get current player avatar settings."""
+        if not self.current_player:
+            return {"hair_style": "default", "outfit": "default", "accessory": "none", "color_scheme": "blue"}
+        
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM player_avatar WHERE player_id = %s", (self.current_player.player_id,))
+        avatar = cur.fetchone()
+        cur.close()
+        conn.close()
+        
+        if avatar:
+            return dict(avatar)
+        return {"hair_style": "default", "outfit": "default", "accessory": "none", "color_scheme": "blue"}
+
+    def update_avatar(self, hair: str, outfit: str, accessory: str, color: str) -> dict:
+        """Update player avatar settings."""
+        if not self.current_player:
+            return {"error": "No player loaded"}
+        
+        conn = get_connection()
+        cur = conn.cursor()
+        
+        current_avatar = self.get_player_avatar()
+        total_cost = 0.0
+        
+        option_codes = [hair, outfit, accessory, color]
+        for code in option_codes:
+            cur.execute("SELECT unlock_cost FROM avatar_options WHERE option_code = %s", (code,))
+            opt = cur.fetchone()
+            if opt:
+                total_cost += float(opt['unlock_cost'])
+        
+        if total_cost > self.current_player.cash:
+            cur.close()
+            conn.close()
+            return {"error": f"Not enough cash! Need ${total_cost:.2f}"}
+        
+        cur.execute("""
+            INSERT INTO player_avatar (player_id, hair_style, outfit, accessory, color_scheme)
+            VALUES (%s, %s, %s, %s, %s)
+            ON CONFLICT (player_id) DO UPDATE SET
+                hair_style = EXCLUDED.hair_style,
+                outfit = EXCLUDED.outfit,
+                accessory = EXCLUDED.accessory,
+                color_scheme = EXCLUDED.color_scheme
+        """, (self.current_player.player_id, hair, outfit, accessory, color))
+        
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        return {"success": True}
 
 
 def display_scenario(scenario: dict) -> None:

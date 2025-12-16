@@ -103,3 +103,9 @@ The game runs as a web application on port 5000.
 - 2025-12: Implemented CSRF protection via Flask-WTF for security
 - 2025-12: Added dual career path system (Entrepreneur vs Employee)
 - 2025-12: Implemented job title progression for employee path (10 job levels per industry)
+- 2025-12: Added Random Events system with 8 surprise business events
+- 2025-12: Created Business Dashboard with milestones and rival tracking
+- 2025-12: Implemented Rival NPC system with 5 competing businesses
+- 2025-12: Added Weekly Challenges with reward tracking
+- 2025-12: Built Avatar Customization system (hair, outfit, accessories, colors)
+- 2025-12: Expanded Fantasy World with 3 tavern-themed scenarios

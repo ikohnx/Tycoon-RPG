@@ -1,7 +1,10 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from flask_wtf.csrf import CSRFProtect
-from src.database import init_database, seed_scenarios, seed_achievements, seed_items, seed_npcs, seed_quests
+from src.database import (init_database, seed_scenarios, seed_achievements, seed_items, 
+                          seed_npcs, seed_quests, seed_random_events, seed_rivals, 
+                          seed_milestones, seed_weekly_challenges, seed_avatar_options,
+                          seed_fantasy_scenarios)
 from src.game_engine import GameEngine
 from src.leveling import get_level_title, get_progress_bar, get_exp_to_next_level
 
@@ -15,6 +18,12 @@ seed_achievements()
 seed_items()
 seed_npcs()
 seed_quests()
+seed_random_events()
+seed_rivals()
+seed_milestones()
+seed_weekly_challenges()
+seed_avatar_options()
+seed_fantasy_scenarios()
 
 engine = GameEngine()
 
@@ -274,6 +283,112 @@ def start_quest(quest_id):
 def logout():
     session.pop('player_id', None)
     return redirect(url_for('index'))
+
+@app.route('/dashboard')
+def dashboard():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    milestones = engine.get_milestones()
+    financial_history = engine.get_financial_history()
+    rivals = engine.get_rivals()
+    
+    return render_template('dashboard.html', stats=stats, milestones=milestones, 
+                          financial_history=financial_history, rivals=rivals)
+
+@app.route('/random_event')
+def random_event():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    event = engine.get_random_event()
+    stats = engine.get_player_stats()
+    
+    if not event:
+        flash("No events available right now. Keep playing!")
+        return redirect(url_for('hub'))
+    
+    return render_template('random_event.html', event=event, stats=stats)
+
+@app.route('/resolve_event/<int:event_id>/<choice>')
+def resolve_event(event_id, choice):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    result = engine.process_random_event(event_id, choice)
+    stats = engine.get_player_stats()
+    
+    if result.get('error'):
+        flash(result['error'])
+        return redirect(url_for('hub'))
+    
+    return render_template('event_result.html', result=result, stats=stats)
+
+@app.route('/rivals')
+def rivals():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    rival_list = engine.get_rivals()
+    
+    return render_template('rivals.html', stats=stats, rivals=rival_list)
+
+@app.route('/challenges')
+def challenges():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    challenge_data = engine.get_weekly_challenges()
+    
+    return render_template('challenges.html', stats=stats, challenges=challenge_data)
+
+@app.route('/avatar')
+def avatar():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    avatar_options = engine.get_avatar_options()
+    current_avatar = engine.get_player_avatar()
+    
+    return render_template('avatar.html', stats=stats, options=avatar_options, current=current_avatar)
+
+@app.route('/update_avatar', methods=['POST'])
+def update_avatar():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    
+    hair = request.form.get('hair', 'default')
+    outfit = request.form.get('outfit', 'default')
+    accessory = request.form.get('accessory', 'none')
+    color = request.form.get('color', 'blue')
+    
+    result = engine.update_avatar(hair, outfit, accessory, color)
+    
+    if result.get('error'):
+        flash(result['error'])
+    else:
+        flash("Avatar updated successfully!")
+    
+    return redirect(url_for('avatar'))
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

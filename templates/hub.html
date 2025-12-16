@@ -92,6 +92,9 @@
                         <span class="badge bg-warning">{{ stats.character_stats.stat_points }}</span>
                         {% endif %}
                     </a>
+                    <a href="{{ url_for('avatar') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-person-bounding-box"></i> Customize Avatar
+                    </a>
                     <a href="{{ url_for('inventory') }}" class="btn btn-outline-info">
                         <i class="bi bi-bag"></i> Inventory
                     </a>
@@ -103,6 +106,28 @@
                     </a>
                     <a href="{{ url_for('quests') }}" class="btn btn-outline-danger">
                         <i class="bi bi-journal-text"></i> Quests
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6><i class="bi bi-lightning-fill"></i> Special Activities</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('random_event') }}" class="btn btn-warning">
+                        <i class="bi bi-exclamation-triangle"></i> Random Event
+                    </a>
+                    <a href="{{ url_for('challenges') }}" class="btn btn-info">
+                        <i class="bi bi-calendar-week"></i> Weekly Challenges
+                    </a>
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-success">
+                        <i class="bi bi-graph-up"></i> Dashboard
+                    </a>
+                    <a href="{{ url_for('rivals') }}" class="btn btn-danger">
+                        <i class="bi bi-people-fill"></i> Rivals
                     </a>
                 </div>
             </div>

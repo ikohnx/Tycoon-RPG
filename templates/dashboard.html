@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}Business Dashboard - Business Tycoon RPG{% endblock %}
+
+{% block body_class %}world-{{ stats.world|lower }}{% endblock %}
+
+{% block content %}
+<div class="row fade-in">
+    <div class="col-12 mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2><i class="bi bi-graph-up"></i> Business Dashboard</h2>
+            <a href="{{ url_for('hub') }}" class="btn btn-outline-light">
+                <i class="bi bi-arrow-left"></i> Back to Hub
+            </a>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header bg-success">
+                <h5 class="mb-0"><i class="bi bi-cash-stack"></i> Financial Overview</h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    <h2 class="text-success">${{ "{:,.2f}".format(stats.cash) }}</h2>
+                    <small class="text-muted">Current Cash</small>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between">
+                    <span>Reputation</span>
+                    <span class="text-warning">{{ stats.reputation }}/100</span>
+                </div>
+                <div class="progress mt-2" style="height: 10px;">
+                    <div class="progress-bar bg-warning" style="width: {{ stats.reputation }}%"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header bg-info">
+                <h5 class="mb-0"><i class="bi bi-trophy"></i> Milestones Earned</h5>
+            </div>
+            <div class="card-body">
+                {% if milestones.earned %}
+                    {% for m in milestones.earned %}
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="bi bi-{{ m.badge_icon }} text-warning me-2"></i>
+                        <span>{{ m.milestone_name }}</span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted mb-0">No milestones earned yet. Keep playing!</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header bg-primary">
+                <h5 class="mb-0"><i class="bi bi-flag"></i> Available Milestones</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    {% for m in milestones.available[:6] %}
+                    <div class="col-md-6">
+                        <div class="card bg-dark">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="bi bi-{{ m.badge_icon }} text-muted me-2 display-6"></i>
+                                    <div>
+                                        <h6 class="mb-0">{{ m.milestone_name }}</h6>
+                                        <small class="text-muted">{{ m.milestone_description }}</small>
+                                    </div>
+                                </div>
+                                <div class="mt-2">
+                                    <span class="badge bg-success">+{{ m.exp_reward }} EXP</span>
+                                    {% if m.cash_reward > 0 %}
+                                    <span class="badge bg-warning text-dark">+${{ m.cash_reward }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header bg-danger">
+                <h5 class="mb-0"><i class="bi bi-people-fill"></i> Your Rivals</h5>
+            </div>
+            <div class="card-body">
+                {% if rivals %}
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover">
+                        <thead>
+                            <tr>
+                                <th>Rival</th>
+                                <th>Business</th>
+                                <th>Difficulty</th>
+                                <th>Your Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in rivals %}
+                            <tr>
+                                <td>{{ r.rival_name }}</td>
+                                <td>{{ r.rival_business }}</td>
+                                <td>
+                                    {% for i in range(r.difficulty_level) %}
+                                    <i class="bi bi-star-fill text-warning"></i>
+                                    {% endfor %}
+                                </td>
+                                <td>
+                                    <span class="text-success">{{ r.wins }}W</span> / 
+                                    <span class="text-danger">{{ r.losses }}L</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">No rivals in your industry yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
