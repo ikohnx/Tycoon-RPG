@@ -114,3 +114,8 @@ The game runs as a web application on port 5000.
 - 2025-12: Created 10 Industrial scenarios covering Operations, HR, Finance, Strategy, Marketing, Legal
 - 2025-12: Added 5 Industrial random events and 5 Industrial rivals (Carnegie, Vanderbilt, etc.)
 - 2025-12: Implemented Industrial job progression (Furnace Stoker to Mill Baron, Track Layer to Railroad Tycoon)
+- 2025-12: Major UI overhaul - transformed from business app to RPG game aesthetic
+- 2025-12: Added Cinzel and Staatliches game fonts with golden gradient titles
+- 2025-12: Created game-styled buttons (gold, crimson, emerald, purple variants with glow effects)
+- 2025-12: Implemented game HUD navbar, decorative panel borders, and custom scrollbar
+- 2025-12: Added avatar frame glow, level badge pulse animations, and stat card accents

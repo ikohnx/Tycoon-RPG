@@ -9,79 +9,84 @@
     <div class="col-md-4">
         <div class="card mb-4">
             <div class="card-header text-center">
-                <img src="/static/images/business_tycoon_character_avatar.png" alt="Your Avatar" class="avatar-img mb-2">
-                <h5 class="mb-0">{{ stats.name }}</h5>
+                <div class="avatar-frame mx-auto mb-3">
+                    <img src="/static/images/business_tycoon_character_avatar.png" alt="Your Avatar">
+                </div>
+                <h4 class="game-title mb-1">{{ stats.name }}</h4>
                 {% if stats.career_path == 'employee' and stats.job_title %}
-                <small class="text-info">
-                    <i class="bi bi-person-badge"></i> {{ stats.job_title }}
-                </small>
+                <div class="game-subtitle text-info">
+                    <i class="bi bi-award-fill"></i> {{ stats.job_title }}
+                </div>
                 {% elif stats.career_path == 'entrepreneur' %}
-                <small class="text-success">
-                    <i class="bi bi-building"></i> Business Owner
-                </small>
+                <div class="game-subtitle text-success">
+                    <i class="bi bi-crown-fill"></i> Business Owner
+                </div>
                 {% endif %}
             </div>
             <div class="card-body">
                 {% if stats.career_path == 'employee' %}
-                <div class="stat-card bg-info bg-opacity-10 border-info">
-                    <small class="text-muted">Career Level</small>
-                    <div class="d-flex justify-content-between align-items-center">
+                <div class="stat-card" style="border-color: rgba(13, 202, 240, 0.3);">
+                    <small class="text-muted text-uppercase" style="font-size: 0.7rem; letter-spacing: 1px;">Career Progress</small>
+                    <div class="d-flex justify-content-between align-items-center mt-1">
                         <div class="h5 mb-0 text-info">
-                            <i class="bi bi-ladder"></i> Level {{ stats.job_level }}
+                            <i class="bi bi-ladder"></i> Rank {{ stats.job_level }}
                         </div>
-                        <span class="badge bg-info">Employee Path</span>
+                        <span class="badge bg-info">Employee</span>
                     </div>
-                    <div class="progress mt-2" style="height: 8px;">
-                        <div class="progress-bar bg-info" style="width: {{ (stats.job_level * 10) }}%"></div>
+                    <div class="progress mt-2">
+                        <div class="progress-bar bg-info" style="width: {{ (stats.job_level * 10) }}%; background: linear-gradient(180deg, #0dcaf0, #0a7c96) !important;"></div>
                     </div>
-                    <small class="text-muted">Next promotion at Marketing Level {{ stats.job_level + 1 }}</small>
                 </div>
                 {% endif %}
+                
                 <div class="stat-card">
-                    <small class="text-muted">World</small>
-                    <div class="h5 mb-0">
+                    <small class="text-muted text-uppercase" style="font-size: 0.7rem; letter-spacing: 1px;">World</small>
+                    <div class="h5 mb-0 mt-1">
                         {% if stats.world == 'Modern' %}
-                        <i class="bi bi-building"></i>
+                        <i class="bi bi-building text-primary"></i>
                         {% elif stats.world == 'Industrial' %}
-                        <i class="bi bi-gear-wide-connected text-warning"></i>
+                        <i class="bi bi-gear-wide-connected" style="color: #cd853f;"></i>
                         {% elif stats.world == 'Fantasy' %}
-                        <i class="bi bi-magic"></i>
+                        <i class="bi bi-magic text-purple"></i>
                         {% else %}
-                        <i class="bi bi-rocket"></i>
+                        <i class="bi bi-rocket text-info"></i>
                         {% endif %}
-                        {{ stats.world }}
+                        <span class="gold-text">{{ stats.world }}</span>
                     </div>
                 </div>
+                
                 <div class="stat-card">
-                    <small class="text-muted">Industry</small>
-                    <div class="h5 mb-0">
+                    <small class="text-muted text-uppercase" style="font-size: 0.7rem; letter-spacing: 1px;">Industry</small>
+                    <div class="h5 mb-0 mt-1">
                         {% if stats.industry == 'Restaurant' %}
-                        <i class="bi bi-cup-hot"></i>
+                        <i class="bi bi-cup-hot-fill text-warning"></i>
                         {% elif stats.industry == 'SaaS' %}
-                        <i class="bi bi-laptop"></i>
+                        <i class="bi bi-laptop-fill text-info"></i>
                         {% elif stats.industry == 'Steel Mill' %}
-                        <i class="bi bi-fire text-warning"></i>
+                        <i class="bi bi-fire" style="color: #ff6347;"></i>
                         {% elif stats.industry == 'Textile Factory' %}
-                        <i class="bi bi-scissors text-warning"></i>
+                        <i class="bi bi-scissors" style="color: #dda0dd;"></i>
                         {% elif stats.industry == 'Railroad' %}
-                        <i class="bi bi-train-front text-warning"></i>
+                        <i class="bi bi-train-front-fill" style="color: #8b4513;"></i>
                         {% else %}
-                        <i class="bi bi-shop"></i>
+                        <i class="bi bi-shop-window"></i>
                         {% endif %}
                         {{ stats.industry }}
                     </div>
                 </div>
-                <div class="stat-card">
-                    <small class="text-muted">Cash</small>
-                    <div class="h4 mb-0 text-success">
-                        <i class="bi bi-cash"></i> ${{ "{:,.2f}".format(stats.cash) }}
+                
+                <div class="stat-card" style="border-color: rgba(80, 200, 120, 0.3);">
+                    <small class="text-muted text-uppercase" style="font-size: 0.7rem; letter-spacing: 1px;">Treasury</small>
+                    <div class="h4 mb-0 mt-1" style="color: #50c878;">
+                        <i class="bi bi-coin"></i> ${{ "{:,.0f}".format(stats.cash) }}
                     </div>
                 </div>
-                <div class="stat-card">
-                    <small class="text-muted">Reputation</small>
+                
+                <div class="stat-card" style="border-color: rgba(255, 215, 0, 0.3);">
+                    <small class="text-muted text-uppercase" style="font-size: 0.7rem; letter-spacing: 1px;">Reputation</small>
                     <div class="progress mt-2">
                         <div class="progress-bar" style="width: {{ stats.reputation }}%">
-                            {{ stats.reputation }}/100
+                            <span style="font-size: 0.8rem; font-weight: bold;">{{ stats.reputation }}/100</span>
                         </div>
                     </div>
                 </div>
@@ -90,30 +95,30 @@
         
         <div class="card mb-4">
             <div class="card-header">
-                <h6><i class="bi bi-grid-3x3-gap"></i> Quick Actions</h6>
+                <i class="bi bi-controller"></i> Quick Actions
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2">
-                    <a href="{{ url_for('character') }}" class="btn btn-outline-primary">
-                        <i class="bi bi-person-badge"></i> Character & Stats
+                    <a href="{{ url_for('character') }}" class="btn btn-game btn-game-purple">
+                        <i class="bi bi-person-badge-fill"></i> Character Stats
                         {% if stats.character_stats.stat_points > 0 %}
-                        <span class="badge bg-warning">{{ stats.character_stats.stat_points }}</span>
+                        <span class="badge bg-warning text-dark ms-2">+{{ stats.character_stats.stat_points }}</span>
                         {% endif %}
                     </a>
                     <a href="{{ url_for('avatar') }}" class="btn btn-outline-secondary">
-                        <i class="bi bi-person-bounding-box"></i> Customize Avatar
+                        <i class="bi bi-person-bounding-box"></i> Customize Look
                     </a>
                     <a href="{{ url_for('inventory') }}" class="btn btn-outline-info">
-                        <i class="bi bi-bag"></i> Inventory
+                        <i class="bi bi-backpack-fill"></i> Inventory
                     </a>
-                    <a href="{{ url_for('shop') }}" class="btn btn-outline-success">
-                        <i class="bi bi-shop"></i> Shop
+                    <a href="{{ url_for('shop') }}" class="btn btn-game btn-game-emerald">
+                        <i class="bi bi-shop-window"></i> Shop
                     </a>
                     <a href="{{ url_for('npcs') }}" class="btn btn-outline-warning">
-                        <i class="bi bi-people"></i> Network
+                        <i class="bi bi-people-fill"></i> Network
                     </a>
-                    <a href="{{ url_for('quests') }}" class="btn btn-outline-danger">
-                        <i class="bi bi-journal-text"></i> Quests
+                    <a href="{{ url_for('quests') }}" class="btn btn-game btn-game-crimson">
+                        <i class="bi bi-journal-bookmark-fill"></i> Quests
                     </a>
                 </div>
             </div>
@@ -121,21 +126,21 @@
         
         <div class="card mb-4">
             <div class="card-header">
-                <h6><i class="bi bi-lightning-fill"></i> Special Activities</h6>
+                <i class="bi bi-lightning-charge-fill"></i> Special Events
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2">
-                    <a href="{{ url_for('random_event') }}" class="btn btn-warning">
-                        <i class="bi bi-exclamation-triangle"></i> Random Event
+                    <a href="{{ url_for('random_event') }}" class="btn btn-game btn-game-gold">
+                        <i class="bi bi-dice-5-fill"></i> Random Event
                     </a>
-                    <a href="{{ url_for('challenges') }}" class="btn btn-info">
-                        <i class="bi bi-calendar-week"></i> Weekly Challenges
+                    <a href="{{ url_for('challenges') }}" class="btn btn-outline-info">
+                        <i class="bi bi-calendar-week-fill"></i> Weekly Challenges
                     </a>
-                    <a href="{{ url_for('dashboard') }}" class="btn btn-success">
-                        <i class="bi bi-graph-up"></i> Dashboard
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-success">
+                        <i class="bi bi-speedometer2"></i> Dashboard
                     </a>
-                    <a href="{{ url_for('rivals') }}" class="btn btn-danger">
-                        <i class="bi bi-people-fill"></i> Rivals
+                    <a href="{{ url_for('rivals') }}" class="btn btn-outline-danger">
+                        <i class="bi bi-person-x-fill"></i> Rivals
                     </a>
                 </div>
             </div>
@@ -145,30 +150,42 @@
     <div class="col-md-8">
         <div class="card mb-4">
             <div class="card-header">
-                <h5><i class="bi bi-briefcase"></i> Business Challenges</h5>
+                <i class="bi bi-trophy-fill"></i> Business Challenges
             </div>
             <div class="card-body">
-                <p class="text-muted">Select a discipline to tackle business scenarios and gain experience:</p>
+                <p class="game-subtitle mb-4">Master the six disciplines to become the ultimate tycoon!</p>
                 
                 <div class="row g-3">
                     {% for discipline, data in stats.disciplines.items() %}
                     <div class="col-md-6">
-                        <div class="card bg-dark">
+                        <div class="card h-100" style="background: linear-gradient(135deg, rgba(255,215,0,0.05) 0%, rgba(0,0,0,0.4) 100%);">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <h6 class="mb-0">{{ discipline }}</h6>
-                                    <span class="level-badge">L{{ data.level }}</span>
+                                    <h6 class="mb-0" style="font-family: 'Cinzel', serif; color: #ffd700;">
+                                        {% if discipline == 'Marketing' %}<i class="bi bi-megaphone-fill"></i>
+                                        {% elif discipline == 'Finance' %}<i class="bi bi-graph-up-arrow"></i>
+                                        {% elif discipline == 'Operations' %}<i class="bi bi-gear-fill"></i>
+                                        {% elif discipline == 'Human Resources' %}<i class="bi bi-people-fill"></i>
+                                        {% elif discipline == 'Legal' %}<i class="bi bi-briefcase-fill"></i>
+                                        {% elif discipline == 'Strategy' %}<i class="bi bi-lightbulb-fill"></i>
+                                        {% endif %}
+                                        {{ discipline }}
+                                    </h6>
+                                    <span class="level-badge">LV {{ data.level }}</span>
                                 </div>
-                                <small class="text-muted">{{ data.title }}</small>
-                                <div class="progress mt-2" style="height: 10px;">
+                                <small class="game-subtitle">{{ data.title }}</small>
+                                <div class="progress mt-3" style="height: 14px;">
                                     {% set progress_pct = ((data.total_exp - (data.total_exp - data.exp_to_next if data.level < 10 else 0)) / (data.exp_to_next + data.total_exp - (data.total_exp - data.exp_to_next if data.level < 10 else 0))) * 100 if data.level < 10 else 100 %}
                                     <div class="progress-bar" style="width: {{ progress_pct|default(100) }}%"></div>
                                 </div>
-                                <small class="text-muted">{{ data.total_exp }} / {{ data.total_exp + data.exp_to_next if data.exp_to_next > 0 else 'MAX' }} EXP</small>
+                                <div class="d-flex justify-content-between mt-2">
+                                    <small class="text-muted">{{ data.total_exp }} EXP</small>
+                                    <small class="text-muted">{% if data.exp_to_next > 0 %}{{ data.exp_to_next }} to next{% else %}MAX{% endif %}</small>
+                                </div>
                                 <div class="mt-3">
                                     <a href="{{ url_for('scenarios', discipline=discipline) }}" 
-                                       class="btn btn-sm btn-primary w-100">
-                                        <i class="bi bi-play-fill"></i> Take Challenge
+                                       class="btn btn-game btn-game-gold w-100">
+                                        <i class="bi bi-play-fill"></i> Play
                                     </a>
                                 </div>
                             </div>

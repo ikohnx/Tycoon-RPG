@@ -3,95 +3,142 @@
 {% block title %}Business Tycoon RPG - Welcome{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center mt-5">
-    <div class="col-md-8 text-center">
-        <h1 class="display-3 mb-4">
-            <i class="bi bi-building"></i> Business Tycoon RPG
-        </h1>
-        <p class="lead mb-5">Master Business Skills Across Three Worlds</p>
+<div class="row justify-content-center mt-4">
+    <div class="col-md-10 text-center">
+        <div class="mb-5">
+            <h1 class="game-title display-2 mb-3">
+                <i class="bi bi-gem" style="-webkit-text-fill-color: #ffd700;"></i> Tycoon RPG
+            </h1>
+            <p class="game-subtitle lead">Master Business Skills Across Four Worlds</p>
+        </div>
         
-        <div class="row g-4">
+        <div class="row g-4 mb-5">
             <div class="col-md-6">
-                <div class="card h-100">
-                    <div class="card-body text-center p-4">
-                        <i class="bi bi-plus-circle display-4 text-success mb-3"></i>
-                        <h3>New Game</h3>
-                        <p>Start your journey as a business tycoon</p>
-                        <a href="{{ url_for('new_game') }}" class="btn btn-primary btn-lg">
-                            <i class="bi bi-play-fill"></i> Start New Game
+                <div class="card h-100" style="border-color: rgba(80, 200, 120, 0.5);">
+                    <div class="card-body text-center p-5">
+                        <div class="mb-4">
+                            <i class="bi bi-plus-circle-fill display-1" style="color: #50c878; filter: drop-shadow(0 0 20px rgba(80,200,120,0.5));"></i>
+                        </div>
+                        <h3 class="game-title mb-3">New Adventure</h3>
+                        <p class="game-subtitle">Begin your journey to become the ultimate business tycoon</p>
+                        <a href="{{ url_for('new_game') }}" class="btn btn-game btn-game-emerald btn-lg mt-3">
+                            <i class="bi bi-play-fill"></i> Start Game
                         </a>
                     </div>
                 </div>
             </div>
             
             <div class="col-md-6">
-                <div class="card h-100">
+                <div class="card h-100" style="border-color: rgba(74, 144, 217, 0.5);">
                     <div class="card-body p-4">
-                        <i class="bi bi-save display-4 text-info mb-3 d-block text-center"></i>
-                        <h3 class="text-center">Continue Game</h3>
+                        <div class="text-center mb-4">
+                            <i class="bi bi-save-fill display-1" style="color: #4a90d9; filter: drop-shadow(0 0 20px rgba(74,144,217,0.5));"></i>
+                        </div>
+                        <h3 class="game-title text-center mb-4">Continue Quest</h3>
                         {% if players %}
-                        <div class="list-group mt-3">
+                        <div class="d-grid gap-2">
                             {% for player in players[:5] %}
                             <a href="{{ url_for('load_game', player_id=player.player_id) }}" 
-                               class="list-group-item list-group-item-action bg-transparent text-light border-secondary">
+                               class="btn btn-outline-primary text-start p-3">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
-                                        <strong>{{ player.player_name }}</strong>
+                                        <strong class="gold-text">{{ player.player_name }}</strong>
                                         <small class="d-block text-muted">
-                                            {{ player.chosen_world }} / {{ player.chosen_industry }}
+                                            <i class="bi bi-globe2"></i> {{ player.chosen_world }} / {{ player.chosen_industry }}
                                         </small>
                                     </div>
-                                    <span class="badge bg-success">${{ "%.0f"|format(player.total_cash|float) }}</span>
+                                    <span class="badge" style="background: linear-gradient(135deg, #50c878, #228b22);">
+                                        <i class="bi bi-coin"></i> ${{ "%.0f"|format(player.total_cash|float) }}
+                                    </span>
                                 </div>
                             </a>
                             {% endfor %}
                         </div>
                         {% else %}
-                        <p class="text-center text-muted mt-3">No saved games yet</p>
+                        <p class="text-center game-subtitle mt-3">
+                            <i class="bi bi-inbox"></i> No saved games yet
+                        </p>
                         {% endif %}
                     </div>
                 </div>
             </div>
         </div>
         
-        <div class="mt-5">
-            <h4>Learn Real Business Skills</h4>
-            <div class="row g-3 mt-3">
+        <div class="section-divider"></div>
+        
+        <div class="mt-4">
+            <h4 class="game-title mb-4">
+                <i class="bi bi-book-fill" style="-webkit-text-fill-color: #ffd700;"></i> Master Six Disciplines
+            </h4>
+            <div class="row g-3 justify-content-center">
                 <div class="col-4 col-md-2">
-                    <div class="stat-card text-center">
-                        <i class="bi bi-megaphone"></i>
-                        <small class="d-block">Marketing</small>
+                    <div class="stat-card text-center py-3">
+                        <i class="bi bi-megaphone-fill display-6" style="color: #ff6b6b;"></i>
+                        <small class="d-block mt-2 game-subtitle">Marketing</small>
                     </div>
                 </div>
                 <div class="col-4 col-md-2">
-                    <div class="stat-card text-center">
-                        <i class="bi bi-cash-stack"></i>
-                        <small class="d-block">Finance</small>
+                    <div class="stat-card text-center py-3">
+                        <i class="bi bi-graph-up-arrow display-6" style="color: #50c878;"></i>
+                        <small class="d-block mt-2 game-subtitle">Finance</small>
                     </div>
                 </div>
                 <div class="col-4 col-md-2">
-                    <div class="stat-card text-center">
-                        <i class="bi bi-gear"></i>
-                        <small class="d-block">Operations</small>
+                    <div class="stat-card text-center py-3">
+                        <i class="bi bi-gear-fill display-6" style="color: #ffd700;"></i>
+                        <small class="d-block mt-2 game-subtitle">Operations</small>
                     </div>
                 </div>
                 <div class="col-4 col-md-2">
-                    <div class="stat-card text-center">
-                        <i class="bi bi-people"></i>
-                        <small class="d-block">HR</small>
+                    <div class="stat-card text-center py-3">
+                        <i class="bi bi-people-fill display-6" style="color: #4a90d9;"></i>
+                        <small class="d-block mt-2 game-subtitle">HR</small>
                     </div>
                 </div>
                 <div class="col-4 col-md-2">
-                    <div class="stat-card text-center">
-                        <i class="bi bi-file-text"></i>
-                        <small class="d-block">Legal</small>
+                    <div class="stat-card text-center py-3">
+                        <i class="bi bi-briefcase-fill display-6" style="color: #9932cc;"></i>
+                        <small class="d-block mt-2 game-subtitle">Legal</small>
                     </div>
                 </div>
                 <div class="col-4 col-md-2">
-                    <div class="stat-card text-center">
-                        <i class="bi bi-lightbulb"></i>
-                        <small class="d-block">Strategy</small>
+                    <div class="stat-card text-center py-3">
+                        <i class="bi bi-lightbulb-fill display-6" style="color: #ff8c00;"></i>
+                        <small class="d-block mt-2 game-subtitle">Strategy</small>
                     </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section-divider"></div>
+        
+        <div class="row g-4 mt-2">
+            <div class="col-md-3">
+                <div class="stat-card text-center py-4">
+                    <i class="bi bi-building display-4 text-primary"></i>
+                    <h6 class="game-subtitle mt-3">Modern</h6>
+                    <small class="text-muted">Offices & Tech</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card text-center py-4">
+                    <i class="bi bi-gear-wide-connected display-4" style="color: #cd853f;"></i>
+                    <h6 class="game-subtitle mt-3">Industrial</h6>
+                    <small class="text-muted">1800s Factories</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card text-center py-4">
+                    <i class="bi bi-magic display-4" style="color: #9932cc;"></i>
+                    <h6 class="game-subtitle mt-3">Fantasy</h6>
+                    <small class="text-muted">Coming Soon</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card text-center py-4">
+                    <i class="bi bi-rocket-takeoff display-4 text-info"></i>
+                    <h6 class="game-subtitle mt-3">Sci-Fi</h6>
+                    <small class="text-muted">Coming Soon</small>
                 </div>
             </div>
         </div>
