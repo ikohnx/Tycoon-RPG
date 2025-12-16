@@ -187,3 +187,10 @@ The game runs as a web application on port 5000.
   - Advisors now provide real EXP/gold/reputation bonuses during scenarios
   - Equipment stats connected - luck bonus gives 2% per point star upgrade chance
   - Leaderboard widget on hub page showing top 3 players by stars
+- 2025-12: Added 5 Advanced Interactive Challenges for higher levels (5-10):
+  - ROI Calculator (Level 5): Calculate Return on Investment percentage
+  - Inventory Turnover (Level 6): Measure inventory efficiency
+  - Customer Lifetime Value (Level 7): Calculate customer worth over time
+  - Payback Period Comparison (Level 8): Compare investment options
+  - Compound Growth Forecast (Level 9): Project future value with compound interest
+  - Each advanced challenge has dedicated UI, training content, and accurate formula evaluation
