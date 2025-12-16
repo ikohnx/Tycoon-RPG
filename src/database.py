@@ -1481,6 +1481,191 @@ def seed_modern_restaurant_full():
     conn.close()
 
 
+def seed_marketing_curriculum():
+    """Seed the complete 10-level Marketing Curriculum for Modern/Restaurant."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM scenario_master WHERE discipline = 'Marketing' AND scenario_title LIKE '%L1:%'")
+    result = cur.fetchone()
+    if result['count'] > 0:
+        print("Marketing curriculum already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    scenarios = [
+        # LEVEL 1: What is Marketing? (Need vs. Want)
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Marketing", "required_level": 1,
+         "scenario_title": "L1: Understanding Customer Needs", 
+         "scenario_narrative": "A customer walks in looking tired and mentions they skipped breakfast. Your Marketing Manager explains: 'Marketing is about matching what we offer to what customers need or want. This person has a NEED (hunger) but we can shape their WANT.' How do you respond?",
+         "choice_a_text": "Offer a quick, affordable breakfast combo (addresses the NEED)", 
+         "choice_a_exp_reward": 80, "choice_a_cash_change": 50, "choice_a_reputation_change": 3,
+         "choice_a_feedback": "You addressed the customer's basic need. In marketing, identifying needs is step one - but remember, wants can lead to higher-value sales.",
+         "choice_b_text": "Suggest the premium brunch special with fresh-squeezed juice (creates a WANT)", 
+         "choice_b_exp_reward": 100, "choice_b_cash_change": 120, "choice_b_reputation_change": 5,
+         "choice_b_feedback": "Excellent! You transformed a basic need into a premium want. Marketing's power is shaping desires beyond basic needs.",
+         "choice_c_text": "Just take their order without any suggestion", 
+         "choice_c_exp_reward": 40, "choice_c_cash_change": 30, "choice_c_reputation_change": 0,
+         "choice_c_feedback": "You missed a marketing opportunity. Great marketers proactively guide customers from needs to wants.", 
+         "subskill_focus": "Customer Psychology"},
+        
+        # LEVEL 2: The 4 Ps - Product
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Marketing", "required_level": 2,
+         "scenario_title": "L2: Defining Your Product Strategy", 
+         "scenario_narrative": "You're designing a new menu item. The Finance Director says 'Product is the first of the 4 Ps of marketing.' You must decide the product's features, benefits, and positioning. What approach do you take?",
+         "choice_a_text": "Create a premium gourmet burger with high-quality ingredients and unique presentation", 
+         "choice_a_exp_reward": 100, "choice_a_cash_change": -200, "choice_a_reputation_change": 8,
+         "choice_a_feedback": "Premium products have higher margins but smaller markets. Your product now signals quality and exclusivity - a key marketing decision.",
+         "choice_b_text": "Create a budget-friendly everyday burger that's affordable and consistent", 
+         "choice_b_exp_reward": 90, "choice_b_cash_change": 150, "choice_b_reputation_change": 3,
+         "choice_b_feedback": "Budget products target volume over margin. This product strategy focuses on accessibility and repeat purchases.",
+         "choice_c_text": "Create a mid-range burger that tries to appeal to everyone", 
+         "choice_c_exp_reward": 60, "choice_c_cash_change": 50, "choice_c_reputation_change": 2,
+         "choice_c_feedback": "The 'stuck in the middle' trap! Products that try to be everything often appeal to no one. Choose a clear position.", 
+         "subskill_focus": "Product Strategy"},
+        
+        # LEVEL 3: Customer Segmentation & Target Audience
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Marketing", "required_level": 3,
+         "scenario_title": "L3: Finding Your Target Market", 
+         "scenario_narrative": "Your Marketing Manager presents data: 'We can't advertise to everyone. We need to segment the market.' She shows two potential segments: College students (limited budget, high volume, social media users) or Business professionals (expense accounts, weekday lunches, value convenience). Who do you target?",
+         "choice_a_text": "Target college students with social media campaigns and student discounts", 
+         "choice_a_exp_reward": 90, "choice_a_cash_change": 100, "choice_a_reputation_change": 4,
+         "choice_a_feedback": "Good segmentation! Students are price-sensitive but bring volume and word-of-mouth. Demographics (age, income) and psychographics (lifestyle) drove this choice.",
+         "choice_b_text": "Target business professionals with lunch specials and quick service", 
+         "choice_b_exp_reward": 100, "choice_b_cash_change": 200, "choice_b_reputation_change": 5,
+         "choice_b_feedback": "Smart choice! Business customers have higher spending power. You used demographics (income) and behavior (weekday patterns) to segment.",
+         "choice_c_text": "Target both segments with different campaigns for each", 
+         "choice_c_exp_reward": 80, "choice_c_cash_change": -100, "choice_c_reputation_change": 3,
+         "choice_c_feedback": "Multi-segment strategies require more resources. Possible, but expensive - most startups focus on one segment first.", 
+         "subskill_focus": "Market Segmentation"},
+        
+        # LEVEL 4: The 4 Ps - Price
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Marketing", "required_level": 4,
+         "scenario_title": "L4: Setting the Right Price", 
+         "scenario_narrative": "Time to price your new signature dish. Your Finance Director explains pricing strategies: Cost-plus (production cost + margin), competitive (match competitors), or value-based (what customers perceive it's worth). Your dish costs $8 to make, competitors charge $18, and customers in focus groups said they'd pay up to $25. What's your price?",
+         "choice_a_text": "Price at $16 (cost-plus: $8 cost + 100% margin)", 
+         "choice_a_exp_reward": 70, "choice_a_cash_change": 100, "choice_a_reputation_change": 2,
+         "choice_a_feedback": "Cost-plus is simple and ensures profit, but you left money on the table. Customers would pay more!",
+         "choice_b_text": "Price at $18 (competitive: match the market)", 
+         "choice_b_exp_reward": 85, "choice_b_cash_change": 150, "choice_b_reputation_change": 3,
+         "choice_b_feedback": "Competitive pricing reduces risk but doesn't differentiate you. Good for commodities, less so for unique products.",
+         "choice_c_text": "Price at $22 (value-based: below max willingness to pay)", 
+         "choice_c_exp_reward": 110, "choice_c_cash_change": 250, "choice_c_reputation_change": 5,
+         "choice_c_feedback": "Value-based pricing captures customer perception! You priced below their $25 max to leave room for satisfaction. This is premium marketing.", 
+         "subskill_focus": "Pricing Strategy"},
+        
+        # LEVEL 5: The 4 Ps - Place (Distribution)
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Marketing", "required_level": 5,
+         "scenario_title": "L5: Choosing Your Distribution Channels", 
+         "scenario_narrative": "Your Operations Chief asks about expansion. 'Place is the third P - how customers access your product.' Options: Open a second physical location downtown ($50K investment), partner with delivery apps (15% commission per order), or build your own online ordering system ($10K investment). Which channel strategy do you pursue?",
+         "choice_a_text": "Open the second physical location downtown", 
+         "choice_a_exp_reward": 90, "choice_a_cash_change": -500, "choice_a_reputation_change": 8,
+         "choice_a_feedback": "Physical expansion increases reach but requires capital and management attention. Great for building brand presence in high-traffic areas.",
+         "choice_b_text": "Partner with delivery apps for instant reach", 
+         "choice_b_exp_reward": 100, "choice_b_cash_change": 200, "choice_b_reputation_change": 4,
+         "choice_b_feedback": "Smart channel leverage! Delivery apps provide instant distribution to thousands of customers. The 15% commission is the cost of that reach.",
+         "choice_c_text": "Build your own online ordering system", 
+         "choice_c_exp_reward": 85, "choice_c_cash_change": -100, "choice_c_reputation_change": 3,
+         "choice_c_feedback": "Own channels mean no commissions and customer data ownership. Higher upfront cost but better long-term margins.", 
+         "subskill_focus": "Distribution Channels"},
+        
+        # LEVEL 6: The 4 Ps - Promotion & CPA
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Marketing", "required_level": 6,
+         "scenario_title": "L6: Measuring Promotion Effectiveness (CPA)", 
+         "scenario_narrative": "Your Marketing Manager presents two ad campaigns: Social Media Ads cost $500 and brought 50 new customers. Local Newspaper Ads cost $800 and brought 40 new customers. She asks: 'Which has the better Cost Per Acquisition?' Which campaign wins and should get more budget?",
+         "choice_a_text": "Social Media - CPA is $10 per customer ($500÷50)", 
+         "choice_a_exp_reward": 120, "choice_a_cash_change": 300, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Correct! CPA = Total Cost ÷ Customers Acquired. Social media's $10 CPA beats newspaper's $20 CPA. Always measure promotion effectiveness!",
+         "choice_b_text": "Newspaper - it reaches a more established audience", 
+         "choice_b_exp_reward": 60, "choice_b_cash_change": -100, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "Audience quality matters, but you ignored the math. Newspaper's CPA is $20 ($800÷40) - twice as expensive per customer. Data beats intuition.",
+         "choice_c_text": "Split budget equally between both channels", 
+         "choice_c_exp_reward": 80, "choice_c_cash_change": 50, "choice_c_reputation_change": 3,
+         "choice_c_feedback": "Diversification has value, but ignoring CPA data wastes money. Optimize based on metrics, then diversify.", 
+         "subskill_focus": "Cost Per Acquisition"},
+        
+        # LEVEL 7: A/B Testing & Conversion
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Marketing", "required_level": 7,
+         "scenario_title": "L7: Running Your First A/B Test", 
+         "scenario_narrative": "You want to improve online orders. Your Marketing Manager suggests an A/B test: 'Show half of visitors Version A (photo-focused menu) and half Version B (description-focused menu). After 1000 visitors each, Version A converted 8% and Version B converted 5%.' What do you conclude?",
+         "choice_a_text": "Version A wins - immediately switch all traffic to it", 
+         "choice_a_exp_reward": 100, "choice_a_cash_change": 200, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "You applied A/B testing correctly! Version A has 60% higher conversion (8% vs 5%). A/B testing removes guesswork from marketing decisions.",
+         "choice_b_text": "Keep testing longer - the sample size might be too small", 
+         "choice_b_exp_reward": 110, "choice_b_cash_change": 150, "choice_b_reputation_change": 6,
+         "choice_b_feedback": "Statistical rigor! 1000 visitors each is decent, but you're right to consider significance. In practice, this 3% difference is likely significant.",
+         "choice_c_text": "The difference is too small to matter", 
+         "choice_c_exp_reward": 50, "choice_c_cash_change": 0, "choice_c_reputation_change": 1,
+         "choice_c_feedback": "3 percentage points is huge! That's 60% more conversions. In marketing, small percentage improvements compound into major revenue.", 
+         "subskill_focus": "Conversion Optimization"},
+        
+        # LEVEL 8: Customer Retention & LTV
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Marketing", "required_level": 8,
+         "scenario_title": "L8: Understanding Customer Lifetime Value", 
+         "scenario_narrative": "Your Finance Director presents data: 'Average customer visits 2x/month, spends $30/visit, and stays loyal for 2 years. That's an LTV of $1,440 ($30 × 2 × 24 months).' She asks whether to spend $5,000 on a loyalty program (improves retention by 6 months) or $5,000 on new customer ads (brings 200 new customers). What's smarter?",
+         "choice_a_text": "Invest in the loyalty program - retention extends LTV", 
+         "choice_a_exp_reward": 120, "choice_a_cash_change": 400, "choice_a_reputation_change": 7,
+         "choice_a_feedback": "Brilliant LTV thinking! If 100 loyal customers stay 6 months longer, that's $36,000 additional revenue (100 × $30 × 2 × 6). Retention often beats acquisition.",
+         "choice_b_text": "Invest in new customer ads - growth requires new customers", 
+         "choice_b_exp_reward": 80, "choice_b_cash_change": 200, "choice_b_reputation_change": 4,
+         "choice_b_feedback": "200 new customers × $1,440 LTV = $288,000 potential. But what's their retention rate? New customers often churn faster than loyal ones.",
+         "choice_c_text": "Do both with $2,500 each", 
+         "choice_c_exp_reward": 90, "choice_c_cash_change": 250, "choice_c_reputation_change": 5,
+         "choice_c_feedback": "Balanced approach! But the math favored retention here. Always calculate LTV impact before splitting budgets.", 
+         "subskill_focus": "Customer Lifetime Value"},
+        
+        # LEVEL 9: Competitive Strategy & Positioning (SWOT)
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Marketing", "required_level": 9,
+         "scenario_title": "L9: Competitive Positioning with SWOT", 
+         "scenario_narrative": "A rival just opened across the street with identical menu and lower prices! Your Strategy Advisor runs a SWOT analysis: Strengths (loyal customer base, unique recipes), Weaknesses (higher costs), Opportunities (delivery expansion), Threats (price war). How do you position against them?",
+         "choice_a_text": "Emphasize quality and unique recipes - 'You can't copy our secret sauce'", 
+         "choice_a_exp_reward": 130, "choice_a_cash_change": 300, "choice_a_reputation_change": 8,
+         "choice_a_feedback": "Perfect positioning! You leveraged strengths (unique recipes) to differentiate. Positioning means owning a distinct place in customers' minds.",
+         "choice_b_text": "Match their prices to prevent customer loss", 
+         "choice_b_exp_reward": 60, "choice_b_cash_change": -200, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "Price wars destroy margins and rarely have winners. Your weakness (higher costs) makes this especially dangerous.",
+         "choice_c_text": "Accelerate delivery expansion to capture new territory", 
+         "choice_c_exp_reward": 100, "choice_c_cash_change": 100, "choice_c_reputation_change": 5,
+         "choice_c_feedback": "Using opportunities from SWOT! Expanding where they aren't reduces direct competition. Strategic but requires execution.", 
+         "subskill_focus": "Competitive Positioning"},
+        
+        # LEVEL 10: Brand Architecture & Crisis Management
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Marketing", "required_level": 10,
+         "scenario_title": "L10: Managing a Brand Crisis", 
+         "scenario_narrative": "CRISIS! A customer found a foreign object in their food and posted it on social media. It's going viral - 50,000 views and climbing. News outlets are calling. Your Legal Counsel warns about liability, but your Marketing Manager says 'This is a brand moment.' How do you respond?",
+         "choice_a_text": "Issue immediate public apology, offer full refund, invite customer back for VIP treatment", 
+         "choice_a_exp_reward": 150, "choice_a_cash_change": -500, "choice_a_reputation_change": 10,
+         "choice_a_feedback": "Masterful crisis management! Transparency, accountability, and generosity turn critics into advocates. This is executive-level brand leadership.",
+         "choice_b_text": "Stay silent and let legal handle it - don't admit fault publicly", 
+         "choice_b_exp_reward": 40, "choice_b_cash_change": 0, "choice_b_reputation_change": -15,
+         "choice_b_feedback": "Silence in a crisis is catastrophic. Social media amplifies every hour you don't respond. You've lost control of the narrative.",
+         "choice_c_text": "Post a general statement about food safety standards without addressing the specific incident", 
+         "choice_c_exp_reward": 70, "choice_c_cash_change": -100, "choice_c_reputation_change": -5,
+         "choice_c_feedback": "Generic responses feel evasive. Customers want to see you take personal responsibility, not hide behind corporate speak.", 
+         "subskill_focus": "Crisis Management"},
+    ]
+    
+    for scenario in scenarios:
+        cur.execute("""
+            INSERT INTO scenario_master (world_type, industry, discipline, required_level, scenario_title, scenario_narrative,
+                choice_a_text, choice_a_exp_reward, choice_a_cash_change, choice_a_reputation_change, choice_a_feedback,
+                choice_b_text, choice_b_exp_reward, choice_b_cash_change, choice_b_reputation_change, choice_b_feedback,
+                choice_c_text, choice_c_exp_reward, choice_c_cash_change, choice_c_reputation_change, choice_c_feedback,
+                subskill_focus)
+            VALUES (%(world_type)s, %(industry)s, %(discipline)s, %(required_level)s, %(scenario_title)s, %(scenario_narrative)s,
+                %(choice_a_text)s, %(choice_a_exp_reward)s, %(choice_a_cash_change)s, %(choice_a_reputation_change)s, %(choice_a_feedback)s,
+                %(choice_b_text)s, %(choice_b_exp_reward)s, %(choice_b_cash_change)s, %(choice_b_reputation_change)s, %(choice_b_feedback)s,
+                %(choice_c_text)s, %(choice_c_exp_reward)s, %(choice_c_cash_change)s, %(choice_c_reputation_change)s, %(choice_c_feedback)s,
+                %(subskill_focus)s)
+        """, scenario)
+    
+    conn.commit()
+    print(f"Seeded {len(scenarios)} Marketing Curriculum scenarios (Levels 1-10)!")
+    cur.close()
+    conn.close()
+
+
 if __name__ == "__main__":
     init_database()
     seed_scenarios()
@@ -1498,3 +1683,4 @@ if __name__ == "__main__":
     seed_industrial_events()
     seed_industrial_rivals()
     seed_modern_restaurant_full()
+    seed_marketing_curriculum()
