@@ -115,6 +115,29 @@ def scenarios(discipline):
                          discipline=discipline,
                          stats=stats)
 
+@app.route('/training/<int:scenario_id>')
+def training(scenario_id):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    if engine.is_scenario_completed(scenario_id):
+        flash("You've already completed this quest!")
+        return redirect(url_for('hub'))
+    
+    scenario = engine.get_scenario_by_id(scenario_id)
+    
+    if not scenario:
+        flash("Scenario not found!")
+        return redirect(url_for('hub'))
+    
+    training_data = engine.get_training_content(scenario_id)
+    
+    return render_template('training.html', scenario=scenario, training=training_data, stats=stats)
+
 @app.route('/play/<int:scenario_id>')
 def play_scenario(scenario_id):
     player_id = session.get('player_id')

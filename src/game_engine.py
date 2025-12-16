@@ -302,6 +302,62 @@ class GameEngine:
         
         return dict(scenario) if scenario else None
     
+    def get_training_content(self, scenario_id: int) -> dict:
+        """Get training/tutorial content for a scenario."""
+        import json
+        conn = get_connection()
+        cur = conn.cursor()
+        
+        cur.execute("SELECT training_content, discipline, challenge_type FROM scenario_master WHERE scenario_id = %s", (scenario_id,))
+        result = cur.fetchone()
+        
+        cur.close()
+        conn.close()
+        
+        if result and result.get('training_content'):
+            try:
+                return json.loads(result['training_content'])
+            except json.JSONDecodeError:
+                pass
+        
+        discipline = result['discipline'] if result else 'Marketing'
+        challenge_type = result.get('challenge_type', 'choice') if result else 'choice'
+        
+        default_training = {
+            'budget_calculator': {
+                'concept': '<p><strong>Profit</strong> is what remains after subtracting all expenses from revenue. It tells you if your business is making or losing money.</p>',
+                'formula': 'Profit = Revenue - (Wages + Rent + Supplies + Marketing)',
+                'example': '<p>If Revenue = $50,000 and total expenses = $40,000<br>Then Profit = $50,000 - $40,000 = <strong>$10,000</strong></p>',
+                'tips': ['Add up all expenses first', 'Subtract total expenses from revenue', 'A negative number means a loss']
+            },
+            'pricing_strategy': {
+                'concept': '<p><strong>Profit Margin</strong> is the percentage of the selling price that is profit. Setting prices correctly ensures you cover costs and make money.</p>',
+                'formula': 'Selling Price = Cost ÷ (1 - Margin%)',
+                'example': '<p>If item costs $10 and you want 40% margin:<br>$10 ÷ (1 - 0.40) = $10 ÷ 0.60 = <strong>$16.67</strong></p>',
+                'tips': ['Convert margin percentage to decimal (40% = 0.40)', 'Subtract from 1, then divide', 'Check: at $16.67, profit is $6.67 which is 40%']
+            },
+            'staffing_decision': {
+                'concept': '<p><strong>Staffing calculations</strong> help you hire the right number of employees. Too few = poor service. Too many = wasted money.</p>',
+                'formula': 'Staff Needed = Customers ÷ Customers per Staff',
+                'example': '<p>If you expect 200 customers and each staff can serve 25:<br>200 ÷ 25 = <strong>8 staff members</strong></p>',
+                'tips': ['Always round UP to ensure coverage', 'Consider peak hours may need more staff', 'Factor in breaks and absences']
+            },
+            'break_even': {
+                'concept': '<p><strong>Break-even point</strong> is the number of units you must sell to cover all costs. Below this = loss, above = profit.</p>',
+                'formula': 'Break-Even Units = Fixed Costs ÷ (Price - Variable Cost)',
+                'example': '<p>Fixed costs $10,000, sell at $50, costs $30 to make:<br>$10,000 ÷ ($50 - $30) = $10,000 ÷ $20 = <strong>500 units</strong></p>',
+                'tips': ['Fixed costs stay the same regardless of sales', 'Price minus cost = contribution margin', 'Sell more than break-even to profit']
+            },
+            'choice': {
+                'concept': f'<p>This quest will test your <strong>{discipline}</strong> skills. Read the scenario carefully and choose the best option based on business principles.</p>',
+                'formula': None,
+                'example': None,
+                'tips': ['Read all options before choosing', 'Consider short and long-term effects', 'Think about customer and employee impact']
+            }
+        }
+        
+        return default_training.get(challenge_type, default_training['choice'])
+    
     def is_scenario_completed(self, scenario_id: int) -> bool:
         """Check if a scenario has been completed by the current player."""
         if not self.current_player:

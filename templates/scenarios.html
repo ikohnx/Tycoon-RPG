@@ -76,14 +76,14 @@
                             <i class="bi bi-check-lg"></i> Completed
                         </button>
                         {% elif scenario.challenge_type and scenario.challenge_type != 'choice' %}
-                        <a href="{{ url_for('play_challenge', scenario_id=scenario.scenario_id) }}" 
+                        <a href="{{ url_for('training', scenario_id=scenario.scenario_id) }}" 
                            class="btn btn-game btn-game-purple w-100">
-                            <i class="bi bi-calculator-fill"></i> Solve Challenge
+                            <i class="bi bi-book-fill"></i> Learn & Solve
                         </a>
                         {% else %}
-                        <a href="{{ url_for('play_scenario', scenario_id=scenario.scenario_id) }}" 
+                        <a href="{{ url_for('training', scenario_id=scenario.scenario_id) }}" 
                            class="btn btn-game btn-game-gold w-100">
-                            <i class="bi bi-play-fill"></i> Begin Quest
+                            <i class="bi bi-book-fill"></i> Learn & Play
                         </a>
                         {% endif %}
                     </div>

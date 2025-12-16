@@ -148,6 +148,11 @@ def init_database():
     """)
     
     cur.execute("""
+        ALTER TABLE scenario_master 
+        ADD COLUMN IF NOT EXISTS training_content TEXT DEFAULT NULL;
+    """)
+    
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS player_stats (
             stat_id SERIAL PRIMARY KEY,
             player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
