@@ -3852,6 +3852,510 @@ def seed_hr_curriculum():
     conn.close()
 
 
+def seed_strategy_curriculum():
+    """Seed the complete 10-level Strategy Curriculum across 3 worlds (30 scenarios total).
+    
+    This is the CAPSTONE discipline synthesizing Marketing, Accounting, Finance, Legal, and HR.
+    
+    Curriculum Structure:
+    - L1-L3: Fundamentals & Vision (Mission/Vision, Competitive Advantage, PESTLE)
+    - L4-L6: Internal Analysis & Formulation (VRIO, Porter's Generic, Balanced Scorecard)
+    - L7-L8: Market Expansion & Defense (Ansoff Matrix, Porter's Five Forces)
+    - L9-L10: Organizational Design & Mastery (Org Structure, Strategic Resource Allocation)
+    """
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM scenario_master WHERE discipline = 'Strategy' AND scenario_title LIKE 'L%:%'")
+    result = cur.fetchone()
+    if result['count'] >= 30:
+        print("Strategy curriculum already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    scenarios = [
+        # ========== LEVEL 1: Mission and Vision ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Strategy", "required_level": 1,
+         "scenario_title": "L1: Mission and Vision", 
+         "scenario_narrative": "Your restaurant has grown from a single location to three, but your team seems confused about the company's direction. Investors and new employees ask 'What does this company stand for?' You need to articulate a clear Mission (current purpose) and Vision (long-term goal).",
+         "choice_a_text": "Draft comprehensive statements: Vision - 'Become the region's most beloved farm-to-table dining destination' / Mission - 'Serve fresh, locally-sourced meals that connect community with cuisine'", 
+         "choice_a_exp_reward": 50, "choice_a_cash_change": 0, "choice_a_reputation_change": 4,
+         "choice_a_feedback": "Strategic clarity achieved! A clear Vision gives everyone a North Star to aim for. The Mission explains HOW you'll get there daily. Employees now understand why local sourcing matters - it's core to identity, not just a marketing gimmick.",
+         "choice_b_text": "Keep it simple: 'Make money and serve good food'", 
+         "choice_b_exp_reward": 20, "choice_b_cash_change": 0, "choice_b_reputation_change": 0,
+         "choice_b_feedback": "Too generic! Every restaurant wants to make money and serve good food. A Mission must differentiate - what makes YOUR approach unique? Without specificity, it provides no strategic guidance.",
+         "choice_c_text": "Focus only on financial targets - 'Achieve $5M revenue by 2027'", 
+         "choice_c_exp_reward": 30, "choice_c_cash_change": 0, "choice_c_reputation_change": 1,
+         "choice_c_feedback": "Financial goals are important but aren't Mission statements! Mission answers WHY you exist, not just WHAT you want to achieve. Revenue targets belong in strategic plans, not foundational identity.", 
+         "subskill_focus": "Defining Purpose"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Strategy", "required_level": 1,
+         "scenario_title": "L1: Mission and Vision", 
+         "scenario_narrative": "The Guild Council asks you to submit your establishment's Charter of Purpose. This document will guide all future decisions and define your tavern's identity within the Guild registry for generations.",
+         "choice_a_text": "Craft a meaningful charter: Vision - 'Become the realm's legendary gathering place where heroes find fellowship' / Mission - 'Provide finest ales, warmest hearth, and safe haven to all who seek adventure'", 
+         "choice_a_exp_reward": 50, "choice_a_cash_change": 0, "choice_a_reputation_change": 4,
+         "choice_a_feedback": "A charter worthy of the Guild archives! Your Vision inspires - legendary status is aspirational. Your Mission is actionable - ales, warmth, and haven are daily deliverables. New staff understand their higher purpose.",
+         "choice_b_text": "Write: 'Sell drinks, make gold'", 
+         "choice_b_exp_reward": 20, "choice_b_cash_change": 0, "choice_b_reputation_change": -1,
+         "choice_b_feedback": "The Guild rejects this charter as beneath their standards! Any merchant can sell drinks. A charter must capture what makes your establishment special. Revision required.",
+         "choice_c_text": "Copy another successful tavern's charter with minor changes", 
+         "choice_c_exp_reward": 25, "choice_c_cash_change": 0, "choice_c_reputation_change": 0,
+         "choice_c_feedback": "Borrowed identity is no identity! The Guild notices the similarities. Your charter should reflect YOUR unique strengths and aspirations, not imitate others.", 
+         "subskill_focus": "Defining Purpose"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Strategy", "required_level": 1,
+         "scenario_title": "L1: Mission and Vision", 
+         "scenario_narrative": "The Galactic Commerce Board requires all corporations to file a Statement of Purpose explaining their contribution to interstellar society. This document will be publicly available and shapes stakeholder expectations.",
+         "choice_a_text": "File comprehensive statement: Vision - 'Pioneer sustainable resource extraction that enables humanity's expansion to the stars' / Mission - 'Responsibly harvest rare minerals while protecting crew welfare and cosmic environments'", 
+         "choice_a_exp_reward": 50, "choice_a_cash_change": 0, "choice_a_reputation_change": 4,
+         "choice_a_feedback": "The Board commends your statement! Your Vision connects mining to humanity's greater purpose. Your Mission balances profit (resource extraction) with responsibility (welfare, environment). Investors appreciate the long-term thinking.",
+         "choice_b_text": "File: 'Extract maximum resources at minimum cost for shareholder value'", 
+         "choice_b_exp_reward": 25, "choice_b_cash_change": 500, "choice_b_reputation_change": -2,
+         "choice_b_feedback": "Functionally accurate but reputationally damaging! The public sees a corporation that cares only about profit. Talent chooses competitors with more inspiring missions. Short-term focus, long-term cost.",
+         "choice_c_text": "Hire consultants to craft something that sounds good without commitment", 
+         "choice_c_exp_reward": 30, "choice_c_cash_change": -1000, "choice_c_reputation_change": 1,
+         "choice_c_feedback": "Empty words are eventually exposed! Consultant-speak sounds impressive but means nothing actionable. When actions don't match the statement, stakeholders lose trust. Authenticity beats eloquence.", 
+         "subskill_focus": "Defining Purpose"},
+
+        # ========== LEVEL 2: Competitive Advantage ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Strategy", "required_level": 2,
+         "scenario_title": "L2: Competitive Advantage", 
+         "scenario_narrative": "Three new restaurants opened nearby, creating intense competition. You must identify what your restaurant does better than rivals. The choice: compete on lowest prices (Cost Leadership) or compete on unique quality (Differentiation).",
+         "choice_a_text": "Pursue Differentiation: Focus on unique fusion cuisine, premium ingredients, and exceptional dining experience that commands higher prices", 
+         "choice_a_exp_reward": 60, "choice_a_cash_change": 500, "choice_a_reputation_change": 4,
+         "choice_a_feedback": "Differentiation strategy chosen! You can't be the cheapest AND the best - pick one. By focusing on unique quality, customers pay premium for experiences they can't get elsewhere. Competitors can't easily copy your chef's creativity.",
+         "choice_b_text": "Pursue Cost Leadership: Streamline operations, buy in bulk, offer the lowest prices in the area", 
+         "choice_b_exp_reward": 55, "choice_b_cash_change": 800, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "Cost Leadership strategy chosen! Valid approach, but requires ruthless efficiency. You must have the LOWEST costs to sustain lowest prices. If competitors match prices, you'll need even better operations to survive.",
+         "choice_c_text": "Try both: Offer cheap prices AND premium quality", 
+         "choice_c_exp_reward": 25, "choice_c_cash_change": -500, "choice_c_reputation_change": -1,
+         "choice_c_feedback": "Stuck in the middle! Premium ingredients at cheap prices means losing money on every plate. Customers get confused - are you fast food or fine dining? Pick a lane and commit.", 
+         "subskill_focus": "Competitive Positioning"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Strategy", "required_level": 2,
+         "scenario_title": "L2: Competitive Advantage", 
+         "scenario_narrative": "New taverns and inns flood the district. The Guild Assessor asks: 'What makes YOUR establishment worth visiting?' You must define your competitive advantage - the best enchanted ales (Differentiation) or the cheapest drinks (Cost Leadership).",
+         "choice_a_text": "Differentiation: Invest in master-crafted enchanted beverages, rare ingredients, and legendary atmosphere that no competitor can replicate", 
+         "choice_a_exp_reward": 60, "choice_a_cash_change": 300, "choice_a_reputation_change": 4,
+         "choice_a_feedback": "Differentiation mastery! Your Dragon Fire Ale and phoenix-feather decor create experiences money alone can't buy. Wealthy adventurers pay premium prices. Competitors would need decades to match your reputation.",
+         "choice_b_text": "Cost Leadership: Efficient brewing, simple fare, the lowest prices for working-class patrons", 
+         "choice_b_exp_reward": 55, "choice_b_cash_change": 400, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "Cost Leadership engaged! You serve the masses with honest, affordable refreshment. Volume compensates for lower margins. Just ensure your costs stay below competitors - or they'll undercut you.",
+         "choice_c_text": "Serve premium products at budget prices to attract everyone", 
+         "choice_c_exp_reward": 25, "choice_c_cash_change": -400, "choice_c_reputation_change": 0,
+         "choice_c_feedback": "Economically impossible! Rare enchanted ingredients at tavern prices means you're subsidizing every customer. Either raise prices to match quality, or lower quality to match prices.", 
+         "subskill_focus": "Competitive Positioning"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Strategy", "required_level": 2,
+         "scenario_title": "L2: Competitive Advantage", 
+         "scenario_narrative": "Dozens of mining corps compete for contracts. The Galactic Mining Authority asks what distinguishes your operation. Will you be the lowest-cost extractor (Cost Leadership) or the specialist in rare exotic materials (Differentiation)?",
+         "choice_a_text": "Differentiation: Specialize in extracting ultra-rare isotopes requiring custom equipment and expert crews that competitors can't match", 
+         "choice_a_exp_reward": 60, "choice_a_cash_change": 2000, "choice_a_reputation_change": 4,
+         "choice_a_feedback": "Niche differentiation! Rare isotopes command massive premiums. Your specialized equipment and trained crews create barriers to entry. Competitors can't easily replicate your expertise.",
+         "choice_b_text": "Cost Leadership: Maximum automation, minimal crew, lowest extraction cost per ton for commodity minerals", 
+         "choice_b_exp_reward": 55, "choice_b_cash_change": 3000, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "Scale efficiency! Commodity minerals have thin margins but enormous volume. Your automated operations achieve costs 20% below competitors. Win on price when quality is standardized.",
+         "choice_c_text": "Offer specialty extraction at commodity prices to dominate both markets", 
+         "choice_c_exp_reward": 25, "choice_c_cash_change": -5000, "choice_c_reputation_change": 0,
+         "choice_c_feedback": "Impossible economics! Specialty equipment costs don't scale down to commodity prices. You're losing money on every rare extraction contract. Strategic clarity requires choosing your battlefield.", 
+         "subskill_focus": "Competitive Positioning"},
+
+        # ========== LEVEL 3: Environmental Scanning (PESTLE) ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Strategy", "required_level": 3,
+         "scenario_title": "L3: Environmental Scanning (PESTLE)", 
+         "scenario_narrative": "Before expanding to a second city, you must analyze the external environment using PESTLE: Political, Economic, Social, Technological, Legal, Environmental factors. Recent news mentions new health regulations (L), rising inflation (E), and changing food trends (S).",
+         "choice_a_text": "Conduct full PESTLE analysis: Map how each factor (Political, Economic, Social, Technological, Legal, Environmental) affects your expansion plans before committing", 
+         "choice_a_exp_reward": 70, "choice_a_cash_change": 0, "choice_a_reputation_change": 4,
+         "choice_a_feedback": "Strategic foresight! Your PESTLE analysis reveals: new health regs (L) require kitchen upgrades; inflation (E) increases ingredient costs; plant-based trend (S) opens opportunity. Now you can plan accordingly rather than react surprised.",
+         "choice_b_text": "Focus only on local competitors - that's the real threat", 
+         "choice_b_exp_reward": 35, "choice_b_cash_change": 0, "choice_b_reputation_change": 1,
+         "choice_b_feedback": "Competitor analysis is important but incomplete! You missed that new environmental regulations (E) ban your preferred packaging. PESTLE captures macro forces beyond direct competition.",
+         "choice_c_text": "Expand quickly before overanalyzing - speed is advantage", 
+         "choice_c_exp_reward": 30, "choice_c_cash_change": -2000, "choice_c_reputation_change": -1,
+         "choice_c_feedback": "Speed without foresight is reckless! You opened during a recession (E) with regulatory changes (L) you didn't anticipate. Losses exceed what analysis would have cost.", 
+         "subskill_focus": "External Analysis"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Strategy", "required_level": 3,
+         "scenario_title": "L3: Environmental Scanning (PESTLE)", 
+         "scenario_narrative": "Before opening a tavern in a new kingdom, you consult the Guild's Strategic Council. They advise using the ancient PESTLE wisdom: Political (kingdom stability), Economic (trade routes), Social (local customs), Technological (magical innovations), Legal (guild laws), Environmental (harvest conditions).",
+         "choice_a_text": "Commission comprehensive realm analysis: Political tensions with neighboring kingdoms, economic toll road changes, social attitudes toward outsiders, available enchantments, local guild regulations, crop forecasts", 
+         "choice_a_exp_reward": 70, "choice_a_cash_change": -200, "choice_a_reputation_change": 4,
+         "choice_a_feedback": "Strategic wisdom! Analysis reveals: Political tensions (P) mean soldier customers; toll changes (E) affect supplier costs; locals distrust outsiders (S) requiring community integration; new preservation enchantments (T) available. Informed expansion succeeds.",
+         "choice_b_text": "Ask a local merchant if the area seems profitable", 
+         "choice_b_exp_reward": 35, "choice_b_cash_change": 0, "choice_b_reputation_change": 1,
+         "choice_b_feedback": "Single perspective is limited! The merchant doesn't know upcoming Legal changes banning certain brews. PESTLE examines ALL external factors systematically.",
+         "choice_c_text": "Trust intuition - you've succeeded before without analysis", 
+         "choice_c_exp_reward": 25, "choice_c_cash_change": -500, "choice_c_reputation_change": -1,
+         "choice_c_feedback": "Past success doesn't predict new environments! Different kingdoms have different forces. Your intuition missed an upcoming harvest failure (E) that spikes ingredient costs. Analysis prevents surprises.", 
+         "subskill_focus": "External Analysis"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Strategy", "required_level": 3,
+         "scenario_title": "L3: Environmental Scanning (PESTLE)", 
+         "scenario_narrative": "Before establishing operations in a new star system, your Strategic Intelligence division recommends PESTLE analysis: Political (system governance), Economic (mineral prices), Social (colony attitudes), Technological (extraction advances), Legal (Galactic regulations), Environmental (asteroid stability).",
+         "choice_a_text": "Deploy full intelligence gathering: Political faction analysis, commodity price forecasts, colony labor attitudes, emerging extraction tech, new Galactic Mining Act provisions, geological surveys", 
+         "choice_a_exp_reward": 70, "choice_a_cash_change": -5000, "choice_a_reputation_change": 4,
+         "choice_a_feedback": "Strategic intelligence mastery! Analysis reveals: Political instability (P) poses security risks; price forecasts (E) show declining returns; colony opposes corporate mining (S) requiring local partnerships; new extraction tech (T) could halve costs. Plan adjusted for success.",
+         "choice_b_text": "Check mineral surveys - if there's ore, we can mine it", 
+         "choice_b_exp_reward": 35, "choice_b_cash_change": 0, "choice_b_reputation_change": 1,
+         "choice_b_feedback": "Technical feasibility isn't strategic viability! Yes, ore exists, but new Legal restrictions (L) limit extraction rates. Political unrest (P) requires expensive security. PESTLE sees the whole picture.",
+         "choice_c_text": "Competitors are moving in - we must act before analysis is complete", 
+         "choice_c_exp_reward": 30, "choice_c_cash_change": -10000, "choice_c_reputation_change": -1,
+         "choice_c_feedback": "Speed without intelligence is costly! Competitors who analyzed first knew about upcoming Environmental regulations (E) requiring expensive containment. They waited strategically while you committed prematurely.", 
+         "subskill_focus": "External Analysis"},
+
+        # ========== LEVEL 4: Resource Analysis (VRIO) ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Strategy", "required_level": 4,
+         "scenario_title": "L4: Resource Analysis (VRIO)", 
+         "scenario_narrative": "An investor asks what makes your restaurant defensible long-term. You need to analyze your resources using VRIO: Is each resource Valuable, Rare, hard to Imitate, and is your Organization set up to exploit it? Your chef's recipes, location, and brand all need evaluation.",
+         "choice_a_text": "Conduct VRIO assessment: Chef's secret recipes (V-yes, R-yes, I-hard, O-yes = sustainable advantage), Location (V-yes, R-no = temporary), Brand (V-yes, R-developing, I-medium, O-building)", 
+         "choice_a_exp_reward": 80, "choice_a_cash_change": 0, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Resource-based strategy! VRIO reveals your true competitive moat. The chef's recipes are your sustainable advantage - valuable, rare, hard to copy, and you're organized to leverage them. Protect this asset; invest in brand-building as secondary advantage.",
+         "choice_b_text": "List all resources as equally important competitive advantages", 
+         "choice_b_exp_reward": 35, "choice_b_cash_change": 0, "choice_b_reputation_change": 1,
+         "choice_b_feedback": "Not all resources are equal! Your tables are valuable but not rare - anyone can buy tables. VRIO distinguishes temporary advantages from sustainable ones. Focus resources on what competitors CAN'T easily copy.",
+         "choice_c_text": "Tell investor competitive advantage comes from hard work and determination", 
+         "choice_c_exp_reward": 25, "choice_c_cash_change": 0, "choice_c_reputation_change": 0,
+         "choice_c_feedback": "Platitudes don't satisfy investors! Everyone works hard. VRIO identifies SPECIFIC, DEFENSIBLE resources that create sustained above-average returns. Strategy requires analytical precision.", 
+         "subskill_focus": "Internal Strength"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Strategy", "required_level": 4,
+         "scenario_title": "L4: Resource Analysis (VRIO)", 
+         "scenario_narrative": "The Guild Master asks what resources make your tavern truly special. You must evaluate using the ancient VRIO framework: Valuable, Rare, Inimitable, Organized. Your enchanted brewing equipment, legendary recipes, and trained staff all warrant examination.",
+         "choice_a_text": "Analyze each resource: Enchanted brewing vats (V-yes, R-yes, I-very hard, O-yes = sustainable advantage), Recipes passed down 5 generations (V-yes, R-yes, I-impossible to copy, O-yes = core advantage)", 
+         "choice_a_exp_reward": 80, "choice_a_cash_change": 0, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Resource mastery! Your enchanted vats ARE rare - custom-forged by a now-deceased master. Your ancestral recipes are truly inimitable - they literally cannot be replicated. These are your defensive moats. Protect them absolutely.",
+         "choice_b_text": "Our competitive advantage is excellent customer service", 
+         "choice_b_exp_reward": 40, "choice_b_cash_change": 0, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "Service is valuable but easily imitated! Competitors can train staff to be friendly too. VRIO asks what can't be copied. Your unique enchanted equipment passes that test; generic 'service' doesn't.",
+         "choice_c_text": "We don't need frameworks - we just know we're the best", 
+         "choice_c_exp_reward": 25, "choice_c_cash_change": -200, "choice_c_reputation_change": 0,
+         "choice_c_feedback": "Confidence without analysis is arrogance! The Guild has seen many 'best' taverns fail when competitors copied their non-protected advantages. VRIO identifies what truly cannot be replicated.", 
+         "subskill_focus": "Internal Strength"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Strategy", "required_level": 4,
+         "scenario_title": "L4: Resource Analysis (VRIO)", 
+         "scenario_narrative": "The board demands a Resource Audit to identify sustainable competitive advantages. Using VRIO framework: Is your proprietary extraction algorithm, specialized fleet, and experienced crew Valuable, Rare, hard to Imitate, and properly Organized?",
+         "choice_a_text": "Present rigorous VRIO analysis: Proprietary algorithm (V-yes, R-yes, I-patented, O-yes = core advantage), Fleet (V-yes, R-no = parity), Crew expertise (V-yes, R-somewhat, I-takes years, O-developing)", 
+         "choice_a_exp_reward": 80, "choice_a_cash_change": 0, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Strategic resource clarity! Your algorithm is the crown jewel - valuable, rare, legally protected, and fully exploited. The fleet provides no advantage (competitors have similar ships). Crew expertise is developing but not yet a moat. Focus investment accordingly.",
+         "choice_b_text": "Our advantage is having the best technology in the sector", 
+         "choice_b_exp_reward": 40, "choice_b_cash_change": 0, "choice_b_reputation_change": 1,
+         "choice_b_feedback": "Which technology specifically? 'Best technology' is vague. VRIO demands precision. Your extraction algorithm is truly rare; your ships are standard models. Know exactly where your advantage lies.",
+         "choice_c_text": "Competitive advantage is overrated - just execute better than rivals", 
+         "choice_c_exp_reward": 25, "choice_c_cash_change": 0, "choice_c_reputation_change": 0,
+         "choice_c_feedback": "Execution matters but isn't strategy! If competitors can copy everything you do, 'better execution' becomes an exhausting arms race. VRIO identifies resources that provide lasting advantage regardless of execution.", 
+         "subskill_focus": "Internal Strength"},
+
+        # ========== LEVEL 5: Business Strategy (Porter's Generic) ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Strategy", "required_level": 5,
+         "scenario_title": "L5: Business Strategy (Porter's Generic)", 
+         "scenario_narrative": "A strategic consultant reviews your positioning and warns you're 'stuck in the middle' - not the cheapest option (Cost Leadership), not clearly premium (Differentiation), and not focused on a specific niche (Focus). Porter's Generic Strategies demand a clear choice.",
+         "choice_a_text": "Commit fully to Differentiation: Elevate to premium positioning with unique chef creations, upscale ambiance, and premium pricing that clearly separates us from competitors", 
+         "choice_a_exp_reward": 90, "choice_a_cash_change": 1000, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Strategic clarity achieved! Differentiation means customers choose you for unique value, not price. Your focus on chef creativity and ambiance creates experiences competitors can't match. Premium pricing reflects premium value.",
+         "choice_b_text": "Pursue Cost Leadership: Strip away extras, maximize efficiency, become the value leader in the neighborhood", 
+         "choice_b_exp_reward": 85, "choice_b_cash_change": 1500, "choice_b_reputation_change": 3,
+         "choice_b_feedback": "Cost Leadership commitment! Valid strategy if you can truly achieve lowest costs. This means ruthless efficiency, standardized processes, and volume-based purchasing. Compete on price only if you have cost advantage.",
+         "choice_c_text": "Stay flexible - sometimes compete on price, sometimes on quality, depending on the situation", 
+         "choice_c_exp_reward": 35, "choice_c_cash_change": -500, "choice_c_reputation_change": -1,
+         "choice_c_feedback": "This IS being stuck in the middle! Customers don't know what you stand for. Price-shoppers find cheaper options; quality-seekers find more prestigious ones. Porter proved: strategic ambiguity underperforms clear positioning.", 
+         "subskill_focus": "Competitive Stance"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Strategy", "required_level": 5,
+         "scenario_title": "L5: Business Strategy (Porter's Generic)", 
+         "scenario_narrative": "The Grand Strategist of the Guild warns your tavern lacks clear positioning. Are you the cheapest drinks in town (Cost Leadership), the most prestigious establishment (Differentiation), or specialized for a specific clientele (Focus)? 'All things to all people' fails.",
+         "choice_a_text": "Declare Differentiation Focus: Become THE destination for adventurers seeking legendary brews, rare lore, and quest connections - premium pricing for premium experiences", 
+         "choice_a_exp_reward": 90, "choice_a_cash_change": 500, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Focused Differentiation mastery! By targeting adventurers specifically with unique offerings they can't find elsewhere, you become irreplaceable to that segment. They'll travel across kingdoms for your legendary Dragon Fire Ale.",
+         "choice_b_text": "Pursue Cost Leadership: Simple ales, efficient service, the working person's tavern with unbeatable prices", 
+         "choice_b_exp_reward": 85, "choice_b_cash_change": 700, "choice_b_reputation_change": 3,
+         "choice_b_feedback": "Cost Leadership commitment! Serve the masses with honest value. This requires operational efficiency - large batches, minimal waste, standardized recipes. Volume compensates for thinner margins.",
+         "choice_c_text": "Adapt our positioning based on who walks through the door that day", 
+         "choice_c_exp_reward": 30, "choice_c_cash_change": -300, "choice_c_reputation_change": -1,
+         "choice_c_feedback": "Strategic confusion! Adventurers seeking legendary experiences find peasant prices suspicious. Workers seeking affordable drinks resent premium markups. Without consistent positioning, no one knows what to expect.", 
+         "subskill_focus": "Competitive Stance"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Strategy", "required_level": 5,
+         "scenario_title": "L5: Business Strategy (Porter's Generic)", 
+         "scenario_narrative": "The Strategic Planning Committee demands you clarify your market position. Are you the lowest-cost extractor (Cost Leadership), the specialist in complex rare-mineral extraction (Differentiation), or focused on a specific sector like medical-grade isotopes (Focus)?",
+         "choice_a_text": "Commit to Focused Differentiation: Specialize exclusively in ultra-rare medical-grade isotopes, becoming the premium provider for pharmaceutical and biotech clients who demand absolute purity", 
+         "choice_a_exp_reward": 90, "choice_a_cash_change": 5000, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Focused Differentiation excellence! Medical-grade clients pay massive premiums for certified purity. Your specialized equipment, trained crews, and quality certifications create barriers competitors would need years to overcome.",
+         "choice_b_text": "Pursue broad Cost Leadership: Maximize automation across all mineral types, achieve lowest cost-per-ton in the sector", 
+         "choice_b_exp_reward": 85, "choice_b_cash_change": 8000, "choice_b_reputation_change": 3,
+         "choice_b_feedback": "Scale efficiency! Broad Cost Leadership means being the sector's low-cost producer across commodity minerals. Heavy automation, optimal routes, minimal crew. When quality is standardized, lowest cost wins contracts.",
+         "choice_c_text": "Remain flexible - bid on whatever contracts seem profitable at the moment", 
+         "choice_c_exp_reward": 35, "choice_c_cash_change": -3000, "choice_c_reputation_change": -1,
+         "choice_c_feedback": "Opportunistic bidding isn't strategy! Without clear positioning, you lack advantages in any segment. Specialists beat you on quality; cost leaders beat you on price. The middle is where profits die.", 
+         "subskill_focus": "Competitive Stance"},
+
+        # ========== LEVEL 6: Strategic Goal Setting (Balanced Scorecard) ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Strategy", "required_level": 6,
+         "scenario_title": "L6: Strategic Goal Setting", 
+         "scenario_narrative": "Annual planning begins. Last year focused only on revenue, but the Balanced Scorecard framework demands four perspectives: Financial (profits), Customer (satisfaction), Internal Process (efficiency), Learning & Growth (employee development). What KPIs will you set?",
+         "choice_a_text": "Develop balanced KPIs: Financial (15% profit growth), Customer (4.5+ Yelp rating, 40% repeat visits), Internal Process (table turnover time, food waste %), Learning & Growth (chef certifications, cross-training hours)", 
+         "choice_a_exp_reward": 100, "choice_a_cash_change": 0, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Balanced Scorecard mastery! Financial results are lagging indicators - they tell you what already happened. Customer, Process, and Learning metrics are leading indicators - they predict future financial success. Your balanced approach drives sustainable performance.",
+         "choice_b_text": "Focus on financial metrics only - revenue, profit margin, and cash flow are what matter", 
+         "choice_b_exp_reward": 50, "choice_b_cash_change": 500, "choice_b_reputation_change": 1,
+         "choice_b_feedback": "Financial focus misses root causes! By the time you see declining revenue, customer satisfaction and internal processes already deteriorated. Balanced Scorecard catches problems before they hit the bottom line.",
+         "choice_c_text": "Set vague goals like 'improve customer experience' without specific metrics", 
+         "choice_c_exp_reward": 30, "choice_c_cash_change": 0, "choice_c_reputation_change": 0,
+         "choice_c_feedback": "Unmeasurable goals are meaningless! 'Improve customer experience' - by how much? Compared to what baseline? KPIs must be specific and measurable to drive action and accountability.", 
+         "subskill_focus": "Balanced Scorecard"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Strategy", "required_level": 6,
+         "scenario_title": "L6: Strategic Goal Setting", 
+         "scenario_narrative": "The Guild requires annual goal registration using the Four Pillars framework: Treasury (gold), Patrons (customer loyalty), Craft (internal quality), Growth (apprentice development). You must set balanced targets across all four.",
+         "choice_a_text": "Register balanced goals: Treasury (increase reserves 20%), Patrons (5+ Guild rating, track repeat visitors), Craft (legendary artifacts forged, waste reduction), Growth (apprentice completion rate, master certifications)", 
+         "choice_a_exp_reward": 100, "choice_a_cash_change": 0, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Four Pillars excellence! The Guild commends your balanced approach. Strong Treasury comes FROM satisfied Patrons, efficient Craft, and skilled staff. By tracking all four, you identify problems before they drain your gold.",
+         "choice_b_text": "Focus on Treasury alone - gold is the ultimate measure of success", 
+         "choice_b_exp_reward": 50, "choice_b_cash_change": 300, "choice_b_reputation_change": 1,
+         "choice_b_feedback": "Gold worship blinds you to its sources! When gold declines, you won't know if it's Patron dissatisfaction, Craft problems, or untrained staff. Balanced goals reveal root causes.",
+         "choice_c_text": "Set inspiring but unmeasurable goals like 'become legendary'", 
+         "choice_c_exp_reward": 30, "choice_c_cash_change": 0, "choice_c_reputation_change": 0,
+         "choice_c_feedback": "The Guild rejects vague aspirations! 'Become legendary' - what does that mean specifically? How will you know when achieved? Goals must be measurable to be meaningful.", 
+         "subskill_focus": "Balanced Scorecard"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Strategy", "required_level": 6,
+         "scenario_title": "L6: Strategic Goal Setting", 
+         "scenario_narrative": "The Strategic Planning System requires Balanced Scorecard KPIs across four dimensions: Financial (returns), Customer (client satisfaction), Internal Process (operational efficiency), Innovation & Growth (technology development). What metrics will you track?",
+         "choice_a_text": "Program balanced metrics: Financial (ROI, margin), Customer (delivery reliability, quality scores), Internal Process (extraction efficiency, safety incidents), Innovation (R&D spend, patents filed, training hours)", 
+         "choice_a_exp_reward": 100, "choice_a_cash_change": 0, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Balanced performance management! Financial metrics tell you how you DID. Customer, Process, and Innovation metrics predict how you WILL DO. Safety incidents predict future lawsuits; R&D predicts future competitive position. Lead and lag indicators together.",
+         "choice_b_text": "Prioritize financial metrics - shareholder returns are the ultimate scorecard", 
+         "choice_b_exp_reward": 50, "choice_b_cash_change": 2000, "choice_b_reputation_change": 1,
+         "choice_b_feedback": "Short-term focus! This quarter's returns look great, but declining innovation investment and safety shortcuts will destroy future value. Balanced Scorecard forces long-term thinking.",
+         "choice_c_text": "Track everything possible - data is power", 
+         "choice_c_exp_reward": 35, "choice_c_cash_change": -1000, "choice_c_reputation_change": 0,
+         "choice_c_feedback": "Data overload paralyzes decision-making! Hundreds of metrics mean nothing gets focus. Balanced Scorecard selects KEY performance indicators - the vital few that truly drive strategic success.", 
+         "subskill_focus": "Balanced Scorecard"},
+
+        # ========== LEVEL 7: Growth Strategy (Ansoff Matrix) ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Strategy", "required_level": 7,
+         "scenario_title": "L7: Growth Strategy (Ansoff Matrix)", 
+         "scenario_narrative": "Your restaurant is profitable but growth has stalled. The Ansoff Matrix presents four growth paths: Market Penetration (more sales to current customers), Market Development (new locations), Product Development (new menu items), or Diversification (new products for new markets). Which path?",
+         "choice_a_text": "Start with Market Penetration (lowest risk): Increase visit frequency through loyalty programs and expanded hours before attempting riskier strategies", 
+         "choice_a_exp_reward": 110, "choice_a_cash_change": 800, "choice_a_reputation_change": 4,
+         "choice_a_feedback": "Strategic growth sequencing! Ansoff shows penetration is lowest-risk because you know both your product AND your customers. Extract maximum value from current position before taking risks. Loyalty programs increase average visits from 2 to 3 per month - significant growth without new investment.",
+         "choice_b_text": "Pursue Diversification immediately: Open a completely different business (food truck, catering, meal kits) in new markets", 
+         "choice_b_exp_reward": 60, "choice_b_cash_change": -2000, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "Diversification is highest risk! New products for new markets means you're learning everything from scratch. Ansoff suggests exhausting lower-risk options first. Why diversify when penetration opportunities remain?",
+         "choice_c_text": "Pursue all four strategies simultaneously to maximize growth", 
+         "choice_c_exp_reward": 40, "choice_c_cash_change": -3000, "choice_c_reputation_change": 0,
+         "choice_c_feedback": "Resource dispersion kills execution! Each strategy requires focused investment. Doing four at once means doing none well. Ansoff helps CHOOSE - sequence strategies based on risk tolerance and resources.", 
+         "subskill_focus": "Growth Planning"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Strategy", "required_level": 7,
+         "scenario_title": "L7: Growth Strategy (Ansoff Matrix)", 
+         "scenario_narrative": "Your tavern's gold reserves are growing but the Guild challenges you to expand influence. The Four Paths of Growth: More sales to current patrons (Penetration), new territories (Market Development), new offerings (Product Development), or entirely new ventures (Diversification). Which path calls to you?",
+         "choice_a_text": "Begin with Penetration: Maximize current tavern before expansion - loyalty rewards, exclusive memberships, extended hours to serve current patrons more frequently", 
+         "choice_a_exp_reward": 110, "choice_a_cash_change": 400, "choice_a_reputation_change": 4,
+         "choice_a_feedback": "Wisdom in sequence! You already know your patrons and your ales. Extracting more value from this known territory is safest. Guild Members who visited monthly now visit weekly with the new membership program. Growth without gambling.",
+         "choice_b_text": "Diversify immediately: Open an adventuring supply shop attached to the tavern", 
+         "choice_b_exp_reward": 60, "choice_b_cash_change": -800, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "New product for new market is maximum risk! You know tavern-keeping, not equipment supply. The shop struggles while taking focus from your core business. Exhaust lower-risk paths first.",
+         "choice_c_text": "Pursue all growth paths simultaneously to grow as fast as possible", 
+         "choice_c_exp_reward": 40, "choice_c_cash_change": -1000, "choice_c_reputation_change": 0,
+         "choice_c_feedback": "Scattered resources achieve scattered results! Each path requires dedicated gold and attention. The Four Paths are OPTIONS to sequence, not simultaneous mandates.", 
+         "subskill_focus": "Growth Planning"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Strategy", "required_level": 7,
+         "scenario_title": "L7: Growth Strategy (Ansoff Matrix)", 
+         "scenario_narrative": "Shareholder pressure demands growth plans. The Ansoff Matrix offers four vectors: Penetration (more extraction from current asteroids), Market Development (new star systems), Product Development (new mineral processing), Diversification (new industries). Strategic choice required.",
+         "choice_a_text": "Prioritize Market Penetration: Optimize current asteroid yields with improved technology and extended mining schedules before expanding to new systems", 
+         "choice_a_exp_reward": 110, "choice_a_cash_change": 5000, "choice_a_reputation_change": 4,
+         "choice_a_feedback": "Capital-efficient growth! New technology increases yield from known asteroids by 30% - growth without the risk and cost of new system exploration. Ansoff prioritizes low-risk growth until opportunities exhaust.",
+         "choice_b_text": "Pursue Diversification: Enter refining and manufacturing - move up the value chain entirely", 
+         "choice_b_exp_reward": 60, "choice_b_cash_change": -20000, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "Highest risk, highest capital requirement! New industry, new customers, new competitors. Diversification makes sense AFTER exhausting lower-risk options. Why gamble when penetration opportunities remain?",
+         "choice_c_text": "Spread investment across all four growth vectors for portfolio diversification", 
+         "choice_c_exp_reward": 45, "choice_c_cash_change": -8000, "choice_c_reputation_change": 0,
+         "choice_c_feedback": "Strategic diversification isn't the same as scattered investment! Ansoff helps you CHOOSE and SEQUENCE, not spread thin. Focus resources on the most attractive risk-adjusted opportunity.", 
+         "subskill_focus": "Growth Planning"},
+
+        # ========== LEVEL 8: Industry Analysis (Porter's Five Forces) ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Strategy", "required_level": 8,
+         "scenario_title": "L8: Industry Analysis (Porter's Five Forces)", 
+         "scenario_narrative": "Before major investment, you must analyze industry profit potential using Porter's Five Forces: Buyer Power, Supplier Power, Threat of Substitutes, Threat of New Entrants, and Competitive Rivalry. A consultant presents concerning findings about delivery app power (Buyers) and food supplier consolidation (Suppliers).",
+         "choice_a_text": "Conduct full Five Forces analysis and develop strategies to counter each threat: Reduce delivery app dependence, diversify suppliers, strengthen barriers to entry, differentiate from substitutes", 
+         "choice_a_exp_reward": 120, "choice_a_cash_change": 500, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Industry structure mastery! Your analysis reveals: delivery apps extract 30% commissions (high Buyer power) - counter with direct ordering incentives. Two suppliers control 80% of produce (high Supplier power) - develop local farm relationships. Understanding these forces lets you shape them.",
+         "choice_b_text": "Focus only on direct competitors - they're the real threat", 
+         "choice_b_exp_reward": 50, "choice_b_cash_change": 0, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "Rivalry is just ONE of five forces! You beat competitors but delivery apps still take 30% of revenue. Supplier consolidation raises your costs. Porter teaches that profitability depends on ALL five forces, not just direct competition.",
+         "choice_c_text": "Industry analysis is academic - just focus on running a great restaurant", 
+         "choice_c_exp_reward": 35, "choice_c_cash_change": -1000, "choice_c_reputation_change": 0,
+         "choice_c_feedback": "Great restaurants can fail in bad industries! If suppliers have power, they take your margins. If substitutes are attractive, customers leave. Porter's Five Forces explains why some industries are structurally more profitable than others.", 
+         "subskill_focus": "Industry Structure"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Strategy", "required_level": 8,
+         "scenario_title": "L8: Industry Analysis (Porter's Five Forces)", 
+         "scenario_narrative": "The Grand Strategist teaches the Five Forces that shape any trade: Power of Patrons (Buyers), Power of Suppliers, Threat of Magical Alternatives (Substitutes), Threat of New Taverns (Entrants), and Rivalry among existing establishments. She warns of troubling trends.",
+         "choice_a_text": "Analyze all Five Forces: Counter Patron power with unique offerings, diversify from the Brewers Guild monopoly (Supplier power), defend against wild magic beverages (Substitutes), build reputation barriers against new entrants", 
+         "choice_a_exp_reward": 120, "choice_a_cash_change": 300, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Strategic force mastery! The Brewers Guild's monopoly (Supplier power) was extracting excessive margins - your new partnership with independent brewers breaks their hold. Understanding forces lets you reshape them to your advantage.",
+         "choice_b_text": "Focus on defeating rival taverns - they're the clear enemy", 
+         "choice_b_exp_reward": 50, "choice_b_cash_change": 0, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "Rivalry is visible but not always dominant! You crush rivals but wild magic potions (Substitutes) steal your younger patrons. The Royal Court's exclusive tax power (Buyer power) squeezes margins. See all five forces.",
+         "choice_c_text": "These forces are beyond our control - just brew good ale", 
+         "choice_c_exp_reward": 35, "choice_c_cash_change": -500, "choice_c_reputation_change": 0,
+         "choice_c_feedback": "Forces can be shaped! Good ale matters, but if the Brewers Guild controls all ingredients, they capture the value of your good ale. The Five Forces aren't destiny - they're strategic targets to influence.", 
+         "subskill_focus": "Industry Structure"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Strategy", "required_level": 8,
+         "scenario_title": "L8: Industry Analysis (Porter's Five Forces)", 
+         "scenario_narrative": "The Strategic Intelligence division presents Porter's Five Forces analysis of the mining sector: Buyer Power (major corps dictate prices), Supplier Power (Interstellar Bank controls financing), Threat of Substitutes (nanobots, asteroid reclamation), Threat of Entrants (low barriers), and intense Rivalry.",
+         "choice_a_text": "Address each force strategically: Lock in long-term buyer contracts, secure alternative financing sources, differentiate from nanobot extraction, build scale barriers, find non-rival niches", 
+         "choice_a_exp_reward": 120, "choice_a_cash_change": 2000, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Industry structure optimization! The Interstellar Bank's financing monopoly (Supplier power) was your biggest vulnerability - you secured alternative credit sources, reducing their leverage. Each force addressed improves structural profitability.",
+         "choice_b_text": "Focus on beating rival mining corps - outcompete them and the rest follows", 
+         "choice_b_exp_reward": 50, "choice_b_cash_change": 0, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "You win market share but profitability declines! Why? The Interstellar Bank (Supplier power) raised financing costs for the whole sector. Nanobot technology (Substitutes) made traditional extraction less valuable. All five forces matter.",
+         "choice_c_text": "If industry forces are unfavorable, exit to a better industry", 
+         "choice_c_exp_reward": 60, "choice_c_cash_change": -5000, "choice_c_reputation_change": 1,
+         "choice_c_feedback": "Exit is an option, but forces can be reshaped! Your specialized position in rare isotopes faces different forces than commodity mining. Five Forces analysis identifies WHERE in the industry to compete, not just whether to compete.", 
+         "subskill_focus": "Industry Structure"},
+
+        # ========== LEVEL 9: Organizational Structure ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Strategy", "required_level": 9,
+         "scenario_title": "L9: Organizational Structure", 
+         "scenario_narrative": "Your restaurant group has grown to six locations, but the original functional structure (all chefs report to head chef, all servers to floor manager) is causing coordination problems. You're considering Divisional (each location self-contained) or Matrix (functional AND location reporting) structures.",
+         "choice_a_text": "Restructure to Divisional: Each location becomes a self-contained unit with its own chef, manager, and P&L responsibility, with corporate providing shared services and standards", 
+         "choice_a_exp_reward": 130, "choice_a_cash_change": 0, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Structure follows strategy! Divisional design empowers each location to adapt to local markets while maintaining brand standards. General Managers own results. Corporate focuses on strategy, not micromanagement. Accountability is clear.",
+         "choice_b_text": "Maintain Functional structure: Central control ensures consistency across all locations", 
+         "choice_b_exp_reward": 60, "choice_b_cash_change": -1000, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "Functional structure doesn't scale! With six locations, the head chef can't effectively oversee all kitchens. Decisions bottleneck at the top. What worked at one location creates chaos at six.",
+         "choice_c_text": "Implement Matrix: Staff report to both functional heads and location managers", 
+         "choice_c_exp_reward": 70, "choice_c_cash_change": -500, "choice_c_reputation_change": 3,
+         "choice_c_feedback": "Matrix creates complexity! Chefs with two bosses face conflicting priorities. Matrix works for project-based organizations, but restaurants need clear operational authority. Divisional is cleaner for your situation.", 
+         "subskill_focus": "Adaptive Design"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Strategy", "required_level": 9,
+         "scenario_title": "L9: Organizational Structure", 
+         "scenario_narrative": "Your tavern empire spans three kingdoms. The original Guild structure (all brewers under Master Brewer, all servers under Hospitality Guild) creates conflicts between Guild loyalties and location needs. The Grand Council offers alternative structures.",
+         "choice_a_text": "Adopt Regional Baronies (Divisional): Each kingdom's taverns become a self-governing barony with local Guildmasters, while the central House maintains standards and shared knowledge", 
+         "choice_a_exp_reward": 130, "choice_a_cash_change": 0, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Wise restructuring! Each Barony can adapt to local customs, laws, and tastes while the central House ensures quality standards and knowledge sharing. Regional Barons own results and can respond quickly to local conditions.",
+         "choice_b_text": "Strengthen central Guild control: All masters report directly to you regardless of location", 
+         "choice_b_exp_reward": 55, "choice_b_cash_change": -400, "choice_b_reputation_change": 1,
+         "choice_b_feedback": "Centralized control breaks at distance! Decisions for the distant eastern kingdom take weeks. Local opportunities pass while awaiting approval. Structure must match scale.",
+         "choice_c_text": "Create Dual Loyalty (Matrix): Staff serve both their Guild and their location equally", 
+         "choice_c_exp_reward": 65, "choice_c_cash_change": -200, "choice_c_reputation_change": 2,
+         "choice_c_feedback": "Two masters create confusion! When the Brewers Guild demands recipe standardization but the local Barony needs adaptation, who wins? Clean authority lines outperform elegant but complex matrices.", 
+         "subskill_focus": "Adaptive Design"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Strategy", "required_level": 9,
+         "scenario_title": "L9: Organizational Structure", 
+         "scenario_narrative": "Your corporation operates across twelve star systems, but the original Functional structure (Engineering division, Operations division, Sales division) causes coordination failures. Product decisions require alignment across all functions, slowing response time.",
+         "choice_a_text": "Restructure to Product-Based Divisions: Create separate divisions for Commodity Minerals, Rare Isotopes, and Specialty Extraction - each with integrated engineering, operations, and sales", 
+         "choice_a_exp_reward": 130, "choice_a_cash_change": -10000, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Organizational alignment achieved! Each division now has the resources to move quickly on product-specific opportunities. Rare Isotopes division can invest in specialized equipment without Commodity Minerals budget politics. Structure matches strategy.",
+         "choice_b_text": "Maintain Functional structure: Specialized expertise in each function is our competitive advantage", 
+         "choice_b_exp_reward": 60, "choice_b_cash_change": -5000, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "Functional silos create handoff problems! Engineers optimize for technical elegance; Sales promises features Operations can't deliver. Cross-functional coordination meetings multiply. At your scale, functional structure creates more friction than expertise.",
+         "choice_c_text": "Implement Matrix: Everyone reports to both Function and Product leaders", 
+         "choice_c_exp_reward": 75, "choice_c_cash_change": -3000, "choice_c_reputation_change": 3,
+         "choice_c_feedback": "Matrix can work but adds complexity. Your situation (clearly distinct product lines with different success factors) favors cleaner divisional structure. Matrix fits when products share so much capability that divisions would duplicate.", 
+         "subskill_focus": "Adaptive Design"},
+
+        # ========== LEVEL 10: Strategic Resource Allocation ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Strategy", "required_level": 10,
+         "scenario_title": "L10: Strategic Resource Allocation", 
+         "scenario_narrative": "As CEO, you must allocate the company's $500,000 annual surplus. Options: invest in R&D (test kitchen for new concepts), pursue M&A (acquire a competitor), or expand internal capacity (renovate existing locations). Each path has different risk/return profiles and strategic implications.",
+         "choice_a_text": "Balanced allocation based on strategic priorities: 40% R&D for future concepts ($200K), 35% capacity expansion for proven locations ($175K), 25% M&A reserve for opportunistic acquisitions ($125K)", 
+         "choice_a_exp_reward": 150, "choice_a_cash_change": 2000, "choice_a_reputation_change": 6,
+         "choice_a_feedback": "Strategic capital deployment mastery! Your allocation reflects strategic thinking: R&D builds future advantages, capacity expansion harvests current success, M&A reserve enables opportunistic moves. The board commends your balanced, long-term perspective that doesn't sacrifice today for tomorrow or vice versa.",
+         "choice_b_text": "All-in on M&A: Acquire the struggling competitor while they're weak", 
+         "choice_b_exp_reward": 80, "choice_b_cash_change": 5000, "choice_b_reputation_change": 3,
+         "choice_b_feedback": "High concentration risk! Acquisition succeeds but integration consumes all management attention. R&D stalls, existing locations deteriorate. Strategic resource allocation means balanced investment across time horizons.",
+         "choice_c_text": "Return surplus to shareholders - let them decide where to invest", 
+         "choice_c_exp_reward": 60, "choice_c_cash_change": 0, "choice_c_reputation_change": 2,
+         "choice_c_feedback": "Abdication of strategic responsibility! As CEO, you have information shareholders lack about strategic opportunities. Returning capital signals you see no good internal investments - often untrue for growth companies.", 
+         "subskill_focus": "Capital Deployment"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Strategy", "required_level": 10,
+         "scenario_title": "L10: Strategic Resource Allocation", 
+         "scenario_narrative": "The Grand Treasury holds 10,000 gold pieces in surplus. The Council demands your allocation decision: Invest in the Alchemical Research Guild (new brews for the future), acquire the failing Dragon's Rest tavern (M&A), or renovate the Great Hall (capacity expansion). Each choice shapes the empire's future.",
+         "choice_a_text": "Strategic allocation across time horizons: 4,000 gold to Alchemical Research (future), 3,500 gold to Great Hall renovation (present), 2,500 gold reserved for opportunistic acquisitions", 
+         "choice_a_exp_reward": 150, "choice_a_cash_change": 1000, "choice_a_reputation_change": 6,
+         "choice_a_feedback": "Resource allocation wisdom! The Council celebrates your balanced vision. Alchemical research secures future advantages; renovation harvests current success; the acquisition reserve enables swift action when opportunities arise. All time horizons are served.",
+         "choice_b_text": "Acquire Dragon's Rest immediately - they're desperate and it's a bargain", 
+         "choice_b_exp_reward": 80, "choice_b_cash_change": 2000, "choice_b_reputation_change": 3,
+         "choice_b_feedback": "Opportunistic but unbalanced! Dragon's Rest revives but your research stalls. Competitors develop new brews while you manage an integration. Strategic allocation balances present opportunities with future preparation.",
+         "choice_c_text": "Distribute the gold to Guild Members as bonus - they earned it", 
+         "choice_c_exp_reward": 55, "choice_c_cash_change": 0, "choice_c_reputation_change": 3,
+         "choice_c_feedback": "Popular but strategically weak! Guild Members celebrate, but the empire builds no future advantage. Leaders must balance immediate rewards with long-term investment. Where will next decade's growth come from?", 
+         "subskill_focus": "Capital Deployment"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Strategy", "required_level": 10,
+         "scenario_title": "L10: Strategic Resource Allocation", 
+         "scenario_narrative": "The board expects your capital allocation decision. The $50 million surplus could fund: R&D for quantum extraction technology (30% of profits for risky future tech), M&A to acquire a struggling competitor, or capacity expansion at proven asteroids. Shareholders demand justification.",
+         "choice_a_text": "Present strategic allocation framework: 35% R&D for quantum extraction ($17.5M), 40% capacity expansion ($20M), 25% M&A opportunistic reserve ($12.5M), with clear metrics and stage gates for each", 
+         "choice_a_exp_reward": 150, "choice_a_cash_change": 10000, "choice_a_reputation_change": 6,
+         "choice_a_feedback": "Capital allocation excellence! Your presentation demonstrates mastery: R&D addresses technological disruption, capacity expansion harvests proven assets, M&A reserve enables strategic opportunism. Clear metrics ensure accountability. The board unanimously approves - this is what strategic leadership looks like.",
+         "choice_b_text": "Commit 100% to quantum extraction R&D - technology is the future", 
+         "choice_b_exp_reward": 70, "choice_b_cash_change": -5000, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "Bold but unbalanced! Quantum research may take 10 years. Meanwhile, current operations starve for capital while competitors expand. Strategic allocation serves multiple time horizons simultaneously.",
+         "choice_c_text": "Maximize shareholder dividends - return 80% of surplus", 
+         "choice_c_exp_reward": 55, "choice_c_cash_change": 0, "choice_c_reputation_change": 1,
+         "choice_c_feedback": "Short-term shareholder appeasement! Dividends boost this quarter's stock price but signal no growth vision. Institutional investors question long-term trajectory. CEOs allocate capital; they don't just return it.", 
+         "subskill_focus": "Capital Deployment"},
+    ]
+    
+    for scenario in scenarios:
+        cur.execute("""
+            INSERT INTO scenario_master (world_type, industry, discipline, required_level, scenario_title, scenario_narrative,
+                choice_a_text, choice_a_exp_reward, choice_a_cash_change, choice_a_reputation_change, choice_a_feedback,
+                choice_b_text, choice_b_exp_reward, choice_b_cash_change, choice_b_reputation_change, choice_b_feedback,
+                choice_c_text, choice_c_exp_reward, choice_c_cash_change, choice_c_reputation_change, choice_c_feedback,
+                subskill_focus)
+            VALUES (%(world_type)s, %(industry)s, %(discipline)s, %(required_level)s, %(scenario_title)s, %(scenario_narrative)s,
+                %(choice_a_text)s, %(choice_a_exp_reward)s, %(choice_a_cash_change)s, %(choice_a_reputation_change)s, %(choice_a_feedback)s,
+                %(choice_b_text)s, %(choice_b_exp_reward)s, %(choice_b_cash_change)s, %(choice_b_reputation_change)s, %(choice_b_feedback)s,
+                %(choice_c_text)s, %(choice_c_exp_reward)s, %(choice_c_cash_change)s, %(choice_c_reputation_change)s, %(choice_c_feedback)s,
+                %(subskill_focus)s)
+        """, scenario)
+    
+    conn.commit()
+    print(f"Seeded {len(scenarios)} Strategy Curriculum scenarios (Levels 1-10, 3 worlds)!")
+    cur.close()
+    conn.close()
+
+
 if __name__ == "__main__":
     init_database()
     seed_scenarios()
@@ -3875,3 +4379,4 @@ if __name__ == "__main__":
     seed_legal_curriculum()
     seed_operations_curriculum()
     seed_hr_curriculum()
+    seed_strategy_curriculum()

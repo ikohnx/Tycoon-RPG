@@ -148,3 +148,6 @@ The game runs as a web application on port 5000.
 - 2025-12: Operations curriculum covers: Transformation Process (I/O), Inventory Management, Workflow Optimization, Capacity Utilization, Quality Assurance, Production Scheduling, Just-In-Time Inventory, Supply Chain Risk Management, Outsourcing/Offshoring, Process Innovation & Automation
 - 2025-12: Implemented complete 10-level Human Resources Curriculum (30 scenarios across 3 worlds)
 - 2025-12: HR curriculum covers: Job Description & Needs Analysis, Legal & Ethical Hiring (EEO), Onboarding & Training, Performance Management (SMART Goals), Compensation & Benefits, Employee Relations & Morale, Conflict Resolution & Mediation, Termination & Severance, Succession Planning, Organizational Structure & Labor Relations
+- 2025-12: Implemented complete 10-level Strategy Curriculum (30 scenarios across 3 worlds)
+- 2025-12: Strategy curriculum covers: Mission & Vision, Competitive Advantage (Cost Leadership vs Differentiation), PESTLE Analysis, VRIO Framework, Porter's Generic Strategies, Balanced Scorecard, Ansoff Matrix, Porter's Five Forces, Organizational Structure (Functional/Divisional/Matrix), Strategic Resource Allocation
+- 2025-12: **ALL 6 CORE DISCIPLINES COMPLETE** - Total of 210 educational business scenarios across all curricula
