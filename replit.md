@@ -127,3 +127,5 @@ The game runs as a web application on port 5000.
   - Victory and defeat splash screens
 - 2025-12: Redesigned hub with visual building grid layout showing illustrated icons
 - 2025-12: Added "SELECTED" badge indicators on new game selection cards
+- 2025-12: Fixed core gameplay - added 15 new scenarios for Modern/Restaurant covering all 6 disciplines
+- 2025-12: Each discipline now has real business education content with choices, feedback, and consequences
