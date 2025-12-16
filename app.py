@@ -8,7 +8,8 @@ from src.database import (init_database, seed_scenarios, seed_achievements, seed
                           seed_industrial_events, seed_industrial_rivals, seed_modern_restaurant_full,
                           seed_marketing_curriculum, seed_accounting_curriculum, seed_finance_curriculum,
                           seed_legal_curriculum, seed_operations_curriculum, seed_hr_curriculum,
-                          seed_strategy_curriculum)
+                          seed_strategy_curriculum, seed_daily_login_rewards, seed_advisors,
+                          seed_equipment, seed_daily_missions)
 from src.game_engine import GameEngine
 from src.leveling import get_level_title, get_progress_bar, get_exp_to_next_level
 
@@ -39,6 +40,10 @@ seed_legal_curriculum()
 seed_operations_curriculum()
 seed_hr_curriculum()
 seed_strategy_curriculum()
+seed_daily_login_rewards()
+seed_advisors()
+seed_equipment()
+seed_daily_missions()
 
 engine = GameEngine()
 
@@ -86,7 +91,13 @@ def hub():
         data['exp_to_next'] = exp_needed
         data['next_level'] = next_level
     
-    return render_template('hub.html', stats=stats)
+    energy = engine.get_player_energy()
+    login_status = engine.get_daily_login_status()
+    idle_income = engine.get_idle_income_status()
+    prestige_status = engine.get_prestige_status()
+    
+    return render_template('hub.html', stats=stats, energy=energy, login_status=login_status, 
+                          idle_income=idle_income, prestige_status=prestige_status)
 
 @app.route('/scenarios/<discipline>')
 def scenarios(discipline):
@@ -95,11 +106,11 @@ def scenarios(discipline):
         return redirect(url_for('index'))
     
     engine.load_player(player_id)
-    available = engine.get_available_scenarios(discipline)
+    all_scenarios = engine.get_all_scenarios_with_status(discipline)
     stats = engine.get_player_stats()
     
     return render_template('scenarios.html', 
-                         scenarios=available, 
+                         scenarios=all_scenarios, 
                          discipline=discipline,
                          stats=stats)
 
@@ -134,6 +145,11 @@ def make_choice(scenario_id, choice):
     
     if engine.is_scenario_completed(scenario_id):
         flash("You've already completed this scenario!")
+        return redirect(url_for('hub'))
+    
+    energy_result = engine.consume_energy(10)
+    if energy_result.get('error'):
+        flash(energy_result['error'])
         return redirect(url_for('hub'))
     
     scenario = engine.get_scenario_by_id(scenario_id)
@@ -404,6 +420,245 @@ def update_avatar():
         flash("Avatar updated successfully!")
     
     return redirect(url_for('avatar'))
+
+@app.route('/daily_login')
+def daily_login():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    login_status = engine.get_daily_login_status()
+    stats = engine.get_player_stats()
+    
+    return render_template('daily_login.html', stats=stats, login_status=login_status)
+
+@app.route('/claim_daily', methods=['POST'])
+def claim_daily():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    result = engine.claim_daily_login()
+    
+    if result.get('error'):
+        flash(result['error'])
+    else:
+        rewards_str = ", ".join(result['rewards_given']) if result['rewards_given'] else "Reward claimed!"
+        flash(f"Day {result['reward_day']} reward claimed! {rewards_str}")
+    
+    return redirect(url_for('hub'))
+
+@app.route('/collect_idle', methods=['POST'])
+def collect_idle():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    result = engine.collect_idle_income()
+    
+    if result.get('error'):
+        flash(result['error'])
+    else:
+        flash(f"Collected ${result['collected']:,.0f} gold from passive income!")
+    
+    return redirect(url_for('hub'))
+
+@app.route('/advisors')
+def advisors():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    advisor_data = engine.get_advisors()
+    
+    return render_template('advisors.html', stats=stats, advisor_data=advisor_data)
+
+@app.route('/recruit_advisor/<int:advisor_id>', methods=['POST'])
+def recruit_advisor(advisor_id):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    result = engine.recruit_advisor(advisor_id)
+    
+    if result.get('error'):
+        flash(result['error'])
+    else:
+        flash(f"Recruited {result['advisor_name']}!")
+    
+    return redirect(url_for('advisors'))
+
+@app.route('/equipment')
+def equipment():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    equipment_data = engine.get_equipment()
+    
+    return render_template('equipment.html', stats=stats, equipment_data=equipment_data)
+
+@app.route('/purchase_equipment/<int:equipment_id>', methods=['POST'])
+def purchase_equipment(equipment_id):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    result = engine.purchase_equipment(equipment_id)
+    
+    if result.get('error'):
+        flash(result['error'])
+    else:
+        flash(f"Purchased {result['equipment_name']}!")
+    
+    return redirect(url_for('equipment'))
+
+@app.route('/equip_item/<int:equipment_id>', methods=['POST'])
+def equip_item(equipment_id):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    result = engine.equip_item(equipment_id)
+    
+    if result.get('error'):
+        flash(result['error'])
+    else:
+        flash(f"Equipped {result['equipped']} to {result['slot']} slot!")
+    
+    return redirect(url_for('equipment'))
+
+@app.route('/prestige')
+def prestige():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    prestige_status = engine.get_prestige_status()
+    
+    return render_template('prestige.html', stats=stats, prestige_status=prestige_status)
+
+@app.route('/perform_prestige', methods=['POST'])
+def perform_prestige():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    result = engine.perform_prestige()
+    
+    if result.get('error'):
+        flash(result['error'])
+    else:
+        flash(f"Prestige complete! Now at Prestige Level {result['new_prestige_level']}. EXP x{result['new_exp_multiplier']:.1f}, Gold x{result['new_gold_multiplier']:.2f}")
+    
+    return redirect(url_for('hub'))
+
+@app.route('/daily_missions')
+def daily_missions():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    missions_data = engine.get_daily_missions()
+    
+    return render_template('daily_missions.html', stats=stats, missions_data=missions_data)
+
+@app.route('/claim_mission/<int:mission_id>', methods=['POST'])
+def claim_mission(mission_id):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    result = engine.claim_daily_mission(mission_id)
+    
+    if result.get('error'):
+        flash(result['error'])
+    else:
+        flash(f"Claimed {result['mission_name']} reward: +{result['reward_amount']} {result['reward_type']}!")
+    
+    return redirect(url_for('daily_missions'))
+
+@app.route('/leaderboard')
+def leaderboard():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    category = request.args.get('category', 'stars')
+    rankings = engine.get_leaderboard(category)
+    
+    return render_template('leaderboard.html', stats=stats, rankings=rankings, category=category)
+
+@app.route('/battle_arena')
+def battle_arena():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    battle_data = engine.get_rival_battle_status()
+    
+    return render_template('battle_arena.html', stats=stats, battle_data=battle_data)
+
+@app.route('/battle_rival/<int:rival_id>', methods=['POST'])
+def battle_rival(rival_id):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    result = engine.battle_rival(rival_id)
+    stats = engine.get_player_stats()
+    
+    if result.get('error'):
+        flash(result['error'])
+        return redirect(url_for('battle_arena'))
+    
+    return render_template('battle_result.html', stats=stats, result=result)
+
+@app.route('/campaign_map')
+def campaign_map():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    campaign_data = engine.get_campaign_map()
+    
+    return render_template('campaign_map.html', stats=stats, campaign=campaign_data)
+
+@app.route('/boss_challenges')
+def boss_challenges():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    bosses = engine.get_boss_scenarios()
+    
+    return render_template('boss_challenges.html', stats=stats, bosses=bosses)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

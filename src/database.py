@@ -126,9 +126,15 @@ def init_database():
             player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
             scenario_id INTEGER REFERENCES scenario_master(scenario_id) ON DELETE CASCADE,
             choice_made CHAR(1) NOT NULL,
+            stars_earned INTEGER DEFAULT 1,
             completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             UNIQUE(player_id, scenario_id)
         );
+    """)
+    
+    cur.execute("""
+        ALTER TABLE completed_scenarios 
+        ADD COLUMN IF NOT EXISTS stars_earned INTEGER DEFAULT 1;
     """)
     
     cur.execute("""
@@ -380,6 +386,216 @@ def init_database():
             milestone_id INTEGER REFERENCES business_milestones(milestone_id) ON DELETE CASCADE,
             achieved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             UNIQUE(player_id, milestone_id)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_energy (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            current_energy INTEGER DEFAULT 100,
+            max_energy INTEGER DEFAULT 100,
+            last_recharge_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(player_id)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_daily_login (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            current_streak INTEGER DEFAULT 0,
+            longest_streak INTEGER DEFAULT 0,
+            last_login_date DATE,
+            last_claim_date DATE,
+            UNIQUE(player_id)
+        );
+    """)
+    
+    cur.execute("""
+        ALTER TABLE player_daily_login ADD COLUMN IF NOT EXISTS current_streak INTEGER DEFAULT 0;
+    """)
+    cur.execute("""
+        ALTER TABLE player_daily_login ADD COLUMN IF NOT EXISTS longest_streak INTEGER DEFAULT 0;
+    """)
+    cur.execute("""
+        ALTER TABLE player_daily_login ADD COLUMN IF NOT EXISTS last_claim_date DATE;
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_prestige (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            prestige_level INTEGER DEFAULT 0,
+            exp_multiplier DECIMAL(5, 2) DEFAULT 1.0,
+            gold_multiplier DECIMAL(5, 2) DEFAULT 1.0,
+            total_prestiges INTEGER DEFAULT 0,
+            UNIQUE(player_id)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS daily_login_rewards (
+            day_number INTEGER PRIMARY KEY,
+            reward_type VARCHAR(50) NOT NULL,
+            reward_amount INTEGER NOT NULL,
+            reward_description TEXT NOT NULL
+        );
+    """)
+    
+    cur.execute("""
+        ALTER TABLE daily_login_rewards ADD COLUMN IF NOT EXISTS reward_amount INTEGER DEFAULT 0;
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_idle_income (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            gold_per_minute DECIMAL(10, 2) DEFAULT 0,
+            last_collection_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            uncollected_gold DECIMAL(15, 2) DEFAULT 0,
+            UNIQUE(player_id)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS advisors (
+            advisor_id SERIAL PRIMARY KEY,
+            advisor_code VARCHAR(50) UNIQUE NOT NULL,
+            advisor_name VARCHAR(100) NOT NULL,
+            advisor_title VARCHAR(100) NOT NULL,
+            advisor_description TEXT,
+            discipline_specialty VARCHAR(100) NOT NULL,
+            bonus_type VARCHAR(50) NOT NULL,
+            bonus_value INTEGER DEFAULT 10,
+            rarity VARCHAR(20) DEFAULT 'common',
+            unlock_cost DECIMAL(10, 2) DEFAULT 0,
+            avatar_image VARCHAR(255)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_advisors (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            advisor_id INTEGER REFERENCES advisors(advisor_id) ON DELETE CASCADE,
+            level INTEGER DEFAULT 1,
+            recruited_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            is_active BOOLEAN DEFAULT TRUE,
+            UNIQUE(player_id, advisor_id)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS equipment (
+            equipment_id SERIAL PRIMARY KEY,
+            equipment_code VARCHAR(50) UNIQUE NOT NULL,
+            equipment_name VARCHAR(100) NOT NULL,
+            equipment_description TEXT,
+            slot_type VARCHAR(50) NOT NULL,
+            stat_bonus_type VARCHAR(50) NOT NULL,
+            stat_bonus_value INTEGER DEFAULT 0,
+            rarity VARCHAR(20) DEFAULT 'common',
+            purchase_price DECIMAL(10, 2) DEFAULT 0,
+            level_required INTEGER DEFAULT 1,
+            icon_image VARCHAR(255)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_equipment (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            equipment_id INTEGER REFERENCES equipment(equipment_id) ON DELETE CASCADE,
+            slot_type VARCHAR(50) NOT NULL,
+            is_equipped BOOLEAN DEFAULT FALSE,
+            acquired_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(player_id, equipment_id)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_prestige (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            prestige_level INTEGER DEFAULT 0,
+            exp_multiplier DECIMAL(5, 2) DEFAULT 1.0,
+            gold_multiplier DECIMAL(5, 2) DEFAULT 1.0,
+            total_prestiges INTEGER DEFAULT 0,
+            last_prestige_at TIMESTAMP,
+            UNIQUE(player_id)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS daily_missions (
+            mission_id SERIAL PRIMARY KEY,
+            mission_code VARCHAR(50) UNIQUE NOT NULL,
+            mission_name VARCHAR(100) NOT NULL,
+            mission_description TEXT NOT NULL,
+            mission_type VARCHAR(50) NOT NULL,
+            target_value INTEGER NOT NULL,
+            exp_reward INTEGER DEFAULT 0,
+            cash_reward DECIMAL(10, 2) DEFAULT 0,
+            energy_reward INTEGER DEFAULT 0
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_daily_missions (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            mission_id INTEGER REFERENCES daily_missions(mission_id) ON DELETE CASCADE,
+            current_progress INTEGER DEFAULT 0,
+            completed BOOLEAN DEFAULT FALSE,
+            assigned_date DATE DEFAULT CURRENT_DATE,
+            completed_at TIMESTAMP,
+            UNIQUE(player_id, mission_id, assigned_date)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS boss_scenarios (
+            boss_id SERIAL PRIMARY KEY,
+            scenario_id INTEGER REFERENCES scenario_master(scenario_id) ON DELETE CASCADE,
+            boss_name VARCHAR(100) NOT NULL,
+            boss_description TEXT,
+            difficulty_rating INTEGER DEFAULT 5,
+            bonus_exp_multiplier DECIMAL(3, 1) DEFAULT 2.0,
+            bonus_cash_reward DECIMAL(10, 2) DEFAULT 0,
+            world_type VARCHAR(50) NOT NULL,
+            discipline VARCHAR(100) NOT NULL,
+            required_level INTEGER NOT NULL,
+            UNIQUE(scenario_id)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS leaderboard_cache (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            total_stars INTEGER DEFAULT 0,
+            total_wealth DECIMAL(15, 2) DEFAULT 0,
+            highest_discipline_level INTEGER DEFAULT 1,
+            total_scenarios_completed INTEGER DEFAULT 0,
+            rank_stars INTEGER,
+            rank_wealth INTEGER,
+            rank_level INTEGER,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(player_id)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS rival_battles (
+            battle_id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            rival_id INTEGER REFERENCES rivals(rival_id) ON DELETE CASCADE,
+            player_score INTEGER DEFAULT 0,
+            rival_score INTEGER DEFAULT 0,
+            winner VARCHAR(20),
+            rewards_earned DECIMAL(10, 2) DEFAULT 0,
+            battle_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     """)
     
@@ -4356,6 +4572,155 @@ def seed_strategy_curriculum():
     conn.close()
 
 
+def seed_daily_login_rewards():
+    """Seed daily login rewards (7-day cycle)."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM daily_login_rewards")
+    result = cur.fetchone()
+    if result['count'] > 0:
+        print("Daily login rewards already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    rewards = [
+        (1, 'gold', 100, 'Day 1: 100 Gold'),
+        (2, 'energy', 25, 'Day 2: 25 Energy'),
+        (3, 'gold', 200, 'Day 3: 200 Gold'),
+        (4, 'exp', 500, 'Day 4: 500 EXP Boost'),
+        (5, 'gold', 300, 'Day 5: 300 Gold'),
+        (6, 'energy', 50, 'Day 6: 50 Energy'),
+        (7, 'gold', 500, 'Day 7: 500 Gold Jackpot!'),
+    ]
+    
+    for day, reward_type, value, desc in rewards:
+        cur.execute("""
+            INSERT INTO daily_login_rewards (day_number, reward_type, reward_amount, reward_description)
+            VALUES (%s, %s, %s, %s)
+        """, (day, reward_type, value, desc))
+    
+    conn.commit()
+    print("Seeded 7 daily login rewards!")
+    cur.close()
+    conn.close()
+
+
+def seed_advisors():
+    """Seed 12 recruitable advisors with unique bonuses."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM advisors")
+    result = cur.fetchone()
+    if result['count'] > 0:
+        print("Advisors already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    advisors = [
+        ('advisor_marketing_1', 'Maya Sterling', 'Brand Consultant', 'Former CMO who built iconic brands.', 'Marketing', 'exp_boost', 10, 'common', 500),
+        ('advisor_marketing_2', 'Derek Viral', 'Social Media Guru', 'Influencer turned business strategist.', 'Marketing', 'exp_boost', 20, 'rare', 2000),
+        ('advisor_finance_1', 'Charles Ledger', 'Senior Accountant', 'Decades of financial expertise.', 'Finance', 'gold_boost', 10, 'common', 500),
+        ('advisor_finance_2', 'Victoria Vault', 'Investment Banker', 'Wall Street veteran.', 'Finance', 'gold_boost', 25, 'epic', 5000),
+        ('advisor_operations_1', 'Marcus Flow', 'Process Engineer', 'Efficiency optimization expert.', 'Operations', 'exp_boost', 10, 'common', 500),
+        ('advisor_operations_2', 'Linda Logistics', 'Supply Chain Director', 'Global logistics mastermind.', 'Operations', 'exp_boost', 20, 'rare', 2000),
+        ('advisor_hr_1', 'Patricia People', 'HR Manager', 'Employee engagement specialist.', 'Human Resources', 'reputation_boost', 5, 'common', 500),
+        ('advisor_hr_2', 'Robert Relations', 'Chief People Officer', 'Transformed company cultures.', 'Human Resources', 'reputation_boost', 10, 'rare', 2000),
+        ('advisor_legal_1', 'James Justice', 'Corporate Attorney', 'Contract law specialist.', 'Legal', 'exp_boost', 10, 'common', 500),
+        ('advisor_legal_2', 'Diana Defense', 'Litigation Expert', 'Undefeated in court.', 'Legal', 'exp_boost', 20, 'rare', 2000),
+        ('advisor_strategy_1', 'Alexander Vision', 'Strategy Consultant', 'McKinsey trained strategist.', 'Strategy', 'exp_boost', 15, 'rare', 2000),
+        ('advisor_strategy_2', 'Sophia Empire', 'CEO Coach', 'Advisor to Fortune 500 leaders.', 'Strategy', 'exp_boost', 30, 'legendary', 10000),
+    ]
+    
+    for code, name, title, desc, specialty, bonus_type, bonus_val, rarity, cost in advisors:
+        cur.execute("""
+            INSERT INTO advisors (advisor_code, advisor_name, advisor_title, advisor_description, 
+                                  discipline_specialty, bonus_type, bonus_value, rarity, unlock_cost)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (code, name, title, desc, specialty, bonus_type, bonus_val, rarity, cost))
+    
+    conn.commit()
+    print("Seeded 12 advisors!")
+    cur.close()
+    conn.close()
+
+
+def seed_equipment():
+    """Seed equipment items for Head, Body, and Accessory slots."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM equipment")
+    result = cur.fetchone()
+    if result['count'] > 0:
+        print("Equipment already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    equipment = [
+        ('head_glasses', 'Reading Glasses', 'Sharp focus for analysis.', 'Head', 'intelligence', 2, 'common', 200, 1),
+        ('head_headset', 'Premium Headset', 'Stay connected in style.', 'Head', 'charisma', 3, 'common', 300, 2),
+        ('head_crown', 'Golden Crown', 'Symbol of business royalty.', 'Head', 'reputation', 5, 'epic', 5000, 5),
+        ('body_suit', 'Business Suit', 'Professional appearance matters.', 'Body', 'charisma', 3, 'common', 500, 1),
+        ('body_armor', 'Power Armor', 'Corporate warrior attire.', 'Body', 'negotiation', 4, 'rare', 2000, 3),
+        ('body_cloak', 'Executive Cloak', 'Commanding presence.', 'Body', 'reputation', 5, 'epic', 5000, 5),
+        ('acc_watch', 'Luxury Watch', 'Time is money.', 'Accessory', 'luck', 2, 'common', 300, 1),
+        ('acc_ring', 'Signet Ring', 'Mark of success.', 'Accessory', 'negotiation', 3, 'rare', 1500, 3),
+        ('acc_briefcase', 'Diamond Briefcase', 'Ultimate status symbol.', 'Accessory', 'intelligence', 5, 'legendary', 10000, 7),
+    ]
+    
+    for code, name, desc, slot, stat, val, rarity, price, lvl in equipment:
+        cur.execute("""
+            INSERT INTO equipment (equipment_code, equipment_name, equipment_description, slot_type,
+                                   stat_bonus_type, stat_bonus_value, rarity, purchase_price, level_required)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (code, name, desc, slot, stat, val, rarity, price, lvl))
+    
+    conn.commit()
+    print("Seeded 9 equipment items!")
+    cur.close()
+    conn.close()
+
+
+def seed_daily_missions():
+    """Seed daily mission templates."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM daily_missions")
+    result = cur.fetchone()
+    if result['count'] > 0:
+        print("Daily missions already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    missions = [
+        ('daily_complete_3', 'Busy Day', 'Complete 3 scenarios', 'complete_scenarios', 3, 300, 100, 10),
+        ('daily_complete_5', 'Workaholic', 'Complete 5 scenarios', 'complete_scenarios', 5, 500, 200, 20),
+        ('daily_earn_1000', 'Money Maker', 'Earn 1000 gold', 'earn_gold', 1000, 200, 150, 15),
+        ('daily_perfect_3', 'Perfectionist', 'Get 3-star rating 3 times', 'perfect_stars', 3, 400, 250, 25),
+        ('daily_login_streak', 'Dedicated', 'Maintain 7-day login streak', 'login_streak', 7, 1000, 500, 50),
+        ('daily_discipline', 'Well-Rounded', 'Complete scenarios in 3 different disciplines', 'varied_disciplines', 3, 350, 175, 15),
+    ]
+    
+    for code, name, desc, mission_type, target, exp, cash, energy in missions:
+        cur.execute("""
+            INSERT INTO daily_missions (mission_code, mission_name, mission_description, mission_type,
+                                        target_value, exp_reward, cash_reward, energy_reward)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, (code, name, desc, mission_type, target, exp, cash, energy))
+    
+    conn.commit()
+    print("Seeded 6 daily missions!")
+    cur.close()
+    conn.close()
+
+
 if __name__ == "__main__":
     init_database()
     seed_scenarios()
@@ -4380,3 +4745,7 @@ if __name__ == "__main__":
     seed_operations_curriculum()
     seed_hr_curriculum()
     seed_strategy_curriculum()
+    seed_daily_login_rewards()
+    seed_advisors()
+    seed_equipment()
+    seed_daily_missions()

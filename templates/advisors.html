@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Advisors - Business Tycoon RPG{% endblock %}
+
+{% block body_class %}world-{{ stats.world|lower }}{% endblock %}
+
+{% block content %}
+<div class="row fade-in">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="game-title"><i class="bi bi-person-check-fill"></i> Advisor Council</h2>
+            <a href="{{ url_for('hub') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to HQ
+            </a>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-people-fill"></i> Your Advisors ({{ advisor_data.recruited|length }}/{{ advisor_data.all_advisors|length }})
+            </div>
+            <div class="card-body">
+                <p class="game-subtitle">Recruit advisors to boost your discipline bonuses and unlock special abilities!</p>
+                
+                <div class="row g-3">
+                    {% for advisor in advisor_data.all_advisors %}
+                    <div class="col-md-4 col-sm-6">
+                        <div class="card h-100" style="background: linear-gradient(180deg, rgba(30,30,50,0.9), rgba(15,15,30,0.95)); border: 2px solid {% if advisor.advisor_id in advisor_data.recruited_ids %}rgba(80,200,120,0.5){% elif advisor.rarity == 'legendary' %}rgba(255,215,0,0.5){% elif advisor.rarity == 'epic' %}rgba(138,43,226,0.5){% elif advisor.rarity == 'rare' %}rgba(0,191,255,0.5){% else %}rgba(100,100,100,0.3){% endif %};">
+                            <div class="card-body text-center">
+                                <div class="mb-2">
+                                    <i class="bi bi-person-circle" style="font-size: 3rem; color: {% if advisor.rarity == 'legendary' %}#ffd700{% elif advisor.rarity == 'epic' %}#8a2be2{% elif advisor.rarity == 'rare' %}#00bfff{% else %}#6c757d{% endif %};"></i>
+                                </div>
+                                <h5 class="gold-text mb-1">{{ advisor.advisor_name }}</h5>
+                                <small class="text-muted d-block mb-2">{{ advisor.advisor_title }}</small>
+                                
+                                <span class="badge mb-2" style="background: {% if advisor.rarity == 'legendary' %}linear-gradient(180deg, #ffd700, #b8860b){% elif advisor.rarity == 'epic' %}linear-gradient(180deg, #8a2be2, #4b0082){% elif advisor.rarity == 'rare' %}linear-gradient(180deg, #00bfff, #0080ff){% else %}linear-gradient(180deg, #6c757d, #495057){% endif %};">{{ advisor.rarity|capitalize }}</span>
+                                
+                                <p class="small text-muted mb-2">{{ advisor.advisor_description }}</p>
+                                
+                                <div class="stat-card p-2 mb-2">
+                                    <small class="text-warning"><i class="bi bi-star-fill"></i> {{ advisor.discipline_specialty }}</small>
+                                    <div class="text-success">+{{ advisor.bonus_value }}% {{ advisor.bonus_type }}</div>
+                                </div>
+                                
+                                {% if advisor.advisor_id in advisor_data.recruited_ids %}
+                                <span class="badge bg-success"><i class="bi bi-check-circle-fill"></i> Recruited</span>
+                                {% else %}
+                                <form action="{{ url_for('recruit_advisor', advisor_id=advisor.advisor_id) }}" method="POST">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-game btn-game-gold w-100" {% if stats.cash < advisor.unlock_cost %}disabled{% endif %}>
+                                        <i class="bi bi-coin"></i> Recruit ${{ "{:,.0f}".format(advisor.unlock_cost) }}
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

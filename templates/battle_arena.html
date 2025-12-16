@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Battle Arena - Business Tycoon RPG{% endblock %}
+
+{% block body_class %}world-{{ stats.world|lower }}{% endblock %}
+
+{% block content %}
+<div class="row fade-in">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="game-title"><i class="bi bi-trophy-fill"></i> Battle Arena</h2>
+            <a href="{{ url_for('hub') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to HQ
+            </a>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card mb-4" style="border: 2px solid rgba(80,200,120,0.4);">
+                    <div class="card-header" style="background: linear-gradient(180deg, rgba(80,200,120,0.2), transparent);">
+                        <i class="bi bi-shield-fill"></i> Your Combat Power
+                    </div>
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <img src="/static/images/business_tycoon_hero_portrait.png" alt="Your Hero" style="width: 100px; height: 100px; border-radius: 50%; border: 3px solid #50c878;">
+                        </div>
+                        <h3 class="gold-text">{{ stats.name }}</h3>
+                        <div class="h2 text-success mb-3">
+                            <i class="bi bi-lightning-charge-fill"></i> {{ battle_data.player_power }}
+                        </div>
+                        <small class="text-muted">Power is calculated from your stats, equipment, and discipline levels</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="bi bi-people-fill"></i> Challenge Rivals
+                    </div>
+                    <div class="card-body">
+                        <p class="game-subtitle">Battle rival businesses to win gold and reputation!</p>
+                        
+                        <div class="row g-3">
+                            {% for rival in battle_data.rivals %}
+                            <div class="col-md-6">
+                                <div class="card h-100" style="background: linear-gradient(180deg, rgba(30,30,50,0.9), rgba(15,15,30,0.95)); border: 2px solid rgba(220,53,69,0.4);">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <div>
+                                                <h5 class="text-danger mb-0">{{ rival.rival_name }}</h5>
+                                                <small class="text-muted">{{ rival.rival_title }}</small>
+                                            </div>
+                                            <span class="badge bg-danger">Lv.{{ rival.rival_level }}</span>
+                                        </div>
+                                        
+                                        <p class="small text-muted mb-3">{{ rival.rival_description }}</p>
+                                        
+                                        <div class="stat-card p-2 mb-3">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="text-muted">Estimated Power</span>
+                                                <span class="text-danger"><i class="bi bi-lightning-charge-fill"></i> {{ rival.rival_level * 50 + 100 }}</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row g-2 mb-3 small">
+                                            <div class="col-6">
+                                                <div class="text-warning"><i class="bi bi-coin"></i> ${{ rival.rival_level * 500 }}</div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="text-info"><i class="bi bi-star-fill"></i> +2 Rep</div>
+                                            </div>
+                                        </div>
+                                        
+                                        <form action="{{ url_for('battle_rival', rival_id=rival.rival_id) }}" method="POST">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="btn btn-game btn-game-crimson w-100">
+                                                <i class="bi bi-sword"></i> Battle!
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="col-12 text-center text-muted">
+                                <i class="bi bi-emoji-smile" style="font-size: 3rem;"></i>
+                                <p>No rivals available in this world.</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

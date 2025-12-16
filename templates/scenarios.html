@@ -27,7 +27,7 @@
         <div class="row g-4">
             {% for scenario in scenarios %}
             <div class="col-md-6">
-                <div class="card h-100">
+                <div class="card h-100 {% if scenario.is_completed %}border-success{% endif %}" style="{% if scenario.is_completed %}opacity: 0.85;{% endif %}">
                     {% if 'Menu' in scenario.scenario_title %}
                     <img src="/static/images/menu_design_scenario_illustration.png" class="scenario-img" alt="Scenario">
                     {% elif 'Social' in scenario.scenario_title %}
@@ -39,19 +39,43 @@
                     {% endif %}
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <span class="level-badge">Level {{ scenario.required_level }}</span>
-                        {% if scenario.subskill_focus %}
-                        <small class="text-muted">{{ scenario.subskill_focus }}</small>
-                        {% endif %}
+                        <div class="d-flex align-items-center gap-2">
+                            {% if scenario.is_completed %}
+                            <span class="star-rating">
+                                {% for i in range(3) %}
+                                    {% if i < scenario.stars_earned %}
+                                    <i class="bi bi-star-fill text-warning"></i>
+                                    {% else %}
+                                    <i class="bi bi-star text-muted"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </span>
+                            {% endif %}
+                            {% if scenario.subskill_focus %}
+                            <small class="text-muted">{{ scenario.subskill_focus }}</small>
+                            {% endif %}
+                        </div>
                     </div>
                     <div class="card-body">
-                        <h5>{{ scenario.scenario_title }}</h5>
+                        <h5>
+                            {{ scenario.scenario_title }}
+                            {% if scenario.is_completed %}
+                            <span class="badge bg-success ms-2"><i class="bi bi-check-circle-fill"></i> Complete</span>
+                            {% endif %}
+                        </h5>
                         <p class="text-muted small">
                             {{ scenario.scenario_narrative[:150] }}...
                         </p>
+                        {% if scenario.is_completed %}
+                        <button class="btn btn-outline-success w-100" disabled>
+                            <i class="bi bi-check-lg"></i> Completed
+                        </button>
+                        {% else %}
                         <a href="{{ url_for('play_scenario', scenario_id=scenario.scenario_id) }}" 
                            class="btn btn-game btn-game-gold w-100">
                             <i class="bi bi-play-fill"></i> Begin Quest
                         </a>
+                        {% endif %}
                     </div>
                 </div>
             </div>

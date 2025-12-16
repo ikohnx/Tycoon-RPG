@@ -50,6 +50,28 @@
                 </div>
                 {% endif %}
                 
+                <div class="text-center mb-4">
+                    <h4 class="text-muted mb-2">Performance Rating</h4>
+                    <div class="star-rating-large">
+                        {% for i in range(3) %}
+                            {% if i < result.stars_earned %}
+                            <i class="bi bi-star-fill text-warning" style="font-size: 3rem; text-shadow: 0 0 10px rgba(255,215,0,0.5);"></i>
+                            {% else %}
+                            <i class="bi bi-star text-muted" style="font-size: 3rem;"></i>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <p class="mt-2 text-muted">
+                        {% if result.stars_earned == 3 %}
+                        <span class="text-success">Perfect Choice!</span>
+                        {% elif result.stars_earned == 2 %}
+                        <span class="text-info">Good Decision!</span>
+                        {% else %}
+                        <span class="text-warning">Learning Experience</span>
+                        {% endif %}
+                    </p>
+                </div>
+                
                 <div class="row g-4 text-center">
                     <div class="col-md-4">
                         <div class="stat-card">
@@ -76,7 +98,7 @@
                     
                     <div class="col-md-4">
                         <div class="stat-card">
-                            <i class="bi bi-star-fill display-5 {% if result.reputation_change >= 0 %}text-warning{% else %}text-danger{% endif %}"></i>
+                            <i class="bi bi-award-fill display-5 {% if result.reputation_change >= 0 %}text-warning{% else %}text-danger{% endif %}"></i>
                             <h4 class="mt-2 {% if result.reputation_change >= 0 %}text-success{% else %}text-danger{% endif %}">
                                 {% if result.reputation_change >= 0 %}+{% endif %}{{ result.reputation_change }}
                             </h4>

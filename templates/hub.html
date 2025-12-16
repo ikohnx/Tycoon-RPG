@@ -100,6 +100,74 @@
                         </div>
                     </div>
                 </div>
+                
+                <div class="stat-card" style="border-color: rgba(0, 191, 255, 0.3);">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-lightning-charge-fill" style="font-size: 2rem; color: #00bfff; margin-right: 10px;"></i>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted text-uppercase" style="font-size: 0.7rem; letter-spacing: 1px;">Energy</small>
+                                {% if energy.current_energy < energy.max_energy %}
+                                <small class="text-info" style="font-size: 0.65rem;">
+                                    <i class="bi bi-clock"></i> Recharging...
+                                </small>
+                                {% endif %}
+                            </div>
+                            <div class="progress mt-1" style="height: 20px;">
+                                <div class="progress-bar" style="width: {{ (energy.current_energy / energy.max_energy * 100) }}%; background: linear-gradient(180deg, #00bfff, #0080ff) !important;">
+                                    <span style="font-size: 0.8rem; font-weight: bold;">{{ energy.current_energy }}/{{ energy.max_energy }}</span>
+                                </div>
+                            </div>
+                            <small class="text-muted" style="font-size: 0.65rem;">Costs 10 energy per scenario</small>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if idle_income %}
+                <div class="stat-card" style="border-color: rgba(255, 165, 0, 0.4); background: linear-gradient(180deg, rgba(255,165,0,0.1), rgba(0,0,0,0));">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-piggy-bank-fill" style="font-size: 2rem; color: #ffa500; margin-right: 10px;"></i>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted text-uppercase" style="font-size: 0.7rem; letter-spacing: 1px;">Idle Income</small>
+                                <small class="text-warning" style="font-size: 0.65rem;">
+                                    <i class="bi bi-clock-history"></i> ${{ "%.1f"|format(idle_income.gold_per_hour) }}/hr
+                                </small>
+                            </div>
+                            <div class="h5 mb-1" style="color: #ffa500;">
+                                ${{ "%.0f"|format(idle_income.accumulated_gold) }} <small class="text-muted">available</small>
+                            </div>
+                            {% if idle_income.accumulated_gold >= 1 %}
+                            <form action="{{ url_for('collect_idle') }}" method="POST" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-warning w-100">
+                                    <i class="bi bi-cash-coin"></i> Collect Gold
+                                </button>
+                            </form>
+                            {% else %}
+                            <small class="text-muted" style="font-size: 0.65rem;">Accumulating... Max 8 hours</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if prestige_status and prestige_status.prestige_level > 0 %}
+                <div class="stat-card" style="border-color: rgba(138, 43, 226, 0.4); background: linear-gradient(180deg, rgba(138,43,226,0.1), rgba(0,0,0,0));">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-gem" style="font-size: 1.5rem; color: #8a2be2; margin-right: 10px;"></i>
+                        <div>
+                            <small class="text-muted text-uppercase" style="font-size: 0.7rem; letter-spacing: 1px;">Prestige</small>
+                            <div class="h5 mb-0" style="color: #8a2be2;">
+                                Level {{ prestige_status.prestige_level }}
+                            </div>
+                            <small class="text-info" style="font-size: 0.65rem;">
+                                EXP x{{ "%.1f"|format(prestige_status.exp_multiplier) }} | Gold x{{ "%.2f"|format(prestige_status.gold_multiplier) }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </div>
         
@@ -130,6 +198,12 @@
                     <a href="{{ url_for('quests') }}" class="btn btn-game btn-game-crimson">
                         <i class="bi bi-journal-bookmark-fill"></i> Quests
                     </a>
+                    <a href="{{ url_for('advisors') }}" class="btn btn-outline-primary">
+                        <i class="bi bi-person-check-fill"></i> Advisors
+                    </a>
+                    <a href="{{ url_for('equipment') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-shield-shaded"></i> Equipment
+                    </a>
                 </div>
             </div>
         </div>
@@ -140,6 +214,15 @@
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2">
+                    <a href="{{ url_for('daily_login') }}" class="btn {% if login_status.can_claim %}btn-game btn-game-gold{% else %}btn-outline-success{% endif %}">
+                        <i class="bi bi-calendar-check-fill"></i> Daily Login
+                        {% if login_status.can_claim %}
+                        <span class="badge bg-danger ms-2">Claim!</span>
+                        {% else %}
+                        <span class="badge bg-success ms-2"><i class="bi bi-check"></i></span>
+                        {% endif %}
+                        <small class="ms-2">({{ login_status.current_streak }} day streak)</small>
+                    </a>
                     <a href="{{ url_for('random_event') }}" class="btn btn-game btn-game-gold">
                         <i class="bi bi-dice-5-fill"></i> Random Event
                     </a>
@@ -151,6 +234,24 @@
                     </a>
                     <a href="{{ url_for('rivals') }}" class="btn btn-outline-danger">
                         <i class="bi bi-person-x-fill"></i> Rivals
+                    </a>
+                    <a href="{{ url_for('daily_missions') }}" class="btn btn-outline-warning">
+                        <i class="bi bi-list-check"></i> Daily Missions
+                    </a>
+                    <a href="{{ url_for('battle_arena') }}" class="btn btn-game btn-game-crimson">
+                        <i class="bi bi-trophy-fill"></i> Battle Arena
+                    </a>
+                    <a href="{{ url_for('leaderboard') }}" class="btn btn-outline-light">
+                        <i class="bi bi-bar-chart-fill"></i> Leaderboard
+                    </a>
+                    <a href="{{ url_for('prestige') }}" class="btn btn-game btn-game-purple">
+                        <i class="bi bi-gem"></i> Prestige
+                    </a>
+                    <a href="{{ url_for('campaign_map') }}" class="btn btn-game btn-game-gold">
+                        <i class="bi bi-map-fill"></i> Campaign Map
+                    </a>
+                    <a href="{{ url_for('boss_challenges') }}" class="btn btn-game btn-game-crimson">
+                        <i class="bi bi-skull"></i> Boss Challenges
                     </a>
                 </div>
             </div>
