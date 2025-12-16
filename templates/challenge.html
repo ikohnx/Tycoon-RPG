@@ -186,6 +186,205 @@
                 </button>
             </form>
         </div>
+        
+        {% elif challenge.type == 'roi_calculator' %}
+        <div class="challenge-type-roi">
+            <h4 class="text-warning mb-3"><i class="bi bi-percent"></i> ROI Calculation</h4>
+            <p class="text-muted">Calculate the Return on Investment percentage.</p>
+            
+            <div class="roi-data">
+                <div class="data-row">
+                    <span class="data-label">Initial Investment:</span>
+                    <span class="data-value text-danger">${{ "{:,.0f}".format(challenge.data.investment) }}</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">Monthly Gain:</span>
+                    <span class="data-value text-success">+${{ "{:,.0f}".format(challenge.data.monthly_gain) }}/mo</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">Evaluation Period:</span>
+                    <span class="data-value">{{ challenge.data.period_months }} months</span>
+                </div>
+            </div>
+            
+            <form action="{{ url_for('submit_challenge', scenario_id=challenge.scenario_id) }}" method="POST" class="challenge-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="challenge_type" value="roi_calculator">
+                
+                <div class="input-group-challenge">
+                    <label>What is the ROI percentage?</label>
+                    <div class="input-wrapper">
+                        <input type="number" name="answer" class="challenge-input" placeholder="Enter %" required step="0.1">
+                        <span class="input-suffix">%</span>
+                    </div>
+                    <small class="text-muted">ROI = ((Gain - Investment) / Investment) × 100</small>
+                </div>
+                
+                <button type="submit" class="btn btn-game btn-game-gold btn-lg w-100">
+                    <i class="bi bi-check-circle-fill"></i> Calculate ROI
+                </button>
+            </form>
+        </div>
+        
+        {% elif challenge.type == 'inventory_turnover' %}
+        <div class="challenge-type-inventory">
+            <h4 class="text-warning mb-3"><i class="bi bi-box-seam"></i> Inventory Turnover</h4>
+            <p class="text-muted">Calculate how efficiently inventory is moving.</p>
+            
+            <div class="inventory-data">
+                <div class="data-row">
+                    <span class="data-label">Cost of Goods Sold (Annual):</span>
+                    <span class="data-value">${{ "{:,.0f}".format(challenge.data.cost_of_goods_sold) }}</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">Average Inventory Value:</span>
+                    <span class="data-value">${{ "{:,.0f}".format(challenge.data.average_inventory) }}</span>
+                </div>
+            </div>
+            
+            <form action="{{ url_for('submit_challenge', scenario_id=challenge.scenario_id) }}" method="POST" class="challenge-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="challenge_type" value="inventory_turnover">
+                
+                <div class="input-group-challenge">
+                    <label>Inventory Turnover Ratio:</label>
+                    <input type="number" name="answer" class="challenge-input" placeholder="e.g., 12" required step="0.1" min="0">
+                    <small class="text-muted">COGS ÷ Average Inventory</small>
+                </div>
+                
+                <button type="submit" class="btn btn-game btn-game-gold btn-lg w-100">
+                    <i class="bi bi-check-circle-fill"></i> Submit Answer
+                </button>
+            </form>
+        </div>
+        
+        {% elif challenge.type == 'ltv_calculator' %}
+        <div class="challenge-type-ltv">
+            <h4 class="text-warning mb-3"><i class="bi bi-person-hearts"></i> Customer Lifetime Value</h4>
+            <p class="text-muted">Calculate how much a customer is worth over their lifetime.</p>
+            
+            <div class="ltv-data">
+                <div class="data-row">
+                    <span class="data-label">Average Purchase:</span>
+                    <span class="data-value">${{ "%.2f"|format(challenge.data.avg_purchase) }}</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">Visits per Month:</span>
+                    <span class="data-value">{{ challenge.data.frequency_monthly }}x</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">Average Customer Retention:</span>
+                    <span class="data-value">{{ challenge.data.retention_years }} years</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">Profit Margin:</span>
+                    <span class="data-value text-success">{{ challenge.data.profit_margin }}%</span>
+                </div>
+            </div>
+            
+            <form action="{{ url_for('submit_challenge', scenario_id=challenge.scenario_id) }}" method="POST" class="challenge-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="challenge_type" value="ltv_calculator">
+                
+                <div class="input-group-challenge">
+                    <label>Customer Lifetime Value:</label>
+                    <div class="input-wrapper">
+                        <span class="input-prefix">$</span>
+                        <input type="number" name="answer" class="challenge-input" placeholder="Enter LTV" required step="1" min="0">
+                    </div>
+                    <small class="text-muted">(Avg × Frequency × 12 × Years) × Margin%</small>
+                </div>
+                
+                <button type="submit" class="btn btn-game btn-game-gold btn-lg w-100">
+                    <i class="bi bi-check-circle-fill"></i> Calculate LTV
+                </button>
+            </form>
+        </div>
+        
+        {% elif challenge.type == 'payback_period' %}
+        <div class="challenge-type-payback">
+            <h4 class="text-warning mb-3"><i class="bi bi-hourglass-split"></i> Payback Period Comparison</h4>
+            <p class="text-muted">Find which investment pays back faster.</p>
+            
+            <div class="payback-data">
+                <div class="option-box option-a">
+                    <h5 class="text-info">Option A</h5>
+                    <div class="data-row">
+                        <span class="data-label">Investment:</span>
+                        <span class="data-value">${{ "{:,.0f}".format(challenge.data.option_a_cost) }}</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-label">Annual Profit:</span>
+                        <span class="data-value text-success">${{ "{:,.0f}".format(challenge.data.option_a_annual_profit) }}/yr</span>
+                    </div>
+                </div>
+                <div class="option-box option-b mt-3">
+                    <h5 class="text-warning">Option B</h5>
+                    <div class="data-row">
+                        <span class="data-label">Investment:</span>
+                        <span class="data-value">${{ "{:,.0f}".format(challenge.data.option_b_cost) }}</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-label">Annual Profit:</span>
+                        <span class="data-value text-success">${{ "{:,.0f}".format(challenge.data.option_b_annual_profit) }}/yr</span>
+                    </div>
+                </div>
+            </div>
+            
+            <form action="{{ url_for('submit_challenge', scenario_id=challenge.scenario_id) }}" method="POST" class="challenge-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="challenge_type" value="payback_period">
+                
+                <div class="input-group-challenge">
+                    <label>Best Payback Period (in years):</label>
+                    <input type="number" name="answer" class="challenge-input" placeholder="e.g., 2.5" required step="0.01" min="0">
+                    <small class="text-muted">Lower is better! Investment ÷ Annual Profit</small>
+                </div>
+                
+                <button type="submit" class="btn btn-game btn-game-gold btn-lg w-100">
+                    <i class="bi bi-check-circle-fill"></i> Compare Options
+                </button>
+            </form>
+        </div>
+        
+        {% elif challenge.type == 'compound_growth' %}
+        <div class="challenge-type-compound">
+            <h4 class="text-warning mb-3"><i class="bi bi-graph-up"></i> Compound Growth Forecast</h4>
+            <p class="text-muted">Project future value with compound growth.</p>
+            
+            <div class="compound-data">
+                <div class="data-row">
+                    <span class="data-label">Current Value:</span>
+                    <span class="data-value">${{ "{:,.0f}".format(challenge.data.initial_value) }}</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">Annual Growth Rate:</span>
+                    <span class="data-value text-success">{{ challenge.data.growth_rate }}%</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">Time Period:</span>
+                    <span class="data-value">{{ challenge.data.years }} years</span>
+                </div>
+            </div>
+            
+            <form action="{{ url_for('submit_challenge', scenario_id=challenge.scenario_id) }}" method="POST" class="challenge-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="challenge_type" value="compound_growth">
+                
+                <div class="input-group-challenge">
+                    <label>Future Value:</label>
+                    <div class="input-wrapper">
+                        <span class="input-prefix">$</span>
+                        <input type="number" name="answer" class="challenge-input" placeholder="Enter projected value" required step="1" min="0">
+                    </div>
+                    <small class="text-muted">Present Value × (1 + Rate)^Years</small>
+                </div>
+                
+                <button type="submit" class="btn btn-game btn-game-gold btn-lg w-100">
+                    <i class="bi bi-check-circle-fill"></i> Project Growth
+                </button>
+            </form>
+        </div>
         {% endif %}
     </div>
 </div>

@@ -4966,6 +4966,137 @@ def seed_interactive_challenges():
     conn.close()
 
 
+def seed_advanced_challenges():
+    """Seed advanced calculation-based challenges for levels 5-10."""
+    import json
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM scenario_master WHERE challenge_type = 'roi_calculator'")
+    result = cur.fetchone()
+    if result['count'] > 0:
+        print("Advanced challenges already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    challenges = [
+        {
+            'world_type': 'Modern',
+            'industry': 'Restaurant',
+            'discipline': 'Finance',
+            'required_level': 5,
+            'scenario_title': 'Kitchen Renovation ROI',
+            'scenario_narrative': 'You\'re considering a $50,000 kitchen renovation. Your consultant estimates it will increase monthly profits by $2,500. Calculate the ROI percentage for the first year.',
+            'challenge_type': 'roi_calculator',
+            'challenge_config': json.dumps({
+                'investment': 50000,
+                'monthly_gain': 2500,
+                'period_months': 12
+            }),
+            'choice_a_exp_reward': 350,
+            'choice_a_cash_change': 1000,
+            'choice_a_reputation_change': 12,
+            'choice_a_feedback': 'ROI = (Net Gain / Investment) x 100. In this case: (30000-50000)/50000 = -40% first year, but positive long-term!'
+        },
+        {
+            'world_type': 'Modern',
+            'industry': 'Restaurant',
+            'discipline': 'Operations',
+            'required_level': 6,
+            'scenario_title': 'Inventory Turnover Analysis',
+            'scenario_narrative': 'Your annual cost of goods sold is $180,000. Average inventory value is $15,000. Calculate your inventory turnover ratio to assess supply chain efficiency.',
+            'challenge_type': 'inventory_turnover',
+            'challenge_config': json.dumps({
+                'cost_of_goods_sold': 180000,
+                'average_inventory': 15000
+            }),
+            'choice_a_exp_reward': 400,
+            'choice_a_cash_change': 1200,
+            'choice_a_reputation_change': 15,
+            'choice_a_feedback': 'Inventory Turnover = COGS / Average Inventory. Higher ratios mean faster-moving inventory and better cash flow.'
+        },
+        {
+            'world_type': 'Modern',
+            'industry': 'Restaurant',
+            'discipline': 'Marketing',
+            'required_level': 7,
+            'scenario_title': 'Customer Lifetime Value',
+            'scenario_narrative': 'Your average customer spends $45 per visit, visits 3 times per month, and stays loyal for 2 years on average. With a 30% profit margin, what\'s the Customer Lifetime Value?',
+            'challenge_type': 'ltv_calculator',
+            'challenge_config': json.dumps({
+                'avg_purchase': 45,
+                'frequency_monthly': 3,
+                'retention_years': 2,
+                'profit_margin': 30
+            }),
+            'choice_a_exp_reward': 450,
+            'choice_a_cash_change': 1500,
+            'choice_a_reputation_change': 18,
+            'choice_a_feedback': 'CLV = (Avg Purchase × Frequency × 12 × Years) × Profit Margin. This tells you how much you can spend to acquire customers.'
+        },
+        {
+            'world_type': 'Modern',
+            'industry': 'Restaurant',
+            'discipline': 'Strategy',
+            'required_level': 8,
+            'scenario_title': 'Expansion Investment Decision',
+            'scenario_narrative': 'Two franchise opportunities: Location A costs $200,000 and projects $80,000 annual profit. Location B costs $150,000 and projects $52,500 annual profit. Which has better payback period?',
+            'challenge_type': 'payback_period',
+            'challenge_config': json.dumps({
+                'option_a_cost': 200000,
+                'option_a_annual_profit': 80000,
+                'option_b_cost': 150000,
+                'option_b_annual_profit': 52500
+            }),
+            'choice_a_exp_reward': 500,
+            'choice_a_cash_change': 2000,
+            'choice_a_reputation_change': 20,
+            'choice_a_feedback': 'Payback Period = Initial Investment / Annual Profit. Compare both options to find the faster return on investment.'
+        },
+        {
+            'world_type': 'Modern',
+            'industry': 'Restaurant',
+            'discipline': 'Finance',
+            'required_level': 9,
+            'scenario_title': 'Compound Growth Forecast',
+            'scenario_narrative': 'Your restaurant chain has $500,000 in annual revenue growing at 15% compound annually. Project the revenue after 3 years of sustained growth.',
+            'challenge_type': 'compound_growth',
+            'challenge_config': json.dumps({
+                'initial_value': 500000,
+                'growth_rate': 15,
+                'years': 3
+            }),
+            'choice_a_exp_reward': 600,
+            'choice_a_cash_change': 2500,
+            'choice_a_reputation_change': 25,
+            'choice_a_feedback': 'Compound Growth: Future Value = Present Value × (1 + rate)^years. Understanding compound growth is key to long-term planning.'
+        }
+    ]
+    
+    for ch in challenges:
+        cur.execute("""
+            INSERT INTO scenario_master 
+            (world_type, industry, discipline, required_level, scenario_title, scenario_narrative,
+             choice_a_text, choice_a_exp_reward, choice_a_cash_change, choice_a_reputation_change, choice_a_feedback,
+             choice_b_text, choice_b_exp_reward, choice_b_cash_change, choice_b_reputation_change, choice_b_feedback,
+             challenge_type, challenge_config, is_active)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, TRUE)
+        """, (
+            ch['world_type'], ch['industry'], ch['discipline'], ch['required_level'],
+            ch['scenario_title'], ch['scenario_narrative'],
+            'Calculate Answer', ch['choice_a_exp_reward'], ch['choice_a_cash_change'], 
+            ch['choice_a_reputation_change'], ch['choice_a_feedback'],
+            'Skip Challenge', 0, 0, 0, 'You chose to skip this challenge.',
+            ch['challenge_type'], ch['challenge_config']
+        ))
+    
+    conn.commit()
+    print(f"Seeded {len(challenges)} advanced challenges!")
+    cur.close()
+    conn.close()
+
+
 if __name__ == "__main__":
     init_database()
     seed_scenarios()

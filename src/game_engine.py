@@ -390,6 +390,36 @@ class GameEngine:
                 'example': '<p>Fixed costs $10,000, sell at $50, costs $30 to make:<br>$10,000 ÷ ($50 - $30) = $10,000 ÷ $20 = <strong>500 units</strong></p>',
                 'tips': ['Fixed costs stay the same regardless of sales', 'Price minus cost = contribution margin', 'Sell more than break-even to profit']
             },
+            'roi_calculator': {
+                'concept': '<p><strong>Return on Investment (ROI)</strong> measures the profitability of an investment as a percentage. Positive ROI = making money, negative ROI = losing money.</p>',
+                'formula': 'ROI = ((Total Gain - Investment) ÷ Investment) × 100',
+                'example': '<p>Investment of $10,000, total returns of $12,000:<br>(($12,000 - $10,000) ÷ $10,000) × 100 = <strong>20% ROI</strong></p>',
+                'tips': ['Calculate total gains over the period first', 'Subtract original investment to get net gain', 'Negative ROI means you lost money on the investment']
+            },
+            'inventory_turnover': {
+                'concept': '<p><strong>Inventory Turnover</strong> shows how many times you sell and replace inventory in a year. Higher = more efficient, lower = slow-moving stock.</p>',
+                'formula': 'Inventory Turnover = Cost of Goods Sold ÷ Average Inventory',
+                'example': '<p>COGS of $100,000 and average inventory of $20,000:<br>$100,000 ÷ $20,000 = <strong>5 times per year</strong></p>',
+                'tips': ['Use COGS, not revenue', 'Higher turnover means less cash tied up in stock', 'Industry standards vary - restaurants should be high']
+            },
+            'ltv_calculator': {
+                'concept': '<p><strong>Customer Lifetime Value (CLV/LTV)</strong> predicts the total profit from a customer relationship. Essential for knowing how much to spend on customer acquisition.</p>',
+                'formula': 'LTV = (Avg Purchase × Frequency × 12 × Years) × Profit Margin',
+                'example': '<p>$50 avg, 2 times/month, 3 years, 25% margin:<br>($50 × 2 × 12 × 3) × 0.25 = $3,600 × 0.25 = <strong>$900 LTV</strong></p>',
+                'tips': ['Multiply by profit margin, not revenue', 'LTV should exceed customer acquisition cost', 'Loyal customers are worth investing in']
+            },
+            'payback_period': {
+                'concept': '<p><strong>Payback Period</strong> is how long it takes to recover your initial investment. Shorter = less risky, faster return on capital.</p>',
+                'formula': 'Payback Period = Initial Investment ÷ Annual Profit',
+                'example': '<p>$50,000 investment generating $10,000 annual profit:<br>$50,000 ÷ $10,000 = <strong>5 years to pay back</strong></p>',
+                'tips': ['Lower payback period = better investment', 'Compare multiple options by payback period', 'Consider risk - shorter payback = lower risk']
+            },
+            'compound_growth': {
+                'concept': '<p><strong>Compound Growth</strong> shows how values grow exponentially over time. Money earns returns on returns, accelerating growth.</p>',
+                'formula': 'Future Value = Present Value × (1 + Rate)^Years',
+                'example': '<p>$100,000 growing at 10% for 3 years:<br>$100,000 × (1.10)³ = $100,000 × 1.331 = <strong>$133,100</strong></p>',
+                'tips': ['Convert percentage to decimal (10% = 0.10)', 'Add 1 to the rate before raising to power', 'Compound growth accelerates over time']
+            },
             'choice': {
                 'concept': f'<p>This quest will test your <strong>{discipline}</strong> skills. Read the scenario carefully and choose the best option based on business principles.</p>',
                 'formula': None,
@@ -717,6 +747,47 @@ class GameEngine:
             if unit_price > unit_cost:
                 correct_answer = fixed_costs / (unit_price - unit_cost)
             tolerance = 1
+        
+        elif challenge_type == 'roi_calculator':
+            investment = challenge_config.get('investment', 0)
+            monthly_gain = challenge_config.get('monthly_gain', 0)
+            period_months = challenge_config.get('period_months', 12)
+            total_gain = monthly_gain * period_months
+            net_gain = total_gain - investment
+            correct_answer = (net_gain / investment) * 100 if investment > 0 else 0
+            tolerance = 2
+        
+        elif challenge_type == 'inventory_turnover':
+            cogs = challenge_config.get('cost_of_goods_sold', 0)
+            avg_inventory = challenge_config.get('average_inventory', 1)
+            correct_answer = cogs / avg_inventory if avg_inventory > 0 else 0
+            tolerance = 0.5
+        
+        elif challenge_type == 'ltv_calculator':
+            avg_purchase = challenge_config.get('avg_purchase', 0)
+            frequency = challenge_config.get('frequency_monthly', 1)
+            years = challenge_config.get('retention_years', 1)
+            margin = challenge_config.get('profit_margin', 100) / 100
+            total_revenue = avg_purchase * frequency * 12 * years
+            correct_answer = total_revenue * margin
+            tolerance = 50
+        
+        elif challenge_type == 'payback_period':
+            cost_a = challenge_config.get('option_a_cost', 0)
+            profit_a = challenge_config.get('option_a_annual_profit', 1)
+            cost_b = challenge_config.get('option_b_cost', 0)
+            profit_b = challenge_config.get('option_b_annual_profit', 1)
+            payback_a = cost_a / profit_a if profit_a > 0 else 999
+            payback_b = cost_b / profit_b if profit_b > 0 else 999
+            correct_answer = payback_a if payback_a <= payback_b else payback_b
+            tolerance = 0.1
+        
+        elif challenge_type == 'compound_growth':
+            initial = challenge_config.get('initial_value', 0)
+            rate = challenge_config.get('growth_rate', 0) / 100
+            years = challenge_config.get('years', 1)
+            correct_answer = initial * ((1 + rate) ** years)
+            tolerance = 500
         
         if challenge_type == 'pricing_strategy':
             answer = round(answer, 2)
