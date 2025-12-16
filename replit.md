@@ -136,3 +136,5 @@ The game runs as a web application on port 5000.
 - 2025-12: Added 6 NPC discipline advisor portraits (Marketing Manager, Finance Director, Operations Chief, HR Manager, Legal Counsel, Strategy Advisor)
 - 2025-12: Implemented dialogue typing animation and staggered choice card animations
 - 2025-12: Created discipline-specific scene backdrops for all 6 business disciplines
+- 2025-12: Implemented complete 10-level Marketing Curriculum with structured learning progression
+- 2025-12: Marketing curriculum covers: Need vs Want, 4 Ps (Product, Price, Place, Promotion), Segmentation, CPA, A/B Testing, LTV, SWOT, Crisis Management
