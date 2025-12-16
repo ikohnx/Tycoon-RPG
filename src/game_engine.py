@@ -44,6 +44,42 @@ JOB_TITLES = {
         8: 'VP of Sales',
         9: 'Chief Revenue Officer',
         10: 'CEO'
+    },
+    'Steel Mill': {
+        1: 'Furnace Stoker',
+        2: 'Foundry Worker',
+        3: 'Shift Supervisor',
+        4: 'Foreman',
+        5: 'Production Manager',
+        6: 'Plant Superintendent',
+        7: 'Operations Director',
+        8: 'Vice President',
+        9: 'Senior Vice President',
+        10: 'Mill Baron'
+    },
+    'Textile Factory': {
+        1: 'Loom Operator',
+        2: 'Pattern Cutter',
+        3: 'Floor Supervisor',
+        4: 'Quality Inspector',
+        5: 'Production Chief',
+        6: 'Factory Manager',
+        7: 'Regional Director',
+        8: 'Vice President',
+        9: 'Chief Operating Officer',
+        10: 'Textile Magnate'
+    },
+    'Railroad': {
+        1: 'Track Layer',
+        2: 'Station Porter',
+        3: 'Conductor',
+        4: 'Station Master',
+        5: 'District Manager',
+        6: 'Division Superintendent',
+        7: 'Regional Director',
+        8: 'Vice President',
+        9: 'Executive VP',
+        10: 'Railroad Tycoon'
     }
 }
 

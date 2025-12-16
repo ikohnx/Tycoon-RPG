@@ -42,6 +42,8 @@
                     <div class="h5 mb-0">
                         {% if stats.world == 'Modern' %}
                         <i class="bi bi-building"></i>
+                        {% elif stats.world == 'Industrial' %}
+                        <i class="bi bi-gear-wide-connected text-warning"></i>
                         {% elif stats.world == 'Fantasy' %}
                         <i class="bi bi-magic"></i>
                         {% else %}
@@ -57,6 +59,12 @@
                         <i class="bi bi-cup-hot"></i>
                         {% elif stats.industry == 'SaaS' %}
                         <i class="bi bi-laptop"></i>
+                        {% elif stats.industry == 'Steel Mill' %}
+                        <i class="bi bi-fire text-warning"></i>
+                        {% elif stats.industry == 'Textile Factory' %}
+                        <i class="bi bi-scissors text-warning"></i>
+                        {% elif stats.industry == 'Railroad' %}
+                        <i class="bi bi-train-front text-warning"></i>
                         {% else %}
                         <i class="bi bi-shop"></i>
                         {% endif %}

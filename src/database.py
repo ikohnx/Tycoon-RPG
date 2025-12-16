@@ -1084,6 +1084,233 @@ def seed_fantasy_scenarios():
     conn.close()
 
 
+def seed_industrial_scenarios():
+    """Seed Industrial Age scenarios for steel mill, textile factory, and railroad industries."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM scenario_master WHERE world_type = 'Industrial'")
+    result = cur.fetchone()
+    if result['count'] > 0:
+        print("Industrial scenarios already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    scenarios = [
+        {"world_type": "Industrial", "industry": "Steel Mill", "discipline": "Operations", "required_level": 1,
+         "scenario_title": "The Bessemer Decision", "scenario_narrative": "A salesman offers the revolutionary Bessemer process equipment. It promises faster steel production but requires significant capital and worker retraining.",
+         "choice_a_text": "Invest in the Bessemer converter ($5,000)", "choice_a_exp_reward": 120, "choice_a_cash_change": -5000, "choice_a_reputation_change": 15,
+         "choice_a_feedback": "Brilliant! Your mill now produces steel 10x faster than competitors using traditional methods.",
+         "choice_b_text": "Wait and observe competitors first", "choice_b_exp_reward": 60, "choice_b_cash_change": 0, "choice_b_reputation_change": 0,
+         "choice_b_feedback": "Cautious, but competitors are racing ahead. You'll need to decide soon.",
+         "choice_c_text": "Stick with puddling furnaces (traditional)", "choice_c_exp_reward": 40, "choice_c_cash_change": 0, "choice_c_reputation_change": -5,
+         "choice_c_feedback": "Your workers know the old ways, but the industry is changing rapidly.", "subskill_focus": "Process Optimization"},
+        
+        {"world_type": "Industrial", "industry": "Steel Mill", "discipline": "Human Resources", "required_level": 1,
+         "scenario_title": "The Labor Dispute", "scenario_narrative": "Furnace workers demand shorter 10-hour shifts instead of the current 12 hours. They threaten to strike during peak production season.",
+         "choice_a_text": "Negotiate 11-hour shifts with meal breaks", "choice_a_exp_reward": 100, "choice_a_cash_change": -200, "choice_a_reputation_change": 10,
+         "choice_a_feedback": "A reasonable compromise! Workers are satisfied and productivity remains strong.",
+         "choice_b_text": "Refuse and prepare to hire replacements", "choice_b_exp_reward": 50, "choice_b_cash_change": 500, "choice_b_reputation_change": -15,
+         "choice_b_feedback": "The strike lasted two weeks. Production suffered but you maintained control.",
+         "choice_c_text": "Grant 10-hour shifts with slight wage reduction", "choice_c_exp_reward": 85, "choice_c_cash_change": 100, "choice_c_reputation_change": 5,
+         "choice_c_feedback": "Workers accepted the trade-off. Morale improved somewhat.", "subskill_focus": "Conflict Resolution"},
+        
+        {"world_type": "Industrial", "industry": "Steel Mill", "discipline": "Finance", "required_level": 2,
+         "scenario_title": "Railroad Contract Bid", "scenario_narrative": "The Pennsylvania Railroad needs 10,000 tons of rail steel. Winning this contract would establish your mill, but you'll need to secure capital to expand capacity.",
+         "choice_a_text": "Bid aggressively and seek bank financing", "choice_a_exp_reward": 150, "choice_a_cash_change": 8000, "choice_a_reputation_change": 20,
+         "choice_a_feedback": "Contract secured! Your mill is now a major supplier to the railroad industry.",
+         "choice_b_text": "Bid conservatively within current capacity", "choice_b_exp_reward": 90, "choice_b_cash_change": 2000, "choice_b_reputation_change": 5,
+         "choice_b_feedback": "You won a smaller portion of the contract. Safe but limited growth.",
+         "choice_c_text": "Partner with a larger mill to share the contract", "choice_c_exp_reward": 110, "choice_c_cash_change": 4000, "choice_c_reputation_change": 12,
+         "choice_c_feedback": "The partnership worked well. You gained experience and contacts.", "subskill_focus": "Investment Analysis"},
+        
+        {"world_type": "Industrial", "industry": "Textile Factory", "discipline": "Operations", "required_level": 1,
+         "scenario_title": "The Power Loom Upgrade", "scenario_narrative": "Your hand looms are reliable but slow. Power looms could triple output, but they require steam engine installation and new worker training.",
+         "choice_a_text": "Install power looms throughout ($3,000)", "choice_a_exp_reward": 110, "choice_a_cash_change": -3000, "choice_a_reputation_change": 10,
+         "choice_a_feedback": "Production soared! You can now compete with the largest mills in New England.",
+         "choice_b_text": "Upgrade half the factory first", "choice_b_exp_reward": 80, "choice_b_cash_change": -1500, "choice_b_reputation_change": 5,
+         "choice_b_feedback": "A measured approach. You can observe results before full commitment.",
+         "choice_c_text": "Invest in faster hand looms instead", "choice_c_exp_reward": 50, "choice_c_cash_change": -500, "choice_c_reputation_change": 0,
+         "choice_c_feedback": "Marginal improvement. Your competitors are pulling ahead.", "subskill_focus": "Process Optimization"},
+        
+        {"world_type": "Industrial", "industry": "Textile Factory", "discipline": "Human Resources", "required_level": 1,
+         "scenario_title": "The Child Labor Question", "scenario_narrative": "Many mills employ children for their small fingers and low wages. A reformer is publicizing conditions. Your factory currently employs workers of all ages.",
+         "choice_a_text": "Transition to adult workers only, offer fair wages", "choice_a_exp_reward": 130, "choice_a_cash_change": -800, "choice_a_reputation_change": 25,
+         "choice_a_feedback": "Your reputation as a fair employer attracts skilled workers from competitors.",
+         "choice_b_text": "Establish a factory school for young workers", "choice_b_exp_reward": 100, "choice_b_cash_change": -400, "choice_b_reputation_change": 15,
+         "choice_b_feedback": "A progressive compromise that garners public approval.",
+         "choice_c_text": "Continue current practices quietly", "choice_c_exp_reward": 40, "choice_c_cash_change": 200, "choice_c_reputation_change": -10,
+         "choice_c_feedback": "Profits remain high, but the reformer's article damaged your reputation.", "subskill_focus": "Team Building"},
+        
+        {"world_type": "Industrial", "industry": "Textile Factory", "discipline": "Marketing", "required_level": 2,
+         "scenario_title": "The Department Store Opportunity", "scenario_narrative": "A new department store in Philadelphia wants exclusive textile patterns. This could establish your brand but requires design investment.",
+         "choice_a_text": "Create exclusive patterns and brand partnership", "choice_a_exp_reward": 140, "choice_a_cash_change": 1500, "choice_a_reputation_change": 18,
+         "choice_a_feedback": "Your patterns are the talk of high society! Orders are flooding in.",
+         "choice_b_text": "Offer standard patterns at discount", "choice_b_exp_reward": 70, "choice_b_cash_change": 600, "choice_b_reputation_change": 3,
+         "choice_b_feedback": "They accepted, but you're one of many suppliers.",
+         "choice_c_text": "Decline - focus on wholesale markets", "choice_c_exp_reward": 50, "choice_c_cash_change": 0, "choice_c_reputation_change": 0,
+         "choice_c_feedback": "Wholesale is reliable but the retail opportunity passed you by.", "subskill_focus": "Brand Identity"},
+        
+        {"world_type": "Industrial", "industry": "Railroad", "discipline": "Strategy", "required_level": 1,
+         "scenario_title": "The Route Survey", "scenario_narrative": "Your railroad needs to connect two cities. The mountain route is shorter but requires expensive tunneling. The valley route is longer but easier to build.",
+         "choice_a_text": "Take the mountain route (tunnel investment)", "choice_a_exp_reward": 130, "choice_a_cash_change": -6000, "choice_a_reputation_change": 20,
+         "choice_a_feedback": "The shorter route attracts more passengers and freight. Competitors are envious!",
+         "choice_b_text": "Build the valley route (longer but cheaper)", "choice_b_exp_reward": 80, "choice_b_cash_change": -2000, "choice_b_reputation_change": 5,
+         "choice_b_feedback": "The route works but the longer journey time limits your competitive advantage.",
+         "choice_c_text": "Survey both options further (delay)", "choice_c_exp_reward": 50, "choice_c_cash_change": -500, "choice_c_reputation_change": -5,
+         "choice_c_feedback": "A competitor started building while you deliberated. Time is money!", "subskill_focus": "Long-term Planning"},
+        
+        {"world_type": "Industrial", "industry": "Railroad", "discipline": "Finance", "required_level": 1,
+         "scenario_title": "The Stock Offering", "scenario_narrative": "To fund expansion, you need capital. You can issue stock, seek bank loans, or find wealthy investors. Each has different implications for control and cost.",
+         "choice_a_text": "Issue public stock (dilute ownership)", "choice_a_exp_reward": 100, "choice_a_cash_change": 10000, "choice_a_reputation_change": 15,
+         "choice_a_feedback": "Capital secured! You now have a board of directors to answer to.",
+         "choice_b_text": "Secure bank loans (keep full control)", "choice_b_exp_reward": 90, "choice_b_cash_change": 5000, "choice_b_reputation_change": 8,
+         "choice_b_feedback": "Full control maintained, but the interest payments are significant.",
+         "choice_c_text": "Find a wealthy partner (share control, share risk)", "choice_c_exp_reward": 110, "choice_c_cash_change": 7000, "choice_c_reputation_change": 12,
+         "choice_c_feedback": "Your new partner brings both capital and valuable political connections.", "subskill_focus": "Investment Analysis"},
+        
+        {"world_type": "Industrial", "industry": "Railroad", "discipline": "Operations", "required_level": 2,
+         "scenario_title": "The Gauge Question", "scenario_narrative": "Your railroad uses a different track gauge than connecting lines. Passengers and freight must transfer at junctions, causing delays and costs.",
+         "choice_a_text": "Convert to standard gauge (major expense)", "choice_a_exp_reward": 150, "choice_a_cash_change": -8000, "choice_a_reputation_change": 25,
+         "choice_a_feedback": "Seamless connections! Shippers and passengers flock to your efficient line.",
+         "choice_b_text": "Build transfer facilities at junctions", "choice_b_exp_reward": 80, "choice_b_cash_change": -2000, "choice_b_reputation_change": 5,
+         "choice_b_feedback": "Workable but inefficient. The transfer delays remain a complaint.",
+         "choice_c_text": "Lobby for your gauge as the new standard", "choice_c_exp_reward": 60, "choice_c_cash_change": -1000, "choice_c_reputation_change": -5,
+         "choice_c_feedback": "The lobbying failed. Congress chose the other gauge as standard.", "subskill_focus": "Supply Chain"},
+        
+        {"world_type": "Industrial", "industry": "Railroad", "discipline": "Legal", "required_level": 2,
+         "scenario_title": "The Land Grant Proposal", "scenario_narrative": "The federal government offers land grants for railroads expanding westward. The terms are complex and require navigating political relationships.",
+         "choice_a_text": "Pursue the land grant aggressively", "choice_a_exp_reward": 160, "choice_a_cash_change": 15000, "choice_a_reputation_change": 20,
+         "choice_a_feedback": "Success! Thousands of acres of valuable land are now yours to develop or sell.",
+         "choice_b_text": "Apply cautiously with proper legal review", "choice_b_exp_reward": 120, "choice_b_cash_change": 8000, "choice_b_reputation_change": 15,
+         "choice_b_feedback": "A smaller grant, but with clear title and no legal complications.",
+         "choice_c_text": "Avoid government entanglements", "choice_c_exp_reward": 50, "choice_c_cash_change": 0, "choice_c_reputation_change": 0,
+         "choice_c_feedback": "Your competitors are now major landowners. You missed an opportunity.", "subskill_focus": "Contract Law"},
+    ]
+    
+    for scenario in scenarios:
+        cur.execute("""
+            INSERT INTO scenario_master (world_type, industry, discipline, required_level, scenario_title, scenario_narrative,
+                choice_a_text, choice_a_exp_reward, choice_a_cash_change, choice_a_reputation_change, choice_a_feedback,
+                choice_b_text, choice_b_exp_reward, choice_b_cash_change, choice_b_reputation_change, choice_b_feedback,
+                choice_c_text, choice_c_exp_reward, choice_c_cash_change, choice_c_reputation_change, choice_c_feedback,
+                subskill_focus)
+            VALUES (%(world_type)s, %(industry)s, %(discipline)s, %(required_level)s, %(scenario_title)s, %(scenario_narrative)s,
+                %(choice_a_text)s, %(choice_a_exp_reward)s, %(choice_a_cash_change)s, %(choice_a_reputation_change)s, %(choice_a_feedback)s,
+                %(choice_b_text)s, %(choice_b_exp_reward)s, %(choice_b_cash_change)s, %(choice_b_reputation_change)s, %(choice_b_feedback)s,
+                %(choice_c_text)s, %(choice_c_exp_reward)s, %(choice_c_cash_change)s, %(choice_c_reputation_change)s, %(choice_c_feedback)s,
+                %(subskill_focus)s)
+        """, scenario)
+    
+    conn.commit()
+    print(f"Seeded {len(scenarios)} Industrial scenarios successfully!")
+    cur.close()
+    conn.close()
+
+
+def seed_industrial_events():
+    """Seed random events for Industrial Age world."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM random_events WHERE world_type = 'Industrial'")
+    result = cur.fetchone()
+    if result['count'] > 0:
+        print("Industrial events already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    events = [
+        {"code": "machinery_breakdown", "name": "Machinery Breakdown", "type": "crisis", "world": "Industrial", "industry": None,
+         "description": "A critical piece of machinery has broken down! Production is halted until repairs are made.",
+         "choice_a_text": "Rush repair with overtime pay", "choice_a_cash": -500, "choice_a_rep": 5, 
+         "choice_a_feedback": "Expensive but production resumed quickly. Workers appreciate the quick action.",
+         "choice_b_text": "Wait for regular repair schedule", "choice_b_cash": 0, "choice_b_rep": -10,
+         "choice_b_feedback": "Production delays hurt your reputation with clients.", "rarity": "common", "min_level": 1},
+        {"code": "coal_shortage", "name": "Coal Shortage", "type": "crisis", "world": "Industrial", "industry": None,
+         "description": "A mine collapse has caused a regional coal shortage. Your operations depend on a steady supply.",
+         "choice_a_text": "Secure emergency coal at premium prices", "choice_a_cash": -800, "choice_a_rep": 5,
+         "choice_a_feedback": "Operations continue smoothly. Your reliability is noted by customers.",
+         "choice_b_text": "Reduce operations until supply normalizes", "choice_b_cash": -300, "choice_b_rep": -5,
+         "choice_b_feedback": "Slower production, but you weathered the shortage.", "rarity": "uncommon", "min_level": 1},
+        {"code": "inventors_proposal", "name": "Inventor's Proposal", "type": "opportunity", "world": "Industrial", "industry": None,
+         "description": "A young inventor presents a patent for improved efficiency. He wants capital in exchange for exclusive rights.",
+         "choice_a_text": "Invest in the patent ($1000)", "choice_a_cash": -1000, "choice_a_rep": 15,
+         "choice_a_feedback": "The invention works! Your factory becomes more efficient.",
+         "choice_b_text": "Politely decline", "choice_b_cash": 0, "choice_b_rep": 0,
+         "choice_b_feedback": "A competitor bought the patent instead. Their loss is your caution.", "rarity": "rare", "min_level": 2},
+        {"code": "workers_parade", "name": "Workers' Parade", "type": "decision", "world": "Industrial", "industry": None,
+         "description": "Workers are organizing a parade for the new Labor Day holiday. They want you to close the factory for the day.",
+         "choice_a_text": "Close for the day with pay", "choice_a_cash": -200, "choice_a_rep": 20,
+         "choice_a_feedback": "Worker morale soars! You're seen as a fair employer.",
+         "choice_b_text": "Keep factory open (voluntary attendance)", "choice_b_cash": 100, "choice_b_rep": -5,
+         "choice_b_feedback": "Production continued but workers grumbled.", "rarity": "common", "min_level": 1},
+        {"code": "govt_inspection", "name": "Government Inspection", "type": "crisis", "world": "Industrial", "industry": None,
+         "description": "A government inspector has arrived unannounced to examine working conditions and safety measures.",
+         "choice_a_text": "Cooperate fully and make improvements", "choice_a_cash": -600, "choice_a_rep": 15,
+         "choice_a_feedback": "The inspector was impressed with your cooperation and improvements.",
+         "choice_b_text": "Show only the best areas of the facility", "choice_b_cash": -100, "choice_b_rep": -10,
+         "choice_b_feedback": "The inspector noticed your evasiveness and scheduled a return visit.", "rarity": "uncommon", "min_level": 1},
+    ]
+    
+    for event in events:
+        cur.execute("""
+            INSERT INTO random_events (event_code, event_name, event_description, event_type, world_type, industry,
+                choice_a_text, choice_a_cash_change, choice_a_reputation_change, choice_a_feedback,
+                choice_b_text, choice_b_cash_change, choice_b_reputation_change, choice_b_feedback,
+                rarity, min_level)
+            VALUES (%(code)s, %(name)s, %(description)s, %(type)s, %(world)s, %(industry)s,
+                %(choice_a_text)s, %(choice_a_cash)s, %(choice_a_rep)s, %(choice_a_feedback)s,
+                %(choice_b_text)s, %(choice_b_cash)s, %(choice_b_rep)s, %(choice_b_feedback)s,
+                %(rarity)s, %(min_level)s)
+        """, event)
+    
+    conn.commit()
+    print(f"Seeded {len(events)} Industrial random events successfully!")
+    cur.close()
+    conn.close()
+
+
+def seed_industrial_rivals():
+    """Seed rival businesses for Industrial Age world."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM rivals WHERE world_type = 'Industrial'")
+    result = cur.fetchone()
+    if result['count'] > 0:
+        print("Industrial rivals already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    rivals = [
+        {"code": "carnegie_steel", "name": "Andrew Carnegie", "business": "Carnegie Steel Works", "world": "Industrial", "industry": "Steel Mill",
+         "description": "The largest and most efficient steel operation in the region.", "difficulty": 5},
+        {"code": "allegheny_iron", "name": "Henry Frick", "business": "Allegheny Iron & Coke", "world": "Industrial", "industry": "Steel Mill",
+         "description": "A vertically integrated competitor controlling ore and fuel sources.", "difficulty": 4},
+        {"code": "lowell_mills", "name": "Francis Lowell Jr.", "business": "Lowell Textile Mills", "world": "Industrial", "industry": "Textile Factory",
+         "description": "Pioneering factory with the famous 'Lowell System' of worker management.", "difficulty": 4},
+        {"code": "manchester_cotton", "name": "Lord Manchester", "business": "Manchester Cotton Works", "world": "Industrial", "industry": "Textile Factory",
+         "description": "British-backed operation with access to imported cotton and machinery.", "difficulty": 3},
+        {"code": "vanderbilt_rail", "name": "Cornelius Vanderbilt", "business": "Vanderbilt Railways", "world": "Industrial", "industry": "Railroad",
+         "description": "The commodore's expanding railroad empire threatens all competitors.", "difficulty": 5},
+    ]
+    
+    for rival in rivals:
+        cur.execute("""
+            INSERT INTO rivals (rival_code, rival_name, rival_business, rival_description, world_type, industry, difficulty_level)
+            VALUES (%(code)s, %(name)s, %(business)s, %(description)s, %(world)s, %(industry)s, %(difficulty)s)
+        """, rival)
+    
+    conn.commit()
+    print(f"Seeded {len(rivals)} Industrial rivals successfully!")
+    cur.close()
+    conn.close()
+
+
 if __name__ == "__main__":
     init_database()
     seed_scenarios()
@@ -1097,3 +1324,6 @@ if __name__ == "__main__":
     seed_weekly_challenges()
     seed_avatar_options()
     seed_fantasy_scenarios()
+    seed_industrial_scenarios()
+    seed_industrial_events()
+    seed_industrial_rivals()

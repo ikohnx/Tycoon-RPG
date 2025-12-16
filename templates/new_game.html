@@ -66,7 +66,7 @@
                     <div class="mb-4">
                         <label class="form-label"><i class="bi bi-globe"></i> Select Your World</label>
                         <div class="row g-3">
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <input type="radio" class="btn-check" name="world" value="Modern" id="world-modern" checked>
                                 <label class="btn btn-outline-light w-100 p-3" for="world-modern">
                                     <i class="bi bi-building display-6 d-block mb-2"></i>
@@ -74,7 +74,15 @@
                                     <small class="d-block text-muted">Office towers, digital marketing</small>
                                 </label>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
+                                <input type="radio" class="btn-check" name="world" value="Industrial" id="world-industrial">
+                                <label class="btn btn-outline-warning w-100 p-3" for="world-industrial">
+                                    <i class="bi bi-gear-wide-connected display-6 d-block mb-2"></i>
+                                    <strong>Industrial</strong>
+                                    <small class="d-block text-muted">1800s factories & railroads</small>
+                                </label>
+                            </div>
+                            <div class="col-md-3">
                                 <input type="radio" class="btn-check" name="world" value="Fantasy" id="world-fantasy" disabled>
                                 <label class="btn btn-outline-secondary w-100 p-3" for="world-fantasy">
                                     <i class="bi bi-magic display-6 d-block mb-2"></i>
@@ -82,7 +90,7 @@
                                     <small class="d-block text-muted">Coming Soon</small>
                                 </label>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <input type="radio" class="btn-check" name="world" value="SciFi" id="world-scifi" disabled>
                                 <label class="btn btn-outline-secondary w-100 p-3" for="world-scifi">
                                     <i class="bi bi-rocket display-6 d-block mb-2"></i>
@@ -93,7 +101,7 @@
                         </div>
                     </div>
                     
-                    <div class="mb-4">
+                    <div class="mb-4" id="modern-industries">
                         <label class="form-label">Select Your Industry</label>
                         <div class="row g-3">
                             <div class="col-md-6">
@@ -115,6 +123,36 @@
                         </div>
                     </div>
                     
+                    <div class="mb-4 d-none" id="industrial-industries">
+                        <label class="form-label">Select Your Industry</label>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <input type="radio" class="btn-check" name="industry" value="Steel Mill" id="ind-steel">
+                                <label class="btn btn-outline-warning w-100 p-3" for="ind-steel">
+                                    <i class="bi bi-fire display-6 d-block mb-2"></i>
+                                    <strong>Steel Mill</strong>
+                                    <small class="d-block text-muted">Operations +40%, Finance +20%</small>
+                                </label>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="radio" class="btn-check" name="industry" value="Textile Factory" id="ind-textile">
+                                <label class="btn btn-outline-warning w-100 p-3" for="ind-textile">
+                                    <i class="bi bi-scissors display-6 d-block mb-2"></i>
+                                    <strong>Textile Factory</strong>
+                                    <small class="d-block text-muted">Operations +30%, HR +20%</small>
+                                </label>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="radio" class="btn-check" name="industry" value="Railroad" id="ind-railroad">
+                                <label class="btn btn-outline-warning w-100 p-3" for="ind-railroad">
+                                    <i class="bi bi-train-front display-6 d-block mb-2"></i>
+                                    <strong>Railroad</strong>
+                                    <small class="d-block text-muted">Strategy +30%, Finance +30%</small>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="d-flex justify-content-between">
                         <a href="{{ url_for('index') }}" class="btn btn-outline-light">
                             <i class="bi bi-arrow-left"></i> Back
@@ -128,4 +166,26 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const worldRadios = document.querySelectorAll('input[name="world"]');
+    const modernIndustries = document.getElementById('modern-industries');
+    const industrialIndustries = document.getElementById('industrial-industries');
+    
+    worldRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'Industrial') {
+                modernIndustries.classList.add('d-none');
+                industrialIndustries.classList.remove('d-none');
+                document.getElementById('ind-steel').checked = true;
+            } else {
+                modernIndustries.classList.remove('d-none');
+                industrialIndustries.classList.add('d-none');
+                document.getElementById('ind-restaurant').checked = true;
+            }
+        });
+    });
+});
+</script>
 {% endblock %}

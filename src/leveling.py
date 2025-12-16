@@ -68,6 +68,30 @@ INDUSTRY_WEIGHTS = {
         "Human Resources": 1.2,
         "Legal": 1.3,
         "Strategy": 1.0
+    },
+    "Steel Mill": {
+        "Marketing": 0.7,
+        "Finance": 1.2,
+        "Operations": 1.4,
+        "Human Resources": 1.1,
+        "Legal": 0.9,
+        "Strategy": 1.0
+    },
+    "Textile Factory": {
+        "Marketing": 1.0,
+        "Finance": 1.0,
+        "Operations": 1.3,
+        "Human Resources": 1.2,
+        "Legal": 0.8,
+        "Strategy": 0.9
+    },
+    "Railroad": {
+        "Marketing": 0.8,
+        "Finance": 1.3,
+        "Operations": 1.2,
+        "Human Resources": 1.0,
+        "Legal": 1.1,
+        "Strategy": 1.3
     }
 }
 
