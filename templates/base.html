@@ -391,6 +391,56 @@
             50% { box-shadow: 0 0 25px rgba(255, 215, 0, 0.8), 0 0 40px rgba(255, 215, 0, 0.3); }
         }
         
+        .selection-card {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .selection-card .selected-badge {
+            display: none;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: linear-gradient(135deg, #50c878, #228b22);
+            color: #fff;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-family: 'Staatliches', cursive;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+            box-shadow: 0 0 15px rgba(80, 200, 120, 0.5);
+            z-index: 10;
+        }
+        
+        .btn-check:checked + .selection-card .selected-badge {
+            display: block;
+            animation: badgePop 0.3s ease;
+        }
+        
+        @keyframes badgePop {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        
+        .btn-check:checked + .selection-card {
+            border-color: #50c878 !important;
+            box-shadow: 0 0 25px rgba(80, 200, 120, 0.4), inset 0 0 30px rgba(80, 200, 120, 0.1);
+            transform: scale(1.02);
+        }
+        
+        .btn-check:checked + .selection-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: inherit;
+            background: linear-gradient(135deg, rgba(80,200,120,0.15) 0%, transparent 50%);
+            pointer-events: none;
+        }
+        
         .choice-btn {
             background: linear-gradient(135deg, rgba(74, 144, 217, 0.1) 0%, rgba(0, 0, 0, 0.3) 100%);
             border: 2px solid rgba(74, 144, 217, 0.5);
