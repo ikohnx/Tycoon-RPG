@@ -140,3 +140,5 @@ The game runs as a web application on port 5000.
 - 2025-12: Marketing curriculum covers: Need vs Want, 4 Ps (Product, Price, Place, Promotion), Segmentation, CPA, A/B Testing, LTV, SWOT, Crisis Management
 - 2025-12: Implemented complete 10-level Accounting/Finance Curriculum with structured learning progression
 - 2025-12: Accounting curriculum covers: Accounting Equation, Revenue vs Expense, Cash vs Accrual, Income Statement (P&L), Balance Sheet, Cash Flow Statement, Financial Ratios (Quick/Current), FIFO/LIFO Inventory, Budget Variance Analysis, Tax Strategy (GAAP/IFRS)
+- 2025-12: Implemented complete 10-level Strategic Finance Curriculum (30 scenarios across 3 worlds)
+- 2025-12: Finance curriculum covers: Cash Flow Management, ROI, Time Value of Money, Capital Budgeting (Payback Period), Debt Financing, Risk/Return Tradeoff, DCF & NPV, WACC, Equity Financing & Dilution, Mergers & Acquisitions

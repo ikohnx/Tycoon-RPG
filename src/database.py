@@ -1851,6 +1851,501 @@ def seed_accounting_curriculum():
     conn.close()
 
 
+def seed_finance_curriculum():
+    """Seed the complete 10-level Strategic Finance Curriculum across all 3 worlds."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM scenario_master WHERE discipline = 'Finance' AND scenario_title LIKE '%Cash Flow Management%'")
+    result = cur.fetchone()
+    if result['count'] > 0:
+        print("Finance curriculum already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    scenarios = [
+        # ========== LEVEL 1: Cash Flow Management (Working Capital) ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Finance", "required_level": 1,
+         "scenario_title": "L1: Cash Flow Management", 
+         "scenario_narrative": "Your Finance Director looks worried: 'We have $15,000 in the bank. This month's bills are $12,000, but our biggest customer owes us $20,000 and won't pay for 45 days. A supplier is offering a 10% discount if we pay $8,000 today.' How do you manage your working capital?",
+         "choice_a_text": "Pay bills first ($12K), skip the discount - we need to stay solvent", 
+         "choice_a_exp_reward": 90, "choice_a_cash_change": -120, "choice_a_reputation_change": 3,
+         "choice_a_feedback": "Safe choice! Rule #1 of cash flow: solvency first. You can't benefit from discounts if you can't pay employees. Cash management is about surviving to tomorrow.",
+         "choice_b_text": "Take the discount ($8K), pay partial bills - negotiate payment plans for the rest", 
+         "choice_b_exp_reward": 110, "choice_b_cash_change": 200, "choice_b_reputation_change": 5,
+         "choice_b_feedback": "Strategic cash management! The $800 discount savings plus negotiated terms maximizes your working capital. This is how CFOs think.",
+         "choice_c_text": "Call the customer demanding early payment - it's their fault we're tight", 
+         "choice_c_exp_reward": 50, "choice_c_cash_change": 0, "choice_c_reputation_change": -3,
+         "choice_c_feedback": "Damaging a customer relationship rarely solves cash flow. Working capital management means planning ahead, not reacting with panic.", 
+         "subskill_focus": "Working Capital"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Finance", "required_level": 1,
+         "scenario_title": "L1: Cash Flow Management", 
+         "scenario_narrative": "Your tavern has 200 gold coins in the vault. The ale merchant demands 150 gold today, but the Adventurer's Guild owes you 300 gold for last month's feast - payable at the next full moon (3 weeks away). A traveling spice merchant offers rare ingredients at 80 gold, but only today.",
+         "choice_a_text": "Pay the ale merchant (150g) - we need stock to serve customers", 
+         "choice_a_exp_reward": 90, "choice_a_cash_change": -100, "choice_a_reputation_change": 3,
+         "choice_a_feedback": "Keeping your core supplies flowing is essential. Without ale, you have no business. But you missed the rare spice opportunity.",
+         "choice_b_text": "Pay ale (150g) AND buy spices (80g) - use our buffer for opportunity", 
+         "choice_b_exp_reward": 60, "choice_b_cash_change": -230, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "Risky! You're left with only 20 gold. If the Guild delays payment or an emergency arises, you're insolvent. Never drain your cash buffer.",
+         "choice_c_text": "Negotiate 100g partial payment to ale merchant, buy spices with remainder", 
+         "choice_c_exp_reward": 110, "choice_c_cash_change": 180, "choice_c_reputation_change": 5,
+         "choice_c_feedback": "Masterful working capital management! Partial payments, relationship leverage, and seizing opportunities - you balance all three.", 
+         "subskill_focus": "Working Capital"},
+        
+        # Sci-Fi World  
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Finance", "required_level": 1,
+         "scenario_title": "L1: Cash Flow Management", 
+         "scenario_narrative": "Your asteroid mining operation has 50,000 credits. The refueling depot demands 35,000 credits by end of cycle. The Galactic Trade Federation owes you 80,000 credits for last quarter's ore shipment - processing takes 60 days. A rival offers to buy your secondary drill for 25,000 credits today.",
+         "choice_a_text": "Pay the depot (35K), wait for the Federation payment", 
+         "choice_a_exp_reward": 80, "choice_a_cash_change": -200, "choice_a_reputation_change": 2,
+         "choice_a_feedback": "Conservative approach keeps you operational but you're tight on reserves. What if ore prices drop or Federation delays?",
+         "choice_b_text": "Sell the drill (25K), pay depot - maintain equipment flexibility", 
+         "choice_b_exp_reward": 100, "choice_b_cash_change": 100, "choice_b_reputation_change": 4,
+         "choice_b_feedback": "Smart liquidity move! Converting idle assets to cash improves your working capital position. You've gained breathing room.",
+         "choice_c_text": "Request early payment from Federation at a 5% discount", 
+         "choice_c_exp_reward": 110, "choice_c_cash_change": 150, "choice_c_reputation_change": 5,
+         "choice_c_feedback": "Factoring receivables! Giving up 5% to get cash 60 days early is often worthwhile. Time value of money in action.", 
+         "subskill_focus": "Working Capital"},
+
+        # ========== LEVEL 2: Return on Investment (ROI) ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Finance", "required_level": 2,
+         "scenario_title": "L2: Return on Investment (ROI)", 
+         "scenario_narrative": "You have $10,000 to invest. Option A: New espresso machine costs $10,000 and will generate $3,000 extra profit per year. Option B: Marketing campaign costs $10,000 and will generate $5,000 extra profit, but only this year. Which has better ROI?",
+         "choice_a_text": "Espresso machine - 30% ROI annually ($3K/$10K), compounds over years", 
+         "choice_a_exp_reward": 110, "choice_a_cash_change": 300, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Excellent long-term thinking! 30% annual ROI that repeats beats a one-time 50%. Over 3 years: machine = $9K profit vs marketing = $5K. Time matters!",
+         "choice_b_text": "Marketing campaign - 50% ROI ($5K/$10K) is higher than 30%", 
+         "choice_b_exp_reward": 80, "choice_b_cash_change": 500, "choice_b_reputation_change": 3,
+         "choice_b_feedback": "Higher immediate ROI, but it's one-time. For recurring investments, consider lifetime returns. The machine earns more by year 2.",
+         "choice_c_text": "Split $5,000 into each option", 
+         "choice_c_exp_reward": 90, "choice_c_cash_change": 250, "choice_c_reputation_change": 4,
+         "choice_c_feedback": "Diversification has merit! Half-machine generates $1,500/year ongoing, half-marketing generates $2,500 once. Good balanced approach.", 
+         "subskill_focus": "ROI Analysis"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Finance", "required_level": 2,
+         "scenario_title": "L2: Return on Investment (ROI)", 
+         "scenario_narrative": "You have 500 gold to invest. Option A: Commission a rare Enchanted Artifact from a master craftsman for 500 gold - sells for 700 gold (40% ROI). Option B: Buy brewing supplies for 500 gold that will produce ale worth 600 gold monthly, forever. Which investment wins?",
+         "choice_a_text": "Brewing supplies - 20% monthly ROI ($100/$500) recurring is infinite returns", 
+         "choice_a_exp_reward": 120, "choice_a_cash_change": 100, "choice_a_reputation_change": 6,
+         "choice_a_feedback": "Brilliant! 20% monthly = 240% annually, recurring forever. The artifact's 40% one-time return pales in comparison. Recurring ROI beats one-time.",
+         "choice_b_text": "Enchanted Artifact - 40% ROI in one transaction is higher", 
+         "choice_b_exp_reward": 70, "choice_b_cash_change": 200, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "One-time 40% is good, but brewing supplies at 20% MONTHLY means 240% ROI in a year. Always annualize returns for fair comparison!",
+         "choice_c_text": "Wait for a better opportunity - both seem risky", 
+         "choice_c_exp_reward": 40, "choice_c_cash_change": 0, "choice_c_reputation_change": 0,
+         "choice_c_feedback": "Inaction is its own risk! Your gold earns 0% sitting in the vault. Even a modest ROI beats inflation and opportunity cost.", 
+         "subskill_focus": "ROI Analysis"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Finance", "required_level": 2,
+         "scenario_title": "L2: Return on Investment (ROI)", 
+         "scenario_narrative": "You have 100,000 credits. Option A: New Mining Drill costs 100,000 and extracts 25,000 credits of exotic metals per quarter. Option B: Automation upgrade costs 100,000 and saves 15,000 credits in labor costs per quarter, forever. Calculate the ROI.",
+         "choice_a_text": "Mining Drill - 25% quarterly ROI (25K/100K) = 100% annual return", 
+         "choice_a_exp_reward": 100, "choice_a_cash_change": 250, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Revenue-generating assets have clear ROI. 25K quarterly = 100K annually = 100% ROI. Payback in 1 year, then pure profit!",
+         "choice_b_text": "Automation - 15% quarterly savings = 60% annual ROI, plus reduces risk", 
+         "choice_b_exp_reward": 110, "choice_b_cash_change": 150, "choice_b_reputation_change": 6,
+         "choice_b_feedback": "Smart risk-adjusted thinking! Cost savings are guaranteed; revenue depends on market prices. 60% safe ROI may beat 100% risky ROI.",
+         "choice_c_text": "Both investments have the same long-term value", 
+         "choice_c_exp_reward": 50, "choice_c_cash_change": 0, "choice_c_reputation_change": 1,
+         "choice_c_feedback": "Not quite! The drill's 100% beats automation's 60% in pure ROI terms. But risk matters too - calculate both.", 
+         "subskill_focus": "ROI Analysis"},
+
+        # ========== LEVEL 3: Time Value of Money (TVM) ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Finance", "required_level": 3,
+         "scenario_title": "L3: Time Value of Money", 
+         "scenario_narrative": "A supplier offers you a choice: receive a $10,000 rebate today OR a $11,000 rebate in one year. Your Finance Director asks: 'If we invest $10,000 today at 8% annual interest, what's it worth in a year?' What should you choose?",
+         "choice_a_text": "$10,000 today - it becomes $10,800 in a year (10K × 1.08), which is less than $11K", 
+         "choice_a_exp_reward": 80, "choice_a_cash_change": 100, "choice_a_reputation_change": 3,
+         "choice_a_feedback": "Good TVM calculation! $10K × 1.08 = $10,800 < $11,000. Mathematically, waiting IS better here. But cash flow needs might override theory.",
+         "choice_b_text": "$11,000 in one year - it's $200 more in future value terms", 
+         "choice_b_exp_reward": 110, "choice_b_cash_change": 0, "choice_b_reputation_change": 5,
+         "choice_b_feedback": "Correct TVM analysis! $11K > $10,800 (the future value of $10K at 8%). You earned the equivalent of 10% return by waiting - better than 8%!",
+         "choice_c_text": "Always take money today - a bird in hand is worth two in the bush", 
+         "choice_c_exp_reward": 60, "choice_c_cash_change": 100, "choice_c_reputation_change": 2,
+         "choice_c_feedback": "The intuition is often right, but not always! When the future amount exceeds your investment returns, waiting can be mathematically superior.", 
+         "subskill_focus": "Time Value of Money"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Finance", "required_level": 3,
+         "scenario_title": "L3: Time Value of Money", 
+         "scenario_narrative": "A noble offers you a choice: 1,000 gold coins today OR 1,200 gold coins after the harvest festival (6 months). The Dwarven Banking Guild pays 5% interest per 6 months. What is the smarter financial decision?",
+         "choice_a_text": "Take 1,000 gold today - at 5% it becomes 1,050 gold, still less than 1,200", 
+         "choice_a_exp_reward": 80, "choice_a_cash_change": 0, "choice_a_reputation_change": 3,
+         "choice_a_feedback": "Good math! 1,000 × 1.05 = 1,050 < 1,200. The noble's offer beats the bank rate. TVM says wait for 1,200 gold.",
+         "choice_b_text": "Wait for 1,200 gold - that's a 20% return, far exceeding the 5% bank rate", 
+         "choice_b_exp_reward": 120, "choice_b_cash_change": 200, "choice_b_reputation_change": 6,
+         "choice_b_feedback": "Perfect! 20% in 6 months (200 gold profit) vs 5% from the bank. Always compare offered returns against your opportunity cost!",
+         "choice_c_text": "The noble might not pay - take the guaranteed gold now", 
+         "choice_c_exp_reward": 70, "choice_c_cash_change": 100, "choice_c_reputation_change": 3,
+         "choice_c_feedback": "Risk consideration is valid! In TVM, we often add a 'risk premium' for uncertain future payments. Noble's credit matters.", 
+         "subskill_focus": "Time Value of Money"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Finance", "required_level": 3,
+         "scenario_title": "L3: Time Value of Money", 
+         "scenario_narrative": "The Galactic Trade Federation offers a contract: receive 50,000 credits today as upfront payment OR 60,000 credits in 2 years upon project completion. Current Federation Bond rates yield 8% annually. Which is worth more?",
+         "choice_a_text": "50K today grows to 58,320 credits in 2 years (50K × 1.08²) - take the upfront", 
+         "choice_a_exp_reward": 100, "choice_a_cash_change": 500, "choice_a_reputation_change": 4,
+         "choice_a_feedback": "Solid compound interest calculation! FV = 50,000 × (1.08)² = 58,320. But 60K > 58,320, so waiting actually wins!",
+         "choice_b_text": "60K in 2 years - its present value is 51,440 (60K ÷ 1.08²), exceeds 50K", 
+         "choice_b_exp_reward": 120, "choice_b_cash_change": 0, "choice_b_reputation_change": 6,
+         "choice_b_feedback": "Master-level TVM! You correctly discounted future value to present value. PV = 60,000 / 1.1664 = 51,440 > 50,000. Waiting wins!",
+         "choice_c_text": "They're equivalent - 10K more over 2 years is about 10% annual return", 
+         "choice_c_exp_reward": 70, "choice_c_cash_change": 0, "choice_c_reputation_change": 2,
+         "choice_c_feedback": "Close thinking but imprecise! The implied return is (60K/50K)^0.5 - 1 = 9.5% annually, slightly above the 8% bond rate. Math matters!", 
+         "subskill_focus": "Time Value of Money"},
+
+        # ========== LEVEL 4: Capital Budgeting (Payback Period) ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Finance", "required_level": 4,
+         "scenario_title": "L4: Capital Budgeting - Payback Period", 
+         "scenario_narrative": "Two expansion opportunities: Location A costs $100,000 and generates $25,000 annual profit. Location B costs $150,000 and generates $50,000 annual profit. Your bank requires investments to 'pay back' within 4 years. Which do you choose?",
+         "choice_a_text": "Location B - payback is 3 years ($150K ÷ $50K), faster than A's 4 years", 
+         "choice_a_exp_reward": 120, "choice_a_cash_change": 500, "choice_a_reputation_change": 6,
+         "choice_a_feedback": "Correct payback analysis! B: 150K/50K = 3 years. A: 100K/25K = 4 years. Both meet the 4-year threshold, but B recovers capital faster!",
+         "choice_b_text": "Location A - it costs less and still meets the 4-year payback requirement", 
+         "choice_b_exp_reward": 80, "choice_b_cash_change": 250, "choice_b_reputation_change": 3,
+         "choice_b_feedback": "A meets requirements, but B pays back faster (3 vs 4 years) AND generates more profit after payback ($50K vs $25K annually). Think bigger!",
+         "choice_c_text": "Neither - 3-4 years is too long to wait for returns", 
+         "choice_c_exp_reward": 50, "choice_c_cash_change": 0, "choice_c_reputation_change": 1,
+         "choice_c_feedback": "3-4 year payback is standard for real estate! After payback, you own income-generating assets. Short-term thinking costs opportunities.", 
+         "subskill_focus": "Capital Budgeting"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Finance", "required_level": 4,
+         "scenario_title": "L4: Capital Budgeting - Payback Period", 
+         "scenario_narrative": "Two expansion options: The Cellar expansion costs 2,000 gold and generates 500 gold annual profit. The Garden Terrace costs 3,000 gold and generates 1,200 gold annual profit (but only in warm seasons - 600 gold effective). Which pays back faster?",
+         "choice_a_text": "Cellar - payback is 4 years (2,000 ÷ 500), the terrace is 5 years (3,000 ÷ 600)", 
+         "choice_a_exp_reward": 110, "choice_a_cash_change": 250, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Excellent adjustment for seasonality! Terrace's 1,200 gold is only half-effective (600 avg), making payback 5 years vs Cellar's 4. Real-world factors matter!",
+         "choice_b_text": "Terrace - 1,200 gold annual beats 500 gold, faster payback overall", 
+         "choice_b_exp_reward": 60, "choice_b_cash_change": 0, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "You forgot seasonal adjustment! 1,200 gold 'only in warm seasons' means ~600 gold annualized. Always normalize to annual figures!",
+         "choice_c_text": "Terrace - higher profit after payback, even if slower initially", 
+         "choice_c_exp_reward": 90, "choice_c_cash_change": 200, "choice_c_reputation_change": 4,
+         "choice_c_feedback": "Valid long-term thinking! After payback, Terrace earns more. Payback period ignores post-payback profits - a known limitation.", 
+         "subskill_focus": "Capital Budgeting"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Finance", "required_level": 4,
+         "scenario_title": "L4: Capital Budgeting - Payback Period", 
+         "scenario_narrative": "Two asteroid mining claims: Claim Alpha costs 500,000 credits and yields 100,000 credits annually. Claim Beta costs 800,000 credits and yields 250,000 credits annually. The Federation requires 5-year payback for licensing. Which qualifies?",
+         "choice_a_text": "Both qualify - Alpha (5 years exactly) and Beta (3.2 years)", 
+         "choice_a_exp_reward": 100, "choice_a_cash_change": 200, "choice_a_reputation_change": 4,
+         "choice_a_feedback": "Correct! Alpha: 500K/100K = 5 years (barely qualifies). Beta: 800K/250K = 3.2 years (comfortably qualifies). Both work, but Beta is safer.",
+         "choice_b_text": "Only Beta qualifies - 3.2 years beats Alpha's 5 years, which doesn't meet 'within' 5 years", 
+         "choice_b_exp_reward": 80, "choice_b_cash_change": 100, "choice_b_reputation_change": 3,
+         "choice_b_feedback": "Strict interpretation! 'Within 5 years' could mean <5 or ≤5. Beta definitely qualifies at 3.2 years. Always clarify contract terms!",
+         "choice_c_text": "Choose Beta - faster payback AND higher annual returns after payback", 
+         "choice_c_exp_reward": 120, "choice_c_cash_change": 300, "choice_c_reputation_change": 6,
+         "choice_c_feedback": "Strategic thinking! Beta recovers faster AND generates 2.5× more annually afterward. This is how capital budgeting drives real decisions.", 
+         "subskill_focus": "Capital Budgeting"},
+
+        # ========== LEVEL 5: Debt Financing & Interest ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Finance", "required_level": 5,
+         "scenario_title": "L5: Debt Financing & Interest", 
+         "scenario_narrative": "You need $100,000 for expansion. Three loan options: Bank A: 8% interest, 5-year term, $20,280/year payments. Bank B: 6% interest, 10-year term, $13,590/year payments. Bank C: 10% interest, 3-year term, $40,210/year payments. Which minimizes total interest paid?",
+         "choice_a_text": "Bank C (3 years) - $40,210 × 3 = $120,630 total, only $20,630 interest", 
+         "choice_a_exp_reward": 120, "choice_a_cash_change": -200, "choice_a_reputation_change": 6,
+         "choice_a_feedback": "Mathematically optimal! Despite highest rate, shortest term = least interest. A: $101,400 paid, B: $135,900 paid, C: $120,630 paid. Time is money!",
+         "choice_b_text": "Bank B (6%) - lowest rate means lowest total cost", 
+         "choice_b_exp_reward": 60, "choice_b_cash_change": 0, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "Common mistake! B's low rate over 10 years = $35,900 total interest. C's high rate over 3 years = only $20,630 interest. Duration matters more!",
+         "choice_c_text": "Bank A - middle ground balances rate and term", 
+         "choice_c_exp_reward": 80, "choice_c_cash_change": -100, "choice_c_reputation_change": 3,
+         "choice_c_feedback": "A pays $101,400 total ($1,400 interest), better than B but not optimal. Sometimes the middle option isn't the best financial choice.", 
+         "subskill_focus": "Debt Financing"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Finance", "required_level": 5,
+         "scenario_title": "L5: Debt Financing & Interest", 
+         "scenario_narrative": "You need 5,000 gold for a tavern upgrade. The Dwarven Banking Guild offers: Secured loan (artifact collateral) at 4% for 5 years OR Unsecured loan at 8% for 5 years. You have a 3,000 gold family heirloom artifact. What's the smarter choice?",
+         "choice_a_text": "Secured loan (4%) - 5,000 × 0.04 × 5 = 1,000 gold interest total", 
+         "choice_a_exp_reward": 110, "choice_a_cash_change": 200, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Smart leverage! Using collateral saves 1,000 gold in interest (2,000 vs 1,000). As long as you make payments, the artifact stays safe.",
+         "choice_b_text": "Unsecured loan (8%) - never risk the family heirloom", 
+         "choice_b_exp_reward": 80, "choice_b_cash_change": -200, "choice_b_reputation_change": 3,
+         "choice_b_feedback": "Emotional decision, not financial. 8% = 2,000 gold interest. The extra 1,000 gold 'buys' peace of mind. Valid if you doubt repayment ability.",
+         "choice_c_text": "Take the secured loan but hide the artifact's true value", 
+         "choice_c_exp_reward": 40, "choice_c_cash_change": -500, "choice_c_reputation_change": -5,
+         "choice_c_feedback": "Fraud! Misrepresenting collateral is a serious offense. The Dwarven Guild will blacklist you. Honesty is the best policy in finance.", 
+         "subskill_focus": "Debt Financing"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Finance", "required_level": 5,
+         "scenario_title": "L5: Debt Financing & Interest", 
+         "scenario_narrative": "You need 1,000,000 credits for a new mining vessel. The Galactic Trade Federation offers: Fixed rate 7% for 10 years OR Variable rate starting at 5% (could rise to 12%). Your economists predict rates will rise. Which structure protects you?",
+         "choice_a_text": "Fixed 7% - lock in the rate to protect against predicted increases", 
+         "choice_a_exp_reward": 120, "choice_a_cash_change": 300, "choice_a_reputation_change": 6,
+         "choice_a_feedback": "Correct hedging strategy! If rates rise to 12%, variable costs explode. Fixed at 7% provides certainty. In rising rate environments, lock in!",
+         "choice_b_text": "Variable starting at 5% - we save 2% initially and can refinance later", 
+         "choice_b_exp_reward": 70, "choice_b_cash_change": -200, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "Gambling against your own prediction! If rates rise to 12%, you'll wish for 7%. Refinancing isn't guaranteed in high-rate environments.",
+         "choice_c_text": "Take variable but hedge with interest rate derivatives", 
+         "choice_c_exp_reward": 100, "choice_c_cash_change": 100, "choice_c_reputation_change": 5,
+         "choice_c_feedback": "Sophisticated! Interest rate swaps can cap your exposure. This is how large corporations manage variable rate risk. Advanced finance!", 
+         "subskill_focus": "Debt Financing"},
+
+        # ========== LEVEL 6: Risk and Return ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Finance", "required_level": 6,
+         "scenario_title": "L6: Risk and Return Tradeoff", 
+         "scenario_narrative": "You have $50,000 to invest. Option A: Expand current location - 80% chance of 15% return, 20% chance of -5% return. Option B: Open new location - 50% chance of 40% return, 50% chance of -20% return. Calculate the expected return.",
+         "choice_a_text": "Option A: Expected return = (0.8 × 15%) + (0.2 × -5%) = 11% with lower risk", 
+         "choice_a_exp_reward": 120, "choice_a_cash_change": 550, "choice_a_reputation_change": 6,
+         "choice_a_feedback": "Perfect expected value calculation! A = 12% - 1% = 11%. B = 20% - 10% = 10%. A has BOTH higher expected return AND lower risk. Clear winner!",
+         "choice_b_text": "Option B: 40% potential upside is too attractive to pass up", 
+         "choice_b_exp_reward": 70, "choice_b_cash_change": -100, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "Chasing upside ignores expected value! B's expected return (10%) is actually lower than A (11%), with MORE risk. Do the math first.",
+         "choice_c_text": "Split 50/50 between both options for diversification", 
+         "choice_c_exp_reward": 90, "choice_c_cash_change": 200, "choice_c_reputation_change": 4,
+         "choice_c_feedback": "Diversification reduces risk but blends expected returns. You get ~10.5% expected return with moderate risk. Not optimal here, but valid strategy.", 
+         "subskill_focus": "Risk Management"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Finance", "required_level": 6,
+         "scenario_title": "L6: Risk and Return Tradeoff", 
+         "scenario_narrative": "A merchant offers investments: Dragon Trade Route - 30% chance of 100% return, 70% chance of total loss. Safe Kingdom Bonds - guaranteed 8% return. How much of your 1,000 gold should you risk on dragons?",
+         "choice_a_text": "Zero on dragons - expected return is (0.3 × 100%) + (0.7 × -100%) = -40%, negative!", 
+         "choice_a_exp_reward": 110, "choice_a_cash_change": 80, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Excellent expected value analysis! Dragon route EV = 30% - 70% = -40%. Never invest in negative expected value propositions, regardless of upside!",
+         "choice_b_text": "100 gold on dragons - small bet, big potential payoff", 
+         "choice_b_exp_reward": 60, "choice_b_cash_change": -100, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "Even small bets on -40% EV are mathematically foolish. 10% of capital in negative EV = -40 gold expected loss. Only the Kingdom Bonds make sense.",
+         "choice_c_text": "Calculate the Kelly Criterion for optimal bet sizing", 
+         "choice_c_exp_reward": 100, "choice_c_cash_change": 0, "choice_c_reputation_change": 5,
+         "choice_c_feedback": "Advanced thinking! Kelly Criterion says bet zero when edge is negative. For positive EV bets, Kelly = (probability × payout - loss probability) / payout.", 
+         "subskill_focus": "Risk Management"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Finance", "required_level": 6,
+         "scenario_title": "L6: Risk and Return Tradeoff", 
+         "scenario_narrative": "Board allocation decision: Safe Asteroid (proven deposits) - guaranteed 12% annual return. Speculative Asteroid (unproven) - 40% chance of 50% return, 40% chance of 10% return, 20% chance of total loss. What's the risk-adjusted recommendation?",
+         "choice_a_text": "Safe Asteroid - 12% guaranteed beats Speculative's 14% expected return given the 20% loss risk", 
+         "choice_a_exp_reward": 100, "choice_a_cash_change": 120, "choice_a_reputation_change": 4,
+         "choice_a_feedback": "Risk-averse choice! Speculative EV = (0.4×50) + (0.4×10) + (0.2×-100) = 20% + 4% - 20% = 4%. Safe at 12% is definitely better than risky 4%!",
+         "choice_b_text": "Speculative - EV = (0.4 × 50%) + (0.4 × 10%) + (0.2 × -100%) = 4%, but upside matters", 
+         "choice_b_exp_reward": 70, "choice_b_cash_change": -200, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "You calculated correctly (4% EV) but chose poorly! 4% expected return with loss risk vs 12% guaranteed. Sharpe ratio strongly favors Safe.",
+         "choice_c_text": "Speculative EV is 24% (20% + 4% + 0%), triple the Safe return", 
+         "choice_c_exp_reward": 50, "choice_c_cash_change": 0, "choice_c_reputation_change": 1,
+         "choice_c_feedback": "Calculation error! Loss probability means NEGATIVE contribution: 0.2 × -100% = -20%. Correct EV = 20% + 4% - 20% = 4%. Always account for losses!", 
+         "subskill_focus": "Risk Management"},
+
+        # ========== LEVEL 7: Discounted Cash Flow (DCF) & NPV ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Finance", "required_level": 7,
+         "scenario_title": "L7: Discounted Cash Flow & NPV", 
+         "scenario_narrative": "A 5-year catering contract offers $20,000 annual payments. At a 10% discount rate, what's the Net Present Value? Use: NPV = CF/(1+r)¹ + CF/(1+r)² + ... Your Finance Director needs this for the board.",
+         "choice_a_text": "NPV = $75,816 (sum of $18,182 + $16,529 + $15,026 + $13,660 + $12,419)", 
+         "choice_a_exp_reward": 130, "choice_a_cash_change": 758, "choice_a_reputation_change": 7,
+         "choice_a_feedback": "Perfect DCF calculation! Each year's $20K is discounted: Y1=18,182, Y2=16,529, Y3=15,026, Y4=13,660, Y5=12,419. Total PV = $75,816. CFO-level skill!",
+         "choice_b_text": "NPV = $100,000 - just multiply $20,000 × 5 years", 
+         "choice_b_exp_reward": 50, "choice_b_cash_change": 0, "choice_b_reputation_change": 1,
+         "choice_b_feedback": "That ignores time value! $20K in year 5 is worth less than $20K today. At 10% discount, future dollars are worth progressively less.",
+         "choice_c_text": "NPV = $90,000 - discount the total by 10%", 
+         "choice_c_exp_reward": 60, "choice_c_cash_change": 0, "choice_c_reputation_change": 2,
+         "choice_c_feedback": "Discount applies year-by-year, not to the total! Year 1 is divided by 1.1, Year 2 by 1.21, etc. The correct NPV is $75,816.", 
+         "subskill_focus": "DCF Valuation"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Finance", "required_level": 7,
+         "scenario_title": "L7: Discounted Cash Flow & NPV", 
+         "scenario_narrative": "The Royal Court offers a 3-year exclusive supply contract: 500 gold per year. A rival offers 1,400 gold upfront today. At 8% discount rate, which deal has higher present value?",
+         "choice_a_text": "Contract NPV = 500/1.08 + 500/1.1664 + 500/1.2597 = 463 + 429 + 397 = 1,289 gold. Take the 1,400 upfront!", 
+         "choice_a_exp_reward": 130, "choice_a_cash_change": 140, "choice_a_reputation_change": 7,
+         "choice_a_feedback": "Masterful DCF! Contract PV = 1,289 gold < 1,400 upfront. The rival's offer is worth 111 gold more in present value terms. Excellent analysis!",
+         "choice_b_text": "Contract total is 1,500 gold vs 1,400 upfront - take the contract", 
+         "choice_b_exp_reward": 60, "choice_b_cash_change": -110, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "You ignored discounting! 1,500 nominal > 1,400, but 1,289 present value < 1,400. Time value matters. The upfront offer is genuinely better.",
+         "choice_c_text": "They're roughly equal - take whichever has less risk", 
+         "choice_c_exp_reward": 80, "choice_c_cash_change": 0, "choice_c_reputation_change": 3,
+         "choice_c_feedback": "Risk adjustment is valid! Contract has counterparty risk over 3 years. Upfront eliminates that. But mathematically, upfront is still better by 111 gold PV.", 
+         "subskill_focus": "DCF Valuation"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Finance", "required_level": 7,
+         "scenario_title": "L7: Discounted Cash Flow & NPV", 
+         "scenario_narrative": "Evaluate an asteroid mining project: Initial investment 500,000 credits. Expected cash flows: Year 1: 150K, Year 2: 200K, Year 3: 250K, Year 4: 200K. At 12% discount rate, what's the NPV? Should we invest?",
+         "choice_a_text": "NPV = -500K + 134K + 159K + 178K + 127K = +98K. Positive NPV = invest!", 
+         "choice_a_exp_reward": 130, "choice_a_cash_change": 980, "choice_a_reputation_change": 7,
+         "choice_a_feedback": "Excellent! Y1: 150/1.12=134K, Y2: 200/1.2544=159K, Y3: 250/1.4049=178K, Y4: 200/1.5735=127K. Total PV=598K. NPV=598K-500K=+98K. Invest!",
+         "choice_b_text": "Total cash flows are 800K vs 500K investment = 300K profit. Easy yes!", 
+         "choice_b_exp_reward": 60, "choice_b_cash_change": 0, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "Nominal profit ignores time value! The real present value of those cash flows is 598K, giving only 98K NPV. Still positive, but less than you thought.",
+         "choice_c_text": "NPV is negative after discounting - don't invest", 
+         "choice_c_exp_reward": 40, "choice_c_cash_change": -200, "choice_c_reputation_change": 0,
+         "choice_c_feedback": "Calculation error! NPV = +98K, which is positive. Always double-check your discounting. Positive NPV projects create shareholder value.", 
+         "subskill_focus": "DCF Valuation"},
+
+        # ========== LEVEL 8: Cost of Capital (WACC) ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Finance", "required_level": 8,
+         "scenario_title": "L8: Weighted Average Cost of Capital (WACC)", 
+         "scenario_narrative": "Your capital structure: 60% equity (investors expect 15% return) and 40% debt (6% interest rate, 25% tax rate). Calculate WACC to determine the minimum return any project must earn.",
+         "choice_a_text": "WACC = (0.6 × 15%) + (0.4 × 6% × 0.75) = 9% + 1.8% = 10.8%", 
+         "choice_a_exp_reward": 140, "choice_a_cash_change": 500, "choice_a_reputation_change": 8,
+         "choice_a_feedback": "Perfect WACC calculation! Equity cost: 9%, After-tax debt cost: 1.8%, WACC: 10.8%. Any project returning less than 10.8% destroys shareholder value!",
+         "choice_b_text": "WACC = (0.6 × 15%) + (0.4 × 6%) = 9% + 2.4% = 11.4%", 
+         "choice_b_exp_reward": 80, "choice_b_cash_change": 0, "choice_b_reputation_change": 3,
+         "choice_b_feedback": "Close! You forgot the tax shield. Interest is tax-deductible, so after-tax debt cost = 6% × (1 - 0.25) = 4.5%, not 6%. WACC = 10.8%.",
+         "choice_c_text": "Just average 15% and 6% = 10.5% is good enough", 
+         "choice_c_exp_reward": 50, "choice_c_cash_change": 0, "choice_c_reputation_change": 1,
+         "choice_c_feedback": "Weighted average requires weights! 50/50 would give 10.5%, but your actual mix is 60/40. Also, tax shield matters. Precision matters in finance!", 
+         "subskill_focus": "Cost of Capital"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Finance", "required_level": 8,
+         "scenario_title": "L8: Weighted Average Cost of Capital (WACC)", 
+         "scenario_narrative": "Your tavern's funding: 70% from a Noble Patron (expects 20% return on investment) and 30% from Dwarven Bank (8% interest, no tax benefit in the kingdom). What's your WACC?",
+         "choice_a_text": "WACC = (0.7 × 20%) + (0.3 × 8%) = 14% + 2.4% = 16.4%", 
+         "choice_a_exp_reward": 130, "choice_a_cash_change": 300, "choice_a_reputation_change": 7,
+         "choice_a_feedback": "Correct! Without tax benefits, debt cost stays at 8%. Your 16.4% WACC means any expansion must return at least 16.4% to satisfy all capital providers.",
+         "choice_b_text": "Just use the 20% equity return - that's what matters to the Noble", 
+         "choice_b_exp_reward": 60, "choice_b_cash_change": -100, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "WACC blends all capital costs! Using only equity cost ignores the cheaper debt financing. Your true hurdle rate is 16.4%, not 20%.",
+         "choice_c_text": "Use the 8% debt rate - it's the cheapest option", 
+         "choice_c_exp_reward": 50, "choice_c_cash_change": -100, "choice_c_reputation_change": 1,
+         "choice_c_feedback": "Debt is cheaper but you can't fund everything with debt! WACC reflects your actual capital mix. Projects must return 16.4% overall.", 
+         "subskill_focus": "Cost of Capital"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Finance", "required_level": 8,
+         "scenario_title": "L8: Weighted Average Cost of Capital (WACC)", 
+         "scenario_narrative": "Your mining corp: 50% equity (shareholders want 18% return), 30% senior debt (5% rate), 20% junior debt (10% rate). Corporate tax is 20%. Calculate WACC.",
+         "choice_a_text": "WACC = (0.5 × 18%) + (0.3 × 5% × 0.8) + (0.2 × 10% × 0.8) = 9% + 1.2% + 1.6% = 11.8%", 
+         "choice_a_exp_reward": 140, "choice_a_cash_change": 400, "choice_a_reputation_change": 8,
+         "choice_a_feedback": "Expert-level WACC! Multiple debt tranches each get tax-adjusted: Senior after-tax: 4%, Junior after-tax: 8%. Total WACC: 11.8%. Minimum acceptable project return!",
+         "choice_b_text": "Average all rates: (18% + 5% + 10%) / 3 = 11%", 
+         "choice_b_exp_reward": 50, "choice_b_cash_change": 0, "choice_b_reputation_change": 1,
+         "choice_b_feedback": "Simple average ignores weights and tax benefits! Your capital structure weights are 50/30/20, not equal. Precision in WACC = precision in decisions.",
+         "choice_c_text": "WACC = 9% + 1.5% + 2% = 12.5%", 
+         "choice_c_exp_reward": 70, "choice_c_cash_change": 0, "choice_c_reputation_change": 2,
+         "choice_c_feedback": "Close but check your tax adjustment! After-tax debt = rate × (1 - tax rate) = rate × 0.8, not rate × 0.9. Correct WACC is 11.8%.", 
+         "subskill_focus": "Cost of Capital"},
+
+        # ========== LEVEL 9: Equity Financing & Dilution ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Finance", "required_level": 9,
+         "scenario_title": "L9: Equity Financing & Dilution", 
+         "scenario_narrative": "An Angel Investor offers $500,000 for 20% of your company. You currently own 100% of 1,000,000 shares. After investment, what's the post-money valuation, and how many shares does the investor get?",
+         "choice_a_text": "Post-money: $2.5M ($500K ÷ 20%). Investor gets 250,000 new shares (25% of 1M = 20% of 1.25M)", 
+         "choice_a_exp_reward": 140, "choice_a_cash_change": 5000, "choice_a_reputation_change": 8,
+         "choice_a_feedback": "Perfect! Post-money = Investment ÷ Ownership = $2.5M. Issue 250K new shares so investor has 250K/1.25M = 20%. Your 1M shares = 80%. Dilution math mastered!",
+         "choice_b_text": "Give investor 200,000 of my existing shares (20% of 1,000,000)", 
+         "choice_b_exp_reward": 60, "choice_b_cash_change": 0, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "Selling YOUR shares means the money goes to you, not the company! For company funding, issue NEW shares. This is a crucial distinction.",
+         "choice_c_text": "Post-money: $2M pre-money + $500K = $2.5M, but investor gets 500K shares for 50%", 
+         "choice_c_exp_reward": 50, "choice_c_cash_change": 0, "choice_c_reputation_change": 1,
+         "choice_c_feedback": "Math error! 500K shares out of 1.5M total = 33%, not 50% or 20%. To get exactly 20%, investor needs 250K shares (20% of 1.25M total).", 
+         "subskill_focus": "Equity Financing"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Finance", "required_level": 9,
+         "scenario_title": "L9: Equity Financing & Dilution", 
+         "scenario_narrative": "A Royal Patron offers 10,000 gold for 25% ownership of future tax revenues (equity equivalent). Your tavern currently generates 2,000 gold annual profit. What implicit valuation is the Patron offering, and should you accept?",
+         "choice_a_text": "Implied valuation: 40,000 gold (10,000 ÷ 25%). At 2,000/year profit, that's 20x earnings - generous!", 
+         "choice_a_exp_reward": 130, "choice_a_cash_change": 1000, "choice_a_reputation_change": 7,
+         "choice_a_feedback": "Excellent valuation analysis! 10K/25% = 40K post-money value. 40K ÷ 2K profit = 20x P/E ratio. For a tavern, that's premium. Accept if you need growth capital!",
+         "choice_b_text": "Bad deal - you're giving up 25% forever for just 5 years of profit", 
+         "choice_b_exp_reward": 80, "choice_b_cash_change": 0, "choice_b_reputation_change": 3,
+         "choice_b_feedback": "Valid concern! But if the 10K capital grows profits to 5K/year, you keep 75% of 5K = 3,750 vs 100% of 2K = 2K. Growth potential matters!",
+         "choice_c_text": "Counter-offer: 10,000 gold for 15% instead of 25%", 
+         "choice_c_exp_reward": 110, "choice_c_cash_change": 500, "choice_c_reputation_change": 6,
+         "choice_c_feedback": "Negotiation! 15% implies 67K valuation (10K ÷ 15% = 66.7K), or 33x earnings. Ambitious but shows financial sophistication. The Patron may counter-offer.", 
+         "subskill_focus": "Equity Financing"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Finance", "required_level": 9,
+         "scenario_title": "L9: Equity Financing & Dilution", 
+         "scenario_narrative": "A Venture Capital firm offers 5,000,000 credits for 30% equity. They want 2x liquidation preference and anti-dilution protection. You currently own 100%. What do these terms mean for your exit scenarios?",
+         "choice_a_text": "2x preference means in a sale, VC gets 10M credits (2 × 5M) before you get anything", 
+         "choice_a_exp_reward": 140, "choice_a_cash_change": 0, "choice_a_reputation_change": 8,
+         "choice_a_feedback": "Correct! Liquidation preference protects downside. If company sells for 15M: VC takes 10M first, you split remaining 5M (70% = 3.5M). Preferences matter more than percentages!",
+         "choice_b_text": "With 30% ownership, in a 20M sale, VC gets 6M (30%) and you get 14M (70%)", 
+         "choice_b_exp_reward": 60, "choice_b_cash_change": 0, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "That ignores liquidation preference! VC takes 10M first, then 30% of remaining 10M = 3M more. VC total: 13M, You: 7M. Preferences > percentages!",
+         "choice_c_text": "Anti-dilution protects you from future investor dilution", 
+         "choice_c_exp_reward": 50, "choice_c_cash_change": -500, "choice_c_reputation_change": 1,
+         "choice_c_feedback": "Backwards! Anti-dilution protects the VC. If future rounds are at lower valuations, VC gets extra shares to maintain value. Founders get diluted more.", 
+         "subskill_focus": "Equity Financing"},
+
+        # ========== LEVEL 10: Mergers & Acquisitions (M&A) ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Finance", "required_level": 10,
+         "scenario_title": "L10: Mergers & Acquisitions", 
+         "scenario_narrative": "A restaurant chain offers to acquire you. They propose: $2M cash + $1M in their stock + $500K earnout based on 2-year performance. Your last valuation was $3M. Your advisor asks: 'How do you evaluate this offer?'",
+         "choice_a_text": "Total value ~$3.5M but quality varies: $2M certain, $1M stock risky, $500K earnout uncertain", 
+         "choice_a_exp_reward": 150, "choice_a_cash_change": 2000, "choice_a_reputation_change": 10,
+         "choice_a_feedback": "Masterful deal analysis! Cash is certain, stock depends on acquirer performance, earnout requires hitting targets. Risk-adjusted value is closer to $3M. Sophisticated M&A thinking!",
+         "choice_b_text": "$3.5M total exceeds $3M valuation - accept immediately", 
+         "choice_b_exp_reward": 70, "choice_b_cash_change": 0, "choice_b_reputation_change": 3,
+         "choice_b_feedback": "Headline value vs real value! Stock can decline, earnouts often go unpaid (40% industry failure rate). Always discount non-cash components.",
+         "choice_c_text": "Counter with $3M all-cash to eliminate uncertainty", 
+         "choice_c_exp_reward": 120, "choice_c_cash_change": 1500, "choice_c_reputation_change": 8,
+         "choice_c_feedback": "Strong negotiating position! Trading $500K nominal for certainty is often worthwhile. All-cash deals close faster and eliminate integration risk.", 
+         "subskill_focus": "M&A Valuation"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Finance", "required_level": 10,
+         "scenario_title": "L10: Mergers & Acquisitions", 
+         "scenario_narrative": "The Grand Innkeepers Guild wants to acquire your successful tavern. They offer: 50,000 gold upfront + 10% of combined profits for 5 years + a seat on their Council. Your tavern profits 5,000 gold yearly. Is this a good deal?",
+         "choice_a_text": "Analyze: 50K upfront (10x current profit) + future share of larger pie + strategic value of Council seat", 
+         "choice_a_exp_reward": 150, "choice_a_cash_change": 500, "choice_a_reputation_change": 10,
+         "choice_a_feedback": "Executive-level thinking! 10x profit multiple is fair. 10% of Guild profits could exceed your current 5K. Council seat provides strategic influence. Synergies matter in M&A!",
+         "choice_b_text": "Reject - I built this tavern and won't sell my legacy", 
+         "choice_b_exp_reward": 70, "choice_b_cash_change": 0, "choice_b_reputation_change": 5,
+         "choice_b_feedback": "Emotional decisions aren't always wrong. But consider: with 50K capital and Guild resources, you could build something bigger. Legacy can evolve.",
+         "choice_c_text": "Counter: 60K upfront + 15% profit share + two Council seats", 
+         "choice_c_exp_reward": 130, "choice_c_cash_change": 600, "choice_c_reputation_change": 8,
+         "choice_c_feedback": "Negotiation in action! 20% premium on cash, increased profit share, more governance power. They'll counter-offer, but you've established your value.", 
+         "subskill_focus": "M&A Valuation"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Finance", "required_level": 10,
+         "scenario_title": "L10: Mergers & Acquisitions", 
+         "scenario_narrative": "The Galactic Mining Consortium offers to acquire your company. Terms: 20,000,000 credits in Consortium stock (currently trading at 100 credits/share) OR 15,000,000 credits cash. Your DCF valuation shows 18,000,000 credits. How do you evaluate?",
+         "choice_a_text": "Stock offer is nominally higher but risky. Cash at 15M is 83% of intrinsic value - negotiate for 17M cash.", 
+         "choice_a_exp_reward": 150, "choice_a_cash_change": 1700, "choice_a_reputation_change": 10,
+         "choice_a_feedback": "CEO-level analysis! Stock can decline post-merger. 15M certain > 20M uncertain for risk-averse sellers. Negotiating to 17M (94% of DCF) is realistic. M&A mastery achieved!",
+         "choice_b_text": "Take the 20M in stock - it's worth more than the 18M DCF valuation", 
+         "choice_b_exp_reward": 80, "choice_b_cash_change": 0, "choice_b_reputation_change": 4,
+         "choice_b_feedback": "Stock value isn't guaranteed! Acquisition stocks often drop 10-20% post-deal. 20M could become 16M. Always discount stock offers for execution risk.",
+         "choice_c_text": "Walk away - neither offer meets the 18M DCF valuation", 
+         "choice_c_exp_reward": 90, "choice_c_cash_change": 0, "choice_c_reputation_change": 5,
+         "choice_c_feedback": "DCF is one estimate, not absolute truth. 15M cash represents 83% of DCF - many sellers accept that for certainty. Sometimes good-enough deals beat perfect ones.", 
+         "subskill_focus": "M&A Valuation"},
+    ]
+    
+    for scenario in scenarios:
+        cur.execute("""
+            INSERT INTO scenario_master (world_type, industry, discipline, required_level, scenario_title, scenario_narrative,
+                choice_a_text, choice_a_exp_reward, choice_a_cash_change, choice_a_reputation_change, choice_a_feedback,
+                choice_b_text, choice_b_exp_reward, choice_b_cash_change, choice_b_reputation_change, choice_b_feedback,
+                choice_c_text, choice_c_exp_reward, choice_c_cash_change, choice_c_reputation_change, choice_c_feedback,
+                subskill_focus)
+            VALUES (%(world_type)s, %(industry)s, %(discipline)s, %(required_level)s, %(scenario_title)s, %(scenario_narrative)s,
+                %(choice_a_text)s, %(choice_a_exp_reward)s, %(choice_a_cash_change)s, %(choice_a_reputation_change)s, %(choice_a_feedback)s,
+                %(choice_b_text)s, %(choice_b_exp_reward)s, %(choice_b_cash_change)s, %(choice_b_reputation_change)s, %(choice_b_feedback)s,
+                %(choice_c_text)s, %(choice_c_exp_reward)s, %(choice_c_cash_change)s, %(choice_c_reputation_change)s, %(choice_c_feedback)s,
+                %(subskill_focus)s)
+        """, scenario)
+    
+    conn.commit()
+    print(f"Seeded {len(scenarios)} Finance Curriculum scenarios (Levels 1-10, 3 worlds)!")
+    cur.close()
+    conn.close()
+
+
 if __name__ == "__main__":
     init_database()
     seed_scenarios()
@@ -1870,3 +2365,4 @@ if __name__ == "__main__":
     seed_modern_restaurant_full()
     seed_marketing_curriculum()
     seed_accounting_curriculum()
+    seed_finance_curriculum()
