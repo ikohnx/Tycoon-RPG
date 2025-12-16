@@ -79,6 +79,7 @@ def play_scenario(scenario_id):
         return redirect(url_for('index'))
     
     engine.load_player(player_id)
+    stats = engine.get_player_stats()
     
     if engine.is_scenario_completed(scenario_id):
         flash("You've already completed this scenario!")
@@ -90,7 +91,7 @@ def play_scenario(scenario_id):
         flash("Scenario not found!")
         return redirect(url_for('hub'))
     
-    return render_template('play.html', scenario=scenario)
+    return render_template('play.html', scenario=scenario, stats=stats)
 
 @app.route('/choose/<int:scenario_id>/<choice>')
 def make_choice(scenario_id, choice):
@@ -117,8 +118,9 @@ def make_choice(scenario_id, choice):
         return redirect(url_for('hub'))
     
     result['level_title'] = get_level_title(result['new_level'])
+    stats = engine.get_player_stats()
     
-    return render_template('result.html', result=result, scenario=scenario)
+    return render_template('result.html', result=result, scenario=scenario, stats=stats)
 
 @app.route('/progress')
 def progress():

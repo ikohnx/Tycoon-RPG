@@ -2,21 +2,42 @@
 
 {% block title %}{{ stats.name }}'s HQ - Business Tycoon RPG{% endblock %}
 
+{% block body_class %}world-{{ stats.world|lower }}{% endblock %}
+
 {% block content %}
-<div class="row">
+<div class="row fade-in">
     <div class="col-md-4">
         <div class="card mb-4">
-            <div class="card-header">
-                <h5><i class="bi bi-person-circle"></i> {{ stats.name }}</h5>
+            <div class="card-header text-center">
+                <img src="/static/images/business_tycoon_character_avatar.png" alt="Your Avatar" class="avatar-img mb-2">
+                <h5 class="mb-0">{{ stats.name }}</h5>
             </div>
             <div class="card-body">
                 <div class="stat-card">
                     <small class="text-muted">World</small>
-                    <div class="h5 mb-0">{{ stats.world }}</div>
+                    <div class="h5 mb-0">
+                        {% if stats.world == 'Modern' %}
+                        <i class="bi bi-building"></i>
+                        {% elif stats.world == 'Fantasy' %}
+                        <i class="bi bi-magic"></i>
+                        {% else %}
+                        <i class="bi bi-rocket"></i>
+                        {% endif %}
+                        {{ stats.world }}
+                    </div>
                 </div>
                 <div class="stat-card">
                     <small class="text-muted">Industry</small>
-                    <div class="h5 mb-0">{{ stats.industry }}</div>
+                    <div class="h5 mb-0">
+                        {% if stats.industry == 'Restaurant' %}
+                        <i class="bi bi-cup-hot"></i>
+                        {% elif stats.industry == 'SaaS' %}
+                        <i class="bi bi-laptop"></i>
+                        {% else %}
+                        <i class="bi bi-shop"></i>
+                        {% endif %}
+                        {{ stats.industry }}
+                    </div>
                 </div>
                 <div class="stat-card">
                     <small class="text-muted">Cash</small>

@@ -12,6 +12,19 @@
             min-height: 100vh;
             color: #e0e0e0;
         }
+        body.world-modern {
+            background: url('/static/images/modern_office_hub_background.png') center center / cover no-repeat fixed;
+        }
+        body.world-fantasy {
+            background: url('/static/images/fantasy_tavern_hub_background.png') center center / cover no-repeat fixed;
+        }
+        body.world-scifi {
+            background: url('/static/images/sci-fi_starship_hub_background.png') center center / cover no-repeat fixed;
+        }
+        .overlay {
+            background: rgba(0, 0, 0, 0.6);
+            min-height: 100vh;
+        }
         .card {
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
@@ -24,28 +37,41 @@
         .btn-primary {
             background: linear-gradient(45deg, #e94560, #0f3460);
             border: none;
+            transition: all 0.3s ease;
         }
         .btn-primary:hover {
             background: linear-gradient(45deg, #0f3460, #e94560);
+            transform: scale(1.05);
         }
         .progress {
             background: rgba(255, 255, 255, 0.1);
             height: 25px;
+            overflow: hidden;
         }
         .progress-bar {
             background: linear-gradient(45deg, #e94560, #f39c12);
+            transition: width 0.5s ease;
         }
         .stat-card {
             background: rgba(255, 255, 255, 0.05);
             border-radius: 10px;
             padding: 15px;
             margin-bottom: 10px;
+            transition: transform 0.2s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-3px);
         }
         .level-badge {
             background: linear-gradient(45deg, #f39c12, #e94560);
             padding: 5px 15px;
             border-radius: 20px;
             font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 5px rgba(243, 156, 18, 0.5); }
+            50% { box-shadow: 0 0 20px rgba(243, 156, 18, 0.8); }
         }
         .choice-btn {
             background: rgba(255, 255, 255, 0.1);
@@ -63,14 +89,51 @@
             transform: translateX(10px);
         }
         .navbar {
-            background: rgba(0, 0, 0, 0.3) !important;
+            background: rgba(0, 0, 0, 0.5) !important;
+            backdrop-filter: blur(10px);
         }
         .navbar-brand, .nav-link {
             color: #fff !important;
         }
+        .avatar-img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 3px solid #f39c12;
+            object-fit: cover;
+        }
+        .scenario-img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 10px 10px 0 0;
+        }
+        .level-up-animation {
+            animation: levelUp 1s ease-out;
+        }
+        @keyframes levelUp {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .exp-gain {
+            animation: expGain 0.5s ease-out;
+        }
+        @keyframes expGain {
+            0% { transform: scale(1); color: #fff; }
+            50% { transform: scale(1.3); color: #f39c12; }
+            100% { transform: scale(1); color: #28a745; }
+        }
     </style>
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
     {% if session.get('player_id') %}
     <nav class="navbar navbar-expand-lg mb-4">
         <div class="container">

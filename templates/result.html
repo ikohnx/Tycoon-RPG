@@ -2,20 +2,23 @@
 
 {% block title %}Result - Business Tycoon RPG{% endblock %}
 
+{% block body_class %}world-{{ stats.world|lower if stats else 'modern' }}{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
+<div class="row justify-content-center fade-in">
     <div class="col-md-10">
         <div class="card">
             <div class="card-header bg-success text-white">
                 <h4 class="mb-0"><i class="bi bi-check-circle"></i> Decision Made!</h4>
             </div>
             <div class="card-body">
-                <div class="bg-dark p-4 rounded mb-4">
+                <div class="bg-dark p-4 rounded mb-4" style="border-left: 4px solid #28a745;">
+                    <h5 class="text-warning mb-3"><i class="bi bi-lightbulb-fill"></i> What You Learned:</h5>
                     <p class="lead mb-0">{{ result.feedback }}</p>
                 </div>
                 
                 {% if result.leveled_up %}
-                <div class="alert alert-warning text-center mb-4">
+                <div class="alert alert-warning text-center mb-4 level-up-animation">
                     <h3 class="mb-2">
                         <i class="bi bi-trophy-fill"></i> LEVEL UP!
                     </h3>

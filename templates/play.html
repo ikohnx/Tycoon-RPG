@@ -2,10 +2,21 @@
 
 {% block title %}{{ scenario.scenario_title }} - Business Tycoon RPG{% endblock %}
 
+{% block body_class %}world-{{ stats.world|lower if stats else 'modern' }}{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
+<div class="row justify-content-center fade-in">
     <div class="col-md-10">
         <div class="card">
+            {% if 'Menu' in scenario.scenario_title %}
+            <img src="/static/images/menu_design_scenario_illustration.png" class="scenario-img" alt="Scenario" style="height: 200px;">
+            {% elif 'Social' in scenario.scenario_title %}
+            <img src="/static/images/social_media_marketing_illustration.png" class="scenario-img" alt="Scenario" style="height: 200px;">
+            {% elif 'Grand' in scenario.scenario_title or 'Opening' in scenario.scenario_title %}
+            <img src="/static/images/grand_opening_scenario_illustration.png" class="scenario-img" alt="Scenario" style="height: 200px;">
+            {% else %}
+            <img src="/static/images/default_business_scenario_image.png" class="scenario-img" alt="Scenario" style="height: 200px;">
+            {% endif %}
             <div class="card-header">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
@@ -20,26 +31,26 @@
             <div class="card-body">
                 <h3 class="mb-4">{{ scenario.scenario_title }}</h3>
                 
-                <div class="bg-dark p-4 rounded mb-4">
+                <div class="bg-dark p-4 rounded mb-4" style="border-left: 4px solid #f39c12;">
                     <p class="lead mb-0">{{ scenario.scenario_narrative }}</p>
                 </div>
                 
-                <h5 class="mb-3">What will you do?</h5>
+                <h5 class="mb-3"><i class="bi bi-question-circle"></i> What will you do?</h5>
                 
                 <a href="{{ url_for('make_choice', scenario_id=scenario.scenario_id, choice='A') }}" 
                    class="btn choice-btn w-100">
-                    <strong>A)</strong> {{ scenario.choice_a_text }}
+                    <strong class="text-warning">A)</strong> {{ scenario.choice_a_text }}
                 </a>
                 
                 <a href="{{ url_for('make_choice', scenario_id=scenario.scenario_id, choice='B') }}" 
                    class="btn choice-btn w-100">
-                    <strong>B)</strong> {{ scenario.choice_b_text }}
+                    <strong class="text-info">B)</strong> {{ scenario.choice_b_text }}
                 </a>
                 
                 {% if scenario.choice_c_text %}
                 <a href="{{ url_for('make_choice', scenario_id=scenario.scenario_id, choice='C') }}" 
                    class="btn choice-btn w-100">
-                    <strong>C)</strong> {{ scenario.choice_c_text }}
+                    <strong class="text-success">C)</strong> {{ scenario.choice_c_text }}
                 </a>
                 {% endif %}
             </div>

@@ -2,8 +2,10 @@
 
 {% block title %}{{ discipline }} Challenges - Business Tycoon RPG{% endblock %}
 
+{% block body_class %}world-{{ stats.world|lower if stats else 'modern' }}{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
+<div class="row justify-content-center fade-in">
     <div class="col-md-10">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2><i class="bi bi-list-task"></i> {{ discipline }} Challenges</h2>
@@ -17,6 +19,15 @@
             {% for scenario in scenarios %}
             <div class="col-md-6">
                 <div class="card h-100">
+                    {% if 'Menu' in scenario.scenario_title %}
+                    <img src="/static/images/menu_design_scenario_illustration.png" class="scenario-img" alt="Scenario">
+                    {% elif 'Social' in scenario.scenario_title %}
+                    <img src="/static/images/social_media_marketing_illustration.png" class="scenario-img" alt="Scenario">
+                    {% elif 'Grand' in scenario.scenario_title or 'Opening' in scenario.scenario_title %}
+                    <img src="/static/images/grand_opening_scenario_illustration.png" class="scenario-img" alt="Scenario">
+                    {% else %}
+                    <img src="/static/images/default_business_scenario_image.png" class="scenario-img" alt="Scenario">
+                    {% endif %}
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <span class="level-badge">Level {{ scenario.required_level }}</span>
                         {% if scenario.subskill_focus %}
