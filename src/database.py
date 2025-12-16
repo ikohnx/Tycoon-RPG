@@ -2848,6 +2848,508 @@ def seed_legal_curriculum():
     conn.close()
 
 
+def seed_operations_curriculum():
+    """Seed the complete 10-level Operations Curriculum across 3 worlds (30 scenarios total).
+    
+    Curriculum Structure:
+    - L1-L3: Fundamentals & Workflow (Transformation Process, Inventory Management, Workflow Optimization)
+    - L4-L6: Efficiency & Quality (Capacity Utilization, Quality Assurance, Production Scheduling)
+    - L7-L8: Advanced Logistics (Just-In-Time, Supply Chain Risk)
+    - L9-L10: Strategy & Mastery (Outsourcing/Offshoring, Process Innovation/Automation)
+    """
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM scenario_master WHERE discipline = 'Operations' AND scenario_title LIKE 'L%:%'")
+    result = cur.fetchone()
+    if result['count'] >= 30:
+        print("Operations curriculum already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    scenarios = [
+        # ========== LEVEL 1: The Transformation Process ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Operations", "required_level": 1,
+         "scenario_title": "L1: The Transformation Process", 
+         "scenario_narrative": "Your restaurant manager asks you to map the complete transformation process: from raw ingredients arriving at the back door to a finished meal reaching the customer's table. Understanding Input → Process → Output is fundamental to operations.",
+         "choice_a_text": "Map it: Inputs (ingredients, labor) → Process (prep, cooking, plating) → Output (finished meal, service)", 
+         "choice_a_exp_reward": 50, "choice_a_cash_change": 0, "choice_a_reputation_change": 3,
+         "choice_a_feedback": "Perfect operations thinking! Every business transforms inputs into outputs. By mapping this flow, you can identify bottlenecks, waste, and opportunities for improvement. This is the foundation of operations management.",
+         "choice_b_text": "Focus only on the cooking - that's where the real work happens", 
+         "choice_b_exp_reward": 25, "choice_b_cash_change": 0, "choice_b_reputation_change": 1,
+         "choice_b_feedback": "Too narrow! Cooking is just one process step. If ingredients arrive late (input problem) or service is slow (output problem), great cooking doesn't matter. Operations views the entire system.",
+         "choice_c_text": "Hire a consultant to figure this out - it's too complex", 
+         "choice_c_exp_reward": 30, "choice_c_cash_change": -500, "choice_c_reputation_change": 1,
+         "choice_c_feedback": "Consultants can help, but you should understand your own transformation process! This is basic operations knowledge every business owner needs. Start with a simple flowchart yourself.", 
+         "subskill_focus": "Process Mapping"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Operations", "required_level": 1,
+         "scenario_title": "L1: The Transformation Process", 
+         "scenario_narrative": "The Guild Master asks you to explain how your tavern creates value. He wants to understand the transformation from raw materials to satisfied customers. This will determine your Guild certification level.",
+         "choice_a_text": "Explain: Inputs (grain, hops, meat) → Process (brewing, cooking, serving) → Output (ale, meals, entertainment)", 
+         "choice_a_exp_reward": 50, "choice_a_cash_change": 0, "choice_a_reputation_change": 3,
+         "choice_a_feedback": "Excellent understanding! The Guild recognizes you understand value creation. Raw materials alone have limited value; your transformation processes create something customers will pay premium prices for.",
+         "choice_b_text": "We buy things and sell them - it's simple trading", 
+         "choice_b_exp_reward": 20, "choice_b_cash_change": 0, "choice_b_reputation_change": 0,
+         "choice_b_feedback": "That's merchant thinking, not operations thinking! A tavern doesn't just resell - it transforms grain into ale, raw meat into feasts. Your processes ADD value beyond the raw materials.",
+         "choice_c_text": "Show him the account books - money in, money out", 
+         "choice_c_exp_reward": 30, "choice_c_cash_change": 0, "choice_c_reputation_change": 1,
+         "choice_c_feedback": "Financial view is important but doesn't explain HOW value is created. Operations focuses on the physical transformation, not just the monetary result. The Guild wants to see your process understanding.", 
+         "subskill_focus": "Process Mapping"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Operations", "required_level": 1,
+         "scenario_title": "L1: The Transformation Process", 
+         "scenario_narrative": "The Galactic Operations Board requires all mining corps to document their transformation process for efficiency audits. You must map how raw asteroid ore becomes refined, sellable minerals.",
+         "choice_a_text": "Document: Inputs (ore, energy, labor) → Process (extraction, refining, quality testing) → Output (refined minerals, waste byproducts)", 
+         "choice_a_exp_reward": 50, "choice_a_cash_change": 0, "choice_a_reputation_change": 3,
+         "choice_a_feedback": "Comprehensive mapping! The Board is impressed. By documenting each step, you can measure efficiency, identify energy waste, and optimize the refining process. This is operations excellence.",
+         "choice_b_text": "We dig rocks and sell them - what's there to map?", 
+         "choice_b_exp_reward": 20, "choice_b_cash_change": 0, "choice_b_reputation_change": -1,
+         "choice_b_feedback": "Oversimplification fails the audit! Between 'dig' and 'sell' are dozens of transformation steps. Extraction methods, ore sorting, refining techniques - each affects quality and cost. Map the details.",
+         "choice_c_text": "Submit last year's documentation with updated dates", 
+         "choice_c_exp_reward": 25, "choice_c_cash_change": 0, "choice_c_reputation_change": 0,
+         "choice_c_feedback": "If your processes haven't changed, reusing documentation is efficient. But has nothing improved in a year? The audit is also an opportunity to review and optimize your transformation process.", 
+         "subskill_focus": "Process Mapping"},
+
+        # ========== LEVEL 2: Inventory Management Basics ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Operations", "required_level": 2,
+         "scenario_title": "L2: Inventory Management Basics", 
+         "scenario_narrative": "Your head chef complains about running out of key ingredients during dinner rush, while your accountant shows you $3,000 worth of spoiled food thrown away last month. You need a proper inventory management system.",
+         "choice_a_text": "Implement FIFO (First In, First Out) rotation and set minimum stock levels for key items", 
+         "choice_a_exp_reward": 60, "choice_a_cash_change": 500, "choice_a_reputation_change": 3,
+         "choice_a_feedback": "Classic inventory management! FIFO ensures older stock is used first (reducing spoilage), while minimum stock levels prevent stockouts. This balances carrying costs against availability.",
+         "choice_b_text": "Just order more of everything to avoid running out", 
+         "choice_b_exp_reward": 25, "choice_b_cash_change": -1000, "choice_b_reputation_change": 1,
+         "choice_b_feedback": "More inventory means more spoilage! Perishables have limited shelf life. You'll solve stockouts but triple your waste. Inventory management balances having enough without having too much.",
+         "choice_c_text": "Let each station manage their own supplies independently", 
+         "choice_c_exp_reward": 30, "choice_c_cash_change": -300, "choice_c_reputation_change": 1,
+         "choice_c_feedback": "Decentralization causes duplication and inconsistency. One station hoards while another runs out. Centralized inventory tracking with clear reorder points is more efficient.", 
+         "subskill_focus": "Inventory Control"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Operations", "required_level": 2,
+         "scenario_title": "L2: Inventory Management Basics", 
+         "scenario_narrative": "Your cellar contains valuable ale barrels, rare spell components, and dried provisions. Some items are spoiling before use while others run out during festivals. The chaos is costing you gold.",
+         "choice_a_text": "Create an inventory ledger tracking all items with dates received and use oldest stock first", 
+         "choice_a_exp_reward": 60, "choice_a_cash_change": 300, "choice_a_reputation_change": 3,
+         "choice_a_feedback": "Proper stock management! Recording receipt dates and using oldest first (FIFO) minimizes spoilage. Setting reorder points for each item prevents stockouts. Your cellar is now professionally managed.",
+         "choice_b_text": "Hire a cellar keeper to memorize everything", 
+         "choice_b_exp_reward": 35, "choice_b_cash_change": -200, "choice_b_reputation_change": 1,
+         "choice_b_feedback": "Human memory is unreliable and doesn't scale! What happens when the cellar keeper is sick or leaves? Written records create a system that survives personnel changes.",
+         "choice_c_text": "Check inventory only when something runs out", 
+         "choice_c_exp_reward": 20, "choice_c_cash_change": -400, "choice_c_reputation_change": 0,
+         "choice_c_feedback": "Reactive management causes stockouts during peak demand! By the time you notice something's gone, it's too late for the dinner rush. Proactive inventory checks prevent problems.", 
+         "subskill_focus": "Inventory Control"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Operations", "required_level": 2,
+         "scenario_title": "L2: Inventory Management Basics", 
+         "scenario_narrative": "Your orbital station stores exotic metals, life support components, and radiation-sensitive materials. Some materials are degrading in storage while critical parts run out during emergencies. The CFO demands better inventory control.",
+         "choice_a_text": "Implement automated tracking with sensors monitoring stock levels, expiration, and environmental conditions", 
+         "choice_a_exp_reward": 60, "choice_a_cash_change": -5000, "choice_a_reputation_change": 4,
+         "choice_a_feedback": "State-of-the-art inventory management! Sensors track quantity, detect degradation, and auto-trigger reorders. For radiation-sensitive materials, this prevents both waste and safety hazards.",
+         "choice_b_text": "Maintain larger buffer stocks of everything critical", 
+         "choice_b_exp_reward": 40, "choice_b_cash_change": -20000, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "Expensive solution! Buffer stock ties up capital and some materials degrade over time regardless of quantity. Smart tracking is more cost-effective than brute-force inventory increases.",
+         "choice_c_text": "Accept occasional stockouts as normal in remote operations", 
+         "choice_c_exp_reward": 20, "choice_c_cash_change": 0, "choice_c_reputation_change": -2,
+         "choice_c_feedback": "In space, stockouts can be life-threatening! Life support component shortages aren't acceptable. Remote operations require BETTER inventory management, not lower standards.", 
+         "subskill_focus": "Inventory Control"},
+
+        # ========== LEVEL 3: Workflow Optimization ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Operations", "required_level": 3,
+         "scenario_title": "L3: Workflow Optimization", 
+         "scenario_narrative": "Dinner service is chaotic. Cooks bump into each other, orders get lost, and food sits under heat lamps too long. You need to create Standard Operating Procedures (SOPs) and optimize the kitchen layout.",
+         "choice_a_text": "Redesign layout for logical flow and create step-by-step SOPs for each station", 
+         "choice_a_exp_reward": 70, "choice_a_cash_change": 800, "choice_a_reputation_change": 4,
+         "choice_a_feedback": "Operations excellence! Logical layout reduces movement waste, and SOPs ensure consistency. The new workflow means faster service, fewer errors, and less staff stress. Efficiency gains compound.",
+         "choice_b_text": "Just tell everyone to work faster and pay attention", 
+         "choice_b_exp_reward": 25, "choice_b_cash_change": 0, "choice_b_reputation_change": 0,
+         "choice_b_feedback": "Blaming workers ignores system problems! If the layout causes collisions and the process creates confusion, working faster just makes more mistakes. Fix the system, not the people.",
+         "choice_c_text": "Hire more staff to handle the chaos", 
+         "choice_c_exp_reward": 35, "choice_c_cash_change": -1500, "choice_c_reputation_change": 1,
+         "choice_c_feedback": "More people in a bad system creates more chaos! Before adding labor, optimize the workflow. Often, better processes let fewer people do more work with less stress.", 
+         "subskill_focus": "Process Optimization"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Operations", "required_level": 3,
+         "scenario_title": "L3: Workflow Optimization", 
+         "scenario_narrative": "Your brewing area is disorganized. Apprentices constantly search for tools, batches are inconsistent, and accidents happen when people cross paths. The Master Brewer demands you fix the workspace.",
+         "choice_a_text": "Reorganize for logical flow: ingredients → mixing → brewing → aging, with tools at each station", 
+         "choice_a_exp_reward": 70, "choice_a_cash_change": 400, "choice_a_reputation_change": 4,
+         "choice_a_feedback": "Workflow mastery! Organizing by process sequence eliminates wasted movement. Tools at each station means no searching. Written procedures ensure every apprentice brews consistently. Production doubles!",
+         "choice_b_text": "Put the most experienced brewer in charge to direct traffic", 
+         "choice_b_exp_reward": 40, "choice_b_cash_change": 0, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "Supervision helps but doesn't fix the underlying chaos! A well-designed workspace shouldn't need constant direction. Good systems work smoothly even when the expert isn't watching.",
+         "choice_c_text": "Restrict access so only one person works at a time", 
+         "choice_c_exp_reward": 30, "choice_c_cash_change": -200, "choice_c_reputation_change": 1,
+         "choice_c_feedback": "Eliminates collisions but destroys throughput! Sequential access means massive delays. The goal is parallel work without interference. Redesign the space, don't restrict it.", 
+         "subskill_focus": "Process Optimization"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Operations", "required_level": 3,
+         "scenario_title": "L3: Workflow Optimization", 
+         "scenario_narrative": "Your ore processing facility has inefficient material flow. Ore moves back and forth between stations, workers wait for equipment, and shift handovers cause delays. Engineering requests SOPs and layout optimization.",
+         "choice_a_text": "Redesign for linear flow and create detailed SOPs with automated handover protocols", 
+         "choice_a_exp_reward": 70, "choice_a_cash_change": 5000, "choice_a_reputation_change": 4,
+         "choice_a_feedback": "Industrial engineering excellence! Linear flow eliminates backtracking. SOPs ensure consistency across shifts. Automated handover protocols mean zero information loss at shift changes. Throughput increases 30%.",
+         "choice_b_text": "Add more equipment to reduce waiting times", 
+         "choice_b_exp_reward": 40, "choice_b_cash_change": -10000, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "Capital-intensive solution to a workflow problem! Before buying equipment, optimize the process. Often the bottleneck is layout or procedure, not equipment capacity.",
+         "choice_c_text": "Run three independent shifts with no handover requirements", 
+         "choice_c_exp_reward": 30, "choice_c_cash_change": -5000, "choice_c_reputation_change": 0,
+         "choice_c_feedback": "Independent shifts means triplicating everything! And in-progress work can't be abandoned between shifts. Proper handover protocols are more efficient than complete independence.", 
+         "subskill_focus": "Process Optimization"},
+
+        # ========== LEVEL 4: Capacity Utilization ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Operations", "required_level": 4,
+         "scenario_title": "L4: Capacity Utilization", 
+         "scenario_narrative": "Your kitchen can produce 200 meals per night at maximum capacity. You're currently serving 120 meals. A new oven costs $30,000 and would increase capacity to 280 meals. But should you buy it?",
+         "choice_a_text": "No - current utilization is 60%. Focus on filling existing capacity before expanding", 
+         "choice_a_exp_reward": 80, "choice_a_cash_change": 0, "choice_a_reputation_change": 4,
+         "choice_a_feedback": "Excellent capacity analysis! At 60% utilization, you have 80 unused meals of capacity. Marketing to fill existing capacity is far cheaper than $30,000 for equipment you don't need yet.",
+         "choice_b_text": "Yes - more capacity means more potential revenue", 
+         "choice_b_exp_reward": 35, "choice_b_cash_change": -30000, "choice_b_reputation_change": 1,
+         "choice_b_feedback": "Capacity without demand is waste! The oven cost $30,000 but won't generate revenue unless you have customers to fill it. First, achieve higher utilization of current equipment.",
+         "choice_c_text": "Wait until we're at 100% capacity, then expand", 
+         "choice_c_exp_reward": 60, "choice_c_cash_change": 0, "choice_c_reputation_change": 2,
+         "choice_c_feedback": "Waiting for 100% is risky - you'll turn away customers while waiting for the oven. Industry standard is to expand around 80-85% utilization. Plan ahead, but don't overbuild.", 
+         "subskill_focus": "Capacity Planning"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Operations", "required_level": 4,
+         "scenario_title": "L4: Capacity Utilization", 
+         "scenario_narrative": "Your brewing capacity is 100 barrels per month. You're currently selling 70 barrels. A dwarven expansion would cost 5,000 gold and double your capacity to 200 barrels. The Master Brewer is eager. Is it wise?",
+         "choice_a_text": "Not yet - at 70% utilization, optimize demand before doubling capacity", 
+         "choice_a_exp_reward": 80, "choice_a_cash_change": 0, "choice_a_reputation_change": 4,
+         "choice_a_feedback": "Strategic thinking! 30 unsold barrels represent unused current capacity. Growing demand to 85-90 barrels through better distribution or marketing costs far less than 5,000 gold for capacity you can't fill.",
+         "choice_b_text": "Expand now - the upcoming festival season will need extra capacity", 
+         "choice_b_exp_reward": 60, "choice_b_cash_change": -5000, "choice_b_reputation_change": 3,
+         "choice_b_feedback": "Seasonal planning is valid! If festival demand exceeds 100 barrels, expansion makes sense. But verify the demand forecast before committing 5,000 gold. Temporary solutions might bridge seasonal peaks.",
+         "choice_c_text": "Double capacity immediately - bigger is always better for breweries", 
+         "choice_c_exp_reward": 30, "choice_c_cash_change": -5000, "choice_c_reputation_change": 1,
+         "choice_c_feedback": "Bigger isn't better without demand! 200 barrels capacity selling only 70 means 65% waste of investment. Capacity should lead demand slightly, not massively exceed it.", 
+         "subskill_focus": "Capacity Planning"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Operations", "required_level": 4,
+         "scenario_title": "L4: Capacity Utilization", 
+         "scenario_narrative": "Your refinery processes 10,000 tons of ore monthly at maximum capacity. Current throughput is 7,500 tons. A 2,000,000 credit expansion would add another 10,000 tons capacity. The Operations VP pushes for approval.",
+         "choice_a_text": "Reject - at 75% utilization, we should maximize current capacity first", 
+         "choice_a_exp_reward": 80, "choice_a_cash_change": 0, "choice_a_reputation_change": 4,
+         "choice_a_feedback": "Sound capacity management! 2.5 million credits of unused capacity exists. Improving extraction rates or extending operating hours might reach 9,000+ tons without capital investment.",
+         "choice_b_text": "Approve if ore supply contracts support 15,000+ tons demand", 
+         "choice_b_exp_reward": 75, "choice_b_cash_change": 0, "choice_b_reputation_change": 4,
+         "choice_b_feedback": "Conditional approval is smart! Expansion should match contracted demand. If you have signed agreements for 15,000 tons monthly, expansion is justified. Capacity follows demand commitments.",
+         "choice_c_text": "Approve to position for market growth opportunities", 
+         "choice_c_exp_reward": 40, "choice_c_cash_change": -2000000, "choice_c_reputation_change": 2,
+         "choice_c_feedback": "Speculative capacity is risky! 'Market growth' isn't a contract. If growth doesn't materialize, you've committed 2 million credits to idle equipment. Expand based on commitments, not hopes.", 
+         "subskill_focus": "Capacity Planning"},
+
+        # ========== LEVEL 5: Quality Assurance ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Operations", "required_level": 5,
+         "scenario_title": "L5: Quality Assurance", 
+         "scenario_narrative": "Customer complaints about inconsistent food quality are increasing. Some dishes are excellent, others are subpar. You need to implement quality controls that ensure every plate meets standards before leaving the kitchen.",
+         "choice_a_text": "Implement mandatory quality checkpoint: every dish inspected by expeditor before serving", 
+         "choice_a_exp_reward": 90, "choice_a_cash_change": 500, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Quality gate implementation! The expeditor checkpoint catches problems before they reach customers. Rejecting subpar dishes costs less than losing customers. This is classic QA: inspect before delivery.",
+         "choice_b_text": "Trust the cooks - they know when food is ready", 
+         "choice_b_exp_reward": 30, "choice_b_cash_change": 0, "choice_b_reputation_change": -2,
+         "choice_b_feedback": "Self-inspection has known limitations! People miss their own errors. Independent quality checks catch what creators overlook. Professional kitchens always have expeditor oversight.",
+         "choice_c_text": "Fire the cooks whose dishes get complaints", 
+         "choice_c_exp_reward": 40, "choice_c_cash_change": -500, "choice_c_reputation_change": 0,
+         "choice_c_feedback": "Reactive punishment doesn't prevent problems! By the time you identify bad cooks, customers are already unhappy. Systematic quality checks catch issues before they reach customers.", 
+         "subskill_focus": "Quality Control"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Operations", "required_level": 5,
+         "scenario_title": "L5: Quality Assurance", 
+         "scenario_narrative": "Some batches of your ale are excellent, others are barely drinkable. The inconsistency is hurting your reputation. Customers don't know what they'll get when they order. The Guild suggests quality standards.",
+         "choice_a_text": "Create written quality standards and taste-test every batch before selling", 
+         "choice_a_exp_reward": 90, "choice_a_cash_change": 300, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Quality assurance mastery! Written standards define 'acceptable.' Taste testing catches bad batches before customers do. Rejecting subpar batches costs less than reputation damage. Consistency builds loyalty.",
+         "choice_b_text": "Blend good and bad batches together to average out quality", 
+         "choice_b_exp_reward": 40, "choice_b_cash_change": 0, "choice_b_reputation_change": 1,
+         "choice_b_feedback": "Dilution doesn't solve the problem! You're now selling mediocre ale instead of some great and some bad. Better to fix the process that creates bad batches in the first place.",
+         "choice_c_text": "Sell bad batches at discount rather than waste them", 
+         "choice_c_exp_reward": 50, "choice_c_cash_change": 100, "choice_c_reputation_change": 0,
+         "choice_c_feedback": "Salvage recovery is valid but incomplete! You recover some value from bad batches, but still have reputation risk. The real solution is preventing bad batches through process improvement.", 
+         "subskill_focus": "Quality Control"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Operations", "required_level": 5,
+         "scenario_title": "L5: Quality Assurance", 
+         "scenario_narrative": "Refined minerals are reaching customers with inconsistent purity levels. Some shipments meet specs, others are rejected. Quality failures cost 500,000 credits last quarter in returns and penalties. Engineering proposes automated quality testing.",
+         "choice_a_text": "Implement inline sensors testing 100% of output with automatic rejection of subspec material", 
+         "choice_a_exp_reward": 90, "choice_a_cash_change": -50000, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Zero-defect quality system! Automated 100% inspection with automatic rejection ensures nothing substandard ships. The 50,000 credit investment saves 500,000+ in returns. Quality pays for itself.",
+         "choice_b_text": "Test samples from each batch - 100% testing is overkill", 
+         "choice_b_exp_reward": 60, "choice_b_cash_change": -20000, "choice_b_reputation_change": 3,
+         "choice_b_feedback": "Statistical sampling can work but has risks. If contamination is localized, sampling might miss it. For high-value materials with severe rejection penalties, 100% testing is often justified.",
+         "choice_c_text": "Negotiate with customers to accept wider purity tolerances", 
+         "choice_c_exp_reward": 40, "choice_c_cash_change": 0, "choice_c_reputation_change": -2,
+         "choice_c_feedback": "Lowering standards instead of raising quality? Customers chose you for specifications you promised. Asking them to accept less damages your reputation and competitive position.", 
+         "subskill_focus": "Quality Control"},
+
+        # ========== LEVEL 6: Production Scheduling ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Operations", "required_level": 6,
+         "scenario_title": "L6: Production Scheduling", 
+         "scenario_narrative": "You're opening three new franchise locations simultaneously. Each requires permits (2 weeks), construction (8 weeks), equipment (delivered in 6 weeks), and staff training (3 weeks). How do you schedule this complex project?",
+         "choice_a_text": "Create a Gantt chart showing parallel tasks and dependencies - permits first, then construction alongside equipment ordering", 
+         "choice_a_exp_reward": 100, "choice_a_cash_change": 1000, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Project management excellence! Gantt charts visualize dependencies. Permits must complete before construction, but equipment can be ordered simultaneously. Critical path analysis shows minimum timeline: 13 weeks total.",
+         "choice_b_text": "Start everything at once to move as fast as possible", 
+         "choice_b_exp_reward": 40, "choice_b_cash_change": -2000, "choice_b_reputation_change": 1,
+         "choice_b_feedback": "Ignoring dependencies wastes resources! You can't construct without permits. Equipment arriving before the building is ready means storage costs. Sequencing based on dependencies is essential.",
+         "choice_c_text": "Open them one at a time to reduce complexity", 
+         "choice_c_exp_reward": 60, "choice_c_cash_change": 0, "choice_c_reputation_change": 2,
+         "choice_c_feedback": "Sequential execution is slower and misses economies of scale! With proper project management, parallel work on three locations shares resources efficiently. Complexity is manageable with good scheduling.", 
+         "subskill_focus": "Project Scheduling"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Operations", "required_level": 6,
+         "scenario_title": "L6: Production Scheduling", 
+         "scenario_narrative": "You've been contracted to build a wizard's tower. The project requires stone masonry (10 weeks), then enchantment binding (4 weeks), then protective warding (2 weeks). Masonry can't start until foundation stones arrive (3 weeks lead time).",
+         "choice_a_text": "Schedule: Order stones immediately, masonry weeks 3-13, enchantment weeks 13-17, warding weeks 17-19", 
+         "choice_a_exp_reward": 100, "choice_a_cash_change": 500, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Critical path identified! You correctly sequenced dependent tasks. Ordering stones immediately minimizes wait time. Total project: 19 weeks, with each phase starting only when prerequisites complete.",
+         "choice_b_text": "Start enchantment preparation while masonry proceeds to save time", 
+         "choice_b_exp_reward": 70, "choice_b_cash_change": 200, "choice_b_reputation_change": 3,
+         "choice_b_feedback": "Partial overlap possible! Enchanters can prepare materials while masonry proceeds, but actual binding requires finished stone. This might save 1-2 weeks. Good optimization thinking!",
+         "choice_c_text": "Hire more masons to compress the 10-week masonry phase", 
+         "choice_c_exp_reward": 60, "choice_c_cash_change": -300, "choice_c_reputation_change": 2,
+         "choice_c_feedback": "Crashing the schedule has costs! Additional masons mean higher wages and potential quality issues from crowding. Only accelerate critical path if the timeline savings justify the cost.", 
+         "subskill_focus": "Project Scheduling"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Operations", "required_level": 6,
+         "scenario_title": "L6: Production Scheduling", 
+         "scenario_narrative": "You're deploying an orbital habitat structure. Components arrive over 8 weeks, assembly requires zero-G conditions (next window: weeks 6-10), and system testing takes 4 weeks after assembly. How do you schedule to meet the window?",
+         "choice_a_text": "Rush component delivery to complete by week 5, assembly during window weeks 6-10, testing weeks 10-14", 
+         "choice_a_exp_reward": 100, "choice_a_cash_change": -10000, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Critical constraint management! The zero-G window is immovable. Compressing component delivery (expensive but possible) enables assembly during the window. Missing the window delays everything by months.",
+         "choice_b_text": "Wait for the next zero-G window rather than rush delivery", 
+         "choice_b_exp_reward": 50, "choice_b_cash_change": 0, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "Delay has costs too! If the next window is months away, you're paying for stored components, delayed revenue, and contract penalties. Sometimes rush fees are cheaper than waiting.",
+         "choice_c_text": "Attempt assembly during suboptimal conditions to avoid rush fees", 
+         "choice_c_exp_reward": 30, "choice_c_cash_change": -50000, "choice_c_reputation_change": -3,
+         "choice_c_feedback": "Safety constraints exist for reasons! Assembly outside proper zero-G conditions risks catastrophic failure. The rush fee is 10,000 credits; failure costs lives and millions. Never compromise safety constraints.", 
+         "subskill_focus": "Project Scheduling"},
+
+        # ========== LEVEL 7: Just-In-Time Inventory ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Operations", "required_level": 7,
+         "scenario_title": "L7: Just-In-Time Inventory", 
+         "scenario_narrative": "Your walk-in cooler is stuffed with ingredients. Inventory carrying costs (spoilage, space, tied-up cash) total $2,000 monthly. Your supplier offers daily deliveries for a $300/month fee. Should you adopt Just-In-Time inventory?",
+         "choice_a_text": "Yes - daily deliveries save $1,700/month ($2,000 costs minus $300 fee) and ensure fresher ingredients", 
+         "choice_a_exp_reward": 110, "choice_a_cash_change": 1700, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "JIT implementation! Smaller, more frequent deliveries reduce inventory carrying costs. Fresher ingredients improve quality. The math is clear: $300 fee saves $2,000 in costs. Classic operations optimization.",
+         "choice_b_text": "No - we need buffer stock in case the supplier fails to deliver", 
+         "choice_b_exp_reward": 60, "choice_b_cash_change": 0, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "Valid risk concern! JIT requires reliable suppliers. But you can mitigate by keeping minimal safety stock of critical items while reducing bulk inventory. Partial JIT captures most savings.",
+         "choice_c_text": "Negotiate: daily delivery with no fee in exchange for exclusivity", 
+         "choice_c_exp_reward": 90, "choice_c_cash_change": 2000, "choice_c_reputation_change": 4,
+         "choice_c_feedback": "Strategic negotiation! Exclusivity has value to suppliers. If they eliminate competition, they might waive delivery fees. You save the full $2,000. Just ensure exclusivity doesn't lock you into bad pricing.", 
+         "subskill_focus": "JIT Operations"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Operations", "required_level": 7,
+         "scenario_title": "L7: Just-In-Time Inventory", 
+         "scenario_narrative": "Your cellar holds 3 months of supplies. Storage costs (spoilage, guarding, space) run 200 gold monthly. A merchant offers weekly deliveries for 50 gold/month. The cellar space could be converted to additional seating worth 100 gold/month revenue.",
+         "choice_a_text": "Switch to weekly deliveries: save 200 gold storage, pay 50 gold fee, gain 100 gold from new seating = 250 gold/month benefit", 
+         "choice_a_exp_reward": 110, "choice_a_cash_change": 250, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Multi-factor JIT analysis! You correctly calculated: storage savings (200) - delivery fee (50) + space conversion (100) = 250 gold monthly benefit. Converting freed space to revenue amplifies JIT benefits.",
+         "choice_b_text": "Keep large inventory - what if war blocks the trade routes?", 
+         "choice_b_exp_reward": 60, "choice_b_cash_change": 0, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "Strategic reserves have value in uncertain times! Perhaps keep 2 weeks buffer instead of 3 months. Balance JIT efficiency against genuine disruption risks. Partial implementation is reasonable.",
+         "choice_c_text": "Convert to weekly delivery but keep cellar empty as backup storage", 
+         "choice_c_exp_reward": 70, "choice_c_cash_change": 150, "choice_c_reputation_change": 3,
+         "choice_c_feedback": "Conservative transition! You save 150 gold (200 storage - 50 fee) while keeping optionality. But empty space earning nothing is still a cost. Consider at least partial conversion.", 
+         "subskill_focus": "JIT Operations"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Operations", "required_level": 7,
+         "scenario_title": "L7: Just-In-Time Inventory", 
+         "scenario_narrative": "Your orbital station maintains 6 months of spare parts. Inventory carrying costs (storage modules, inventory management, capital) total 500,000 credits annually. A supply ship could make monthly runs for 100,000 credits/year. Is JIT feasible in space?",
+         "choice_a_text": "Implement JIT for non-critical parts, maintain safety stock for life-critical systems", 
+         "choice_a_exp_reward": 110, "choice_a_cash_change": 300000, "choice_a_reputation_change": 6,
+         "choice_a_feedback": "Risk-stratified JIT! Non-critical parts (85% of inventory) can go JIT, saving ~400,000 in carrying costs. Life-critical systems keep safety stock because delay cost is infinite. Hybrid approach optimizes both efficiency and safety.",
+         "choice_b_text": "Full JIT - monthly supply runs are reliable enough", 
+         "choice_b_exp_reward": 60, "choice_b_cash_change": 400000, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "Risky in space! One delayed supply run when life support fails is catastrophic. The carrying cost of safety stock for critical items is insurance you can't skip. Pure JIT doesn't fit all environments.",
+         "choice_c_text": "No changes - space is too risky for JIT inventory", 
+         "choice_c_exp_reward": 40, "choice_c_cash_change": 0, "choice_c_reputation_change": 1,
+         "choice_c_feedback": "Overly conservative! While full JIT is dangerous in space, hybrid approaches capture most savings while maintaining critical safety stocks. Analyze item by item rather than blanket rejection.", 
+         "subskill_focus": "JIT Operations"},
+
+        # ========== LEVEL 8: Supply Chain Risk Management ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Operations", "required_level": 8,
+         "scenario_title": "L8: Supply Chain Risk Management", 
+         "scenario_narrative": "Your restaurant depends on a single supplier for premium coffee beans - 40% of your beverage revenue. That supplier just announced they're being acquired by a competitor. Your supply chain is at risk. What's your mitigation strategy?",
+         "choice_a_text": "Immediately qualify a backup supplier and split orders 70/30 to reduce single-source dependency", 
+         "choice_a_exp_reward": 120, "choice_a_cash_change": -500, "choice_a_reputation_change": 6,
+         "choice_a_feedback": "Supply chain resilience! Dual-sourcing eliminates single points of failure. The backup supplier might cost slightly more, but supply continuity is worth the premium. Never let one supplier control a critical input.",
+         "choice_b_text": "Negotiate a long-term contract with the current supplier before the acquisition closes", 
+         "choice_b_exp_reward": 80, "choice_b_cash_change": 0, "choice_b_reputation_change": 3,
+         "choice_b_feedback": "Contractual protection helps but doesn't eliminate risk! The new owner might honor contracts grudgingly with worse service. Or find legal ways to exit. Contracts plus backup suppliers provide real security.",
+         "choice_c_text": "Wait and see - the acquisition might not change anything", 
+         "choice_c_exp_reward": 30, "choice_c_cash_change": 0, "choice_c_reputation_change": 0,
+         "choice_c_feedback": "Passive risk acceptance! If the new owner raises prices or drops you, you'll scramble for alternatives under pressure. Proactive qualification of alternatives costs little and provides insurance.", 
+         "subskill_focus": "Risk Management"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Operations", "required_level": 8,
+         "scenario_title": "L8: Supply Chain Risk Management", 
+         "scenario_narrative": "Your most valuable brew requires Moonstone from a single mine in the Elvish lands. Border tensions are rising between the kingdoms. If trade routes close, you lose your signature product. How do you manage this supply chain risk?",
+         "choice_a_text": "Find an alternative Moonstone source (even if more expensive) and stockpile 6 months supply as buffer", 
+         "choice_a_exp_reward": 120, "choice_a_cash_change": -1000, "choice_a_reputation_change": 6,
+         "choice_a_feedback": "Comprehensive risk mitigation! Alternative sourcing eliminates single-point dependency. Strategic stockpile provides time buffer if war actually closes routes. The cost is insurance against business interruption.",
+         "choice_b_text": "Develop a substitute recipe that doesn't require Moonstone", 
+         "choice_b_exp_reward": 90, "choice_b_cash_change": -300, "choice_b_reputation_change": 4,
+         "choice_b_feedback": "Product adaptation! If you can create an alternative that customers accept, you eliminate the supply risk entirely. But test market acceptance before the crisis - you need this ready in advance.",
+         "choice_c_text": "Hope tensions ease - wars are bad for everyone's business", 
+         "choice_c_exp_reward": 25, "choice_c_cash_change": 0, "choice_c_reputation_change": 0,
+         "choice_c_feedback": "Hope isn't a strategy! Even if war is unlikely, the cost of preparation is low compared to business interruption. Risk management means preparing for bad outcomes, not hoping they won't happen.", 
+         "subskill_focus": "Risk Management"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Operations", "required_level": 8,
+         "scenario_title": "L8: Supply Chain Risk Management", 
+         "scenario_narrative": "Your primary supply route passes through an asteroid field now contested in a trade war. Alternative routes add 40% to shipping costs. Your supply chain analysis shows this route handles 80% of your incoming materials.",
+         "choice_a_text": "Immediately diversify: 50% primary route, 30% expensive alternative, 20% local sourcing development", 
+         "choice_a_exp_reward": 120, "choice_a_cash_change": -100000, "choice_a_reputation_change": 6,
+         "choice_a_feedback": "Strategic diversification! Higher costs now prevent catastrophic disruption later. Local sourcing development builds long-term independence. Supply chain resilience is a competitive advantage in unstable regions.",
+         "choice_b_text": "Stockpile 12 months of critical materials while the route is still open", 
+         "choice_b_exp_reward": 80, "choice_b_cash_change": -500000, "choice_b_reputation_change": 4,
+         "choice_b_feedback": "Buffer strategy! Stockpiling buys time but doesn't solve the underlying problem. If the blockade lasts longer than your stockpile, you're back to the same crisis. Combine stockpiling with route diversification.",
+         "choice_c_text": "Lobby both sides of the trade war for neutral passage rights", 
+         "choice_c_exp_reward": 60, "choice_c_cash_change": -50000, "choice_c_reputation_change": 3,
+         "choice_c_feedback": "Diplomatic approach can work! Neutral status in trade conflicts is valuable. But political solutions aren't guaranteed. Continue physical diversification while pursuing diplomatic options.", 
+         "subskill_focus": "Risk Management"},
+
+        # ========== LEVEL 9: Outsourcing and Offshoring ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Operations", "required_level": 9,
+         "scenario_title": "L9: Outsourcing and Offshoring", 
+         "scenario_narrative": "A commissary kitchen offers to prepare your sauces, doughs, and prep work at 30% lower cost than in-house. This would free your kitchen for cooking only. But you'd lose direct control over these foundation elements.",
+         "choice_a_text": "Outsource commodity prep (doughs, basic stocks) but keep signature sauces in-house for quality control", 
+         "choice_a_exp_reward": 130, "choice_a_cash_change": 2000, "choice_a_reputation_change": 6,
+         "choice_a_feedback": "Strategic outsourcing! Commodity items where quality is standardized benefit from outsourcing. Signature items that define your brand stay in-house. This captures cost savings while protecting differentiation.",
+         "choice_b_text": "Keep everything in-house - quality and consistency are worth the extra cost", 
+         "choice_b_exp_reward": 70, "choice_b_cash_change": 0, "choice_b_reputation_change": 3,
+         "choice_b_feedback": "Valid for premium positioning! If your brand depends on 'everything made fresh in-house,' outsourcing undermines your story. But verify customers actually value and notice the difference for commodity items.",
+         "choice_c_text": "Outsource everything prep-related to maximize cost savings", 
+         "choice_c_exp_reward": 50, "choice_c_cash_change": 3000, "choice_c_reputation_change": 0,
+         "choice_c_feedback": "Risk of commoditization! If your sauces taste like every other restaurant using the same commissary, what's your differentiation? Outsourcing core elements can save money but erode competitive advantage.", 
+         "subskill_focus": "Make vs Buy"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Operations", "required_level": 9,
+         "scenario_title": "L9: Outsourcing and Offshoring", 
+         "scenario_narrative": "A dwarven brewing guild offers to produce your standard ales at 40% lower cost, freeing your brewmasters to focus on premium specialty brews. Your standard ales are 60% of volume but only 30% of profit.",
+         "choice_a_text": "Outsource standard ales, refocus in-house on high-margin specialty brews that differentiate us", 
+         "choice_a_exp_reward": 130, "choice_a_cash_change": 1500, "choice_a_reputation_change": 6,
+         "choice_a_feedback": "Strategic focus! Outsourcing low-margin commodity production frees expert resources for high-value specialty work. You capture cost savings on 60% of volume while improving the 30% that drives profit.",
+         "choice_b_text": "Keep all brewing in-house - our reputation depends on craftsmanship", 
+         "choice_b_exp_reward": 70, "choice_b_cash_change": 0, "choice_b_reputation_change": 4,
+         "choice_b_feedback": "Brand protection strategy! If customers associate your tavern with artisanal everything, outsourcing changes that perception. Verify whether standard ale customers actually distinguish your brew from dwarven mass production.",
+         "choice_c_text": "Outsource specialty brews too - focus on running the tavern, not brewing", 
+         "choice_c_exp_reward": 40, "choice_c_cash_change": 2000, "choice_c_reputation_change": -2,
+         "choice_c_feedback": "Dangerous commoditization! If you outsource everything distinctive, you become a generic tavern. Your specialty brews are your competitive advantage - outsourcing them surrenders differentiation.", 
+         "subskill_focus": "Make vs Buy"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Operations", "required_level": 9,
+         "scenario_title": "L9: Outsourcing and Offshoring", 
+         "scenario_narrative": "A manufacturing consortium on a low-cost planet offers to build your mining drones at 50% savings. Currently you manufacture in-house, giving you quality control and fast customization. The consortium's quality is 'acceptable' but not premium.",
+         "choice_a_text": "Outsource standard drones, keep specialized/custom drone manufacturing in-house", 
+         "choice_a_exp_reward": 130, "choice_a_cash_change": 500000, "choice_a_reputation_change": 6,
+         "choice_a_feedback": "Tiered manufacturing strategy! Standard drones are commodity - acceptable quality at 50% savings makes sense. Custom/specialized drones are competitive advantage - keep control. Classic make vs. buy optimization.",
+         "choice_b_text": "Maintain in-house manufacturing for full quality control and customization speed", 
+         "choice_b_exp_reward": 80, "choice_b_cash_change": 0, "choice_b_reputation_change": 4,
+         "choice_b_feedback": "Vertical integration has value! If drone reliability is critical to operations or quick customization provides competitive advantage, the premium may be justified. Quantify the value before deciding.",
+         "choice_c_text": "Full outsourcing to the consortium for maximum cost reduction", 
+         "choice_c_exp_reward": 50, "choice_c_cash_change": 800000, "choice_c_reputation_change": -1,
+         "choice_c_feedback": "Cost focus ignores capability loss! 'Acceptable' quality may mean more failures. Lost customization speed may cost contracts. And you've transferred your manufacturing capability to a potential future competitor.", 
+         "subskill_focus": "Make vs Buy"},
+
+        # ========== LEVEL 10: Process Innovation & Automation ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Operations", "required_level": 10,
+         "scenario_title": "L10: Process Innovation & Automation", 
+         "scenario_narrative": "A robotics company offers automated prep stations that can handle 80% of kitchen prep work, reducing staff needs by 50% and improving consistency. Investment: $200,000. Payback period: 18 months. Your staff are concerned about job losses.",
+         "choice_a_text": "Implement automation for prep, retrain displaced workers for customer service and quality oversight roles", 
+         "choice_a_exp_reward": 150, "choice_a_cash_change": -200000, "choice_a_reputation_change": 8,
+         "choice_a_feedback": "Responsible automation! You capture efficiency gains while creating new roles for existing staff. Customer service and quality oversight can't be automated. This approach builds loyalty and captures innovation benefits.",
+         "choice_b_text": "Full automation with workforce reduction - business survival requires efficiency", 
+         "choice_b_exp_reward": 100, "choice_b_cash_change": -200000, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "Efficiency gains achieved but at reputation cost. Layoffs create negative publicity and lose institutional knowledge. The financial math works, but community relationships and employee morale suffer.",
+         "choice_c_text": "Reject automation - our people are our competitive advantage", 
+         "choice_c_exp_reward": 60, "choice_c_cash_change": 0, "choice_c_reputation_change": 3,
+         "choice_c_feedback": "Competitor risk! If rivals automate and achieve 50% lower costs, they can undercut your prices. Rejecting all automation may preserve culture short-term but risks long-term competitiveness.", 
+         "subskill_focus": "Automation Strategy"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Operations", "required_level": 10,
+         "scenario_title": "L10: Process Innovation & Automation", 
+         "scenario_narrative": "A gnomish artificer offers enchanted brewing equipment that automates temperature control, timing, and mixing - tripling output while reducing labor by 60%. Cost: 10,000 gold. Your master brewer calls it 'soulless mechanical ale.'",
+         "choice_a_text": "Implement for standard production, keep master brewer focused on premium artisanal batches", 
+         "choice_a_exp_reward": 150, "choice_a_cash_change": -10000, "choice_a_reputation_change": 8,
+         "choice_a_feedback": "Hybrid approach! Automation handles volume efficiently while craftsmanship creates premium products. The master brewer's skills now focus where they add most value. You get scale AND quality differentiation.",
+         "choice_b_text": "Full automation to compete with larger breweries on price", 
+         "choice_b_exp_reward": 90, "choice_b_cash_change": -10000, "choice_b_reputation_change": 3,
+         "choice_b_feedback": "Volume strategy! If your market is price-sensitive, automation enables competition. But verify you can actually match large brewery distribution. Automation without scale may not achieve price competitiveness.",
+         "choice_c_text": "Reject the machinery - our hand-crafted ale is what makes us special", 
+         "choice_c_exp_reward": 60, "choice_c_cash_change": 0, "choice_c_reputation_change": 4,
+         "choice_c_feedback": "Artisanal positioning is valid! If customers pay premium for 'hand-crafted,' automation undermines your value proposition. But monitor competitors - if everyone automates, hand-crafted becomes expensive niche.", 
+         "subskill_focus": "Automation Strategy"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Operations", "required_level": 10,
+         "scenario_title": "L10: Process Innovation & Automation", 
+         "scenario_narrative": "An AI company offers fully autonomous mining drones with neural network optimization. They promise 200% productivity increase and 80% reduction in human operators. Investment: 5,000,000 credits. Human operators' union threatens strike.",
+         "choice_a_text": "Implement with transition program: redeploy operators to drone supervision, maintenance, and remote exploration", 
+         "choice_a_exp_reward": 150, "choice_a_cash_change": -5000000, "choice_a_reputation_change": 8,
+         "choice_a_feedback": "Strategic transformation! Autonomous drones need human oversight, maintenance, and problem-solving for edge cases. Redeployment captures productivity gains while honoring workforce commitments. Industry leadership position achieved.",
+         "choice_b_text": "Full automation with workforce reduction - shareholders demand efficiency", 
+         "choice_b_exp_reward": 100, "choice_b_cash_change": -5000000, "choice_b_reputation_change": 1,
+         "choice_b_feedback": "Maximum efficiency, maximum disruption. Strike likely delays implementation. Laid-off workers become competitors or critics. The math works but social license to operate is damaged. Consider long-term reputation costs.",
+         "choice_c_text": "Delay until union concerns are fully resolved - technology can wait", 
+         "choice_c_exp_reward": 50, "choice_c_cash_change": 0, "choice_c_reputation_change": 2,
+         "choice_c_feedback": "Competitors won't wait! If rivals implement autonomous mining, your cost structure becomes uncompetitive. Negotiated transition is better than indefinite delay. Find a path forward that addresses concerns while capturing benefits.", 
+         "subskill_focus": "Automation Strategy"},
+    ]
+    
+    for scenario in scenarios:
+        cur.execute("""
+            INSERT INTO scenario_master (world_type, industry, discipline, required_level, scenario_title, scenario_narrative,
+                choice_a_text, choice_a_exp_reward, choice_a_cash_change, choice_a_reputation_change, choice_a_feedback,
+                choice_b_text, choice_b_exp_reward, choice_b_cash_change, choice_b_reputation_change, choice_b_feedback,
+                choice_c_text, choice_c_exp_reward, choice_c_cash_change, choice_c_reputation_change, choice_c_feedback,
+                subskill_focus)
+            VALUES (%(world_type)s, %(industry)s, %(discipline)s, %(required_level)s, %(scenario_title)s, %(scenario_narrative)s,
+                %(choice_a_text)s, %(choice_a_exp_reward)s, %(choice_a_cash_change)s, %(choice_a_reputation_change)s, %(choice_a_feedback)s,
+                %(choice_b_text)s, %(choice_b_exp_reward)s, %(choice_b_cash_change)s, %(choice_b_reputation_change)s, %(choice_b_feedback)s,
+                %(choice_c_text)s, %(choice_c_exp_reward)s, %(choice_c_cash_change)s, %(choice_c_reputation_change)s, %(choice_c_feedback)s,
+                %(subskill_focus)s)
+        """, scenario)
+    
+    conn.commit()
+    print(f"Seeded {len(scenarios)} Operations Curriculum scenarios (Levels 1-10, 3 worlds)!")
+    cur.close()
+    conn.close()
+
+
 if __name__ == "__main__":
     init_database()
     seed_scenarios()
@@ -2869,3 +3371,4 @@ if __name__ == "__main__":
     seed_accounting_curriculum()
     seed_finance_curriculum()
     seed_legal_curriculum()
+    seed_operations_curriculum()
