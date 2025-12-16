@@ -8,14 +8,20 @@
 <div class="row justify-content-center fade-in">
     <div class="col-md-10">
         <div class="card">
-            {% if 'Menu' in scenario.scenario_title %}
-            <img src="/static/images/menu_design_scenario_illustration.png" class="scenario-img" alt="Scenario" style="height: 200px;">
-            {% elif 'Social' in scenario.scenario_title %}
-            <img src="/static/images/social_media_marketing_illustration.png" class="scenario-img" alt="Scenario" style="height: 200px;">
-            {% elif 'Grand' in scenario.scenario_title or 'Opening' in scenario.scenario_title %}
-            <img src="/static/images/grand_opening_scenario_illustration.png" class="scenario-img" alt="Scenario" style="height: 200px;">
+            {% if scenario.discipline == 'Marketing' %}
+            <img src="/static/images/marketplace_scenario_card.png" class="scenario-img" alt="Marketing Scenario" style="height: 200px; object-fit: cover; width: 100%;">
+            {% elif scenario.discipline == 'Finance' %}
+            <img src="/static/images/finance_accounting_scenario.png" class="scenario-img" alt="Finance Scenario" style="height: 200px; object-fit: cover; width: 100%;">
+            {% elif scenario.discipline == 'Operations' %}
+            <img src="/static/images/restaurant_kitchen_scenario.png" class="scenario-img" alt="Operations Scenario" style="height: 200px; object-fit: cover; width: 100%;">
+            {% elif scenario.discipline == 'Strategy' %}
+            <img src="/static/images/strategy_meeting_scenario.png" class="scenario-img" alt="Strategy Scenario" style="height: 200px; object-fit: cover; width: 100%;">
+            {% elif scenario.discipline == 'Human Resources' %}
+            <img src="/static/images/hr_building_icon.png" class="scenario-img" alt="HR Scenario" style="height: 200px; object-fit: contain; width: 100%; background: linear-gradient(135deg, rgba(30,30,50,0.95), rgba(15,15,30,0.95));">
+            {% elif scenario.discipline == 'Legal' %}
+            <img src="/static/images/legal_building_icon.png" class="scenario-img" alt="Legal Scenario" style="height: 200px; object-fit: contain; width: 100%; background: linear-gradient(135deg, rgba(30,30,50,0.95), rgba(15,15,30,0.95));">
             {% else %}
-            <img src="/static/images/default_business_scenario_image.png" class="scenario-img" alt="Scenario" style="height: 200px;">
+            <img src="/static/images/marketplace_scenario_card.png" class="scenario-img" alt="Scenario" style="height: 200px; object-fit: cover; width: 100%;">
             {% endif %}
             <div class="card-header">
                 <div class="d-flex justify-content-between align-items-center">
