@@ -31,8 +31,9 @@ def new_game():
             name = 'Entrepreneur'
         world = request.form.get('world', 'Modern')
         industry = request.form.get('industry', 'Restaurant')
+        career_path = request.form.get('career_path', 'entrepreneur')
         
-        player = engine.create_new_player(name, world, industry)
+        player = engine.create_new_player(name, world, industry, career_path)
         session['player_id'] = player.player_id
         
         return redirect(url_for('hub'))

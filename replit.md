@@ -101,3 +101,5 @@ The game runs as a web application on port 5000.
 - 2025-12: Built NPC relationship system with 5 characters and dialogue interactions
 - 2025-12: Added quest system with Main and Side quest tracking
 - 2025-12: Implemented CSRF protection via Flask-WTF for security
+- 2025-12: Added dual career path system (Entrepreneur vs Employee)
+- 2025-12: Implemented job title progression for employee path (10 job levels per industry)

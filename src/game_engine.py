@@ -20,6 +20,33 @@ from src.leveling import (
 )
 
 
+JOB_TITLES = {
+    'Restaurant': {
+        1: 'Dishwasher',
+        2: 'Line Cook',
+        3: 'Sous Chef',
+        4: 'Head Chef',
+        5: 'Kitchen Manager',
+        6: 'Assistant General Manager',
+        7: 'General Manager',
+        8: 'Regional Manager',
+        9: 'Director of Operations',
+        10: 'VP of Operations'
+    },
+    'SaaS': {
+        1: 'Customer Support Rep',
+        2: 'Technical Support Specialist',
+        3: 'Account Manager',
+        4: 'Sales Representative',
+        5: 'Senior Sales Rep',
+        6: 'Sales Manager',
+        7: 'Director of Sales',
+        8: 'VP of Sales',
+        9: 'Chief Revenue Officer',
+        10: 'CEO'
+    }
+}
+
 class Player:
     """Represents a player in the game."""
     
@@ -28,6 +55,9 @@ class Player:
         self.name = ""
         self.world = "Modern"
         self.industry = "Restaurant"
+        self.career_path = "entrepreneur"
+        self.job_title = None
+        self.job_level = 1
         self.cash = 10000.0
         self.reputation = 50
         self.current_month = 1
@@ -55,6 +85,9 @@ class Player:
             self.name = profile['player_name']
             self.world = profile['chosen_world']
             self.industry = profile['chosen_industry']
+            self.career_path = profile.get('career_path', 'entrepreneur')
+            self.job_title = profile.get('job_title')
+            self.job_level = profile.get('job_level', 1)
             self.cash = float(profile['total_cash'])
             self.reputation = profile['business_reputation']
             self.current_month = profile['current_month']
@@ -104,9 +137,11 @@ class Player:
         
         cur.execute("""
             UPDATE player_profiles 
-            SET total_cash = %s, business_reputation = %s, current_month = %s, last_played = CURRENT_TIMESTAMP
+            SET total_cash = %s, business_reputation = %s, current_month = %s, 
+                career_path = %s, job_title = %s, job_level = %s, last_played = CURRENT_TIMESTAMP
             WHERE player_id = %s
-        """, (self.cash, self.reputation, self.current_month, self.player_id))
+        """, (self.cash, self.reputation, self.current_month, 
+              self.career_path, self.job_title, self.job_level, self.player_id))
         
         for discipline, progress in self.discipline_progress.items():
             cur.execute("""
@@ -140,16 +175,27 @@ class GameEngine:
         self.current_player = None
         self.available_scenarios = []
     
-    def create_new_player(self, name: str, world: str = "Modern", industry: str = "Restaurant") -> Player:
+    def create_new_player(self, name: str, world: str = "Modern", industry: str = "Restaurant", career_path: str = "entrepreneur") -> Player:
         """Create a new player and initialize their progress."""
         conn = get_connection()
         cur = conn.cursor()
         
+        if career_path == "employee":
+            starting_cash = 500.0
+            starting_reputation = 25
+            job_title = JOB_TITLES.get(industry, JOB_TITLES['Restaurant']).get(1, 'Entry Level')
+            job_level = 1
+        else:
+            starting_cash = 10000.0
+            starting_reputation = 50
+            job_title = None
+            job_level = 0
+        
         cur.execute("""
-            INSERT INTO player_profiles (player_name, chosen_world, chosen_industry)
-            VALUES (%s, %s, %s)
+            INSERT INTO player_profiles (player_name, chosen_world, chosen_industry, career_path, job_title, job_level, total_cash, business_reputation)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING player_id
-        """, (name, world, industry))
+        """, (name, world, industry, career_path, job_title, job_level, starting_cash, starting_reputation))
         
         player_id = cur.fetchone()['player_id']
         
@@ -171,6 +217,11 @@ class GameEngine:
         player = Player(player_id)
         player.name = name
         player.world = world
+        player.career_path = career_path
+        player.job_title = job_title
+        player.job_level = job_level
+        player.cash = starting_cash
+        player.reputation = starting_reputation
         player.industry = industry
         player.discipline_progress = {d: {'level': 1, 'exp': 0, 'total_exp': 0} for d in DISCIPLINES}
         player.stats = {'charisma': 5, 'intelligence': 5, 'luck': 5, 'negotiation': 5, 'stat_points': 3}
@@ -307,6 +358,19 @@ class GameEngine:
         self.current_player.cash += cash_change
         self.current_player.reputation = max(0, min(100, self.current_player.reputation + reputation_change))
         
+        promotion = None
+        if self.current_player.career_path == 'employee' and leveled_up:
+            if new_level > self.current_player.job_level:
+                self.current_player.job_level = new_level
+                job_titles = JOB_TITLES.get(self.current_player.industry, JOB_TITLES['Restaurant'])
+                new_title = job_titles.get(new_level, job_titles.get(10, 'Senior Executive'))
+                self.current_player.job_title = new_title
+                promotion = {
+                    'old_level': old_level,
+                    'new_level': new_level,
+                    'new_title': new_title
+                }
+        
         conn = get_connection()
         cur = conn.cursor()
         cur.execute("""
@@ -331,7 +395,8 @@ class GameEngine:
             "old_level": old_level,
             "new_level": new_level,
             "discipline": discipline,
-            "new_total_exp": new_exp
+            "new_total_exp": new_exp,
+            "promotion": promotion
         }
     
     def get_player_stats(self) -> dict:
@@ -344,6 +409,9 @@ class GameEngine:
             "name": p.name,
             "world": p.world,
             "industry": p.industry,
+            "career_path": p.career_path,
+            "job_title": p.job_title,
+            "job_level": p.job_level,
             "cash": p.cash,
             "reputation": p.reputation,
             "month": p.current_month,

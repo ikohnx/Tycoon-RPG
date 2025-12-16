@@ -24,12 +24,30 @@ def init_database():
             player_name VARCHAR(100) NOT NULL,
             chosen_world VARCHAR(50) NOT NULL DEFAULT 'Modern',
             chosen_industry VARCHAR(100) NOT NULL DEFAULT 'Restaurant',
+            career_path VARCHAR(50) NOT NULL DEFAULT 'entrepreneur',
+            job_title VARCHAR(100) DEFAULT NULL,
+            job_level INTEGER DEFAULT 1,
             total_cash DECIMAL(15, 2) DEFAULT 10000.00,
             business_reputation INTEGER DEFAULT 50,
             current_month INTEGER DEFAULT 1,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             last_played TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
+    """)
+    
+    cur.execute("""
+        ALTER TABLE player_profiles 
+        ADD COLUMN IF NOT EXISTS career_path VARCHAR(50) NOT NULL DEFAULT 'entrepreneur';
+    """)
+    
+    cur.execute("""
+        ALTER TABLE player_profiles 
+        ADD COLUMN IF NOT EXISTS job_title VARCHAR(100) DEFAULT NULL;
+    """)
+    
+    cur.execute("""
+        ALTER TABLE player_profiles 
+        ADD COLUMN IF NOT EXISTS job_level INTEGER DEFAULT 1;
     """)
     
     cur.execute("""

@@ -4,21 +4,67 @@
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-8">
+    <div class="col-md-10">
         <div class="card">
             <div class="card-header">
-                <h3><i class="bi bi-person-plus"></i> Create Your Business</h3>
+                <h3><i class="bi bi-person-plus"></i> Start Your Journey</h3>
             </div>
             <div class="card-body">
                 <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
                     <div class="mb-4">
-                        <label class="form-label">Business Name</label>
+                        <label class="form-label"><i class="bi bi-person"></i> Your Name</label>
                         <input type="text" name="name" class="form-control bg-dark text-light border-secondary" 
-                               placeholder="Enter your business name" maxlength="50">
+                               placeholder="Enter your name" maxlength="50">
                     </div>
                     
                     <div class="mb-4">
-                        <label class="form-label">Select Your World</label>
+                        <label class="form-label"><i class="bi bi-signpost-split"></i> Choose Your Path</label>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <input type="radio" class="btn-check" name="career_path" value="entrepreneur" id="path-entrepreneur" checked>
+                                <label class="btn btn-outline-success w-100 p-4 text-start" for="path-entrepreneur">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="bi bi-building display-6 me-3"></i>
+                                        <div>
+                                            <strong class="fs-5">Start Your Own Business</strong>
+                                            <span class="badge bg-success ms-2">Entrepreneur</span>
+                                        </div>
+                                    </div>
+                                    <hr class="my-2">
+                                    <ul class="list-unstyled mb-0 small">
+                                        <li><i class="bi bi-check-circle text-success"></i> Start with $10,000 capital</li>
+                                        <li><i class="bi bi-check-circle text-success"></i> 50 starting reputation</li>
+                                        <li><i class="bi bi-check-circle text-success"></i> Full control from day one</li>
+                                        <li><i class="bi bi-exclamation-triangle text-warning"></i> Higher risk, higher reward</li>
+                                    </ul>
+                                </label>
+                            </div>
+                            <div class="col-md-6">
+                                <input type="radio" class="btn-check" name="career_path" value="employee" id="path-employee">
+                                <label class="btn btn-outline-info w-100 p-4 text-start" for="path-employee">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="bi bi-person-badge display-6 me-3"></i>
+                                        <div>
+                                            <strong class="fs-5">Work Your Way Up</strong>
+                                            <span class="badge bg-info ms-2">Employee</span>
+                                        </div>
+                                    </div>
+                                    <hr class="my-2">
+                                    <ul class="list-unstyled mb-0 small">
+                                        <li><i class="bi bi-check-circle text-info"></i> Start with $500 savings</li>
+                                        <li><i class="bi bi-check-circle text-info"></i> Learn the ropes from entry-level</li>
+                                        <li><i class="bi bi-check-circle text-info"></i> Earn promotions as you level up</li>
+                                        <li><i class="bi bi-star text-warning"></i> Eventually start your own business!</li>
+                                    </ul>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label"><i class="bi bi-globe"></i> Select Your World</label>
                         <div class="row g-3">
                             <div class="col-md-4">
                                 <input type="radio" class="btn-check" name="world" value="Modern" id="world-modern" checked>

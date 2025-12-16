@@ -11,8 +11,32 @@
             <div class="card-header text-center">
                 <img src="/static/images/business_tycoon_character_avatar.png" alt="Your Avatar" class="avatar-img mb-2">
                 <h5 class="mb-0">{{ stats.name }}</h5>
+                {% if stats.career_path == 'employee' and stats.job_title %}
+                <small class="text-info">
+                    <i class="bi bi-person-badge"></i> {{ stats.job_title }}
+                </small>
+                {% elif stats.career_path == 'entrepreneur' %}
+                <small class="text-success">
+                    <i class="bi bi-building"></i> Business Owner
+                </small>
+                {% endif %}
             </div>
             <div class="card-body">
+                {% if stats.career_path == 'employee' %}
+                <div class="stat-card bg-info bg-opacity-10 border-info">
+                    <small class="text-muted">Career Level</small>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="h5 mb-0 text-info">
+                            <i class="bi bi-ladder"></i> Level {{ stats.job_level }}
+                        </div>
+                        <span class="badge bg-info">Employee Path</span>
+                    </div>
+                    <div class="progress mt-2" style="height: 8px;">
+                        <div class="progress-bar bg-info" style="width: {{ (stats.job_level * 10) }}%"></div>
+                    </div>
+                    <small class="text-muted">Next promotion at Marketing Level {{ stats.job_level + 1 }}</small>
+                </div>
+                {% endif %}
                 <div class="stat-card">
                     <small class="text-muted">World</small>
                     <div class="h5 mb-0">
