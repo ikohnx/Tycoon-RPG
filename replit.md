@@ -182,3 +182,8 @@ The game runs as a web application on port 5000.
   - Default training content for each challenge type (budget, pricing, staffing, break-even)
   - Choice-based quests also get discipline-specific training intro
   - Buttons changed to "Learn & Play" / "Learn & Solve" to indicate training step
+- 2025-12: Major gameplay improvements implemented:
+  - Password authentication system protecting player accounts (SHA256 hashing)
+  - Advisors now provide real EXP/gold/reputation bonuses during scenarios
+  - Equipment stats connected - luck bonus gives 2% per point star upgrade chance
+  - Leaderboard widget on hub page showing top 3 players by stars
