@@ -138,3 +138,5 @@ The game runs as a web application on port 5000.
 - 2025-12: Created discipline-specific scene backdrops for all 6 business disciplines
 - 2025-12: Implemented complete 10-level Marketing Curriculum with structured learning progression
 - 2025-12: Marketing curriculum covers: Need vs Want, 4 Ps (Product, Price, Place, Promotion), Segmentation, CPA, A/B Testing, LTV, SWOT, Crisis Management
+- 2025-12: Implemented complete 10-level Accounting/Finance Curriculum with structured learning progression
+- 2025-12: Accounting curriculum covers: Accounting Equation, Revenue vs Expense, Cash vs Accrual, Income Statement (P&L), Balance Sheet, Cash Flow Statement, Financial Ratios (Quick/Current), FIFO/LIFO Inventory, Budget Variance Analysis, Tax Strategy (GAAP/IFRS)
