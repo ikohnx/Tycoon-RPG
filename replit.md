@@ -151,3 +151,16 @@ The game runs as a web application on port 5000.
 - 2025-12: Implemented complete 10-level Strategy Curriculum (30 scenarios across 3 worlds)
 - 2025-12: Strategy curriculum covers: Mission & Vision, Competitive Advantage (Cost Leadership vs Differentiation), PESTLE Analysis, VRIO Framework, Porter's Generic Strategies, Balanced Scorecard, Ansoff Matrix, Porter's Five Forces, Organizational Structure (Functional/Divisional/Matrix), Strategic Resource Allocation
 - 2025-12: **ALL 6 CORE DISCIPLINES COMPLETE** - Total of 210 educational business scenarios across all curricula
+- 2025-12: Implemented 12 Kingshot-style mobile RPG game mechanics:
+  - Star Rating System: 1-3 stars per scenario based on choice quality
+  - Energy/Stamina System: 100 max energy, 10 cost per scenario, 1 per 5 min recharge
+  - Daily Login Rewards: Streak tracking with escalating gold/item/energy rewards (7-day cycle)
+  - Idle Income System: Passive gold generation based on completed scenarios and level (max 8 hour accumulation)
+  - Advisor Collection System: 12 recruitable advisors with unique discipline bonuses
+  - Equipment System: 9 items across 3 slots (Head, Body, Accessory) with stat bonuses
+  - Prestige/Ascension System: Reset progress for permanent +10% EXP and +15% gold multipliers
+  - Visual Campaign Map: Node-based stage progression showing all 6 disciplines with stars
+  - Boss Challenges: Level 5 (Elite) and Level 10 (Boss) milestone scenarios per discipline
+  - Daily Missions System: 3 refreshing daily tasks with gold rewards
+  - Leaderboard System: Rankings by total stars, wealth, and combined discipline levels
+  - Rival Battle System: Stat comparison combat with luck modifier and rewards
