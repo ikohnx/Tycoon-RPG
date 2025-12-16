@@ -1,14 +1,20 @@
 import os
 from flask import Flask, render_template, request, redirect, url_for, session, flash
-from src.database import init_database, seed_scenarios
+from flask_wtf.csrf import CSRFProtect
+from src.database import init_database, seed_scenarios, seed_achievements, seed_items, seed_npcs, seed_quests
 from src.game_engine import GameEngine
 from src.leveling import get_level_title, get_progress_bar, get_exp_to_next_level
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key")
+csrf = CSRFProtect(app)
 
 init_database()
 seed_scenarios()
+seed_achievements()
+seed_items()
+seed_npcs()
+seed_quests()
 
 engine = GameEngine()
 
@@ -139,6 +145,129 @@ def progress():
         data['next_level'] = next_level
     
     return render_template('progress.html', stats=stats)
+
+@app.route('/character')
+def character():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    achievements = engine.get_all_achievements()
+    
+    return render_template('character.html', stats=stats, achievements=achievements)
+
+@app.route('/allocate_stat/<stat_name>', methods=['POST'])
+def allocate_stat(stat_name):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    result = engine.allocate_stat(stat_name)
+    
+    if result.get('error'):
+        flash(result['error'])
+    else:
+        flash(f"{stat_name.capitalize()} increased to {result['new_value']}!")
+    
+    return redirect(url_for('character'))
+
+@app.route('/shop')
+def shop():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    items = engine.get_shop_items()
+    
+    return render_template('shop.html', stats=stats, items=items)
+
+@app.route('/buy/<int:item_id>', methods=['POST'])
+def buy_item(item_id):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    result = engine.purchase_item(item_id)
+    
+    if result.get('error'):
+        flash(result['error'])
+    else:
+        flash(f"Purchased {result['item']['item_name']}!")
+    
+    return redirect(url_for('shop'))
+
+@app.route('/inventory')
+def inventory():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    return render_template('inventory.html', stats=stats)
+
+@app.route('/npcs')
+def npcs():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    npc_list = engine.get_npcs()
+    
+    return render_template('npcs.html', stats=stats, npcs=npc_list)
+
+@app.route('/talk/<int:npc_id>', methods=['POST'])
+def talk_to_npc(npc_id):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    result = engine.interact_with_npc(npc_id)
+    stats = engine.get_player_stats()
+    
+    if result.get('error'):
+        flash(result['error'])
+        return redirect(url_for('npcs'))
+    
+    return render_template('npc_dialogue.html', stats=stats, npc=result['npc'], relationship=result['relationship_level'])
+
+@app.route('/quests')
+def quests():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    quest_data = engine.get_quests()
+    
+    return render_template('quests.html', stats=stats, quests=quest_data)
+
+@app.route('/start_quest/<int:quest_id>', methods=['POST'])
+def start_quest(quest_id):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    result = engine.start_quest(quest_id)
+    
+    if result.get('error'):
+        flash(result['error'])
+    else:
+        flash(f"Started quest: {result['quest']['quest_name']}!")
+    
+    return redirect(url_for('quests'))
 
 @app.route('/logout')
 def logout():

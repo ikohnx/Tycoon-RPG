@@ -113,6 +113,123 @@ def init_database():
         );
     """)
     
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_stats (
+            stat_id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            charisma INTEGER DEFAULT 5,
+            intelligence INTEGER DEFAULT 5,
+            luck INTEGER DEFAULT 5,
+            negotiation INTEGER DEFAULT 5,
+            stat_points_available INTEGER DEFAULT 3,
+            UNIQUE(player_id)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS achievements (
+            achievement_id SERIAL PRIMARY KEY,
+            achievement_code VARCHAR(50) UNIQUE NOT NULL,
+            achievement_name VARCHAR(100) NOT NULL,
+            achievement_description TEXT NOT NULL,
+            achievement_icon VARCHAR(50) DEFAULT 'trophy',
+            exp_reward INTEGER DEFAULT 0,
+            cash_reward DECIMAL(10, 2) DEFAULT 0
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_achievements (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            achievement_id INTEGER REFERENCES achievements(achievement_id) ON DELETE CASCADE,
+            earned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(player_id, achievement_id)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS items (
+            item_id SERIAL PRIMARY KEY,
+            item_code VARCHAR(50) UNIQUE NOT NULL,
+            item_name VARCHAR(100) NOT NULL,
+            item_description TEXT NOT NULL,
+            item_type VARCHAR(50) NOT NULL,
+            item_icon VARCHAR(50) DEFAULT 'box',
+            purchase_price DECIMAL(10, 2) DEFAULT 0,
+            effect_type VARCHAR(50),
+            effect_value INTEGER DEFAULT 0,
+            is_consumable BOOLEAN DEFAULT FALSE
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_inventory (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            item_id INTEGER REFERENCES items(item_id) ON DELETE CASCADE,
+            quantity INTEGER DEFAULT 1,
+            acquired_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(player_id, item_id)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS npcs (
+            npc_id SERIAL PRIMARY KEY,
+            npc_code VARCHAR(50) UNIQUE NOT NULL,
+            npc_name VARCHAR(100) NOT NULL,
+            npc_title VARCHAR(100),
+            npc_description TEXT,
+            npc_type VARCHAR(50) NOT NULL,
+            world_type VARCHAR(50) NOT NULL,
+            dialogue_intro TEXT,
+            avatar_image VARCHAR(255)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_npc_relationships (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            npc_id INTEGER REFERENCES npcs(npc_id) ON DELETE CASCADE,
+            relationship_level INTEGER DEFAULT 0,
+            times_interacted INTEGER DEFAULT 0,
+            last_interaction TIMESTAMP,
+            UNIQUE(player_id, npc_id)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS quests (
+            quest_id SERIAL PRIMARY KEY,
+            quest_code VARCHAR(50) UNIQUE NOT NULL,
+            quest_name VARCHAR(100) NOT NULL,
+            quest_description TEXT NOT NULL,
+            quest_type VARCHAR(50) NOT NULL,
+            world_type VARCHAR(50) NOT NULL,
+            required_level INTEGER DEFAULT 1,
+            exp_reward INTEGER DEFAULT 0,
+            cash_reward DECIMAL(10, 2) DEFAULT 0,
+            reputation_reward INTEGER DEFAULT 0,
+            prerequisite_quest_id INTEGER REFERENCES quests(quest_id),
+            npc_giver_id INTEGER REFERENCES npcs(npc_id)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_quests (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            quest_id INTEGER REFERENCES quests(quest_id) ON DELETE CASCADE,
+            status VARCHAR(50) DEFAULT 'available',
+            progress INTEGER DEFAULT 0,
+            started_at TIMESTAMP,
+            completed_at TIMESTAMP,
+            UNIQUE(player_id, quest_id)
+        );
+    """)
+    
     conn.commit()
     cur.close()
     conn.close()
@@ -398,6 +515,150 @@ def seed_scenarios():
     conn.close()
 
 
+def seed_achievements():
+    """Seed the database with initial achievements."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM achievements")
+    result = cur.fetchone()
+    if result['count'] > 0:
+        print("Achievements already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    achievements = [
+        {"code": "first_scenario", "name": "First Steps", "description": "Complete your first scenario", "icon": "star", "exp_reward": 50},
+        {"code": "marketing_novice", "name": "Marketing Novice", "description": "Reach Level 2 in Marketing", "icon": "megaphone", "exp_reward": 100},
+        {"code": "marketing_pro", "name": "Marketing Professional", "description": "Reach Level 5 in Marketing", "icon": "bullseye", "exp_reward": 500},
+        {"code": "first_1000", "name": "First Thousand", "description": "Earn your first $1,000 in profit", "icon": "cash", "exp_reward": 75},
+        {"code": "reputation_builder", "name": "Reputation Builder", "description": "Reach 75 reputation", "icon": "star-fill", "exp_reward": 150},
+        {"code": "perfect_choice", "name": "Perfect Choice", "description": "Make the optimal choice in a scenario", "icon": "check-circle", "exp_reward": 50},
+        {"code": "five_scenarios", "name": "Getting Started", "description": "Complete 5 scenarios", "icon": "list-check", "exp_reward": 100},
+        {"code": "ten_scenarios", "name": "Business Veteran", "description": "Complete 10 scenarios", "icon": "award", "exp_reward": 250},
+        {"code": "stat_master", "name": "Self-Improvement", "description": "Allocate all your initial stat points", "icon": "person-up", "exp_reward": 50},
+        {"code": "first_item", "name": "Collector", "description": "Purchase your first item", "icon": "bag", "exp_reward": 25},
+    ]
+    
+    for ach in achievements:
+        cur.execute("""
+            INSERT INTO achievements (achievement_code, achievement_name, achievement_description, achievement_icon, exp_reward)
+            VALUES (%(code)s, %(name)s, %(description)s, %(icon)s, %(exp_reward)s)
+        """, ach)
+    
+    conn.commit()
+    print(f"Seeded {len(achievements)} achievements successfully!")
+    cur.close()
+    conn.close()
+
+
+def seed_items():
+    """Seed the database with initial items."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM items")
+    result = cur.fetchone()
+    if result['count'] > 0:
+        print("Items already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    items = [
+        {"code": "coffee_boost", "name": "Premium Coffee", "description": "Boosts your focus. +10% EXP on next scenario.", "type": "consumable", "icon": "cup-hot", "price": 50, "effect_type": "exp_boost", "effect_value": 10, "consumable": True},
+        {"code": "consultant_advice", "name": "Consultant Advice", "description": "Expert guidance. Reveals the best choice in a scenario.", "type": "consumable", "icon": "lightbulb", "price": 200, "effect_type": "reveal_best", "effect_value": 1, "consumable": True},
+        {"code": "lucky_coin", "name": "Lucky Coin", "description": "Increases luck by 2 for the next scenario.", "type": "consumable", "icon": "coin", "price": 75, "effect_type": "luck_boost", "effect_value": 2, "consumable": True},
+        {"code": "business_suit", "name": "Professional Suit", "description": "Look sharp! Permanent +1 Charisma.", "type": "equipment", "icon": "suit-club", "price": 500, "effect_type": "charisma", "effect_value": 1, "consumable": False},
+        {"code": "calculator", "name": "Financial Calculator", "description": "Crunch numbers faster. Permanent +1 Intelligence.", "type": "equipment", "icon": "calculator", "price": 500, "effect_type": "intelligence", "effect_value": 1, "consumable": False},
+        {"code": "negotiation_book", "name": "Art of the Deal", "description": "Master negotiation tactics. Permanent +1 Negotiation.", "type": "equipment", "icon": "book", "price": 500, "effect_type": "negotiation", "effect_value": 1, "consumable": False},
+        {"code": "energy_drink", "name": "Energy Drink", "description": "Quick energy boost. +5% EXP on next scenario.", "type": "consumable", "icon": "lightning", "price": 25, "effect_type": "exp_boost", "effect_value": 5, "consumable": True},
+        {"code": "market_report", "name": "Market Report", "description": "Industry insights. +15% EXP on Marketing scenarios.", "type": "consumable", "icon": "graph-up", "price": 150, "effect_type": "discipline_boost", "effect_value": 15, "consumable": True},
+    ]
+    
+    for item in items:
+        cur.execute("""
+            INSERT INTO items (item_code, item_name, item_description, item_type, item_icon, purchase_price, effect_type, effect_value, is_consumable)
+            VALUES (%(code)s, %(name)s, %(description)s, %(type)s, %(icon)s, %(price)s, %(effect_type)s, %(effect_value)s, %(consumable)s)
+        """, item)
+    
+    conn.commit()
+    print(f"Seeded {len(items)} items successfully!")
+    cur.close()
+    conn.close()
+
+
+def seed_npcs():
+    """Seed the database with initial NPCs."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM npcs")
+    result = cur.fetchone()
+    if result['count'] > 0:
+        print("NPCs already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    npcs = [
+        {"code": "mentor_marcus", "name": "Marcus Chen", "title": "Business Mentor", "description": "A seasoned entrepreneur who's built and sold multiple companies. Always willing to share wisdom.", "type": "mentor", "world": "Modern", "dialogue": "Ah, another aspiring business mogul! I've seen many come and go. Let me share some hard-earned wisdom with you."},
+        {"code": "rival_victoria", "name": "Victoria Sterling", "title": "Rival CEO", "description": "Your main competitor. Ruthless, brilliant, and always one step ahead.", "type": "rival", "world": "Modern", "dialogue": "So, you're the new player in town. Don't get too comfortable - this market isn't big enough for both of us."},
+        {"code": "partner_alex", "name": "Alex Rivera", "title": "Potential Partner", "description": "A talented operations manager looking for the right venture to join.", "type": "partner", "world": "Modern", "dialogue": "I've been watching your business grow. Maybe we could help each other out?"},
+        {"code": "investor_james", "name": "James Wellington", "title": "Angel Investor", "description": "Old money with an eye for new opportunities. Has funded dozens of successful startups.", "type": "investor", "world": "Modern", "dialogue": "I'm always looking for the next big thing. Impress me with your numbers and vision."},
+        {"code": "supplier_maria", "name": "Maria Santos", "title": "Premium Supplier", "description": "Runs the best supply chain in the industry. Her products are top-notch but exclusive.", "type": "vendor", "world": "Modern", "dialogue": "Quality has a price, my friend. But I assure you, it's worth every penny."},
+    ]
+    
+    for npc in npcs:
+        cur.execute("""
+            INSERT INTO npcs (npc_code, npc_name, npc_title, npc_description, npc_type, world_type, dialogue_intro)
+            VALUES (%(code)s, %(name)s, %(title)s, %(description)s, %(type)s, %(world)s, %(dialogue)s)
+        """, npc)
+    
+    conn.commit()
+    print(f"Seeded {len(npcs)} NPCs successfully!")
+    cur.close()
+    conn.close()
+
+
+def seed_quests():
+    """Seed the database with initial quests."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM quests")
+    result = cur.fetchone()
+    if result['count'] > 0:
+        print("Quests already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    quests = [
+        {"code": "tutorial_1", "name": "First Day on the Job", "description": "Complete your first marketing scenario to prove you have what it takes.", "type": "main", "world": "Modern", "level": 1, "exp": 100, "cash": 100, "rep": 5},
+        {"code": "tutorial_2", "name": "Building Your Brand", "description": "Complete 3 marketing scenarios to establish your presence.", "type": "main", "world": "Modern", "level": 1, "exp": 250, "cash": 500, "rep": 10},
+        {"code": "mentor_intro", "name": "Meet Your Mentor", "description": "Visit Marcus Chen at the Business Center and introduce yourself.", "type": "main", "world": "Modern", "level": 1, "exp": 50, "cash": 0, "rep": 5},
+        {"code": "rival_encounter", "name": "Know Your Enemy", "description": "Your rival Victoria has opened a restaurant nearby. Scout the competition.", "type": "main", "world": "Modern", "level": 2, "exp": 150, "cash": 0, "rep": 5},
+        {"code": "side_social", "name": "Social Butterfly", "description": "Build your social media presence to 1000 followers.", "type": "side", "world": "Modern", "level": 1, "exp": 200, "cash": 250, "rep": 8},
+    ]
+    
+    for quest in quests:
+        cur.execute("""
+            INSERT INTO quests (quest_code, quest_name, quest_description, quest_type, world_type, required_level, exp_reward, cash_reward, reputation_reward)
+            VALUES (%(code)s, %(name)s, %(description)s, %(type)s, %(world)s, %(level)s, %(exp)s, %(cash)s, %(rep)s)
+        """, quest)
+    
+    conn.commit()
+    print(f"Seeded {len(quests)} quests successfully!")
+    cur.close()
+    conn.close()
+
+
 if __name__ == "__main__":
     init_database()
     seed_scenarios()
+    seed_achievements()
+    seed_items()
+    seed_npcs()
+    seed_quests()

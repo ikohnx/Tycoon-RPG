@@ -32,6 +32,16 @@ class Player:
         self.reputation = 50
         self.current_month = 1
         self.discipline_progress = {}
+        self.stats = {
+            'charisma': 5,
+            'intelligence': 5,
+            'luck': 5,
+            'negotiation': 5,
+            'stat_points': 3
+        }
+        self.inventory = []
+        self.achievements = []
+        self.active_quests = []
         
     def load_from_db(self):
         """Load player data from database."""
@@ -59,6 +69,31 @@ class Player:
                 'total_exp': row['total_exp_earned']
             }
         
+        cur.execute("SELECT * FROM player_stats WHERE player_id = %s", (self.player_id,))
+        stats_row = cur.fetchone()
+        if stats_row:
+            self.stats = {
+                'charisma': stats_row['charisma'],
+                'intelligence': stats_row['intelligence'],
+                'luck': stats_row['luck'],
+                'negotiation': stats_row['negotiation'],
+                'stat_points': stats_row['stat_points_available']
+            }
+        
+        cur.execute("""
+            SELECT i.*, pi.quantity FROM player_inventory pi
+            JOIN items i ON pi.item_id = i.item_id
+            WHERE pi.player_id = %s
+        """, (self.player_id,))
+        self.inventory = [dict(row) for row in cur.fetchall()]
+        
+        cur.execute("""
+            SELECT a.* FROM player_achievements pa
+            JOIN achievements a ON pa.achievement_id = a.achievement_id
+            WHERE pa.player_id = %s
+        """, (self.player_id,))
+        self.achievements = [dict(row) for row in cur.fetchall()]
+        
         cur.close()
         conn.close()
         
@@ -79,6 +114,13 @@ class Player:
                 SET current_level = %s, current_exp = %s, total_exp_earned = %s
                 WHERE player_id = %s AND discipline_name = %s
             """, (progress['level'], progress['exp'], progress['total_exp'], self.player_id, discipline))
+        
+        cur.execute("""
+            UPDATE player_stats
+            SET charisma = %s, intelligence = %s, luck = %s, negotiation = %s, stat_points_available = %s
+            WHERE player_id = %s
+        """, (self.stats['charisma'], self.stats['intelligence'], self.stats['luck'], 
+              self.stats['negotiation'], self.stats['stat_points'], self.player_id))
         
         conn.commit()
         cur.close()
@@ -117,6 +159,11 @@ class GameEngine:
                 VALUES (%s, %s, 1, 0, 0)
             """, (player_id, discipline))
         
+        cur.execute("""
+            INSERT INTO player_stats (player_id, charisma, intelligence, luck, negotiation, stat_points_available)
+            VALUES (%s, 5, 5, 5, 5, 3)
+        """, (player_id,))
+        
         conn.commit()
         cur.close()
         conn.close()
@@ -126,6 +173,7 @@ class GameEngine:
         player.world = world
         player.industry = industry
         player.discipline_progress = {d: {'level': 1, 'exp': 0, 'total_exp': 0} for d in DISCIPLINES}
+        player.stats = {'charisma': 5, 'intelligence': 5, 'luck': 5, 'negotiation': 5, 'stat_points': 3}
         
         self.current_player = player
         return player
@@ -299,7 +347,10 @@ class GameEngine:
             "cash": p.cash,
             "reputation": p.reputation,
             "month": p.current_month,
-            "disciplines": {}
+            "disciplines": {},
+            "character_stats": p.stats,
+            "inventory": p.inventory,
+            "achievements": p.achievements
         }
         
         for discipline, progress in p.discipline_progress.items():
@@ -317,6 +368,203 @@ class GameEngine:
             }
         
         return stats
+    
+    def allocate_stat(self, stat_name: str) -> dict:
+        """Allocate a stat point to a specific stat."""
+        if not self.current_player:
+            return {"error": "No player loaded"}
+        
+        valid_stats = ['charisma', 'intelligence', 'luck', 'negotiation']
+        if stat_name not in valid_stats:
+            return {"error": "Invalid stat name"}
+        
+        if self.current_player.stats['stat_points'] <= 0:
+            return {"error": "No stat points available"}
+        
+        self.current_player.stats[stat_name] += 1
+        self.current_player.stats['stat_points'] -= 1
+        self.current_player.save_to_db()
+        
+        return {"success": True, "stat": stat_name, "new_value": self.current_player.stats[stat_name]}
+    
+    def get_shop_items(self) -> list:
+        """Get all items available in the shop."""
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM items ORDER BY purchase_price")
+        items = [dict(row) for row in cur.fetchall()]
+        cur.close()
+        conn.close()
+        return items
+    
+    def purchase_item(self, item_id: int) -> dict:
+        """Purchase an item from the shop."""
+        if not self.current_player:
+            return {"error": "No player loaded"}
+        
+        conn = get_connection()
+        cur = conn.cursor()
+        
+        cur.execute("SELECT * FROM items WHERE item_id = %s", (item_id,))
+        item = cur.fetchone()
+        
+        if not item:
+            cur.close()
+            conn.close()
+            return {"error": "Item not found"}
+        
+        price = float(item['purchase_price'])
+        if self.current_player.cash < price:
+            cur.close()
+            conn.close()
+            return {"error": "Not enough cash"}
+        
+        self.current_player.cash -= price
+        
+        cur.execute("""
+            INSERT INTO player_inventory (player_id, item_id, quantity)
+            VALUES (%s, %s, 1)
+            ON CONFLICT (player_id, item_id) DO UPDATE SET quantity = player_inventory.quantity + 1
+        """, (self.current_player.player_id, item_id))
+        
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        self.current_player.save_to_db()
+        self.current_player.load_from_db()
+        
+        return {"success": True, "item": dict(item), "new_cash": self.current_player.cash}
+    
+    def get_npcs(self) -> list:
+        """Get NPCs available in the current world."""
+        if not self.current_player:
+            return []
+        
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT n.*, COALESCE(pnr.relationship_level, 0) as relationship
+            FROM npcs n
+            LEFT JOIN player_npc_relationships pnr ON n.npc_id = pnr.npc_id AND pnr.player_id = %s
+            WHERE n.world_type = %s
+            ORDER BY n.npc_name
+        """, (self.current_player.player_id, self.current_player.world))
+        npcs = [dict(row) for row in cur.fetchall()]
+        cur.close()
+        conn.close()
+        return npcs
+    
+    def interact_with_npc(self, npc_id: int) -> dict:
+        """Interact with an NPC."""
+        if not self.current_player:
+            return {"error": "No player loaded"}
+        
+        conn = get_connection()
+        cur = conn.cursor()
+        
+        cur.execute("SELECT * FROM npcs WHERE npc_id = %s", (npc_id,))
+        npc = cur.fetchone()
+        
+        if not npc:
+            cur.close()
+            conn.close()
+            return {"error": "NPC not found"}
+        
+        cur.execute("""
+            INSERT INTO player_npc_relationships (player_id, npc_id, relationship_level, times_interacted, last_interaction)
+            VALUES (%s, %s, 1, 1, CURRENT_TIMESTAMP)
+            ON CONFLICT (player_id, npc_id) DO UPDATE 
+            SET relationship_level = player_npc_relationships.relationship_level + 1,
+                times_interacted = player_npc_relationships.times_interacted + 1,
+                last_interaction = CURRENT_TIMESTAMP
+            RETURNING relationship_level
+        """, (self.current_player.player_id, npc_id))
+        
+        result = cur.fetchone()
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        return {"success": True, "npc": dict(npc), "relationship_level": result['relationship_level']}
+    
+    def get_quests(self) -> dict:
+        """Get available and active quests."""
+        if not self.current_player:
+            return {"available": [], "active": [], "completed": []}
+        
+        conn = get_connection()
+        cur = conn.cursor()
+        
+        cur.execute("""
+            SELECT q.*, pq.status, pq.progress
+            FROM quests q
+            LEFT JOIN player_quests pq ON q.quest_id = pq.quest_id AND pq.player_id = %s
+            WHERE q.world_type = %s
+            ORDER BY q.required_level, q.quest_id
+        """, (self.current_player.player_id, self.current_player.world))
+        
+        quests = {"available": [], "active": [], "completed": []}
+        for row in cur.fetchall():
+            quest = dict(row)
+            status = quest.get('status')
+            if status == 'completed':
+                quests['completed'].append(quest)
+            elif status == 'active':
+                quests['active'].append(quest)
+            else:
+                quests['available'].append(quest)
+        
+        cur.close()
+        conn.close()
+        return quests
+    
+    def start_quest(self, quest_id: int) -> dict:
+        """Start a quest."""
+        if not self.current_player:
+            return {"error": "No player loaded"}
+        
+        conn = get_connection()
+        cur = conn.cursor()
+        
+        cur.execute("SELECT * FROM quests WHERE quest_id = %s", (quest_id,))
+        quest = cur.fetchone()
+        
+        if not quest:
+            cur.close()
+            conn.close()
+            return {"error": "Quest not found"}
+        
+        cur.execute("""
+            INSERT INTO player_quests (player_id, quest_id, status, started_at)
+            VALUES (%s, %s, 'active', CURRENT_TIMESTAMP)
+            ON CONFLICT (player_id, quest_id) DO NOTHING
+        """, (self.current_player.player_id, quest_id))
+        
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        return {"success": True, "quest": dict(quest)}
+    
+    def get_all_achievements(self) -> list:
+        """Get all achievements with earned status."""
+        if not self.current_player:
+            return []
+        
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT a.*, 
+                   CASE WHEN pa.player_id IS NOT NULL THEN TRUE ELSE FALSE END as earned
+            FROM achievements a
+            LEFT JOIN player_achievements pa ON a.achievement_id = pa.achievement_id AND pa.player_id = %s
+            ORDER BY a.achievement_id
+        """, (self.current_player.player_id,))
+        achievements = [dict(row) for row in cur.fetchall()]
+        cur.close()
+        conn.close()
+        return achievements
 
 
 def display_scenario(scenario: dict) -> None:

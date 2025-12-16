@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Character - Business Tycoon RPG{% endblock %}
+
+{% block body_class %}world-{{ stats.world|lower if stats else 'modern' }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center fade-in">
+    <div class="col-md-10">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="bi bi-person-badge"></i> Character Sheet</h2>
+            <a href="{{ url_for('hub') }}" class="btn btn-outline-light">
+                <i class="bi bi-arrow-left"></i> Back to Hub
+            </a>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="bi bi-bar-chart-fill"></i> Character Stats</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if stats.character_stats.stat_points > 0 %}
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i> You have <strong>{{ stats.character_stats.stat_points }}</strong> stat points to allocate!
+                        </div>
+                        {% endif %}
+                        
+                        <div class="stat-item d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <i class="bi bi-chat-heart text-danger"></i> <strong>Charisma</strong>
+                                <small class="text-muted d-block">Improves NPC relationships and negotiation outcomes</small>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-primary fs-5 me-2">{{ stats.character_stats.charisma }}</span>
+                                {% if stats.character_stats.stat_points > 0 %}
+                                <form action="{{ url_for('allocate_stat', stat_name='charisma') }}" method="POST" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-success">+</button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="stat-item d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <i class="bi bi-lightbulb text-warning"></i> <strong>Intelligence</strong>
+                                <small class="text-muted d-block">Increases EXP gained from analytical scenarios</small>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-primary fs-5 me-2">{{ stats.character_stats.intelligence }}</span>
+                                {% if stats.character_stats.stat_points > 0 %}
+                                <form action="{{ url_for('allocate_stat', stat_name='intelligence') }}" method="POST" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-success">+</button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="stat-item d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <i class="bi bi-dice-5 text-info"></i> <strong>Luck</strong>
+                                <small class="text-muted d-block">Chance for bonus rewards and random events</small>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-primary fs-5 me-2">{{ stats.character_stats.luck }}</span>
+                                {% if stats.character_stats.stat_points > 0 %}
+                                <form action="{{ url_for('allocate_stat', stat_name='luck') }}" method="POST" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-success">+</button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="stat-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-hand-thumbs-up text-success"></i> <strong>Negotiation</strong>
+                                <small class="text-muted d-block">Better deals with suppliers and partners</small>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-primary fs-5 me-2">{{ stats.character_stats.negotiation }}</span>
+                                {% if stats.character_stats.stat_points > 0 %}
+                                <form action="{{ url_for('allocate_stat', stat_name='negotiation') }}" method="POST" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-success">+</button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="bi bi-trophy"></i> Achievements</h5>
+                    </div>
+                    <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                        {% for ach in achievements %}
+                        <div class="achievement-item d-flex align-items-center mb-2 p-2 rounded {% if ach.earned %}bg-success bg-opacity-25{% else %}bg-secondary bg-opacity-25{% endif %}">
+                            <i class="bi bi-{{ ach.achievement_icon }} fs-4 me-3 {% if ach.earned %}text-warning{% else %}text-muted{% endif %}"></i>
+                            <div class="flex-grow-1">
+                                <strong {% if not ach.earned %}class="text-muted"{% endif %}>{{ ach.achievement_name }}</strong>
+                                <small class="d-block {% if ach.earned %}text-success{% else %}text-muted{% endif %}">{{ ach.achievement_description }}</small>
+                            </div>
+                            {% if ach.earned %}
+                            <i class="bi bi-check-circle-fill text-success"></i>
+                            {% else %}
+                            <i class="bi bi-lock text-muted"></i>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
