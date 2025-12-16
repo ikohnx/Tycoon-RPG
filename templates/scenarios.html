@@ -38,7 +38,12 @@
                     <img src="/static/images/default_business_scenario_image.png" class="scenario-img" alt="Scenario">
                     {% endif %}
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <span class="level-badge">Level {{ scenario.required_level }}</span>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="level-badge">Level {{ scenario.required_level }}</span>
+                            {% if scenario.challenge_type and scenario.challenge_type != 'choice' %}
+                            <span class="badge bg-purple" style="background: linear-gradient(135deg, #9b59b6, #8e44ad);"><i class="bi bi-calculator"></i> Math</span>
+                            {% endif %}
+                        </div>
                         <div class="d-flex align-items-center gap-2">
                             {% if scenario.is_completed %}
                             <span class="star-rating">
@@ -70,6 +75,11 @@
                         <button class="btn btn-outline-success w-100" disabled>
                             <i class="bi bi-check-lg"></i> Completed
                         </button>
+                        {% elif scenario.challenge_type and scenario.challenge_type != 'choice' %}
+                        <a href="{{ url_for('play_challenge', scenario_id=scenario.scenario_id) }}" 
+                           class="btn btn-game btn-game-purple w-100">
+                            <i class="bi bi-calculator-fill"></i> Solve Challenge
+                        </a>
                         {% else %}
                         <a href="{{ url_for('play_scenario', scenario_id=scenario.scenario_id) }}" 
                            class="btn btn-game btn-game-gold w-100">

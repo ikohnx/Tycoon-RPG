@@ -138,6 +138,16 @@ def init_database():
     """)
     
     cur.execute("""
+        ALTER TABLE scenario_master 
+        ADD COLUMN IF NOT EXISTS challenge_type VARCHAR(50) DEFAULT 'choice';
+    """)
+    
+    cur.execute("""
+        ALTER TABLE scenario_master 
+        ADD COLUMN IF NOT EXISTS challenge_config TEXT DEFAULT NULL;
+    """)
+    
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS player_stats (
             stat_id SERIAL PRIMARY KEY,
             player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
@@ -4717,6 +4727,234 @@ def seed_daily_missions():
     
     conn.commit()
     print("Seeded 6 daily missions!")
+    cur.close()
+    conn.close()
+
+
+def seed_interactive_challenges():
+    """Seed interactive calculation-based challenge scenarios."""
+    import json
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM scenario_master WHERE challenge_type != 'choice'")
+    result = cur.fetchone()
+    if result['count'] > 0:
+        print("Interactive challenges already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    challenges = [
+        {
+            'world_type': 'Modern',
+            'industry': 'Restaurant',
+            'discipline': 'Finance',
+            'required_level': 2,
+            'scenario_title': 'Monthly Budget Review',
+            'scenario_narrative': 'Your restaurant manager needs you to calculate this month\'s profit. Review the financial data and determine if you\'re making money or losing it.',
+            'challenge_type': 'budget_calculator',
+            'challenge_config': json.dumps({
+                'revenue': 45000,
+                'wages': 18000,
+                'rent': 5500,
+                'supplies': 12000,
+                'marketing': 2500
+            }),
+            'choice_a_exp_reward': 150,
+            'choice_a_cash_change': 500,
+            'choice_a_reputation_change': 5,
+            'choice_a_feedback': 'Understanding profit calculation is fundamental to running any business.'
+        },
+        {
+            'world_type': 'Modern',
+            'industry': 'Restaurant',
+            'discipline': 'Marketing',
+            'required_level': 2,
+            'scenario_title': 'Menu Pricing Strategy',
+            'scenario_narrative': 'You\'re launching a new signature dish. Your chef says ingredients cost $8.50 per plate. You want to hit a 35% profit margin to cover overhead and make money.',
+            'challenge_type': 'pricing_strategy',
+            'challenge_config': json.dumps({
+                'unit_cost': 8.50,
+                'competitor_price': 16.99,
+                'target_margin': 35
+            }),
+            'choice_a_exp_reward': 175,
+            'choice_a_cash_change': 400,
+            'choice_a_reputation_change': 5,
+            'choice_a_feedback': 'Pricing strategy balances cost coverage, profit goals, and competitive positioning.'
+        },
+        {
+            'world_type': 'Modern',
+            'industry': 'Restaurant',
+            'discipline': 'Human Resources',
+            'required_level': 2,
+            'scenario_title': 'Weekend Staffing Plan',
+            'scenario_narrative': 'Saturday is your busiest day with an estimated 240 customers. Each server can handle 20 customers per shift. How many servers do you need to schedule?',
+            'challenge_type': 'staffing_decision',
+            'challenge_config': json.dumps({
+                'daily_customers': 240,
+                'customers_per_staff': 20,
+                'hourly_wage': 15
+            }),
+            'choice_a_exp_reward': 140,
+            'choice_a_cash_change': 300,
+            'choice_a_reputation_change': 5,
+            'choice_a_feedback': 'Proper staffing ensures customer satisfaction without overspending on labor.'
+        },
+        {
+            'world_type': 'Modern',
+            'industry': 'Restaurant',
+            'discipline': 'Operations',
+            'required_level': 3,
+            'scenario_title': 'Break-Even Analysis',
+            'scenario_narrative': 'Your fixed monthly costs (rent, utilities, insurance) are $15,000. Each meal sells for $25 and costs $10 to prepare. How many meals must you sell to break even?',
+            'challenge_type': 'break_even',
+            'challenge_config': json.dumps({
+                'fixed_costs': 15000,
+                'unit_price': 25,
+                'unit_cost': 10
+            }),
+            'choice_a_exp_reward': 200,
+            'choice_a_cash_change': 600,
+            'choice_a_reputation_change': 8,
+            'choice_a_feedback': 'Break-even analysis helps you understand the minimum sales needed to avoid losses.'
+        },
+        {
+            'world_type': 'Modern',
+            'industry': 'Restaurant',
+            'discipline': 'Finance',
+            'required_level': 4,
+            'scenario_title': 'Quarterly Profit Analysis',
+            'scenario_narrative': 'The board wants your quarterly profit report. This quarter: Revenue $125,000, Wages $45,000, Rent $16,500, Supplies $35,000, Marketing $8,500.',
+            'challenge_type': 'budget_calculator',
+            'challenge_config': json.dumps({
+                'revenue': 125000,
+                'wages': 45000,
+                'rent': 16500,
+                'supplies': 35000,
+                'marketing': 8500
+            }),
+            'choice_a_exp_reward': 250,
+            'choice_a_cash_change': 800,
+            'choice_a_reputation_change': 10,
+            'choice_a_feedback': 'Regular profit analysis helps identify trends and opportunities for improvement.'
+        },
+        {
+            'world_type': 'Modern',
+            'industry': 'Restaurant',
+            'discipline': 'Marketing',
+            'required_level': 4,
+            'scenario_title': 'Premium Wine Pricing',
+            'scenario_narrative': 'Your sommelier wants to add a premium wine. The bottle costs $22 from your supplier. Industry standard is a 70% markup for wine. What should you charge?',
+            'challenge_type': 'pricing_strategy',
+            'challenge_config': json.dumps({
+                'unit_cost': 22.00,
+                'competitor_price': 75.00,
+                'target_margin': 70
+            }),
+            'choice_a_exp_reward': 225,
+            'choice_a_cash_change': 500,
+            'choice_a_reputation_change': 7,
+            'choice_a_feedback': 'High-margin items like wine can significantly boost restaurant profitability.'
+        },
+        {
+            'world_type': 'Industrial',
+            'industry': 'Steel Mill',
+            'discipline': 'Finance',
+            'required_level': 2,
+            'scenario_title': 'Mill Profit Calculation',
+            'scenario_narrative': 'The accountants need your help. This month\'s figures: Steel sales $78,000, Coal and ore $28,000, Worker wages $22,000, Furnace maintenance $8,000, Transport $5,000.',
+            'challenge_type': 'budget_calculator',
+            'challenge_config': json.dumps({
+                'revenue': 78000,
+                'wages': 22000,
+                'rent': 8000,
+                'supplies': 28000,
+                'marketing': 5000
+            }),
+            'choice_a_exp_reward': 160,
+            'choice_a_cash_change': 450,
+            'choice_a_reputation_change': 6,
+            'choice_a_feedback': 'Industrial profit margins depend heavily on raw material and labor costs.'
+        },
+        {
+            'world_type': 'Industrial',
+            'industry': 'Steel Mill',
+            'discipline': 'Operations',
+            'required_level': 3,
+            'scenario_title': 'Steel Production Break-Even',
+            'scenario_narrative': 'Your mill has monthly fixed costs of $25,000. Each ton of steel sells for $500 and costs $200 in materials and labor to produce. How many tons to break even?',
+            'challenge_type': 'break_even',
+            'challenge_config': json.dumps({
+                'fixed_costs': 25000,
+                'unit_price': 500,
+                'unit_cost': 200
+            }),
+            'choice_a_exp_reward': 210,
+            'choice_a_cash_change': 550,
+            'choice_a_reputation_change': 8,
+            'choice_a_feedback': 'Industrial break-even analysis guides production targets and capacity planning.'
+        },
+        {
+            'world_type': 'Fantasy',
+            'industry': 'Tavern',
+            'discipline': 'Finance',
+            'required_level': 2,
+            'scenario_title': 'Tavern Coin Counting',
+            'scenario_narrative': 'The bard wants to know if the tavern is profitable. Monthly income: 5000 gold coins. Expenses: Staff 1800g, Rent 800g, Ale & Food 1500g, Entertainment 400g.',
+            'challenge_type': 'budget_calculator',
+            'challenge_config': json.dumps({
+                'revenue': 5000,
+                'wages': 1800,
+                'rent': 800,
+                'supplies': 1500,
+                'marketing': 400
+            }),
+            'choice_a_exp_reward': 140,
+            'choice_a_cash_change': 350,
+            'choice_a_reputation_change': 5,
+            'choice_a_feedback': 'Even in a fantasy realm, profit equals revenue minus all expenses!'
+        },
+        {
+            'world_type': 'Sci-Fi',
+            'industry': 'Space Station',
+            'discipline': 'Operations',
+            'required_level': 3,
+            'scenario_title': 'Cargo Bay Break-Even',
+            'scenario_narrative': 'Your station has 50,000 credits in monthly fixed costs. Each cargo container processed earns 200 credits and costs 75 credits in fuel and labor. Break-even containers?',
+            'challenge_type': 'break_even',
+            'challenge_config': json.dumps({
+                'fixed_costs': 50000,
+                'unit_price': 200,
+                'unit_cost': 75
+            }),
+            'choice_a_exp_reward': 190,
+            'choice_a_cash_change': 500,
+            'choice_a_reputation_change': 7,
+            'choice_a_feedback': 'Space logistics require precise break-even analysis for profitable operations.'
+        }
+    ]
+    
+    for ch in challenges:
+        cur.execute("""
+            INSERT INTO scenario_master 
+            (world_type, industry, discipline, required_level, scenario_title, scenario_narrative,
+             choice_a_text, choice_a_exp_reward, choice_a_cash_change, choice_a_reputation_change, choice_a_feedback,
+             choice_b_text, choice_b_exp_reward, choice_b_cash_change, choice_b_reputation_change, choice_b_feedback,
+             challenge_type, challenge_config, is_active)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, TRUE)
+        """, (
+            ch['world_type'], ch['industry'], ch['discipline'], ch['required_level'],
+            ch['scenario_title'], ch['scenario_narrative'],
+            'Calculate Answer', ch['choice_a_exp_reward'], ch['choice_a_cash_change'], 
+            ch['choice_a_reputation_change'], ch['choice_a_feedback'],
+            'Skip Challenge', 0, 0, 0, 'You chose to skip this challenge.',
+            ch['challenge_type'], ch['challenge_config']
+        ))
+    
+    conn.commit()
+    print(f"Seeded {len(challenges)} interactive challenges!")
     cur.close()
     conn.close()
 

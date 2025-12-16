@@ -1,0 +1,375 @@
+{% extends "base.html" %}
+
+{% block title %}{{ challenge.title }} - Business Tycoon RPG{% endblock %}
+
+{% block body_class %}world-{{ stats.world|lower if stats else 'modern' }}{% endblock %}
+
+{% block content %}
+<div class="challenge-container fade-in">
+    <div class="challenge-header">
+        <a href="{{ url_for('hub') }}" class="btn btn-sm btn-outline-light">
+            <i class="bi bi-arrow-left"></i> Exit
+        </a>
+        <div class="challenge-badges">
+            <span class="discipline-badge">{{ challenge.discipline }}</span>
+            <span class="level-badge">LV {{ challenge.level }}</span>
+        </div>
+    </div>
+    
+    <div class="challenge-card">
+        <h2 class="challenge-title">
+            <i class="bi bi-clipboard-data-fill"></i> {{ challenge.title }}
+        </h2>
+        
+        <div class="challenge-narrative">
+            {{ challenge.narrative }}
+        </div>
+        
+        {% if challenge.type == 'budget_calculator' %}
+        <div class="challenge-type-budget">
+            <h4 class="text-warning mb-3"><i class="bi bi-calculator-fill"></i> Budget Challenge</h4>
+            <p class="text-muted">Analyze the numbers and calculate the correct answer.</p>
+            
+            <div class="budget-data">
+                <div class="data-row">
+                    <span class="data-label">Monthly Revenue:</span>
+                    <span class="data-value text-success">${{ "{:,.0f}".format(challenge.data.revenue) }}</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">Staff Wages:</span>
+                    <span class="data-value text-danger">-${{ "{:,.0f}".format(challenge.data.wages) }}</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">Rent & Utilities:</span>
+                    <span class="data-value text-danger">-${{ "{:,.0f}".format(challenge.data.rent) }}</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">Supplies & Inventory:</span>
+                    <span class="data-value text-danger">-${{ "{:,.0f}".format(challenge.data.supplies) }}</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">Marketing Costs:</span>
+                    <span class="data-value text-danger">-${{ "{:,.0f}".format(challenge.data.marketing) }}</span>
+                </div>
+            </div>
+            
+            <form action="{{ url_for('submit_challenge', scenario_id=challenge.scenario_id) }}" method="POST" class="challenge-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="challenge_type" value="budget_calculator">
+                
+                <div class="input-group-challenge">
+                    <label>What is the Monthly Profit/Loss?</label>
+                    <div class="input-wrapper">
+                        <span class="input-prefix">$</span>
+                        <input type="number" name="answer" class="challenge-input" placeholder="Enter amount" required step="1">
+                    </div>
+                    <small class="text-muted">Hint: Revenue minus all expenses</small>
+                </div>
+                
+                <button type="submit" class="btn btn-game btn-game-gold btn-lg w-100">
+                    <i class="bi bi-check-circle-fill"></i> Submit Answer
+                </button>
+            </form>
+        </div>
+        
+        {% elif challenge.type == 'pricing_strategy' %}
+        <div class="challenge-type-pricing">
+            <h4 class="text-warning mb-3"><i class="bi bi-tag-fill"></i> Pricing Challenge</h4>
+            <p class="text-muted">Set the right price to maximize profit.</p>
+            
+            <div class="pricing-data">
+                <div class="data-row">
+                    <span class="data-label">Product Cost (per unit):</span>
+                    <span class="data-value">${{ "%.2f"|format(challenge.data.unit_cost) }}</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">Competitor Price:</span>
+                    <span class="data-value">${{ "%.2f"|format(challenge.data.competitor_price) }}</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">Target Profit Margin:</span>
+                    <span class="data-value text-warning">{{ challenge.data.target_margin }}%</span>
+                </div>
+            </div>
+            
+            <form action="{{ url_for('submit_challenge', scenario_id=challenge.scenario_id) }}" method="POST" class="challenge-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="challenge_type" value="pricing_strategy">
+                
+                <div class="input-group-challenge">
+                    <label>Set Your Selling Price:</label>
+                    <div class="input-wrapper">
+                        <span class="input-prefix">$</span>
+                        <input type="number" name="answer" class="challenge-input" placeholder="0.00" required step="0.01" min="0">
+                    </div>
+                    <small class="text-muted">Price must cover costs and hit target margin</small>
+                </div>
+                
+                <button type="submit" class="btn btn-game btn-game-gold btn-lg w-100">
+                    <i class="bi bi-check-circle-fill"></i> Set Price
+                </button>
+            </form>
+        </div>
+        
+        {% elif challenge.type == 'staffing_decision' %}
+        <div class="challenge-type-staffing">
+            <h4 class="text-warning mb-3"><i class="bi bi-people-fill"></i> Staffing Challenge</h4>
+            <p class="text-muted">Hire the right number of staff for your needs.</p>
+            
+            <div class="staffing-data">
+                <div class="data-row">
+                    <span class="data-label">Expected Daily Customers:</span>
+                    <span class="data-value">{{ challenge.data.daily_customers }}</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">Customers per Staff Member:</span>
+                    <span class="data-value">{{ challenge.data.customers_per_staff }}</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">Hourly Wage:</span>
+                    <span class="data-value">${{ "%.2f"|format(challenge.data.hourly_wage) }}/hr</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">Shift Length:</span>
+                    <span class="data-value">{{ challenge.data.shift_hours }} hours</span>
+                </div>
+            </div>
+            
+            <form action="{{ url_for('submit_challenge', scenario_id=challenge.scenario_id) }}" method="POST" class="challenge-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="challenge_type" value="staffing_decision">
+                
+                <div class="input-group-challenge">
+                    <label>How many staff should you hire?</label>
+                    <input type="number" name="answer" class="challenge-input" placeholder="Enter number" required min="1" max="100">
+                    <small class="text-muted">Round up - understaffing loses customers!</small>
+                </div>
+                
+                <button type="submit" class="btn btn-game btn-game-gold btn-lg w-100">
+                    <i class="bi bi-check-circle-fill"></i> Confirm Staffing
+                </button>
+            </form>
+        </div>
+        
+        {% elif challenge.type == 'break_even' %}
+        <div class="challenge-type-breakeven">
+            <h4 class="text-warning mb-3"><i class="bi bi-graph-up-arrow"></i> Break-Even Analysis</h4>
+            <p class="text-muted">Calculate how many units you need to sell to break even.</p>
+            
+            <div class="breakeven-data">
+                <div class="data-row">
+                    <span class="data-label">Fixed Costs (monthly):</span>
+                    <span class="data-value text-danger">${{ "{:,.0f}".format(challenge.data.fixed_costs) }}</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">Selling Price per Unit:</span>
+                    <span class="data-value text-success">${{ "%.2f"|format(challenge.data.selling_price) }}</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">Variable Cost per Unit:</span>
+                    <span class="data-value text-danger">${{ "%.2f"|format(challenge.data.variable_cost) }}</span>
+                </div>
+            </div>
+            
+            <form action="{{ url_for('submit_challenge', scenario_id=challenge.scenario_id) }}" method="POST" class="challenge-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="challenge_type" value="break_even">
+                
+                <div class="input-group-challenge">
+                    <label>Break-Even Point (units to sell):</label>
+                    <input type="number" name="answer" class="challenge-input" placeholder="Enter units" required min="1">
+                    <small class="text-muted">Fixed Costs ÷ (Price - Variable Cost)</small>
+                </div>
+                
+                <button type="submit" class="btn btn-game btn-game-gold btn-lg w-100">
+                    <i class="bi bi-check-circle-fill"></i> Calculate
+                </button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.challenge-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 15px;
+}
+
+.challenge-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.challenge-badges {
+    display: flex;
+    gap: 10px;
+}
+
+.discipline-badge, .level-badge {
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.discipline-badge {
+    background: linear-gradient(135deg, #6a0dad, #4b0082);
+    color: #fff;
+}
+
+.level-badge {
+    background: linear-gradient(135deg, #ffd700, #ff8c00);
+    color: #000;
+}
+
+.challenge-card {
+    background: rgba(20, 20, 40, 0.95);
+    border: 2px solid rgba(255, 215, 0, 0.4);
+    border-radius: 15px;
+    padding: 25px;
+}
+
+.challenge-title {
+    font-family: 'Cinzel', serif;
+    color: #ffd700;
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 1.4rem;
+}
+
+.challenge-narrative {
+    background: rgba(0, 0, 0, 0.4);
+    border-left: 4px solid #ffd700;
+    padding: 15px;
+    margin-bottom: 25px;
+    line-height: 1.6;
+    font-size: 1rem;
+}
+
+.budget-data, .pricing-data, .staffing-data, .breakeven-data {
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 25px;
+}
+
+.data-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.data-row:last-child {
+    border-bottom: none;
+}
+
+.data-label {
+    color: #aaa;
+}
+
+.data-value {
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.challenge-form {
+    margin-top: 20px;
+}
+
+.input-group-challenge {
+    margin-bottom: 20px;
+}
+
+.input-group-challenge label {
+    display: block;
+    margin-bottom: 10px;
+    color: #ffd700;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.input-wrapper {
+    display: flex;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.5);
+    border: 2px solid rgba(255, 215, 0, 0.3);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.input-prefix {
+    padding: 15px;
+    background: rgba(255, 215, 0, 0.1);
+    color: #ffd700;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+.challenge-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 15px;
+    color: #fff;
+    font-size: 1.3rem;
+    font-weight: bold;
+    text-align: right;
+}
+
+.challenge-input:focus {
+    outline: none;
+}
+
+.challenge-input::placeholder {
+    color: #666;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    opacity: 1;
+    height: 40px;
+}
+
+@media (max-width: 768px) {
+    .challenge-container {
+        padding: 10px;
+    }
+    
+    .challenge-card {
+        padding: 15px;
+    }
+    
+    .challenge-title {
+        font-size: 1.2rem;
+    }
+    
+    .challenge-narrative {
+        font-size: 0.9rem;
+        padding: 12px;
+    }
+    
+    .data-row {
+        padding: 8px 0;
+    }
+    
+    .data-value {
+        font-size: 1rem;
+    }
+    
+    .challenge-input {
+        font-size: 1.1rem;
+        padding: 12px;
+    }
+    
+    .input-prefix {
+        padding: 12px;
+        font-size: 1rem;
+    }
+}
+</style>
+{% endblock %}

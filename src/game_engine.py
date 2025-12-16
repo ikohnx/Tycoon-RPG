@@ -503,6 +503,192 @@ class GameEngine:
         else:
             return 1
     
+    def get_challenge_by_id(self, scenario_id: int) -> dict:
+        """Get a challenge scenario with parsed config."""
+        import json
+        conn = get_connection()
+        cur = conn.cursor()
+        
+        cur.execute("SELECT * FROM scenario_master WHERE scenario_id = %s", (scenario_id,))
+        scenario = cur.fetchone()
+        
+        cur.close()
+        conn.close()
+        
+        if not scenario:
+            return None
+        
+        challenge_config = {}
+        if scenario.get('challenge_config'):
+            try:
+                challenge_config = json.loads(scenario['challenge_config'])
+            except json.JSONDecodeError:
+                challenge_config = {}
+        
+        return {
+            'scenario_id': scenario['scenario_id'],
+            'title': scenario['scenario_title'],
+            'narrative': scenario['scenario_narrative'],
+            'discipline': scenario['discipline'],
+            'level': scenario['required_level'],
+            'type': scenario.get('challenge_type', 'choice'),
+            'data': challenge_config,
+            'base_exp': scenario['choice_a_exp_reward'],
+            'cash_reward': float(scenario['choice_a_cash_change'] or 0),
+            'reputation_reward': scenario['choice_a_reputation_change'] or 0
+        }
+    
+    def evaluate_challenge(self, scenario_id: int, challenge_type: str, answer: float) -> dict:
+        """
+        Evaluate a player's answer to an interactive challenge.
+        Returns result dict with EXP, stars, and feedback.
+        """
+        import json
+        if not self.current_player:
+            return {"error": "No player loaded"}
+        
+        conn = get_connection()
+        cur = conn.cursor()
+        
+        cur.execute("SELECT * FROM scenario_master WHERE scenario_id = %s", (scenario_id,))
+        scenario = cur.fetchone()
+        
+        if not scenario:
+            cur.close()
+            conn.close()
+            return {"error": "Scenario not found"}
+        
+        challenge_config = {}
+        if scenario.get('challenge_config'):
+            try:
+                challenge_config = json.loads(scenario['challenge_config'])
+            except json.JSONDecodeError:
+                pass
+        
+        correct_answer = 0
+        tolerance = 0.01
+        
+        if challenge_type == 'budget_calculator':
+            revenue = challenge_config.get('revenue', 0)
+            wages = challenge_config.get('wages', 0)
+            rent = challenge_config.get('rent', 0)
+            supplies = challenge_config.get('supplies', 0)
+            marketing = challenge_config.get('marketing', 0)
+            correct_answer = revenue - wages - rent - supplies - marketing
+            tolerance = 1
+            
+        elif challenge_type == 'pricing_strategy':
+            unit_cost = challenge_config.get('unit_cost', 0)
+            target_margin = challenge_config.get('target_margin', 0) / 100
+            correct_answer = round(unit_cost / (1 - target_margin), 2)
+            tolerance = 0.50
+            
+        elif challenge_type == 'staffing_decision':
+            daily_customers = challenge_config.get('daily_customers', 0)
+            customers_per_staff = challenge_config.get('customers_per_staff', 1)
+            import math
+            correct_answer = math.ceil(daily_customers / customers_per_staff)
+            tolerance = 0
+            
+        elif challenge_type == 'break_even':
+            fixed_costs = challenge_config.get('fixed_costs', 0)
+            unit_price = challenge_config.get('unit_price', 0)
+            unit_cost = challenge_config.get('unit_cost', 0)
+            if unit_price > unit_cost:
+                correct_answer = fixed_costs / (unit_price - unit_cost)
+            tolerance = 1
+        
+        if challenge_type == 'pricing_strategy':
+            answer = round(answer, 2)
+        
+        error = abs(answer - correct_answer)
+        if tolerance == 0:
+            accuracy = 1.0 if int(answer) == int(correct_answer) else 0.0
+        elif correct_answer == 0:
+            accuracy = 1.0 if error < tolerance else 0.0
+        else:
+            accuracy = max(0, 1 - (error / max(abs(correct_answer) * 0.15, 1)))
+        
+        if accuracy >= 0.95:
+            stars = 3
+            feedback = "Perfect! Your calculation was spot-on."
+        elif accuracy >= 0.7:
+            stars = 2
+            feedback = f"Good job! The correct answer was ${correct_answer:,.2f}. You were close."
+        elif accuracy >= 0.4:
+            stars = 1
+            feedback = f"Almost there. The correct answer was ${correct_answer:,.2f}. Keep practicing!"
+        else:
+            stars = 1
+            feedback = f"Not quite right. The correct answer was ${correct_answer:,.2f}. Review the formulas."
+        
+        base_exp = scenario['choice_a_exp_reward']
+        exp_multiplier = {3: 1.0, 2: 0.7, 1: 0.4}
+        adjusted_exp = int(base_exp * exp_multiplier[stars])
+        
+        discipline = scenario['discipline']
+        weighted_exp = calculate_weighted_exp(
+            adjusted_exp,
+            self.current_player.industry,
+            discipline
+        )
+        
+        progress = self.current_player.discipline_progress[discipline]
+        old_exp = progress['total_exp']
+        new_exp = old_exp + weighted_exp
+        
+        leveled_up, old_level, new_level = check_level_up(old_exp, new_exp)
+        
+        progress['total_exp'] = new_exp
+        progress['exp'] = new_exp
+        progress['level'] = new_level
+        
+        cash_change = float(scenario['choice_a_cash_change'] or 0) * exp_multiplier[stars]
+        reputation_change = int((scenario['choice_a_reputation_change'] or 0) * exp_multiplier[stars])
+        
+        self.current_player.cash += cash_change
+        self.current_player.reputation = max(0, min(100, self.current_player.reputation + reputation_change))
+        
+        cur.execute("""
+            INSERT INTO completed_scenarios (player_id, scenario_id, choice_made, stars_earned)
+            VALUES (%s, %s, %s, %s)
+            ON CONFLICT (player_id, scenario_id) DO NOTHING
+        """, (self.current_player.player_id, scenario_id, 'X', stars))
+        
+        cur.execute("""
+            UPDATE player_discipline_progress
+            SET current_level = %s, current_exp = %s, total_exp_earned = %s
+            WHERE player_id = %s AND discipline_name = %s
+        """, (new_level, new_exp, new_exp, self.current_player.player_id, discipline))
+        
+        cur.execute("""
+            UPDATE player_profiles
+            SET total_cash = %s, business_reputation = %s, last_played = CURRENT_TIMESTAMP
+            WHERE player_id = %s
+        """, (self.current_player.cash, self.current_player.reputation, self.current_player.player_id))
+        
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        return {
+            "success": True,
+            "feedback": feedback,
+            "correct_answer": correct_answer,
+            "player_answer": answer,
+            "accuracy_pct": int(accuracy * 100),
+            "exp_gained": weighted_exp,
+            "base_exp": adjusted_exp,
+            "cash_change": cash_change,
+            "reputation_change": reputation_change,
+            "leveled_up": leveled_up,
+            "old_level": old_level,
+            "new_level": new_level,
+            "discipline": discipline,
+            "new_total_exp": new_exp,
+            "stars_earned": stars
+        }
+    
     def get_player_stats(self) -> dict:
         """Get comprehensive player statistics."""
         if not self.current_player:

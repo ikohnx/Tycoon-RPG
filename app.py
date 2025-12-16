@@ -9,7 +9,7 @@ from src.database import (init_database, seed_scenarios, seed_achievements, seed
                           seed_marketing_curriculum, seed_accounting_curriculum, seed_finance_curriculum,
                           seed_legal_curriculum, seed_operations_curriculum, seed_hr_curriculum,
                           seed_strategy_curriculum, seed_daily_login_rewards, seed_advisors,
-                          seed_equipment, seed_daily_missions)
+                          seed_equipment, seed_daily_missions, seed_interactive_challenges)
 from src.game_engine import GameEngine
 from src.leveling import get_level_title, get_progress_bar, get_exp_to_next_level
 
@@ -44,6 +44,7 @@ seed_daily_login_rewards()
 seed_advisors()
 seed_equipment()
 seed_daily_missions()
+seed_interactive_challenges()
 
 engine = GameEngine()
 
@@ -166,6 +167,65 @@ def make_choice(scenario_id, choice):
     
     result['level_title'] = get_level_title(result['new_level'])
     stats = engine.get_player_stats()
+    
+    return render_template('result.html', result=result, scenario=scenario, stats=stats)
+
+@app.route('/challenge/<int:scenario_id>')
+def play_challenge(scenario_id):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    if engine.is_scenario_completed(scenario_id):
+        flash("You've already completed this challenge!")
+        return redirect(url_for('hub'))
+    
+    challenge = engine.get_challenge_by_id(scenario_id)
+    
+    if not challenge:
+        flash("Challenge not found!")
+        return redirect(url_for('hub'))
+    
+    return render_template('challenge.html', challenge=challenge, stats=stats)
+
+@app.route('/submit_challenge/<int:scenario_id>', methods=['POST'])
+def submit_challenge(scenario_id):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    
+    if engine.is_scenario_completed(scenario_id):
+        flash("You've already completed this challenge!")
+        return redirect(url_for('hub'))
+    
+    energy_result = engine.consume_energy(10)
+    if energy_result.get('error'):
+        flash(energy_result['error'])
+        return redirect(url_for('hub'))
+    
+    challenge_type = request.form.get('challenge_type')
+    answer = request.form.get('answer')
+    
+    try:
+        answer = float(answer)
+    except (ValueError, TypeError):
+        flash("Invalid answer format!")
+        return redirect(url_for('play_challenge', scenario_id=scenario_id))
+    
+    result = engine.evaluate_challenge(scenario_id, challenge_type, answer)
+    
+    if result.get('error'):
+        flash(result['error'])
+        return redirect(url_for('hub'))
+    
+    result['level_title'] = get_level_title(result['new_level'])
+    stats = engine.get_player_stats()
+    scenario = engine.get_scenario_by_id(scenario_id)
     
     return render_template('result.html', result=result, scenario=scenario, stats=stats)
 
