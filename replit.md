@@ -176,3 +176,9 @@ The game runs as a web application on port 5000.
   - 10 interactive challenges seeded across Modern, Industrial, Fantasy, and Sci-Fi worlds
   - Star rating based on accuracy (95%+ = 3 stars, 70%+ = 2 stars, otherwise 1 star)
   - Challenge scenarios visually distinguished with purple "Math" badge in scenario list
+- 2025-12: Implemented Training System for pre-quest learning:
+  - Training page shows concept explanation, formula, worked example, and pro tips
+  - All quests now route through /training first before gameplay
+  - Default training content for each challenge type (budget, pricing, staffing, break-even)
+  - Choice-based quests also get discipline-specific training intro
+  - Buttons changed to "Learn & Play" / "Learn & Solve" to indicate training step
