@@ -5,67 +5,410 @@
 {% block body_class %}world-{{ stats.world|lower if stats else 'modern' }}{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center fade-in">
-    <div class="col-md-10">
-        <div class="card">
-            {% if scenario.discipline == 'Marketing' %}
-            <img src="/static/images/marketplace_scenario_card.png" class="scenario-img" alt="Marketing Scenario" style="height: 200px; object-fit: cover; width: 100%;">
-            {% elif scenario.discipline == 'Finance' %}
-            <img src="/static/images/finance_accounting_scenario.png" class="scenario-img" alt="Finance Scenario" style="height: 200px; object-fit: cover; width: 100%;">
-            {% elif scenario.discipline == 'Operations' %}
-            <img src="/static/images/restaurant_kitchen_scenario.png" class="scenario-img" alt="Operations Scenario" style="height: 200px; object-fit: cover; width: 100%;">
-            {% elif scenario.discipline == 'Strategy' %}
-            <img src="/static/images/strategy_meeting_scenario.png" class="scenario-img" alt="Strategy Scenario" style="height: 200px; object-fit: cover; width: 100%;">
-            {% elif scenario.discipline == 'Human Resources' %}
-            <img src="/static/images/hr_building_icon.png" class="scenario-img" alt="HR Scenario" style="height: 200px; object-fit: contain; width: 100%; background: linear-gradient(135deg, rgba(30,30,50,0.95), rgba(15,15,30,0.95));">
-            {% elif scenario.discipline == 'Legal' %}
-            <img src="/static/images/legal_building_icon.png" class="scenario-img" alt="Legal Scenario" style="height: 200px; object-fit: contain; width: 100%; background: linear-gradient(135deg, rgba(30,30,50,0.95), rgba(15,15,30,0.95));">
-            {% else %}
-            <img src="/static/images/marketplace_scenario_card.png" class="scenario-img" alt="Scenario" style="height: 200px; object-fit: cover; width: 100%;">
-            {% endif %}
-            <div class="card-header">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <span class="level-badge me-2">Level {{ scenario.required_level }}</span>
-                        <span class="badge bg-secondary">{{ scenario.discipline }}</span>
-                    </div>
-                    {% if scenario.subskill_focus %}
-                    <small class="text-muted">Focus: {{ scenario.subskill_focus }}</small>
-                    {% endif %}
-                </div>
+<div class="visual-scene-container fade-in">
+    <div class="scene-backdrop">
+        {% if scenario.discipline == 'Marketing' %}
+        <img src="/static/images/marketplace_scenario_card.png" alt="Scene" class="scene-bg-image">
+        {% elif scenario.discipline == 'Finance' %}
+        <img src="/static/images/finance_accounting_scenario.png" alt="Scene" class="scene-bg-image">
+        {% elif scenario.discipline == 'Operations' %}
+        <img src="/static/images/restaurant_kitchen_scenario.png" alt="Scene" class="scene-bg-image">
+        {% elif scenario.discipline == 'Strategy' %}
+        <img src="/static/images/strategy_meeting_scenario.png" alt="Scene" class="scene-bg-image">
+        {% elif scenario.discipline == 'Human Resources' %}
+        <img src="/static/images/hr_scenario_backdrop.png" alt="Scene" class="scene-bg-image">
+        {% elif scenario.discipline == 'Legal' %}
+        <img src="/static/images/legal_scenario_backdrop.png" alt="Scene" class="scene-bg-image">
+        {% else %}
+        <img src="/static/images/marketplace_scenario_card.png" alt="Scene" class="scene-bg-image">
+        {% endif %}
+        <div class="scene-overlay"></div>
+    </div>
+    
+    <div class="scene-content">
+        <div class="scene-header">
+            <a href="{{ url_for('scenarios', discipline=scenario.discipline) }}" class="btn btn-sm btn-outline-light back-btn">
+                <i class="bi bi-arrow-left"></i> Back
+            </a>
+            <div class="scene-badges">
+                <span class="level-badge">LV {{ scenario.required_level }}</span>
+                <span class="discipline-badge">{{ scenario.discipline }}</span>
             </div>
-            <div class="card-body">
-                <h3 class="game-title mb-4">{{ scenario.scenario_title }}</h3>
-                
-                <div class="bg-dark p-4 rounded mb-4" style="border-left: 4px solid #f39c12;">
-                    <p class="lead mb-0">{{ scenario.scenario_narrative }}</p>
-                </div>
-                
-                <h5 class="game-subtitle mb-3"><i class="bi bi-question-circle-fill gold-text"></i> What will you do?</h5>
+        </div>
+        
+        <div class="character-area">
+            <div class="npc-portrait-frame">
+                {% if scenario.discipline == 'Marketing' %}
+                <img src="/static/images/marketing_manager_portrait.png" alt="Marketing Manager" class="npc-portrait">
+                <div class="npc-name">Marketing Manager</div>
+                {% elif scenario.discipline == 'Finance' %}
+                <img src="/static/images/finance_director_portrait.png" alt="Finance Director" class="npc-portrait">
+                <div class="npc-name">Finance Director</div>
+                {% elif scenario.discipline == 'Operations' %}
+                <img src="/static/images/operations_chief_portrait.png" alt="Operations Chief" class="npc-portrait">
+                <div class="npc-name">Operations Chief</div>
+                {% elif scenario.discipline == 'Human Resources' %}
+                <img src="/static/images/hr_manager_portrait.png" alt="HR Manager" class="npc-portrait">
+                <div class="npc-name">HR Manager</div>
+                {% elif scenario.discipline == 'Legal' %}
+                <img src="/static/images/legal_counsel_portrait.png" alt="Legal Counsel" class="npc-portrait">
+                <div class="npc-name">Legal Counsel</div>
+                {% elif scenario.discipline == 'Strategy' %}
+                <img src="/static/images/strategy_advisor_portrait.png" alt="Strategy Advisor" class="npc-portrait">
+                <div class="npc-name">Strategy Advisor</div>
+                {% else %}
+                <img src="/static/images/business_tycoon_hero_portrait.png" alt="Advisor" class="npc-portrait">
+                <div class="npc-name">Advisor</div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="dialogue-area">
+            <div class="dialogue-box">
+                <div class="dialogue-title">{{ scenario.scenario_title }}</div>
+                <div class="dialogue-text" id="dialogueText">{{ scenario.scenario_narrative }}</div>
+            </div>
+            
+            <div class="choices-container">
+                <div class="choices-prompt"><i class="bi bi-question-diamond-fill"></i> What will you do?</div>
                 
                 <a href="{{ url_for('make_choice', scenario_id=scenario.scenario_id, choice='A') }}" 
-                   class="btn choice-btn w-100">
-                    <strong class="text-warning">A)</strong> {{ scenario.choice_a_text }}
+                   class="choice-card choice-a">
+                    <span class="choice-letter">A</span>
+                    <span class="choice-text">{{ scenario.choice_a_text }}</span>
+                    <i class="bi bi-chevron-right choice-arrow"></i>
                 </a>
                 
                 <a href="{{ url_for('make_choice', scenario_id=scenario.scenario_id, choice='B') }}" 
-                   class="btn choice-btn w-100">
-                    <strong class="text-info">B)</strong> {{ scenario.choice_b_text }}
+                   class="choice-card choice-b">
+                    <span class="choice-letter">B</span>
+                    <span class="choice-text">{{ scenario.choice_b_text }}</span>
+                    <i class="bi bi-chevron-right choice-arrow"></i>
                 </a>
                 
                 {% if scenario.choice_c_text %}
                 <a href="{{ url_for('make_choice', scenario_id=scenario.scenario_id, choice='C') }}" 
-                   class="btn choice-btn w-100">
-                    <strong class="text-success">C)</strong> {{ scenario.choice_c_text }}
+                   class="choice-card choice-c">
+                    <span class="choice-letter">C</span>
+                    <span class="choice-text">{{ scenario.choice_c_text }}</span>
+                    <i class="bi bi-chevron-right choice-arrow"></i>
                 </a>
                 {% endif %}
-            </div>
-            <div class="card-footer">
-                <a href="{{ url_for('scenarios', discipline=scenario.discipline) }}" class="btn btn-outline-light">
-                    <i class="bi bi-arrow-left"></i> Back to Scenarios
-                </a>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+.visual-scene-container {
+    position: relative;
+    min-height: 100vh;
+    margin: -1rem -15px;
+    padding: 0;
+    overflow: hidden;
+}
+
+.scene-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 0;
+}
+
+.scene-bg-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: blur(2px) brightness(0.6);
+}
+
+.scene-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(180deg, 
+        rgba(0,0,0,0.3) 0%, 
+        rgba(0,0,0,0.1) 30%,
+        rgba(0,0,0,0.5) 70%,
+        rgba(0,0,0,0.9) 100%);
+}
+
+.scene-content {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+}
+
+.scene-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.back-btn {
+    font-family: 'Staatliches', cursive;
+    letter-spacing: 1px;
+}
+
+.scene-badges {
+    display: flex;
+    gap: 10px;
+}
+
+.discipline-badge {
+    background: linear-gradient(135deg, rgba(74,144,217,0.8), rgba(37,99,160,0.8));
+    color: white;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-family: 'Staatliches', cursive;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+}
+
+.character-area {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    padding-bottom: 20px;
+}
+
+.npc-portrait-frame {
+    text-align: center;
+    animation: floatIn 0.8s ease-out;
+}
+
+@keyframes floatIn {
+    from {
+        opacity: 0;
+        transform: translateY(50px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.npc-portrait {
+    width: 200px;
+    height: 267px;
+    object-fit: cover;
+    border-radius: 12px;
+    border: 3px solid #ffd700;
+    box-shadow: 
+        0 0 30px rgba(255,215,0,0.3),
+        0 10px 40px rgba(0,0,0,0.5);
+    animation: portraitGlow 3s ease-in-out infinite;
+}
+
+@keyframes portraitGlow {
+    0%, 100% { box-shadow: 0 0 20px rgba(255,215,0,0.3), 0 10px 40px rgba(0,0,0,0.5); }
+    50% { box-shadow: 0 0 40px rgba(255,215,0,0.5), 0 10px 40px rgba(0,0,0,0.5); }
+}
+
+.npc-name {
+    margin-top: 10px;
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    color: #ffd700;
+    text-shadow: 0 0 10px rgba(255,215,0,0.5), 0 2px 4px rgba(0,0,0,0.8);
+    font-size: 1.1rem;
+    letter-spacing: 1px;
+}
+
+.dialogue-area {
+    background: linear-gradient(180deg, rgba(20,20,40,0.95) 0%, rgba(10,10,25,0.98) 100%);
+    border-top: 3px solid;
+    border-image: linear-gradient(90deg, transparent, #ffd700, transparent) 1;
+    padding: 25px;
+    margin: 0 -20px -20px;
+}
+
+.dialogue-box {
+    margin-bottom: 25px;
+}
+
+.dialogue-title {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: 1.3rem;
+    color: #ffd700;
+    margin-bottom: 15px;
+    text-shadow: 0 0 10px rgba(255,215,0,0.3);
+}
+
+.dialogue-text {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    color: #e8e8e8;
+    padding: 20px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 8px;
+    border-left: 4px solid #ffd700;
+}
+
+.choices-prompt {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    color: #ffd700;
+    margin-bottom: 15px;
+    font-size: 1rem;
+    letter-spacing: 1px;
+}
+
+.choices-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.choice-card {
+    display: flex;
+    align-items: center;
+    padding: 18px 20px;
+    background: linear-gradient(135deg, rgba(40,40,70,0.9) 0%, rgba(25,25,50,0.95) 100%);
+    border: 2px solid rgba(255,215,0,0.3);
+    border-radius: 10px;
+    text-decoration: none;
+    color: #fff;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.choice-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,215,0,0.1), transparent);
+    transition: left 0.5s ease;
+}
+
+.choice-card:hover {
+    border-color: #ffd700;
+    transform: translateX(10px);
+    color: #fff;
+    box-shadow: 0 0 25px rgba(255,215,0,0.2);
+}
+
+.choice-card:hover::before {
+    left: 100%;
+}
+
+.choice-letter {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
+    color: #1a1a2e;
+    font-family: 'Cinzel', serif;
+    font-weight: 900;
+    font-size: 1.1rem;
+    border-radius: 50%;
+    margin-right: 15px;
+    flex-shrink: 0;
+}
+
+.choice-a .choice-letter { background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%); }
+.choice-b .choice-letter { background: linear-gradient(135deg, #4a90d9 0%, #2563a0 100%); color: #fff; }
+.choice-c .choice-letter { background: linear-gradient(135deg, #50c878 0%, #228b22 100%); color: #fff; }
+
+.choice-text {
+    flex: 1;
+    font-size: 1rem;
+    line-height: 1.4;
+}
+
+.choice-arrow {
+    margin-left: 15px;
+    color: #ffd700;
+    opacity: 0;
+    transform: translateX(-10px);
+    transition: all 0.3s ease;
+}
+
+.choice-card:hover .choice-arrow {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+@media (min-width: 768px) {
+    .npc-portrait {
+        width: 280px;
+        height: 373px;
+    }
+    
+    .dialogue-area {
+        padding: 30px 40px;
+        margin: 0 -20px -20px;
+    }
+    
+    .dialogue-title {
+        font-size: 1.5rem;
+    }
+    
+    .dialogue-text {
+        font-size: 1.15rem;
+    }
+}
+
+@media (min-width: 992px) {
+    .scene-content {
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+    
+    .npc-portrait {
+        width: 320px;
+        height: 427px;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const dialogueText = document.getElementById('dialogueText');
+    const originalText = dialogueText.textContent;
+    dialogueText.textContent = '';
+    
+    let i = 0;
+    const speed = 20;
+    
+    function typeWriter() {
+        if (i < originalText.length) {
+            dialogueText.textContent += originalText.charAt(i);
+            i++;
+            setTimeout(typeWriter, speed);
+        }
+    }
+    
+    setTimeout(typeWriter, 500);
+    
+    const choices = document.querySelectorAll('.choice-card');
+    choices.forEach((choice, index) => {
+        choice.style.opacity = '0';
+        choice.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            choice.style.transition = 'all 0.4s ease';
+            choice.style.opacity = '1';
+            choice.style.transform = 'translateY(0)';
+        }, 800 + (index * 150));
+    });
+});
+</script>
 {% endblock %}
