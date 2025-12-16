@@ -357,5 +357,204 @@
 .building-icon {
     transition: all 0.3s ease;
 }
+
+/* Mobile Bottom Navigation */
+.mobile-bottom-nav {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(180deg, rgba(20,20,40,0.98), rgba(10,10,25,1));
+    border-top: 2px solid rgba(255,215,0,0.4);
+    padding: 8px 5px 15px 5px;
+    z-index: 1000;
+    justify-content: space-around;
+}
+
+.mobile-bottom-nav a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: #888;
+    font-size: 0.65rem;
+    padding: 5px 8px;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.mobile-bottom-nav a i {
+    font-size: 1.4rem;
+    margin-bottom: 3px;
+}
+
+.mobile-bottom-nav a.active,
+.mobile-bottom-nav a:active {
+    color: #ffd700;
+    background: rgba(255,215,0,0.1);
+}
+
+.mobile-bottom-nav .nav-map {
+    background: linear-gradient(135deg, #ffd700, #ff8c00);
+    color: #000 !important;
+    padding: 10px 15px;
+    border-radius: 50%;
+    margin-top: -20px;
+    box-shadow: 0 0 15px rgba(255,215,0,0.5);
+}
+
+.mobile-bottom-nav .nav-map i {
+    font-size: 1.6rem;
+    margin: 0;
+}
+
+/* Mobile Quick Stats Bar */
+.mobile-stats-bar {
+    display: none;
+    background: rgba(0,0,0,0.9);
+    padding: 8px 10px;
+    border-bottom: 1px solid rgba(255,215,0,0.3);
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 99;
+}
+
+.mobile-stat {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.8rem;
+}
+
+.mobile-stat i {
+    font-size: 1rem;
+}
+
+.mobile-stat .value {
+    font-weight: bold;
+}
+
+@media (max-width: 768px) {
+    .mobile-bottom-nav {
+        display: flex;
+    }
+    
+    .mobile-stats-bar {
+        display: flex;
+    }
+    
+    body {
+        padding-bottom: 80px;
+    }
+    
+    .game-hud {
+        display: none !important;
+    }
+    
+    .col-md-4:first-child {
+        order: 2;
+    }
+    
+    .col-md-8 {
+        order: 1;
+    }
+    
+    .card-header {
+        padding: 10px;
+        font-size: 0.9rem;
+    }
+    
+    .building-card {
+        padding: 10px !important;
+    }
+    
+    .building-icon {
+        width: 50px !important;
+        height: 50px !important;
+    }
+    
+    .building-card h6 {
+        font-size: 0.7rem !important;
+    }
+    
+    .d-grid.gap-2 .btn {
+        padding: 12px 10px;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    
+    .stat-card {
+        padding: 10px;
+    }
+    
+    .avatar-frame {
+        width: 60px;
+        height: 60px;
+    }
+}
+
+@media (max-width: 480px) {
+    .building-icon {
+        width: 40px !important;
+        height: 40px !important;
+    }
+    
+    .building-card h6 {
+        font-size: 0.65rem !important;
+    }
+    
+    .level-badge {
+        font-size: 0.55rem !important;
+        padding: 2px 6px !important;
+    }
+    
+    .mobile-stat {
+        font-size: 0.7rem;
+    }
+}
 </style>
+
+<!-- Mobile Stats Bar -->
+<div class="mobile-stats-bar">
+    <div class="mobile-stat">
+        <i class="bi bi-coin text-warning"></i>
+        <span class="value" style="color: #50c878;">${{ "{:,.0f}".format(stats.cash) }}</span>
+    </div>
+    <div class="mobile-stat">
+        <i class="bi bi-lightning-charge-fill text-info"></i>
+        <span class="value">{{ energy.current_energy }}/{{ energy.max_energy }}</span>
+    </div>
+    <div class="mobile-stat">
+        <i class="bi bi-star-fill text-warning"></i>
+        <span class="value">{{ stats.reputation }}</span>
+    </div>
+</div>
+
+<!-- Mobile Bottom Navigation -->
+<nav class="mobile-bottom-nav">
+    <a href="{{ url_for('hub') }}" class="active">
+        <i class="bi bi-house-door-fill"></i>
+        <span>Home</span>
+    </a>
+    <a href="{{ url_for('character') }}">
+        <i class="bi bi-person-badge-fill"></i>
+        <span>Character</span>
+    </a>
+    <a href="{{ url_for('campaign_map') }}" class="nav-map">
+        <i class="bi bi-map-fill"></i>
+    </a>
+    <a href="{{ url_for('shop') }}">
+        <i class="bi bi-shop-window"></i>
+        <span>Shop</span>
+    </a>
+    <a href="{{ url_for('progress') }}">
+        <i class="bi bi-bar-chart-fill"></i>
+        <span>Stats</span>
+    </a>
+</nav>
 {% endblock %}
