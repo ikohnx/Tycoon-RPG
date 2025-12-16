@@ -132,3 +132,7 @@ The game runs as a web application on port 5000.
 - 2025-12: Implemented illustrated backdrop graphics (Kingshot-style) for all pages
 - 2025-12: Added world-specific background images: Modern office, Industrial factory, Fantasy tavern, Sci-Fi starship
 - 2025-12: Created epic RPG title screen backdrop with fantasy kingdom cityscape
+- 2025-12: Redesigned scenario play screen with visual novel style dialogue system
+- 2025-12: Added 6 NPC discipline advisor portraits (Marketing Manager, Finance Director, Operations Chief, HR Manager, Legal Counsel, Strategy Advisor)
+- 2025-12: Implemented dialogue typing animation and staggered choice card animations
+- 2025-12: Created discipline-specific scene backdrops for all 6 business disciplines
