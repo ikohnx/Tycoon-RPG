@@ -168,3 +168,11 @@ The game runs as a web application on port 5000.
   - Daily Missions System: 3 refreshing daily tasks with gold rewards
   - Leaderboard System: Rankings by total stars, wealth, and combined discipline levels
   - Rival Battle System: Stat comparison combat with luck modifier and rewards
+- 2025-12: Implemented Interactive Challenge System for "real learning" with calculations:
+  - Budget Calculator: Calculate profit from revenue and expenses
+  - Pricing Strategy: Set selling prices based on cost and target margin
+  - Staffing Decision: Calculate staff needed for customer volume
+  - Break-Even Analysis: Calculate break-even point in units
+  - 10 interactive challenges seeded across Modern, Industrial, Fantasy, and Sci-Fi worlds
+  - Star rating based on accuracy (95%+ = 3 stars, 70%+ = 2 stars, otherwise 1 star)
+  - Challenge scenarios visually distinguished with purple "Math" badge in scenario list
