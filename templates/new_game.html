@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}New Game - Business Tycoon RPG{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="bi bi-person-plus"></i> Create Your Business</h3>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-4">
+                        <label class="form-label">Business Name</label>
+                        <input type="text" name="name" class="form-control bg-dark text-light border-secondary" 
+                               placeholder="Enter your business name" maxlength="50">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label">Select Your World</label>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <input type="radio" class="btn-check" name="world" value="Modern" id="world-modern" checked>
+                                <label class="btn btn-outline-light w-100 p-3" for="world-modern">
+                                    <i class="bi bi-building display-6 d-block mb-2"></i>
+                                    <strong>Modern</strong>
+                                    <small class="d-block text-muted">Office towers, digital marketing</small>
+                                </label>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="radio" class="btn-check" name="world" value="Fantasy" id="world-fantasy" disabled>
+                                <label class="btn btn-outline-secondary w-100 p-3" for="world-fantasy">
+                                    <i class="bi bi-magic display-6 d-block mb-2"></i>
+                                    <strong>Fantasy</strong>
+                                    <small class="d-block text-muted">Coming Soon</small>
+                                </label>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="radio" class="btn-check" name="world" value="SciFi" id="world-scifi" disabled>
+                                <label class="btn btn-outline-secondary w-100 p-3" for="world-scifi">
+                                    <i class="bi bi-rocket display-6 d-block mb-2"></i>
+                                    <strong>Sci-Fi</strong>
+                                    <small class="d-block text-muted">Coming Soon</small>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label">Select Your Industry</label>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <input type="radio" class="btn-check" name="industry" value="Restaurant" id="ind-restaurant" checked>
+                                <label class="btn btn-outline-light w-100 p-3" for="ind-restaurant">
+                                    <i class="bi bi-cup-hot display-6 d-block mb-2"></i>
+                                    <strong>Restaurant</strong>
+                                    <small class="d-block text-muted">Marketing +20%, Legal -20%</small>
+                                </label>
+                            </div>
+                            <div class="col-md-6">
+                                <input type="radio" class="btn-check" name="industry" value="SaaS" id="ind-saas" disabled>
+                                <label class="btn btn-outline-secondary w-100 p-3" for="ind-saas">
+                                    <i class="bi bi-laptop display-6 d-block mb-2"></i>
+                                    <strong>SaaS</strong>
+                                    <small class="d-block text-muted">Coming Soon</small>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-light">
+                            <i class="bi bi-arrow-left"></i> Back
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-play-fill"></i> Start Your Journey
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

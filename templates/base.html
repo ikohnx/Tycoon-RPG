@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Business Tycoon RPG{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #e0e0e0;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+        }
+        .card-header {
+            background: rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .btn-primary {
+            background: linear-gradient(45deg, #e94560, #0f3460);
+            border: none;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(45deg, #0f3460, #e94560);
+        }
+        .progress {
+            background: rgba(255, 255, 255, 0.1);
+            height: 25px;
+        }
+        .progress-bar {
+            background: linear-gradient(45deg, #e94560, #f39c12);
+        }
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+        .level-badge {
+            background: linear-gradient(45deg, #f39c12, #e94560);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        .choice-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #fff;
+            padding: 15px 20px;
+            margin: 10px 0;
+            text-align: left;
+            transition: all 0.3s;
+        }
+        .choice-btn:hover {
+            background: rgba(233, 69, 96, 0.3);
+            border-color: #e94560;
+            color: #fff;
+            transform: translateX(10px);
+        }
+        .navbar {
+            background: rgba(0, 0, 0, 0.3) !important;
+        }
+        .navbar-brand, .nav-link {
+            color: #fff !important;
+        }
+    </style>
+</head>
+<body>
+    {% if session.get('player_id') %}
+    <nav class="navbar navbar-expand-lg mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('hub') }}">
+                <i class="bi bi-building"></i> Business Tycoon RPG
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ url_for('hub') }}"><i class="bi bi-house"></i> Hub</a>
+                <a class="nav-link" href="{{ url_for('progress') }}"><i class="bi bi-graph-up"></i> Progress</a>
+                <a class="nav-link" href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right"></i> Logout</a>
+            </div>
+        </div>
+    </nav>
+    {% endif %}
+    
+    <div class="container">
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+        
+        {% block content %}{% endblock %}
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

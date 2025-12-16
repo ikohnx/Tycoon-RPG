@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}{{ scenario.scenario_title }} - Business Tycoon RPG{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="level-badge me-2">Level {{ scenario.required_level }}</span>
+                        <span class="badge bg-secondary">{{ scenario.discipline }}</span>
+                    </div>
+                    {% if scenario.subskill_focus %}
+                    <small class="text-muted">Focus: {{ scenario.subskill_focus }}</small>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body">
+                <h3 class="mb-4">{{ scenario.scenario_title }}</h3>
+                
+                <div class="bg-dark p-4 rounded mb-4">
+                    <p class="lead mb-0">{{ scenario.scenario_narrative }}</p>
+                </div>
+                
+                <h5 class="mb-3">What will you do?</h5>
+                
+                <a href="{{ url_for('make_choice', scenario_id=scenario.scenario_id, choice='A') }}" 
+                   class="btn choice-btn w-100">
+                    <strong>A)</strong> {{ scenario.choice_a_text }}
+                </a>
+                
+                <a href="{{ url_for('make_choice', scenario_id=scenario.scenario_id, choice='B') }}" 
+                   class="btn choice-btn w-100">
+                    <strong>B)</strong> {{ scenario.choice_b_text }}
+                </a>
+                
+                {% if scenario.choice_c_text %}
+                <a href="{{ url_for('make_choice', scenario_id=scenario.scenario_id, choice='C') }}" 
+                   class="btn choice-btn w-100">
+                    <strong>C)</strong> {{ scenario.choice_c_text }}
+                </a>
+                {% endif %}
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('scenarios', discipline=scenario.discipline) }}" class="btn btn-outline-light">
+                    <i class="bi bi-arrow-left"></i> Back to Scenarios
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
