@@ -119,3 +119,11 @@ The game runs as a web application on port 5000.
 - 2025-12: Created game-styled buttons (gold, crimson, emerald, purple variants with glow effects)
 - 2025-12: Implemented game HUD navbar, decorative panel borders, and custom scrollbar
 - 2025-12: Added avatar frame glow, level badge pulse animations, and stat card accents
+- 2025-12: Generated illustrated game graphics (Kingshot-style visual assets):
+  - Hero character portrait and rival villain portrait
+  - 6 discipline building icons (Marketing, Finance, Operations, HR, Legal, Strategy)
+  - Resource icons (gold coin, reputation star)
+  - Scenario illustration cards for each discipline
+  - Victory and defeat splash screens
+- 2025-12: Redesigned hub with visual building grid layout showing illustrated icons
+- 2025-12: Added "SELECTED" badge indicators on new game selection cards
