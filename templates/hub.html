@@ -259,6 +259,27 @@
     </div>
     
     <div class="col-md-8">
+        <div class="card mb-4" style="background: linear-gradient(135deg, rgba(255,215,0,0.1), rgba(255,140,0,0.1)); border: 2px solid rgba(255,215,0,0.5);">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h4 class="gold-text mb-2">
+                            <i class="bi bi-map-fill"></i> Campaign Map
+                        </h4>
+                        <p class="text-muted mb-0">Navigate your journey through all 6 disciplines with a visual node-based progression map!</p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <a href="{{ url_for('campaign_map') }}" class="btn btn-game btn-game-gold btn-lg">
+                            <i class="bi bi-play-fill"></i> View Map
+                        </a>
+                        <a href="{{ url_for('boss_challenges') }}" class="btn btn-game btn-game-crimson btn-lg mt-2">
+                            <i class="bi bi-skull"></i> Boss Fights
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <div class="card mb-4">
             <div class="card-header">
                 <i class="bi bi-buildings"></i> Your Business Empire
