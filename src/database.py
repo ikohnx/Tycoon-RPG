@@ -453,13 +453,9 @@ def init_database():
         CREATE TABLE IF NOT EXISTS daily_login_rewards (
             day_number INTEGER PRIMARY KEY,
             reward_type VARCHAR(50) NOT NULL,
-            reward_amount INTEGER NOT NULL,
+            reward_value INTEGER NOT NULL,
             reward_description TEXT NOT NULL
         );
-    """)
-    
-    cur.execute("""
-        ALTER TABLE daily_login_rewards ADD COLUMN IF NOT EXISTS reward_amount INTEGER DEFAULT 0;
     """)
     
     cur.execute("""
@@ -4612,7 +4608,7 @@ def seed_daily_login_rewards():
     
     for day, reward_type, value, desc in rewards:
         cur.execute("""
-            INSERT INTO daily_login_rewards (day_number, reward_type, reward_amount, reward_description)
+            INSERT INTO daily_login_rewards (day_number, reward_type, reward_value, reward_description)
             VALUES (%s, %s, %s, %s)
         """, (day, reward_type, value, desc))
     

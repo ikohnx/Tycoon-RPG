@@ -1416,14 +1416,14 @@ class GameEngine:
         rewards_given = []
         
         if reward:
-            if reward['reward_type'] == 'gold' and reward['reward_amount']:
-                self.current_player.cash += float(reward['reward_amount'])
-                rewards_given.append(f"+${reward['reward_amount']:,.0f} Gold")
-            elif reward['reward_type'] == 'energy' and reward['reward_amount']:
-                self.recharge_energy(int(reward['reward_amount']))
-                rewards_given.append(f"+{reward['reward_amount']} Energy")
-            elif reward['reward_type'] == 'exp' and reward['reward_amount']:
-                rewards_given.append(f"+{reward['reward_amount']} EXP Bonus")
+            if reward['reward_type'] == 'gold' and reward['reward_value']:
+                self.current_player.cash += float(reward['reward_value'])
+                rewards_given.append(f"+${reward['reward_value']:,.0f} Gold")
+            elif reward['reward_type'] == 'energy' and reward['reward_value']:
+                self.recharge_energy(int(reward['reward_value']))
+                rewards_given.append(f"+{reward['reward_value']} Energy")
+            elif reward['reward_type'] == 'exp' and reward['reward_value']:
+                rewards_given.append(f"+{reward['reward_value']} EXP Bonus")
         
         self.current_player.save_to_db()
         conn.commit()
