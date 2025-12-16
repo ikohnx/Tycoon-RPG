@@ -1,0 +1,39 @@
+Absolutely. The final prompt must not only outline the immediate build (Phases 1-3) but also establish the architecture for long-term expansion (Phase 4), allowing for continuous improvement in content, features, and graphics without needing to rebuild the core system.
+Here is the complete, final project prompt designed for Replit, including the phased approach and the framework for future growth.
+🚀 Final Project Prompt: The Business Tycoon RPG (2D)
+Project Goal: Develop a 2D Graphical RPG using Python/Pygame, set across three distinct worlds (Modern, Fantasy, Sci-Fi), designed to teach real-world business acumen across 6 Core Disciplines and 8 Transferable Sub-Skills, each with a 10-Level progression curve.
+Core Requirements:
+ * Technology: Python (Pygame for graphics, PostgreSQL for database).
+ * Gameplay: Player makes decisions in narrated scenarios, gaining EXP in specific disciplines and sub-skills.
+ * Real-World Focus: All scenarios must teach practical, transferable business skills (e.g., calculating ROI, negotiation tactics, legal compliance).
+Phase 1: The Minimum Viable Product (MVP) - Core Engine
+Objective: Establish the foundation—the database structure and the full 10-level leveling logic. Graphics will be placeholders (text/simple rectangles).
+ * 1.1 Database Setup (PostgreSQL): Create the 5 necessary tables to handle the complexity:
+   * Player_Profiles, Player_Discipline_Progress, Player_SubSkill_Progress, Scenario_Master, Financial_Metrics.
+ * 1.2 Leveling Logic: Implement the code that handles EXP calculation and level-up checks based on the Cumulative EXP Table (150,000 EXP required for L10).
+ * 1.3 Dynamic EXP Formula: Code the Industry Weighting formula to ensure EXP gain is modified by the player's chosen industry (e.g., Marketing EXP is higher in SaaS than Oil & Gas).
+ * 1.4 Content Focus (MVP Path): Implement all 10 Level 1-5 scenarios for ONE test path: Modern World / Restaurant Industry / Marketing Discipline.
+ * 1.5 Deliverable: A functional command-line game where the player can select the MVP path and successfully level their Marketing skill from L1 to L5.
+Phase 2: Graphical Shell & World Expansion
+Objective: Integrate the Pygame graphical front-end and prove the "reskinning" concept for the 3 worlds.
+ * 2.1 Pygame Integration: Implement the basic 2D graphical window and the main Office/Hub screen. Use simple sprite placeholders.
+ * 2.2 World Reskinning Architecture: Implement the code that dynamically loads graphical assets based on the chosen_world field in the database.
+   * Create base sprites for the Modern Office Hub, Fantasy Tavern Hub, and Sci-Fi Starship Hub.
+ * 2.3 Content Expansion (Proof of Concept): Implement 10 Level 1-5 scenarios for two new, distinct paths to prove the logic:
+   * Fantasy World / Retail Industry / Finance Discipline (e.g., valuing dragon-scale inventory, gold-backed loans).
+   * Sci-Fi World / Construction Industry / Operations Discipline (e.g., supply chain optimization for rare-earth metals).
+ * 2.4 Deliverable: A 2D game where a player can select any of the three test paths and the appropriate graphics and scenario text are loaded instantly.
+Phase 3: Financial Engine & Mastery
+Objective: Complete the 10-level progression and implement the crucial financial and risk mechanics.
+ * 3.1 Content Completion: Implement all remaining Level 6-10 scenarios for the three implemented paths. These scenarios must focus on Strategic Management (e.g., M&A, international law, crisis management).
+ * 3.2 Financial Cycle: Implement a simple in-game Monthly Tick that automatically calculates Revenue (based on prior decisions) and deducts operating costs (Wages, Taxes, Rent).
+ * 3.3 Risk/Reputation System: Implement a separate metric for Business Reputation. Player choices can increase money but lower reputation, triggering negative, game-changing events (e.g., a lawsuit, market boycott).
+ * 3.4 Sub-Skill Challenges: Integrate dedicated, complex challenges that can only be solved by having a high level in a Sub-Skill (e.g., an L8 Negotiation check is required to secure a lucrative contract).
+ * 3.5 Deliverable: A fully functional, highly complex business simulator that challenges players up to the Master Tycoon (L10) level.
+Phase 4: Framework for Future Expansion (Scalability)
+Objective: Ensure the architecture supports continuous, low-friction growth.
+ * 4.1 Modular Content Injection: The system must be designed so that new content (new scenarios, new industries) can be added solely by inserting new rows into the Scenario_Master table without requiring changes to the core Pygame or leveling logic.
+ * 4.2 Storyline Integration: Establish a framework for linking specific scenarios into a Storyline Arc (e.g., a "Venture Capital Questline"). This will allow the game to evolve into a story-driven RPG over time.
+ * 4.3 Graphical Improvement Path: The sprites and art assets should be easily replaceable. Create a clear asset naming convention (e.g., Fantasy_Office_L1.png) to allow easy upgrades to higher-fidelity graphics in the future.
+ * 4.4 Interactive Play Hooks: Implement simple in-game mechanics (e.g., a calendar, simple inventory screen, character dialog boxes) that serve as "hooks" for future features like side quests or minigames.
+This phased approach ensures the most difficult parts (logic and graphics) are tackled incrementally, preventing the project from getting stuck.
