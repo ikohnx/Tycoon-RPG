@@ -696,6 +696,202 @@
             90% { opacity: 0.6; }
             100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
         }
+        
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            body {
+                font-size: 14px;
+                background-color: #1a1a2e !important;
+            }
+            
+            body::before {
+                background-attachment: scroll;
+                background-size: cover;
+            }
+            
+            .container {
+                padding-left: 10px;
+                padding-right: 10px;
+            }
+            
+            .game-hud {
+                padding: 8px 10px;
+            }
+            
+            .hud-brand {
+                font-size: 1rem;
+            }
+            
+            .hud-link {
+                font-size: 0.75rem;
+                padding: 5px 8px;
+            }
+            
+            .card {
+                margin-bottom: 15px;
+                border-radius: 10px;
+            }
+            
+            .card-header {
+                padding: 10px 12px;
+                font-size: 0.9rem;
+            }
+            
+            .card-body {
+                padding: 12px;
+            }
+            
+            .game-title {
+                font-size: 1.5rem !important;
+            }
+            
+            .game-title.display-4 {
+                font-size: 1.8rem !important;
+            }
+            
+            .game-subtitle {
+                font-size: 0.85rem;
+            }
+            
+            .btn {
+                font-size: 0.85rem;
+                padding: 8px 12px;
+            }
+            
+            .btn-lg {
+                font-size: 0.9rem;
+                padding: 10px 16px;
+            }
+            
+            .btn-game {
+                padding: 10px 15px;
+                font-size: 0.85rem;
+            }
+            
+            .building-card {
+                padding: 10px !important;
+            }
+            
+            .building-icon {
+                width: 50px !important;
+                height: 50px !important;
+            }
+            
+            .building-card h6 {
+                font-size: 0.75rem !important;
+            }
+            
+            .stat-card {
+                padding: 10px;
+                margin-bottom: 8px;
+            }
+            
+            .avatar-frame {
+                width: 80px;
+                height: 80px;
+            }
+            
+            .avatar-frame img {
+                width: 100%;
+                height: 100%;
+            }
+            
+            .progress {
+                height: 15px;
+            }
+            
+            .d-grid.gap-2 {
+                gap: 8px !important;
+            }
+            
+            .d-grid .btn {
+                padding: 10px;
+                font-size: 0.8rem;
+            }
+            
+            .row.g-3 {
+                --bs-gutter-x: 0.5rem;
+                --bs-gutter-y: 0.5rem;
+            }
+            
+            .col-md-4.col-6 {
+                padding-left: 5px;
+                padding-right: 5px;
+            }
+            
+            /* Campaign Map Mobile */
+            .campaign-path {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                padding-bottom: 15px;
+            }
+            
+            .campaign-node {
+                min-width: 70px !important;
+            }
+            
+            .node-circle {
+                width: 45px !important;
+                height: 45px !important;
+            }
+            
+            /* Hub layout mobile */
+            .col-md-4, .col-md-8 {
+                padding-left: 5px;
+                padding-right: 5px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            body {
+                font-size: 13px;
+            }
+            
+            .game-title {
+                font-size: 1.2rem !important;
+            }
+            
+            .game-title.display-4 {
+                font-size: 1.4rem !important;
+            }
+            
+            .hud-link span, .hud-link:not(:first-child)::before {
+                display: none;
+            }
+            
+            .hud-link i {
+                font-size: 1.2rem;
+            }
+            
+            .building-icon {
+                width: 40px !important;
+                height: 40px !important;
+            }
+            
+            .level-badge {
+                font-size: 0.6rem !important;
+                padding: 2px 6px !important;
+            }
+            
+            .btn-game {
+                padding: 8px 12px;
+                font-size: 0.75rem;
+            }
+            
+            .card-body .row .col-md-4.text-end {
+                text-align: center !important;
+                margin-top: 10px;
+            }
+            
+            .node-circle {
+                width: 40px !important;
+                height: 40px !important;
+            }
+            
+            .campaign-node {
+                min-width: 60px !important;
+            }
+        }
     </style>
 </head>
 <body class="{% block body_class %}{% endblock %}">
