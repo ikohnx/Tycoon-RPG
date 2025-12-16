@@ -2346,6 +2346,508 @@ def seed_finance_curriculum():
     conn.close()
 
 
+def seed_legal_curriculum():
+    """Seed the complete 10-level Legal Curriculum across 3 worlds (30 scenarios total).
+    
+    Curriculum Structure:
+    - L1-L3: Foundational Structure & Contracts (Entity Structure, Contract Essentials, Employee Agreements)
+    - L4-L6: Real Estate & Compliance (Leases, Licensing/Permits, Torts/Negligence)
+    - L7-L8: Intellectual Property (Trademarks, Patents/Trade Secrets)
+    - L9-L10: Strategy & Mastery (Litigation, International Law)
+    """
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM scenario_master WHERE discipline = 'Legal' AND scenario_title LIKE 'L%:%'")
+    result = cur.fetchone()
+    if result['count'] >= 30:
+        print("Legal curriculum already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    scenarios = [
+        # ========== LEVEL 1: Business Entity Structure ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Legal", "required_level": 1,
+         "scenario_title": "L1: Business Entity Structure", 
+         "scenario_narrative": "You're opening your first restaurant. A lawyer asks: 'How do you want to structure the business?' As a Sole Proprietor, the business is simple but you're personally liable for all debts. As a Corporation (LLC), there's more paperwork but your personal assets are protected.",
+         "choice_a_text": "Form an LLC - I want liability protection for my personal assets", 
+         "choice_a_exp_reward": 50, "choice_a_cash_change": -500, "choice_a_reputation_change": 3,
+         "choice_a_feedback": "Smart choice! An LLC creates a 'corporate veil' separating business debts from personal assets. If the restaurant is sued, your house and savings are protected. The filing fee is worth the peace of mind.",
+         "choice_b_text": "Sole Proprietorship - simpler and cheaper to start", 
+         "choice_b_exp_reward": 30, "choice_b_cash_change": 0, "choice_b_reputation_change": 1,
+         "choice_b_feedback": "Simpler, yes, but risky! If a customer sues and wins $500,000, they can take your personal savings, car, even your home. For any business with liability risk, incorporation is essential.",
+         "choice_c_text": "I'll decide later once the business is profitable", 
+         "choice_c_exp_reward": 20, "choice_c_cash_change": 0, "choice_c_reputation_change": 0,
+         "choice_c_feedback": "Dangerous delay! Liability exists from day one. If someone slips on opening day and you're a sole proprietor, your personal assets are immediately at risk. Structure first, operate second.", 
+         "subskill_focus": "Business Formation"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Legal", "required_level": 1,
+         "scenario_title": "L1: Business Entity Structure", 
+         "scenario_narrative": "The Guild Registrar asks how you wish to establish your tavern. A 'Personal Charter' means you own everything but bear all risks personally. A 'Guild-Protected Charter' costs 200 gold but shields your personal holdings from business debts.",
+         "choice_a_text": "Guild-Protected Charter - shield my family estate from tavern debts", 
+         "choice_a_exp_reward": 50, "choice_a_cash_change": -200, "choice_a_reputation_change": 3,
+         "choice_a_feedback": "Wise decision! The Guild Charter creates legal separation. If a dragon destroys your tavern and you owe suppliers, they cannot claim your family home. This is the medieval equivalent of incorporation!",
+         "choice_b_text": "Personal Charter - I trust my tavern will succeed without extra cost", 
+         "choice_b_exp_reward": 30, "choice_b_cash_change": 0, "choice_b_reputation_change": 1,
+         "choice_b_feedback": "Optimism isn't a legal strategy! One bad barrel of ale that sickens nobles could result in claims exceeding your tavern's worth. Without protection, they'll seize your family lands.",
+         "choice_c_text": "Ask the Registrar which other successful taverns chose", 
+         "choice_c_exp_reward": 40, "choice_c_cash_change": 0, "choice_c_reputation_change": 2,
+         "choice_c_feedback": "Research is good! You learn that 9 of 10 successful taverns chose Guild-Protected Charters. The 200 gold is standard insurance for any business serving the public.", 
+         "subskill_focus": "Business Formation"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Legal", "required_level": 1,
+         "scenario_title": "L1: Business Entity Structure", 
+         "scenario_narrative": "Galactic Commerce Authority requires you to register your mining operation. Option A: 'Individual Operator License' - simple, but you're personally liable for mining accidents. Option B: 'Limited Liability Corporation' - more complex, but corporate structure limits personal exposure.",
+         "choice_a_text": "LLC registration - mining is dangerous, I need liability shields", 
+         "choice_a_exp_reward": 50, "choice_a_cash_change": -1000, "choice_a_reputation_change": 3,
+         "choice_a_feedback": "Essential for mining! Space mining accidents can cause millions in damages. LLC structure means creditors can only claim corporate assets, not your personal spacecraft or colony residence.",
+         "choice_b_text": "Individual License - fewer regulations and reporting requirements", 
+         "choice_b_exp_reward": 25, "choice_b_cash_change": 0, "choice_b_reputation_change": 0,
+         "choice_b_feedback": "Catastrophic risk! One asteroid drilling accident that damages a neighboring operation could result in claims of 10 million credits. As an individual, you'd face personal bankruptcy.",
+         "choice_c_text": "Consult with a Galactic Commerce attorney before deciding", 
+         "choice_c_exp_reward": 45, "choice_c_cash_change": -200, "choice_c_reputation_change": 2,
+         "choice_c_feedback": "Professional advice is valuable! The attorney confirms: 'Any operation with injury or property damage potential needs LLC protection.' Mining definitely qualifies.", 
+         "subskill_focus": "Business Formation"},
+
+        # ========== LEVEL 2: Contract Essentials ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Legal", "required_level": 2,
+         "scenario_title": "L2: Contract Essentials", 
+         "scenario_narrative": "Your produce supplier sends a contract. Your lawyer explains a valid contract needs three elements: Offer (supplier promises weekly deliveries), Acceptance (you agree to the terms), and Consideration (you pay $2,000/month, they deliver produce). The contract is missing a signature line for you.",
+         "choice_a_text": "Don't sign until they add proper acceptance provisions - contracts need all 3 elements", 
+         "choice_a_exp_reward": 60, "choice_a_cash_change": 0, "choice_a_reputation_change": 3,
+         "choice_a_feedback": "Excellent legal awareness! A contract without clear acceptance mechanism isn't properly formed. The signature line creates documented proof of acceptance. Never sign incomplete contracts.",
+         "choice_b_text": "Sign it anyway - the offer and price are there, that's enough", 
+         "choice_b_exp_reward": 30, "choice_b_cash_change": 0, "choice_b_reputation_change": 1,
+         "choice_b_feedback": "Risky! While verbal acceptance can sometimes form contracts, you want written proof. If they fail to deliver and claim 'you never formally accepted,' you'll struggle in court.",
+         "choice_c_text": "Email them your acceptance and keep the email as proof", 
+         "choice_c_exp_reward": 50, "choice_c_cash_change": 0, "choice_c_reputation_change": 2,
+         "choice_c_feedback": "Creative solution! Emails can constitute acceptance in many jurisdictions. However, a formal signed contract is cleaner. Request they update the document for professional completeness.", 
+         "subskill_focus": "Contract Law"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Legal", "required_level": 2,
+         "scenario_title": "L2: Contract Essentials", 
+         "scenario_narrative": "A merchant offers to supply your tavern with rare elven wine. He hands you a scroll stating: 'I will deliver 10 barrels monthly for 50 gold each.' For this to be a binding contract under Guild Law, what must you add?",
+         "choice_a_text": "Add my written acceptance and what I'm providing in exchange (the 500 gold payment)", 
+         "choice_a_exp_reward": 60, "choice_a_cash_change": 0, "choice_a_reputation_change": 3,
+         "choice_a_feedback": "Perfect! You've identified all three elements: his Offer (wine delivery), your Acceptance (written agreement), and Consideration (500 gold monthly). This contract will be enforceable before the Guild Court.",
+         "choice_b_text": "A handshake should be sufficient - we're honorable merchants", 
+         "choice_b_exp_reward": 25, "choice_b_cash_change": 0, "choice_b_reputation_change": 0,
+         "choice_b_feedback": "Honor doesn't replace documentation! If the merchant claims you agreed to 75 gold per barrel, how will you prove otherwise? Written contracts protect both parties.",
+         "choice_c_text": "Just pay him the 500 gold - money proves there's an agreement", 
+         "choice_c_exp_reward": 40, "choice_c_cash_change": -500, "choice_c_reputation_change": 1,
+         "choice_c_feedback": "Payment shows consideration, but without documented terms, disputes become difficult. What if he delivers 8 barrels and claims that was the agreement? Always document terms.", 
+         "subskill_focus": "Contract Law"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Legal", "required_level": 2,
+         "scenario_title": "L2: Contract Essentials", 
+         "scenario_narrative": "A fuel supplier transmits a digital contract for 100,000 credits of reactor fuel monthly. Your legal AI flags an issue: the contract contains an offer and price, but no acceptance mechanism and no specification of what happens if you don't pay (no consideration clause).",
+         "choice_a_text": "Request amendments adding acceptance signature block and payment terms before proceeding", 
+         "choice_a_exp_reward": 60, "choice_a_cash_change": 0, "choice_a_reputation_change": 3,
+         "choice_a_feedback": "Correct! Interstellar commerce law requires all three elements: Offer (fuel terms), Acceptance (your agreement), Consideration (payment obligations). Incomplete contracts aren't enforceable in Galactic Court.",
+         "choice_b_text": "The digital transmission itself counts as acceptance - proceed with operations", 
+         "choice_b_exp_reward": 30, "choice_b_cash_change": 0, "choice_b_reputation_change": 1,
+         "choice_b_feedback": "Receiving a contract isn't accepting it! You need affirmative acceptance. Also, without consideration terms, if they fail to deliver, you can't prove what they owed you.",
+         "choice_c_text": "Have your legal AI draft a counter-proposal with all required elements", 
+         "choice_c_exp_reward": 55, "choice_c_cash_change": -100, "choice_c_reputation_change": 3,
+         "choice_c_feedback": "Proactive approach! A counter-proposal that includes all elements (Offer, Acceptance, Consideration) shifts the negotiation to proper legal ground. AI legal assistants are invaluable.", 
+         "subskill_focus": "Contract Law"},
+
+        # ========== LEVEL 3: Employee Agreements ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Legal", "required_level": 3,
+         "scenario_title": "L3: Employee Agreements", 
+         "scenario_narrative": "You're hiring a head chef who will learn your secret recipes. Your lawyer recommends an employment contract with an NDA (Non-Disclosure Agreement) preventing them from sharing recipes, and a non-compete clause. The chef hesitates at signing.",
+         "choice_a_text": "Explain the NDA protects business secrets - it's standard practice for key employees", 
+         "choice_a_exp_reward": 70, "choice_a_cash_change": 0, "choice_a_reputation_change": 4,
+         "choice_a_feedback": "Professional approach! NDAs are standard for employees with access to trade secrets. Explain that it protects both parties - they can't be accused of theft if they follow the agreement. Most quality candidates understand this.",
+         "choice_b_text": "Drop the NDA to make the chef more comfortable joining", 
+         "choice_b_exp_reward": 30, "choice_b_cash_change": 0, "choice_b_reputation_change": 1,
+         "choice_b_feedback": "Risky! Without an NDA, if the chef leaves and opens a competing restaurant using your secret recipes, you have no legal recourse. Protect your intellectual property.",
+         "choice_c_text": "Offer a signing bonus in exchange for accepting the NDA terms", 
+         "choice_c_exp_reward": 60, "choice_c_cash_change": -1000, "choice_c_reputation_change": 3,
+         "choice_c_feedback": "Negotiation works! A signing bonus compensates for the restrictions. The chef feels valued, and you get the legal protection you need. Win-win when both parties gain something.", 
+         "subskill_focus": "Employment Law"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Legal", "required_level": 3,
+         "scenario_title": "L3: Employee Agreements", 
+         "scenario_narrative": "You're hiring a master brewer who knows your secret ale recipe. The Guild recommends a 'Secrecy Oath' (equivalent to an NDA) and a 'Non-Competition Covenant' preventing them from working at rival taverns for 2 years after leaving. The brewer wants to negotiate.",
+         "choice_a_text": "Agree to reduce non-compete to 1 year but keep the full Secrecy Oath", 
+         "choice_a_exp_reward": 70, "choice_a_cash_change": 0, "choice_a_reputation_change": 4,
+         "choice_a_feedback": "Smart negotiation! The Secrecy Oath (protecting your recipe) is essential and non-negotiable. The non-compete duration can flex. 1 year is still meaningful protection while being fair to the brewer's career.",
+         "choice_b_text": "Remove all restrictions - a good brewer will stay loyal without contracts", 
+         "choice_b_exp_reward": 25, "choice_b_cash_change": 0, "choice_b_reputation_change": 0,
+         "choice_b_feedback": "Naive! Loyalty is wonderful but not legally enforceable. If a rival offers triple wages, even honest people may be tempted. Contracts set clear boundaries everyone understands.",
+         "choice_c_text": "Insist on all terms exactly as written - they can accept or leave", 
+         "choice_c_exp_reward": 40, "choice_c_cash_change": 0, "choice_c_reputation_change": 1,
+         "choice_c_feedback": "Inflexibility can cost you talent! Good employees expect reasonable negotiation. A 2-year non-compete may be excessive and could be unenforceable in some jurisdictions anyway.", 
+         "subskill_focus": "Employment Law"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Legal", "required_level": 3,
+         "scenario_title": "L3: Employee Agreements", 
+         "scenario_narrative": "You're hiring a chief engineer who will have access to your proprietary asteroid scanning algorithms. Your legal team prepares a contract with an NDA, invention assignment clause (company owns any work-related inventions), and termination provisions. The engineer requests changes.",
+         "choice_a_text": "Keep NDA and invention assignment, but negotiate fair termination terms", 
+         "choice_a_exp_reward": 70, "choice_a_cash_change": 0, "choice_a_reputation_change": 4,
+         "choice_a_feedback": "Balanced approach! The NDA and invention assignment protect core IP and are standard in tech. Termination terms (severance, notice period) are appropriate negotiation points. Protect IP, be fair on employment terms.",
+         "choice_b_text": "Accept all their changes to secure this talented engineer quickly", 
+         "choice_b_exp_reward": 30, "choice_b_cash_change": 0, "choice_b_reputation_change": 1,
+         "choice_b_feedback": "Hasty! If you waive invention assignment and they develop a breakthrough using company resources, they could leave and patent it personally. Key IP protections aren't negotiable.",
+         "choice_c_text": "Have legal AI analyze which clauses are essential vs. nice-to-have", 
+         "choice_c_exp_reward": 65, "choice_c_cash_change": -100, "choice_c_reputation_change": 3,
+         "choice_c_feedback": "Data-driven negotiation! The AI confirms: NDA and invention assignment are essential; specific termination terms are flexible. Now you know exactly what to protect and where to give.", 
+         "subskill_focus": "Employment Law"},
+
+        # ========== LEVEL 4: Leases and Property Law ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Legal", "required_level": 4,
+         "scenario_title": "L4: Leases and Property Law", 
+         "scenario_narrative": "Your 5-year restaurant lease is expiring. The landlord offers renewal at 20% higher rent. Your lawyer points out the lease contains a 'Tenant Improvement' clause - you invested $50,000 in kitchen upgrades that stay with the property if you leave.",
+         "choice_a_text": "Negotiate: my improvements increased property value, so rent increase should be offset", 
+         "choice_a_exp_reward": 80, "choice_a_cash_change": 200, "choice_a_reputation_change": 4,
+         "choice_a_feedback": "Strong negotiating position! Your improvements benefit future tenants. A skilled negotiator would argue for reduced increase or tenant improvement credits. The landlord profits from your investment.",
+         "choice_b_text": "Accept the 20% increase - moving costs would exceed the rent difference", 
+         "choice_b_exp_reward": 50, "choice_b_cash_change": -200, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "You may be right about moving costs, but you left money on the table! Always negotiate before accepting. Even getting 15% instead of 20% saves significant money over 5 years.",
+         "choice_c_text": "Threaten to remove all improvements before leaving if they don't negotiate", 
+         "choice_c_exp_reward": 40, "choice_c_cash_change": 0, "choice_c_reputation_change": 0,
+         "choice_c_feedback": "Check your lease! Most tenant improvement clauses specify improvements become landlord property. Threatening to remove them could breach your contract and create legal liability.", 
+         "subskill_focus": "Property Law"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Legal", "required_level": 4,
+         "scenario_title": "L4: Leases and Property Law", 
+         "scenario_narrative": "Your Royal Land Grant for the tavern expires next season. The Crown offers renewal but demands you allow Royal Inspectors access anytime, and you must use only 'approved' building materials (more expensive). Your current structure uses traditional timber.",
+         "choice_a_text": "Negotiate inspector notice requirements and grandfather existing timber construction", 
+         "choice_a_exp_reward": 80, "choice_a_cash_change": 0, "choice_a_reputation_change": 4,
+         "choice_a_feedback": "Skilled negotiation! 'Grandfather clauses' exempt existing structures from new requirements. Reasonable notice for inspections (24 hours) balances Crown oversight with business operations.",
+         "choice_b_text": "Accept all terms - arguing with the Crown is unwise", 
+         "choice_b_exp_reward": 40, "choice_b_cash_change": -300, "choice_b_reputation_change": 1,
+         "choice_b_feedback": "The Crown expects negotiation! Even royal grants have standard negotiation. Accepting everything signals you don't understand your rights. The approved materials clause alone costs you significantly.",
+         "choice_c_text": "Seek alternative location outside Crown lands to avoid restrictions", 
+         "choice_c_exp_reward": 50, "choice_c_cash_change": 0, "choice_c_reputation_change": 2,
+         "choice_c_feedback": "Exploring alternatives is wise research! However, Crown lands have better trade routes and customer traffic. Sometimes constraints are worth the location benefits.", 
+         "subskill_focus": "Property Law"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Legal", "required_level": 4,
+         "scenario_title": "L4: Leases and Property Law", 
+         "scenario_narrative": "Your orbital station lease requires renewal. The Station Authority demands you assume responsibility for gravity generator maintenance (previously their duty) and pay 30% more rent. Your operations depend on stable gravity.",
+         "choice_a_text": "Counter-offer: accept maintenance responsibility in exchange for flat rent renewal", 
+         "choice_a_exp_reward": 80, "choice_a_cash_change": 100, "choice_a_reputation_change": 4,
+         "choice_a_feedback": "Excellent trade-off analysis! Taking maintenance responsibility gives you control over critical systems. Trading that for eliminating the 30% rent increase is good value if you have competent engineers.",
+         "choice_b_text": "Reject maintenance transfer - too much liability if generators fail", 
+         "choice_b_exp_reward": 50, "choice_b_cash_change": -300, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "Valid concern about liability! But you're still paying 30% more AND depending on the Authority's maintenance quality. Consider: would your engineers do better?",
+         "choice_c_text": "Accept both changes - we need this location for asteroid proximity", 
+         "choice_c_exp_reward": 35, "choice_c_cash_change": -400, "choice_c_reputation_change": 1,
+         "choice_c_feedback": "Poor negotiation! You accepted extra responsibility AND extra cost. Location value doesn't mean accepting all terms. Counter-offers are expected in commercial negotiations.", 
+         "subskill_focus": "Property Law"},
+
+        # ========== LEVEL 5: Licensing and Permits ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Legal", "required_level": 5,
+         "scenario_title": "L5: Licensing and Permits", 
+         "scenario_narrative": "Grand opening is in 2 weeks! Your manager reports that the health permit is approved, but the liquor license is still processing (takes 4-6 weeks). Serving alcohol without a license is a criminal offense that could permanently bar you from getting one.",
+         "choice_a_text": "Open without alcohol service until license arrives - compliance first", 
+         "choice_a_exp_reward": 90, "choice_a_cash_change": -500, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Correct decision! Serving alcohol without a license risks criminal charges, fines, and permanent license denial. A few weeks of reduced revenue beats a destroyed business. Legal compliance isn't optional.",
+         "choice_b_text": "Delay grand opening until all licenses are secured", 
+         "choice_b_exp_reward": 70, "choice_b_cash_change": -1000, "choice_b_reputation_change": 3,
+         "choice_b_feedback": "Conservative but costly! You're paying rent, staff, and marketing for a closed restaurant. Opening without alcohol is legal and generates revenue while you wait. Balance caution with business reality.",
+         "choice_c_text": "Open fully and serve alcohol - we'll have the license soon anyway", 
+         "choice_c_exp_reward": 20, "choice_c_cash_change": 500, "choice_c_reputation_change": -5,
+         "choice_c_feedback": "Criminal risk! If inspected, you face fines up to $50,000, criminal charges, and permanent license denial. One undercover inspector ruins everything. Never gamble on regulatory compliance.", 
+         "subskill_focus": "Regulatory Compliance"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Legal", "required_level": 5,
+         "scenario_title": "L5: Licensing and Permits", 
+         "scenario_narrative": "The Guild Inspector arrives and finds you lack a 'Fire Safety Seal' - your hearth doesn't meet new fire prevention standards. Operating without it risks a 500 gold fine and closure. Upgrading costs 300 gold and takes one week.",
+         "choice_a_text": "Close for one week, upgrade hearth, obtain proper Fire Safety Seal", 
+         "choice_a_exp_reward": 90, "choice_a_cash_change": -300, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Compliance protects your business! One week closure and 300 gold is far better than 500 gold fine plus forced closure plus reputation damage. Proactive compliance shows professional management.",
+         "choice_b_text": "Pay the 500 gold fine and continue operating while upgrading", 
+         "choice_b_exp_reward": 50, "choice_b_cash_change": -500, "choice_b_reputation_change": 1,
+         "choice_b_feedback": "Expensive choice! You pay the fine AND still need the 300 gold upgrade. Total: 800 gold vs 300 gold for immediate compliance. Plus, repeat violations bring harsher penalties.",
+         "choice_c_text": "Offer the Inspector a 'consideration' to overlook the violation", 
+         "choice_c_exp_reward": 20, "choice_c_cash_change": -200, "choice_c_reputation_change": -10,
+         "choice_c_feedback": "Bribery is a serious crime! If discovered, you lose your license permanently, face criminal charges, and destroy your reputation. The short-term savings aren't worth the catastrophic risk.", 
+         "subskill_focus": "Regulatory Compliance"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Legal", "required_level": 5,
+         "scenario_title": "L5: Licensing and Permits", 
+         "scenario_narrative": "Galactic Mining Commission notifies you that your Environmental Impact Permit expires in 30 days. Renewal requires updated asteroid debris dispersion analysis (costs 50,000 credits, takes 45 days). Operating without permit: 1 million credit fine per day.",
+         "choice_a_text": "Immediately commission the analysis and plan for 15-day operations pause", 
+         "choice_a_exp_reward": 90, "choice_a_cash_change": -50000, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Correct response! 15 days pause costs perhaps 200,000 credits in lost revenue. Operating one day without permit: 1 million fine. The math is clear. Start analysis immediately.",
+         "choice_b_text": "Apply for a 60-day extension while completing the analysis", 
+         "choice_b_exp_reward": 85, "choice_b_cash_change": -60000, "choice_b_reputation_change": 4,
+         "choice_b_feedback": "Smart! Many regulators grant extensions for proactive applicants. Extension fee is typically 10,000 credits - far cheaper than operational pause. Always explore administrative solutions.",
+         "choice_c_text": "Continue operations and pay fines as cost of doing business", 
+         "choice_c_exp_reward": 20, "choice_c_cash_change": -1000000, "choice_c_reputation_change": -10,
+         "choice_c_feedback": "Catastrophic! At 1 million per day, even 3 days of violation exceeds your analysis cost 60 times over. Plus, repeat violations lead to license revocation. Never treat compliance as optional.", 
+         "subskill_focus": "Regulatory Compliance"},
+
+        # ========== LEVEL 6: Torts and Negligence ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Legal", "required_level": 6,
+         "scenario_title": "L6: Torts and Negligence", 
+         "scenario_narrative": "A customer slips on a wet floor near the restroom and breaks their wrist. There was no 'Wet Floor' sign displayed. They're threatening to sue for medical bills ($15,000) plus pain and suffering ($50,000). Your insurance deductible is $10,000.",
+         "choice_a_text": "Acknowledge the missing sign was our negligence, offer to cover medical bills directly", 
+         "choice_a_exp_reward": 100, "choice_a_cash_change": -15000, "choice_a_reputation_change": 3,
+         "choice_a_feedback": "Smart settlement! You were negligent (no sign = breach of duty of care). $15,000 direct payment is better than $65,000 lawsuit plus legal fees. Acknowledging fault and settling fairly prevents escalation.",
+         "choice_b_text": "Deny liability - the customer should watch where they walk", 
+         "choice_b_exp_reward": 40, "choice_b_cash_change": 0, "choice_b_reputation_change": -3,
+         "choice_b_feedback": "Legally weak! Business owners have a 'duty of care' to maintain safe premises. No warning sign is clear negligence. Fighting this wastes money on lawyers and likely loses anyway.",
+         "choice_c_text": "Report to insurance and let them handle everything", 
+         "choice_c_exp_reward": 70, "choice_c_cash_change": -10000, "choice_c_reputation_change": 1,
+         "choice_c_feedback": "Standard approach, but consider: insurance fights claims to minimize payouts, which can anger injured parties and escalate demands. Sometimes direct settlement is faster and cheaper.", 
+         "subskill_focus": "Liability Management"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Legal", "required_level": 6,
+         "scenario_title": "L6: Torts and Negligence", 
+         "scenario_narrative": "A patron claims your enchanted warming stones caused burns when they malfunctioned. The stones were installed by a licensed enchanter, but you hadn't had them inspected in 3 years. The patron demands 1,000 gold for healer's fees and suffering.",
+         "choice_a_text": "Admit the inspection lapse was negligent, negotiate fair compensation", 
+         "choice_a_exp_reward": 100, "choice_a_cash_change": -800, "choice_a_reputation_change": 3,
+         "choice_a_feedback": "Responsible approach! Regular maintenance is part of duty of care. 3 years without inspection shows negligence. Negotiating to 800 gold (healer fees plus modest suffering) is reasonable settlement.",
+         "choice_b_text": "Blame the enchanter - they installed faulty stones", 
+         "choice_b_exp_reward": 50, "choice_b_cash_change": 0, "choice_b_reputation_change": 0,
+         "choice_b_feedback": "Partial defense! You may have a claim against the enchanter, but the patron was injured in YOUR establishment. You're liable to them first, then can seek reimbursement from the enchanter.",
+         "choice_c_text": "Deny everything - the patron probably caused the malfunction themselves", 
+         "choice_c_exp_reward": 30, "choice_c_cash_change": 0, "choice_c_reputation_change": -5,
+         "choice_c_feedback": "Weak defense! Without evidence of patron tampering, Guild Courts will find your 3-year inspection gap as clear negligence. Fighting obvious liability wastes gold and reputation.", 
+         "subskill_focus": "Liability Management"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Legal", "required_level": 6,
+         "scenario_title": "L6: Torts and Negligence", 
+         "scenario_narrative": "A habitat module fails due to a structural flaw, causing temporary life support loss. Three workers require medical treatment (200,000 credits). Investigation shows you delayed mandatory structural inspections by 2 months to meet production targets.",
+         "choice_a_text": "Accept responsibility, cover all medical costs, implement immediate safety review", 
+         "choice_a_exp_reward": 100, "choice_a_cash_change": -200000, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "The only ethical choice! Delayed safety inspections to meet production is textbook negligence. Full compensation plus systemic reform shows genuine accountability. This protects against punitive damages.",
+         "choice_b_text": "Blame the inspection company for not flagging the issue sooner", 
+         "choice_b_exp_reward": 40, "choice_b_cash_change": 0, "choice_b_reputation_change": -3,
+         "choice_b_feedback": "YOU delayed THEIR inspection. Blaming them invites evidence of your delay orders. Courts will find you primarily liable for preventing the inspection that would have caught the flaw.",
+         "choice_c_text": "Offer partial compensation and dispute the connection to inspection delay", 
+         "choice_c_exp_reward": 60, "choice_c_cash_change": -100000, "choice_c_reputation_change": -1,
+         "choice_c_feedback": "Risky strategy! If workers can prove the delay caused the failure (and documentation likely exists), disputing connection looks like bad faith. Juries punish companies that minimize negligence.", 
+         "subskill_focus": "Liability Management"},
+
+        # ========== LEVEL 7: Trademarks and Branding ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Legal", "required_level": 7,
+         "scenario_title": "L7: Trademarks and Branding", 
+         "scenario_narrative": "A new restaurant opens across town with a name and logo remarkably similar to yours. Customers are confused, and some report bad experiences there thinking it was your location. Your lawyer says trademark infringement is likely, but litigation costs $50,000+.",
+         "choice_a_text": "Send a cease and desist letter first - many infringers stop when confronted legally", 
+         "choice_a_exp_reward": 110, "choice_a_cash_change": -2000, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Smart escalation! A cease and desist letter ($2,000 in legal fees) stops 70% of infringers without litigation. It also establishes your willingness to defend your trademark, which is legally important.",
+         "choice_b_text": "Immediately file a trademark infringement lawsuit", 
+         "choice_b_exp_reward": 70, "choice_b_cash_change": -50000, "choice_b_reputation_change": 3,
+         "choice_b_feedback": "Aggressive but expensive! Litigation should be a last resort. Many judges expect parties to attempt resolution first. A cease and desist achieves the same goal at 4% of the cost.",
+         "choice_c_text": "Ignore it - they'll probably fail anyway and it's not worth the hassle", 
+         "choice_c_exp_reward": 30, "choice_c_cash_change": 0, "choice_c_reputation_change": -5,
+         "choice_c_feedback": "Dangerous! Failure to defend trademarks can weaken your legal rights. Courts may find you 'abandoned' protection. Plus, their bad reviews harm your reputation. Trademarks require active defense.", 
+         "subskill_focus": "Intellectual Property"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Legal", "required_level": 7,
+         "scenario_title": "L7: Trademarks and Branding", 
+         "scenario_narrative": "Your tavern's famous 'Golden Dragon' name and sign are being copied by a rival in the next town. Travelers are confused about which is the original. The Guild offers trademark registration for 200 gold, which gives you exclusive rights throughout the kingdom.",
+         "choice_a_text": "Register the trademark immediately, then send formal notice to the rival", 
+         "choice_a_exp_reward": 110, "choice_a_cash_change": -200, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Perfect strategy! Registration creates legal proof of ownership. The formal notice backed by registration usually forces compliance. If they refuse, you have clear grounds for Guild Court action.",
+         "choice_b_text": "Confront the rival directly and demand they change their name", 
+         "choice_b_exp_reward": 50, "choice_b_cash_change": 0, "choice_b_reputation_change": 1,
+         "choice_b_feedback": "Without registration, you have weaker legal standing. They might claim they thought of the name independently. Register first, then your demand has legal teeth.",
+         "choice_c_text": "Change my own name to something more distinctive and unique", 
+         "choice_c_exp_reward": 40, "choice_c_cash_change": -500, "choice_c_reputation_change": -3,
+         "choice_c_feedback": "Surrender! You built the Golden Dragon reputation. Changing your name means losing that brand value while the copycat benefits from your original work. Defend what you created.", 
+         "subskill_focus": "Intellectual Property"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Legal", "required_level": 7,
+         "scenario_title": "L7: Trademarks and Branding", 
+         "scenario_narrative": "Your 'NovaCore Mining' brand is well-known for quality asteroid surveys. A competitor launches 'NovaCorp Mining' with nearly identical branding. Industry analysts report customer confusion is costing you contracts worth 500,000 credits annually.",
+         "choice_a_text": "File for expedited trademark review, then pursue injunction to stop their use", 
+         "choice_a_exp_reward": 110, "choice_a_cash_change": -30000, "choice_a_reputation_change": 6,
+         "choice_a_feedback": "Aggressive defense! Expedited review (10,000 credits) plus injunction filing (20,000 credits) can stop them within 90 days. 500,000 annual losses justify this investment. Brand protection is business protection.",
+         "choice_b_text": "Negotiate a licensing deal where they pay us for brand association", 
+         "choice_b_exp_reward": 80, "choice_b_cash_change": 50000, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "Creative monetization! If they're willing to pay for legitimacy, licensing converts a threat into revenue. However, this only works if their quality matches yours. Bad licensed work hurts your brand.",
+         "choice_c_text": "Rebrand ourselves with something completely distinct to avoid confusion", 
+         "choice_c_exp_reward": 40, "choice_c_cash_change": -100000, "choice_c_reputation_change": -3,
+         "choice_c_feedback": "Expensive retreat! You're paying 100,000 credits to abandon brand equity you built while letting the copier benefit. Defending is almost always cheaper than abandoning established brands.", 
+         "subskill_focus": "Intellectual Property"},
+
+        # ========== LEVEL 8: Patents and Trade Secrets ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Legal", "required_level": 8,
+         "scenario_title": "L8: Patents and Trade Secrets", 
+         "scenario_narrative": "Your chef invented a unique food preparation process that dramatically improves flavor. You could patent it (20-year protection, but process becomes public) or keep it as a trade secret (indefinite protection, but if discovered or reverse-engineered, no legal protection).",
+         "choice_a_text": "Trade secret - our process is hard to reverse-engineer and patents expire", 
+         "choice_a_exp_reward": 120, "choice_a_cash_change": 0, "choice_a_reputation_change": 6,
+         "choice_a_feedback": "Strategic choice! Coca-Cola's formula has been a trade secret for 130+ years. If your process can't be easily discovered through analysis, trade secret provides longer protection. Just ensure robust NDAs and security.",
+         "choice_b_text": "Patent it - we want enforceable legal protection against copycats", 
+         "choice_b_exp_reward": 100, "choice_b_cash_change": -15000, "choice_b_reputation_change": 5,
+         "choice_b_feedback": "Valid approach! Patents give you the right to sue infringers. But remember: once filed, the process is public. Competitors can study it and design around it. And protection ends after 20 years.",
+         "choice_c_text": "Do both - patent the broad concept, keep specific details as trade secrets", 
+         "choice_c_exp_reward": 110, "choice_c_cash_change": -15000, "choice_c_reputation_change": 5,
+         "choice_c_feedback": "Sophisticated strategy! Patent the general method for legal protection while keeping exact specifications secret. This layered approach is used by many successful companies. Consult a patent attorney for best structure.", 
+         "subskill_focus": "Intellectual Property"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Legal", "required_level": 8,
+         "scenario_title": "L8: Patents and Trade Secrets", 
+         "scenario_narrative": "Your alchemist developed a new stable healing potion formula. The Mages' Guild offers to register it as a 'Protected Invention' (like a patent - 15 year monopoly, but formula becomes public after) or you can keep it as a closely guarded 'Guild Secret.'",
+         "choice_a_text": "Guild Secret - we can protect it indefinitely with proper precautions", 
+         "choice_a_exp_reward": 120, "choice_a_cash_change": 0, "choice_a_reputation_change": 6,
+         "choice_a_feedback": "Long-term thinking! If you can control access through careful employee agreements and secure storage, indefinite protection beats 15 years. Many master alchemists keep formulas as trade secrets for generations.",
+         "choice_b_text": "Protected Invention - we need legal recourse if someone steals the formula", 
+         "choice_b_exp_reward": 100, "choice_b_cash_change": -500, "choice_b_reputation_change": 5,
+         "choice_b_feedback": "Defensive choice! If you fear theft or lack strong security, registration provides clear legal standing. Trade secrets offer no protection if independently discovered. Consider your vulnerability.",
+         "choice_c_text": "Register only the stabilization process, keep the base formula secret", 
+         "choice_c_exp_reward": 115, "choice_c_cash_change": -300, "choice_c_reputation_change": 5,
+         "choice_c_feedback": "Layered protection! The registered process protects against that specific innovation while the core formula remains secret. Competitors would need both pieces. Excellent IP strategy.", 
+         "subskill_focus": "Intellectual Property"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Legal", "required_level": 8,
+         "scenario_title": "L8: Patents and Trade Secrets", 
+         "scenario_narrative": "Your engineers designed a revolutionary Zero-G robotic welder. Galactic Patent Office offers 25-year protection (but full technical specs become public). Alternatively, keep it as a trade secret and rely on contracts and security.",
+         "choice_a_text": "Patent it - in 25 years our technology will be obsolete anyway", 
+         "choice_a_exp_reward": 120, "choice_a_cash_change": -100000, "choice_a_reputation_change": 6,
+         "choice_a_feedback": "Practical analysis! Technology often advances faster than patent terms. 25 years of protection for a design that might be outdated in 10 is still valuable. Patent also enables licensing revenue.",
+         "choice_b_text": "Trade secret - competitors can't reverse-engineer what they can't access", 
+         "choice_b_exp_reward": 100, "choice_b_cash_change": 0, "choice_b_reputation_change": 4,
+         "choice_b_feedback": "Viable if you have strong security! But space stations leak information. One disgruntled engineer with specs could destroy your advantage. Trade secrets require constant vigilance.",
+         "choice_c_text": "Patent core innovations, keep manufacturing processes as trade secrets", 
+         "choice_c_exp_reward": 115, "choice_c_cash_change": -75000, "choice_c_reputation_change": 5,
+         "choice_c_feedback": "Optimal hybrid! Patent protects the inventive concept while trade secrets cover production efficiency. Competitors can legally build similar robots but can't match your manufacturing cost.", 
+         "subskill_focus": "Intellectual Property"},
+
+        # ========== LEVEL 9: Litigation and Dispute Resolution ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Legal", "required_level": 9,
+         "scenario_title": "L9: Litigation and Dispute Resolution", 
+         "scenario_narrative": "Your primary food supplier breaches their contract, failing to deliver for 2 weeks and costing you $80,000 in lost revenue. Options: Arbitration (faster, private, but limited damages) vs. Lawsuit (slower, public, but full damages possible). Contract has an arbitration clause.",
+         "choice_a_text": "Pursue arbitration - the contract requires it and it's faster and cheaper", 
+         "choice_a_exp_reward": 130, "choice_a_cash_change": -10000, "choice_a_reputation_change": 6,
+         "choice_a_feedback": "Correct! The arbitration clause likely makes it mandatory anyway. Arbitration typically resolves in 3-6 months vs. 2-3 years for litigation. Costs ~$10,000 vs. $100,000+. Privacy also protects your business reputation.",
+         "choice_b_text": "File lawsuit anyway - arbitration clauses can be challenged", 
+         "choice_b_exp_reward": 60, "choice_b_cash_change": -50000, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "Uphill battle! Courts generally enforce arbitration clauses. You'll spend money fighting to litigate before even addressing the breach. Follow the contract terms you agreed to.",
+         "choice_c_text": "Negotiate directly with the supplier for compensation before legal action", 
+         "choice_c_exp_reward": 110, "choice_c_cash_change": -5000, "choice_c_reputation_change": 5,
+         "choice_c_feedback": "Best first step! Direct negotiation preserves business relationships and is cheapest. Many disputes settle for 60-70% of damages without formal proceedings. Only escalate to arbitration if negotiation fails.", 
+         "subskill_focus": "Dispute Resolution"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Legal", "required_level": 9,
+         "scenario_title": "L9: Litigation and Dispute Resolution", 
+         "scenario_narrative": "A major supplier breaches your ale contract during festival season, costing you 5,000 gold in lost sales. Options: Guild Arbitration (quick, private, but maximum award is 3,000 gold) vs. Crown Court (slow, public, full damages possible but expensive and reputation-damaging).",
+         "choice_a_text": "Guild Arbitration - recover 3,000 gold quickly rather than risk prolonged battle", 
+         "choice_a_exp_reward": 130, "choice_a_cash_change": 2500, "choice_a_reputation_change": 6,
+         "choice_a_feedback": "Pragmatic! 3,000 gold in 30 days beats maybe 5,000 gold in 18 months. Time has value. You can use the quick resolution to find a new supplier and move forward with your business.",
+         "choice_b_text": "Crown Court - I want full compensation for their breach", 
+         "choice_b_exp_reward": 70, "choice_b_cash_change": 0, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "Emotionally satisfying but economically questionable. Crown Court costs 1,000+ gold in fees, takes over a year, and the public attention may hurt your reputation. Is extra 2,000 gold worth all that?",
+         "choice_c_text": "Threaten Crown Court but offer to settle for 4,000 gold to avoid proceedings", 
+         "choice_c_exp_reward": 120, "choice_c_cash_change": 3500, "choice_c_reputation_change": 5,
+         "choice_c_feedback": "Skilled negotiation! The threat of expensive Crown Court litigation incentivizes settlement. 4,000 gold is a reasonable middle ground that saves both parties time and money.", 
+         "subskill_focus": "Dispute Resolution"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Legal", "required_level": 9,
+         "scenario_title": "L9: Litigation and Dispute Resolution", 
+         "scenario_narrative": "A critical equipment supplier breached contract, costing you 2,000,000 credits in downtime. Options: Interstellar Commercial Arbitration (binding, fast, private) vs. Galactic Trade Court (expensive, slow, but precedent-setting and full damages). Your contract specifies arbitration.",
+         "choice_a_text": "Follow contract arbitration clause - it's binding and most efficient", 
+         "choice_a_exp_reward": 130, "choice_a_cash_change": -50000, "choice_a_reputation_change": 6,
+         "choice_a_feedback": "Correct approach! Arbitration clauses are typically enforceable. 50,000 credits for a 6-month resolution beats 500,000 credits for a 3-year court battle. Recover damages faster and return to operations.",
+         "choice_b_text": "Galactic Trade Court - I want this precedent to protect future contracts", 
+         "choice_b_exp_reward": 80, "choice_b_cash_change": -500000, "choice_b_reputation_change": 3,
+         "choice_b_feedback": "Idealistic but costly! Precedent-setting cases require massive legal investment. Unless you're planning industry-wide advocacy, use arbitration for this dispute and save resources for your business.",
+         "choice_c_text": "Propose mediation before any formal proceedings to preserve the relationship", 
+         "choice_c_exp_reward": 100, "choice_c_cash_change": -20000, "choice_c_reputation_change": 5,
+         "choice_c_feedback": "Excellent escalation strategy! Mediation is even cheaper than arbitration. If the supplier values your business, they may offer fair compensation to maintain the relationship. Only escalate if mediation fails.", 
+         "subskill_focus": "Dispute Resolution"},
+
+        # ========== LEVEL 10: International Law & Governance ==========
+        # Modern World
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Legal", "required_level": 10,
+         "scenario_title": "L10: International Law & Governance", 
+         "scenario_narrative": "You're signing a major supply contract with an overseas manufacturer. Your lawyer asks: Which country's laws govern the contract? Where will disputes be resolved? The manufacturer wants their home country; you want yours. This could determine a lawsuit's outcome.",
+         "choice_a_text": "Insist on neutral third country (Singapore/Switzerland) for both governing law and arbitration", 
+         "choice_a_exp_reward": 150, "choice_a_cash_change": 0, "choice_a_reputation_change": 8,
+         "choice_a_feedback": "Expert-level negotiation! Neutral jurisdictions like Singapore or Switzerland have well-developed commercial law and no home-court advantage for either party. This is standard practice in major international contracts.",
+         "choice_b_text": "Accept their governing law but require arbitration in a neutral location", 
+         "choice_b_exp_reward": 110, "choice_b_cash_change": 0, "choice_b_reputation_change": 5,
+         "choice_b_feedback": "Reasonable compromise! Governing law determines contract interpretation, but neutral arbitration ensures fair proceedings. Make sure you understand their commercial law before agreeing.",
+         "choice_c_text": "Insist on your home country for everything - this is non-negotiable", 
+         "choice_c_exp_reward": 60, "choice_c_cash_change": 0, "choice_c_reputation_change": 2,
+         "choice_c_feedback": "Inflexible position! The manufacturer may walk away or demand unfavorable trade-offs. International contracts require mutual compromise on jurisdiction. Hard-line positions often kill deals.", 
+         "subskill_focus": "International Law"},
+        
+        # Fantasy World
+        {"world_type": "Fantasy", "industry": "Tavern", "discipline": "Legal", "required_level": 10,
+         "scenario_title": "L10: International Law & Governance", 
+         "scenario_narrative": "You're negotiating a major contract with an Elven Kingdom merchant for rare wines. They insist on Elven Law governing the contract and disputes resolved in Elven Courts. You want Human Kingdom law. The Merchant Guild suggests neutral Dwarven Commercial Law.",
+         "choice_a_text": "Accept Dwarven Commercial Law - they're known for fair, predictable rulings", 
+         "choice_a_exp_reward": 150, "choice_a_cash_change": -100, "choice_a_reputation_change": 8,
+         "choice_a_feedback": "Diplomatic excellence! Dwarven Commercial Courts are renowned across all kingdoms for impartiality. Neither party has advantage, and their precedents are clear. This protects both sides equally.",
+         "choice_b_text": "Agree to Elven Law but with Human Kingdom arbitrators", 
+         "choice_b_exp_reward": 100, "choice_b_cash_change": 0, "choice_b_reputation_change": 4,
+         "choice_b_feedback": "Creative split! This can work if arbitrators are skilled in Elven Law. However, mixing systems creates complexity. Consider whether simpler neutral framework would be cleaner.",
+         "choice_c_text": "Walk away - I won't risk being subject to foreign courts", 
+         "choice_c_exp_reward": 50, "choice_c_cash_change": 0, "choice_c_reputation_change": 0,
+         "choice_c_feedback": "Lost opportunity! International trade requires compromise on jurisdiction. Refusing all foreign law means limiting yourself to domestic suppliers. Neutral third-party law is the solution.", 
+         "subskill_focus": "International Law"},
+        
+        # Sci-Fi World
+        {"world_type": "Sci-Fi", "industry": "Mining Corp", "discipline": "Legal", "required_level": 10,
+         "scenario_title": "L10: International Law & Governance", 
+         "scenario_narrative": "You're finalizing a major contract with an alien civilization's mining consortium for rare element trade. They operate under completely different legal concepts. Your legal AI suggests three options: your Federation law, their law, or newly-developed Interspecies Commercial Code.",
+         "choice_a_text": "Interspecies Commercial Code - it's designed specifically for cross-species transactions", 
+         "choice_a_exp_reward": 150, "choice_a_cash_change": -50000, "choice_a_reputation_change": 8,
+         "choice_a_feedback": "Forward-thinking choice! The Interspecies Commercial Code reconciles different legal traditions into neutral standards both species can understand. This is the future of galactic commerce law.",
+         "choice_b_text": "Federation law with an alien legal liaison to explain concepts", 
+         "choice_b_exp_reward": 90, "choice_b_cash_change": -30000, "choice_b_reputation_change": 4,
+         "choice_b_feedback": "Risky approach! Even with a liaison, your laws may contain concepts that don't translate. The alien consortium might agree to terms they interpret very differently. Misunderstandings cause disputes.",
+         "choice_c_text": "Create a custom legal framework for just this contract", 
+         "choice_c_exp_reward": 110, "choice_c_cash_change": -100000, "choice_c_reputation_change": 6,
+         "choice_c_feedback": "Thorough but expensive! Custom frameworks can address unique situations but cost significant legal fees to develop. The Interspecies Code already solved most issues you'd have to reinvent.", 
+         "subskill_focus": "International Law"},
+    ]
+    
+    for scenario in scenarios:
+        cur.execute("""
+            INSERT INTO scenario_master (world_type, industry, discipline, required_level, scenario_title, scenario_narrative,
+                choice_a_text, choice_a_exp_reward, choice_a_cash_change, choice_a_reputation_change, choice_a_feedback,
+                choice_b_text, choice_b_exp_reward, choice_b_cash_change, choice_b_reputation_change, choice_b_feedback,
+                choice_c_text, choice_c_exp_reward, choice_c_cash_change, choice_c_reputation_change, choice_c_feedback,
+                subskill_focus)
+            VALUES (%(world_type)s, %(industry)s, %(discipline)s, %(required_level)s, %(scenario_title)s, %(scenario_narrative)s,
+                %(choice_a_text)s, %(choice_a_exp_reward)s, %(choice_a_cash_change)s, %(choice_a_reputation_change)s, %(choice_a_feedback)s,
+                %(choice_b_text)s, %(choice_b_exp_reward)s, %(choice_b_cash_change)s, %(choice_b_reputation_change)s, %(choice_b_feedback)s,
+                %(choice_c_text)s, %(choice_c_exp_reward)s, %(choice_c_cash_change)s, %(choice_c_reputation_change)s, %(choice_c_feedback)s,
+                %(subskill_focus)s)
+        """, scenario)
+    
+    conn.commit()
+    print(f"Seeded {len(scenarios)} Legal Curriculum scenarios (Levels 1-10, 3 worlds)!")
+    cur.close()
+    conn.close()
+
+
 if __name__ == "__main__":
     init_database()
     seed_scenarios()
@@ -2366,3 +2868,4 @@ if __name__ == "__main__":
     seed_marketing_curriculum()
     seed_accounting_curriculum()
     seed_finance_curriculum()
+    seed_legal_curriculum()

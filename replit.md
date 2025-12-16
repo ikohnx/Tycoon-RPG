@@ -142,3 +142,5 @@ The game runs as a web application on port 5000.
 - 2025-12: Accounting curriculum covers: Accounting Equation, Revenue vs Expense, Cash vs Accrual, Income Statement (P&L), Balance Sheet, Cash Flow Statement, Financial Ratios (Quick/Current), FIFO/LIFO Inventory, Budget Variance Analysis, Tax Strategy (GAAP/IFRS)
 - 2025-12: Implemented complete 10-level Strategic Finance Curriculum (30 scenarios across 3 worlds)
 - 2025-12: Finance curriculum covers: Cash Flow Management, ROI, Time Value of Money, Capital Budgeting (Payback Period), Debt Financing, Risk/Return Tradeoff, DCF & NPV, WACC, Equity Financing & Dilution, Mergers & Acquisitions
+- 2025-12: Implemented complete 10-level Legal Curriculum (30 scenarios across 3 worlds)
+- 2025-12: Legal curriculum covers: Business Entity Structure, Contract Essentials, Employee Agreements/NDAs, Leases & Property Law, Licensing & Permits, Torts & Negligence, Trademarks, Patents & Trade Secrets, Litigation & Dispute Resolution, International Law & Governance
