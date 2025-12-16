@@ -168,6 +168,26 @@
                     </div>
                 </div>
                 {% endif %}
+                
+                {% if leaderboard and leaderboard.by_stars %}
+                <div class="stat-card" style="border-color: rgba(255, 215, 0, 0.4); background: linear-gradient(180deg, rgba(255,215,0,0.05), rgba(0,0,0,0));">
+                    <div class="mb-2">
+                        <i class="bi bi-trophy-fill" style="color: #ffd700;"></i>
+                        <small class="text-muted text-uppercase" style="font-size: 0.7rem; letter-spacing: 1px;">Top Players</small>
+                    </div>
+                    {% for player in leaderboard.by_stars[:3] %}
+                    <div class="d-flex justify-content-between align-items-center mb-1" style="font-size: 0.8rem;">
+                        <span>
+                            {% if loop.index == 1 %}<i class="bi bi-award-fill text-warning"></i>{% endif %}
+                            {% if loop.index == 2 %}<i class="bi bi-award-fill text-secondary"></i>{% endif %}
+                            {% if loop.index == 3 %}<i class="bi bi-award-fill" style="color: #cd7f32;"></i>{% endif %}
+                            {{ player.player_name[:12] }}
+                        </span>
+                        <span class="text-warning"><i class="bi bi-star-fill"></i> {{ player.total_stars|int }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
             </div>
         </div>
         

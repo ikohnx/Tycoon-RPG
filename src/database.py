@@ -22,6 +22,7 @@ def init_database():
         CREATE TABLE IF NOT EXISTS player_profiles (
             player_id SERIAL PRIMARY KEY,
             player_name VARCHAR(100) NOT NULL,
+            password_hash VARCHAR(255),
             chosen_world VARCHAR(50) NOT NULL DEFAULT 'Modern',
             chosen_industry VARCHAR(100) NOT NULL DEFAULT 'Restaurant',
             career_path VARCHAR(50) NOT NULL DEFAULT 'entrepreneur',
@@ -33,6 +34,11 @@ def init_database():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             last_played TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
+    """)
+    
+    cur.execute("""
+        ALTER TABLE player_profiles 
+        ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255);
     """)
     
     cur.execute("""

@@ -57,21 +57,52 @@ def index():
 def new_game():
     if request.method == 'POST':
         name = request.form.get('name', 'Entrepreneur').strip()
+        password = request.form.get('password', '').strip()
+        
         if not name:
-            name = 'Entrepreneur'
+            flash('Please enter a name', 'error')
+            return render_template('new_game.html')
+        
+        if len(password) < 4:
+            flash('Password must be at least 4 characters', 'error')
+            return render_template('new_game.html')
+        
+        if engine.player_name_exists(name):
+            flash('That name is already taken. Please choose another.', 'error')
+            return render_template('new_game.html')
+        
         world = request.form.get('world', 'Modern')
         industry = request.form.get('industry', 'Restaurant')
         career_path = request.form.get('career_path', 'entrepreneur')
         
-        player = engine.create_new_player(name, world, industry, career_path)
+        player = engine.create_new_player(name, world, industry, career_path, password)
         session['player_id'] = player.player_id
         
         return redirect(url_for('hub'))
     
     return render_template('new_game.html')
 
-@app.route('/load_game/<int:player_id>')
+@app.route('/load_game/<int:player_id>', methods=['GET', 'POST'])
 def load_game(player_id):
+    if request.method == 'POST':
+        password = request.form.get('password', '')
+        auth_result = engine.authenticate_player(player_id, password)
+        
+        if auth_result['success']:
+            player = engine.load_player(player_id)
+            session['player_id'] = player.player_id
+            return redirect(url_for('hub'))
+        else:
+            flash(auth_result.get('error', 'Login failed'), 'error')
+            return render_template('login.html', player_id=player_id, player_name=request.args.get('name', 'Player'))
+    
+    auth_check = engine.authenticate_player(player_id, None)
+    
+    if auth_check.get('needs_password'):
+        players = engine.get_all_players()
+        player_name = next((p['player_name'] for p in players if p['player_id'] == player_id), 'Player')
+        return render_template('login.html', player_id=player_id, player_name=player_name)
+    
     player = engine.load_player(player_id)
     session['player_id'] = player.player_id
     return redirect(url_for('hub'))
@@ -96,9 +127,10 @@ def hub():
     login_status = engine.get_daily_login_status()
     idle_income = engine.get_idle_income_status()
     prestige_status = engine.get_prestige_status()
+    leaderboard = engine.get_leaderboard(5)
     
     return render_template('hub.html', stats=stats, energy=energy, login_status=login_status, 
-                          idle_income=idle_income, prestige_status=prestige_status)
+                          idle_income=idle_income, prestige_status=prestige_status, leaderboard=leaderboard)
 
 @app.route('/scenarios/<discipline>')
 def scenarios(discipline):

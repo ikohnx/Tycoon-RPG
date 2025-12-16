@@ -22,7 +22,18 @@
                         <input type="text" name="name" 
                                class="form-control bg-dark text-light" 
                                style="border: 2px solid rgba(255,215,0,0.3); font-size: 1.2rem; padding: 12px;"
-                               placeholder="Enter your name" maxlength="50">
+                               placeholder="Enter your name" maxlength="50" required>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label game-subtitle">
+                            <i class="bi bi-shield-lock-fill gold-text"></i> Password <small class="text-muted">(protects your save)</small>
+                        </label>
+                        <input type="password" name="password" 
+                               class="form-control bg-dark text-light" 
+                               style="border: 2px solid rgba(255,215,0,0.3); font-size: 1.1rem; padding: 12px;"
+                               placeholder="Create a password" minlength="4" required>
+                        <small class="text-muted">At least 4 characters. You'll need this to load your game.</small>
                     </div>
                     
                     <div class="section-divider"></div>

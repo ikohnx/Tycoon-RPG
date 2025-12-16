@@ -211,10 +211,15 @@ class GameEngine:
         self.current_player = None
         self.available_scenarios = []
     
-    def create_new_player(self, name: str, world: str = "Modern", industry: str = "Restaurant", career_path: str = "entrepreneur") -> Player:
+    def create_new_player(self, name: str, world: str = "Modern", industry: str = "Restaurant", career_path: str = "entrepreneur", password: str = None) -> Player:
         """Create a new player and initialize their progress."""
+        import hashlib
         conn = get_connection()
         cur = conn.cursor()
+        
+        password_hash = None
+        if password:
+            password_hash = hashlib.sha256(password.encode()).hexdigest()
         
         if career_path == "employee":
             starting_cash = 500.0
@@ -228,10 +233,10 @@ class GameEngine:
             job_level = 0
         
         cur.execute("""
-            INSERT INTO player_profiles (player_name, chosen_world, chosen_industry, career_path, job_title, job_level, total_cash, business_reputation)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO player_profiles (player_name, password_hash, chosen_world, chosen_industry, career_path, job_title, job_level, total_cash, business_reputation)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING player_id
-        """, (name, world, industry, career_path, job_title, job_level, starting_cash, starting_reputation))
+        """, (name, password_hash, world, industry, career_path, job_title, job_level, starting_cash, starting_reputation))
         
         player_id = cur.fetchone()['player_id']
         
@@ -278,16 +283,53 @@ class GameEngine:
         return player
     
     def get_all_players(self) -> list:
-        """Get list of all saved players."""
+        """Get list of all saved players (names only for login, no sensitive data)."""
         conn = get_connection()
         cur = conn.cursor()
         
-        cur.execute("SELECT player_id, player_name, chosen_world, chosen_industry, total_cash FROM player_profiles ORDER BY last_played DESC")
+        cur.execute("SELECT player_id, player_name, chosen_world, chosen_industry, total_cash, password_hash IS NOT NULL as has_password FROM player_profiles ORDER BY last_played DESC")
         players = cur.fetchall()
         
         cur.close()
         conn.close()
         return players
+    
+    def authenticate_player(self, player_id: int, password: str = None) -> dict:
+        """Authenticate a player by ID and password."""
+        import hashlib
+        conn = get_connection()
+        cur = conn.cursor()
+        
+        cur.execute("SELECT player_id, player_name, password_hash FROM player_profiles WHERE player_id = %s", (player_id,))
+        player = cur.fetchone()
+        
+        cur.close()
+        conn.close()
+        
+        if not player:
+            return {"success": False, "error": "Player not found"}
+        
+        if player['password_hash']:
+            if not password:
+                return {"success": False, "error": "Password required", "needs_password": True}
+            
+            input_hash = hashlib.sha256(password.encode()).hexdigest()
+            if input_hash != player['password_hash']:
+                return {"success": False, "error": "Incorrect password"}
+        
+        return {"success": True, "player_id": player['player_id'], "player_name": player['player_name']}
+    
+    def player_name_exists(self, name: str) -> bool:
+        """Check if a player name already exists."""
+        conn = get_connection()
+        cur = conn.cursor()
+        
+        cur.execute("SELECT COUNT(*) as count FROM player_profiles WHERE LOWER(player_name) = LOWER(%s)", (name,))
+        result = cur.fetchone()
+        
+        cur.close()
+        conn.close()
+        return result['count'] > 0
     
     def get_scenario_by_id(self, scenario_id: int) -> dict:
         """Get a specific scenario by ID."""
@@ -474,11 +516,18 @@ class GameEngine:
         feedback = scenario[f'{choice_prefix}_feedback']
         
         discipline = scenario['discipline']
+        
+        advisor_bonuses = self.get_advisor_bonuses(discipline)
+        exp_bonus_pct = advisor_bonuses.get('exp_boost', 0) / 100
+        gold_bonus_pct = advisor_bonuses.get('gold_boost', 0) / 100
+        rep_bonus = advisor_bonuses.get('reputation_boost', 0)
+        
         weighted_exp = calculate_weighted_exp(
             base_exp, 
             self.current_player.industry, 
             discipline
         )
+        weighted_exp = int(weighted_exp * (1 + exp_bonus_pct))
         
         progress = self.current_player.discipline_progress[discipline]
         old_exp = progress['total_exp']
@@ -490,8 +539,11 @@ class GameEngine:
         progress['exp'] = new_exp
         progress['level'] = new_level
         
-        self.current_player.cash += cash_change
-        self.current_player.reputation = max(0, min(100, self.current_player.reputation + reputation_change))
+        boosted_cash = cash_change * (1 + gold_bonus_pct)
+        boosted_rep = reputation_change + rep_bonus
+        
+        self.current_player.cash += boosted_cash
+        self.current_player.reputation = max(0, min(100, self.current_player.reputation + boosted_rep))
         
         promotion = None
         if self.current_player.career_path == 'employee' and leveled_up:
@@ -525,8 +577,8 @@ class GameEngine:
             "success": True,
             "exp_gained": weighted_exp,
             "base_exp": base_exp,
-            "cash_change": cash_change,
-            "reputation_change": reputation_change,
+            "cash_change": boosted_cash,
+            "reputation_change": boosted_rep,
             "feedback": feedback,
             "leveled_up": leveled_up,
             "old_level": old_level,
@@ -534,11 +586,13 @@ class GameEngine:
             "discipline": discipline,
             "new_total_exp": new_exp,
             "promotion": promotion,
-            "stars_earned": stars
+            "stars_earned": stars,
+            "advisor_bonuses": advisor_bonuses
         }
     
     def _calculate_stars(self, scenario: dict, choice: str) -> int:
-        """Calculate stars earned based on choice quality (1-3 stars)."""
+        """Calculate stars earned based on choice quality (1-3 stars).
+        Equipment luck bonus can upgrade stars."""
         exp_rewards = [
             scenario.get('choice_a_exp_reward', 0),
             scenario.get('choice_b_exp_reward', 0),
@@ -553,11 +607,21 @@ class GameEngine:
         max_exp = max(exp_rewards)
         
         if chosen_exp >= max_exp:
-            return 3
+            stars = 3
         elif chosen_exp >= max_exp * 0.7:
-            return 2
+            stars = 2
         else:
-            return 1
+            stars = 1
+        
+        equipment_bonuses = self.get_equipment_bonuses()
+        luck_bonus = equipment_bonuses.get('luck', 0)
+        import random
+        if luck_bonus > 0 and stars < 3:
+            luck_chance = luck_bonus * 0.02
+            if random.random() < luck_chance:
+                stars += 1
+        
+        return stars
     
     def get_challenge_by_id(self, scenario_id: int) -> dict:
         """Get a challenge scenario with parsed config."""
@@ -683,11 +747,18 @@ class GameEngine:
         adjusted_exp = int(base_exp * exp_multiplier[stars])
         
         discipline = scenario['discipline']
+        
+        advisor_bonuses = self.get_advisor_bonuses(discipline)
+        exp_bonus_pct = advisor_bonuses.get('exp_boost', 0) / 100
+        gold_bonus_pct = advisor_bonuses.get('gold_boost', 0) / 100
+        rep_bonus = advisor_bonuses.get('reputation_boost', 0)
+        
         weighted_exp = calculate_weighted_exp(
             adjusted_exp,
             self.current_player.industry,
             discipline
         )
+        weighted_exp = int(weighted_exp * (1 + exp_bonus_pct))
         
         progress = self.current_player.discipline_progress[discipline]
         old_exp = progress['total_exp']
@@ -699,8 +770,8 @@ class GameEngine:
         progress['exp'] = new_exp
         progress['level'] = new_level
         
-        cash_change = float(scenario['choice_a_cash_change'] or 0) * exp_multiplier[stars]
-        reputation_change = int((scenario['choice_a_reputation_change'] or 0) * exp_multiplier[stars])
+        cash_change = float(scenario['choice_a_cash_change'] or 0) * exp_multiplier[stars] * (1 + gold_bonus_pct)
+        reputation_change = int((scenario['choice_a_reputation_change'] or 0) * exp_multiplier[stars]) + rep_bonus
         
         self.current_player.cash += cash_change
         self.current_player.reputation = max(0, min(100, self.current_player.reputation + reputation_change))
@@ -1554,6 +1625,104 @@ class GameEngine:
             "new_rate": new_rate,
             "new_cash": self.current_player.cash
         }
+    
+    def get_leaderboard(self, limit: int = 10) -> dict:
+        """Get top players for leaderboard display."""
+        conn = get_connection()
+        cur = conn.cursor()
+        
+        cur.execute("""
+            SELECT p.player_id, p.player_name, p.total_cash, p.business_reputation, p.chosen_world,
+                   COALESCE(SUM(dp.current_level), 0) as total_levels,
+                   COALESCE(SUM(cs.stars), 0) as total_stars
+            FROM player_profiles p
+            LEFT JOIN player_discipline_progress dp ON p.player_id = dp.player_id
+            LEFT JOIN (SELECT player_id, SUM(stars_earned) as stars FROM completed_scenarios GROUP BY player_id) cs ON p.player_id = cs.player_id
+            GROUP BY p.player_id, p.player_name, p.total_cash, p.business_reputation, p.chosen_world
+            ORDER BY total_stars DESC, total_levels DESC, total_cash DESC
+            LIMIT %s
+        """, (limit,))
+        by_stars = [dict(row) for row in cur.fetchall()]
+        
+        cur.execute("""
+            SELECT p.player_id, p.player_name, p.total_cash, p.chosen_world
+            FROM player_profiles p
+            ORDER BY p.total_cash DESC
+            LIMIT %s
+        """, (limit,))
+        by_wealth = [dict(row) for row in cur.fetchall()]
+        
+        cur.close()
+        conn.close()
+        
+        return {
+            "by_stars": by_stars,
+            "by_wealth": by_wealth
+        }
+    
+    def get_equipment_bonuses(self) -> dict:
+        """Get stat bonuses from equipped items."""
+        if not self.current_player:
+            return {"charisma": 0, "intelligence": 0, "luck": 0, "negotiation": 0}
+        
+        conn = get_connection()
+        cur = conn.cursor()
+        
+        cur.execute("""
+            SELECT e.stat_bonus_type, e.stat_bonus_value
+            FROM equipment e
+            JOIN player_equipment pe ON e.equipment_id = pe.equipment_id
+            WHERE pe.player_id = %s AND pe.is_equipped = TRUE
+        """, (self.current_player.player_id,))
+        equipped = cur.fetchall()
+        
+        cur.close()
+        conn.close()
+        
+        bonuses = {"charisma": 0, "intelligence": 0, "luck": 0, "negotiation": 0}
+        for item in equipped:
+            stat_type = item['stat_bonus_type']
+            if stat_type in bonuses:
+                bonuses[stat_type] += item['stat_bonus_value']
+        
+        return bonuses
+    
+    def get_advisor_bonuses(self, discipline: str = None) -> dict:
+        """Get active advisor bonuses that apply to scenarios.
+        
+        Returns bonuses like:
+        - exp_boost: percentage to add to EXP (e.g., 10 = +10%)
+        - gold_boost: percentage to add to gold rewards
+        - reputation_boost: flat bonus to reputation gains
+        """
+        if not self.current_player:
+            return {"exp_boost": 0, "gold_boost": 0, "reputation_boost": 0}
+        
+        conn = get_connection()
+        cur = conn.cursor()
+        
+        cur.execute("""
+            SELECT a.discipline_specialty, a.bonus_type, a.bonus_value, pa.level
+            FROM advisors a
+            JOIN player_advisors pa ON a.advisor_id = pa.advisor_id
+            WHERE pa.player_id = %s AND pa.is_active = TRUE
+        """, (self.current_player.player_id,))
+        active_advisors = cur.fetchall()
+        
+        cur.close()
+        conn.close()
+        
+        bonuses = {"exp_boost": 0, "gold_boost": 0, "reputation_boost": 0}
+        
+        for advisor in active_advisors:
+            applies = discipline is None or advisor['discipline_specialty'] == discipline
+            if applies:
+                bonus_type = advisor['bonus_type']
+                bonus_value = advisor['bonus_value'] * advisor['level']
+                if bonus_type in bonuses:
+                    bonuses[bonus_type] += bonus_value
+        
+        return bonuses
     
     def get_advisors(self) -> dict:
         """Get all advisors and player's recruited advisors."""
