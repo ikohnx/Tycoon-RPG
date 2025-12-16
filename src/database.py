@@ -1666,6 +1666,191 @@ def seed_marketing_curriculum():
     conn.close()
 
 
+def seed_accounting_curriculum():
+    """Seed the complete 10-level Accounting/Finance Curriculum for Modern/Restaurant."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM scenario_master WHERE discipline = 'Finance' AND scenario_title LIKE 'L1:%'")
+    result = cur.fetchone()
+    if result['count'] > 0:
+        print("Accounting curriculum already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    scenarios = [
+        # LEVEL 1: The Accounting Equation (Assets = Liabilities + Equity)
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Finance", "required_level": 1,
+         "scenario_title": "L1: The Accounting Equation", 
+         "scenario_narrative": "Your Finance Director draws on a whiteboard: 'Every business transaction follows one rule - Assets = Liabilities + Equity. If your restaurant has $50,000 in assets, a $20,000 bank loan (liability), what's your equity?' She tests your understanding.",
+         "choice_a_text": "$30,000 - because Assets ($50K) minus Liabilities ($20K) equals Equity", 
+         "choice_a_exp_reward": 100, "choice_a_cash_change": 0, "choice_a_reputation_change": 3,
+         "choice_a_feedback": "Correct! The accounting equation always balances: $50,000 = $20,000 + $30,000. Equity represents what you actually OWN after paying debts.",
+         "choice_b_text": "$70,000 - I add assets and liabilities together", 
+         "choice_b_exp_reward": 40, "choice_b_cash_change": 0, "choice_b_reputation_change": 0,
+         "choice_b_feedback": "Not quite. Liabilities are what you OWE, not own. Equity = Assets - Liabilities. You'd have $30,000 in equity.",
+         "choice_c_text": "$50,000 - the equity equals the assets", 
+         "choice_c_exp_reward": 50, "choice_c_cash_change": 0, "choice_c_reputation_change": 1,
+         "choice_c_feedback": "That would only be true if you had no debt. With a $20K loan, your equity is $30K. Always subtract what you owe!", 
+         "subskill_focus": "Accounting Fundamentals"},
+        
+        # LEVEL 2: Revenue vs Expense (Key Terms)
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Finance", "required_level": 2,
+         "scenario_title": "L2: Revenue vs Expense", 
+         "scenario_narrative": "Your accountant reviews last month: 'You sold $40,000 worth of food (revenue), but spent $15,000 on ingredients, $8,000 on wages, and $5,000 on rent (expenses).' She asks you to calculate the profit.",
+         "choice_a_text": "$12,000 profit - Revenue ($40K) minus all Expenses ($28K)", 
+         "choice_a_exp_reward": 100, "choice_a_cash_change": 120, "choice_a_reputation_change": 4,
+         "choice_a_feedback": "Excellent! Profit = Revenue - Expenses. $40,000 - ($15,000 + $8,000 + $5,000) = $12,000. You understand the fundamental profit calculation!",
+         "choice_b_text": "$25,000 profit - I only subtracted ingredients", 
+         "choice_b_exp_reward": 50, "choice_b_cash_change": 0, "choice_b_reputation_change": 1,
+         "choice_b_feedback": "You forgot wages and rent! All operating expenses must be subtracted. Real profit is $12,000.",
+         "choice_c_text": "$40,000 profit - that's what we made in sales", 
+         "choice_c_exp_reward": 30, "choice_c_cash_change": 0, "choice_c_reputation_change": 0,
+         "choice_c_feedback": "Revenue is NOT profit! You must subtract expenses. Many businesses fail because owners confuse revenue with profit.", 
+         "subskill_focus": "Profit Calculation"},
+        
+        # LEVEL 3: Cash vs Accrual Accounting
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Finance", "required_level": 3,
+         "scenario_title": "L3: Cash vs Accrual Accounting", 
+         "scenario_narrative": "A corporate client orders $5,000 worth of catering but won't pay for 30 days. Your accountant asks: 'Under CASH accounting, we record revenue when paid. Under ACCRUAL accounting, we record when earned. Which should we use, and when do we record this sale?'",
+         "choice_a_text": "Accrual - record the $5,000 now when service is delivered", 
+         "choice_a_exp_reward": 110, "choice_a_cash_change": 0, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Correct! Accrual accounting matches revenue to when it's EARNED, not received. Most larger businesses use accrual for accurate financial pictures.",
+         "choice_b_text": "Cash - record the $5,000 in 30 days when we receive payment", 
+         "choice_b_exp_reward": 80, "choice_b_cash_change": 0, "choice_b_reputation_change": 3,
+         "choice_b_feedback": "Cash accounting is simpler and shows actual cash flow, but can misrepresent your business's real activity. Small businesses often start with cash basis.",
+         "choice_c_text": "Record half now and half when paid", 
+         "choice_c_exp_reward": 40, "choice_c_cash_change": 0, "choice_c_reputation_change": 1,
+         "choice_c_feedback": "You can't mix methods! Choose one system and apply it consistently. GAAP requires accrual for larger businesses.", 
+         "subskill_focus": "Accounting Methods"},
+        
+        # LEVEL 4: Income Statement (P&L)
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Finance", "required_level": 4,
+         "scenario_title": "L4: Reading the Income Statement", 
+         "scenario_narrative": "Your Finance Director presents the P&L: Revenue $100,000, Cost of Goods Sold $35,000, Operating Expenses $40,000, Interest $5,000, Taxes $5,000. She asks: 'What's our Gross Profit and Net Income?'",
+         "choice_a_text": "Gross Profit: $65,000 (Revenue - COGS), Net Income: $15,000 (after all expenses)", 
+         "choice_a_exp_reward": 120, "choice_a_cash_change": 150, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Perfect! Gross Profit = Revenue - COGS = $65,000. Net Income = Gross Profit - Operating Expenses - Interest - Taxes = $15,000. You read a P&L like a pro!",
+         "choice_b_text": "Gross Profit: $25,000, Net Income: $15,000", 
+         "choice_b_exp_reward": 60, "choice_b_cash_change": 0, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "Your Net Income is right, but Gross Profit only subtracts COGS from Revenue. Gross Profit = $100K - $35K = $65,000.",
+         "choice_c_text": "Both are $15,000 - that's what's left after all expenses", 
+         "choice_c_exp_reward": 50, "choice_c_cash_change": 0, "choice_c_reputation_change": 1,
+         "choice_c_feedback": "Net Income is $15K, but Gross Profit is higher ($65K). Gross Profit shows profitability before overhead - a key metric for restaurants!", 
+         "subskill_focus": "Income Statement"},
+        
+        # LEVEL 5: Balance Sheet
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Finance", "required_level": 5,
+         "scenario_title": "L5: Understanding the Balance Sheet", 
+         "scenario_narrative": "An investor asks to see your Balance Sheet. Your accountant shows: Current Assets $30,000 (cash, inventory), Fixed Assets $70,000 (equipment), Current Liabilities $20,000 (payables), Long-term Debt $40,000 (loan), Owner's Equity $40,000. The investor asks: 'Is this business healthy?'",
+         "choice_a_text": "Yes - Assets ($100K) equal Liabilities + Equity ($100K), and we have positive equity", 
+         "choice_a_exp_reward": 110, "choice_a_cash_change": 500, "choice_a_reputation_change": 6,
+         "choice_a_feedback": "Great analysis! The balance sheet balances, equity is positive at $40K, and current ratio (30K/20K = 1.5) shows short-term health. You impressed the investor!",
+         "choice_b_text": "No - we have $60,000 in total debt, that's too much", 
+         "choice_b_exp_reward": 70, "choice_b_cash_change": 0, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "Debt isn't inherently bad! Your debt-to-equity ratio is 1.5 ($60K/$40K), which is reasonable for a restaurant. Focus on ability to pay, not total debt.",
+         "choice_c_text": "I need more information to assess health", 
+         "choice_c_exp_reward": 90, "choice_c_cash_change": 200, "choice_c_reputation_change": 4,
+         "choice_c_feedback": "Smart answer! Balance sheets show a snapshot, but trends, cash flow, and industry context matter too. The investor appreciates your caution.", 
+         "subskill_focus": "Balance Sheet"},
+        
+        # LEVEL 6: Cash Flow Statement
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Finance", "required_level": 6,
+         "scenario_title": "L6: The Three Types of Cash Flow", 
+         "scenario_narrative": "Your Finance Director explains: 'Cash Flow has 3 sections: Operating (daily business), Investing (buying/selling assets), Financing (loans, equity).' This month: customers paid $50K (Operating +), bought $20K equipment (Investing -), took $10K loan (Financing +). What's net cash flow?",
+         "choice_a_text": "+$40,000 net cash flow ($50K - $20K + $10K)", 
+         "choice_a_exp_reward": 120, "choice_a_cash_change": 400, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Correct! Operating +$50K, Investing -$20K, Financing +$10K = Net +$40K. You understand how cash moves through the three channels!",
+         "choice_b_text": "+$60,000 - I added all the numbers", 
+         "choice_b_exp_reward": 50, "choice_b_cash_change": 0, "choice_b_reputation_change": 1,
+         "choice_b_feedback": "Equipment purchase is a cash OUTFLOW (negative). Investing activities that buy assets reduce cash. Net is +$40K.",
+         "choice_c_text": "+$30,000 - I subtracted the loan since it's debt", 
+         "choice_c_exp_reward": 60, "choice_c_cash_change": 0, "choice_c_reputation_change": 2,
+         "choice_c_feedback": "Loans INCREASE cash when received (even though they're debt). Repaying loans decreases cash. This inflow gives you +$40K net.", 
+         "subskill_focus": "Cash Flow Statement"},
+        
+        # LEVEL 7: Financial Ratios (Quick and Current Ratios)
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Finance", "required_level": 7,
+         "scenario_title": "L7: Analyzing Financial Ratios", 
+         "scenario_narrative": "A bank is considering a loan. They examine your ratios: Current Assets $30,000, Inventory $10,000, Current Liabilities $20,000. The banker asks: 'What's your Current Ratio and Quick Ratio? We need Current Ratio above 1.5 and Quick Ratio above 1.0.'",
+         "choice_a_text": "Current Ratio: 1.5 (30K/20K), Quick Ratio: 1.0 ((30K-10K)/20K) - We qualify!", 
+         "choice_a_exp_reward": 130, "choice_a_cash_change": 1000, "choice_a_reputation_change": 7,
+         "choice_a_feedback": "Perfect calculations! Current Ratio = Current Assets / Current Liabilities. Quick Ratio excludes inventory (harder to liquidate). You secured the loan!",
+         "choice_b_text": "Both ratios are 1.5 - we divide assets by liabilities", 
+         "choice_b_exp_reward": 70, "choice_b_cash_change": 0, "choice_b_reputation_change": 2,
+         "choice_b_feedback": "Current Ratio is 1.5, but Quick Ratio EXCLUDES inventory: (30K-10K)/20K = 1.0. Inventory isn't as liquid as cash!",
+         "choice_c_text": "Current Ratio: 0.67, Quick Ratio: 0.5 - we're in trouble", 
+         "choice_c_exp_reward": 40, "choice_c_cash_change": 0, "choice_c_reputation_change": 0,
+         "choice_c_feedback": "You inverted the formula! Assets go on TOP: Current Ratio = Assets/Liabilities = 30K/20K = 1.5, not 20K/30K.", 
+         "subskill_focus": "Financial Ratios"},
+        
+        # LEVEL 8: Inventory Valuation (FIFO/LIFO)
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Finance", "required_level": 8,
+         "scenario_title": "L8: FIFO vs LIFO Inventory Valuation", 
+         "scenario_narrative": "Ingredient prices are rising. You bought flour at $10/bag (January, 100 bags) and $15/bag (February, 100 bags). You used 120 bags this month. Your accountant asks: 'FIFO (First-In-First-Out) or LIFO (Last-In-First-Out)? This affects your reported profit and taxes.'",
+         "choice_a_text": "FIFO - Report $1,300 COGS (100×$10 + 20×$15), higher profit, higher taxes", 
+         "choice_a_exp_reward": 120, "choice_a_cash_change": -100, "choice_a_reputation_change": 5,
+         "choice_a_feedback": "Correct FIFO calculation! Using older $10 bags first shows lower COGS, higher profit, but higher taxes. FIFO is standard for restaurants (matches actual usage).",
+         "choice_b_text": "LIFO - Report $1,700 COGS (100×$15 + 20×$10), lower profit, lower taxes", 
+         "choice_b_exp_reward": 110, "choice_b_cash_change": 100, "choice_b_reputation_change": 5,
+         "choice_b_feedback": "Correct LIFO math! Using newer $15 bags first shows higher COGS, lower profit, lower taxes. LIFO saves taxes when prices rise, but isn't allowed under IFRS.",
+         "choice_c_text": "Average cost - $12.50 per bag for $1,500 COGS", 
+         "choice_c_exp_reward": 100, "choice_c_cash_change": 0, "choice_c_reputation_change": 4,
+         "choice_c_feedback": "Weighted average is a third valid method! Simple and smooths out price fluctuations. Good choice for volatile ingredients.", 
+         "subskill_focus": "Inventory Valuation"},
+        
+        # LEVEL 9: Budgeting and Variance Analysis
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Finance", "required_level": 9,
+         "scenario_title": "L9: Budget Variance Analysis", 
+         "scenario_narrative": "You budgeted $10,000 for food costs but actually spent $12,000. Your Finance Director asks: 'That's a $2,000 unfavorable variance (20% over budget). Should we investigate price variance (costs went up) or quantity variance (we used more)?'",
+         "choice_a_text": "Investigate both - break down variance into price and quantity components", 
+         "choice_a_exp_reward": 140, "choice_a_cash_change": 200, "choice_a_reputation_change": 7,
+         "choice_a_feedback": "Excellent variance analysis! Total Variance = Price Variance + Quantity Variance. Maybe suppliers raised prices (price) AND we wasted ingredients (quantity). Root cause analysis prevents future overruns.",
+         "choice_b_text": "Focus on quantity - we probably over-ordered or wasted food", 
+         "choice_b_exp_reward": 100, "choice_b_cash_change": 100, "choice_b_reputation_change": 4,
+         "choice_b_feedback": "Quantity variance is often controllable, but don't ignore price! If suppliers raised rates, renegotiating saves more than reducing waste.",
+         "choice_c_text": "It's only 20% over - acceptable variance, don't investigate", 
+         "choice_c_exp_reward": 60, "choice_c_cash_change": -200, "choice_c_reputation_change": 1,
+         "choice_c_feedback": "20% is significant! $2,000 monthly = $24,000 yearly. Small variances compound. Always investigate material deviations from budget.", 
+         "subskill_focus": "Budgeting"},
+        
+        # LEVEL 10: Tax Strategy and Compliance (GAAP/IFRS)
+        {"world_type": "Modern", "industry": "Restaurant", "discipline": "Finance", "required_level": 10,
+         "scenario_title": "L10: Tax Strategy and Accounting Standards", 
+         "scenario_narrative": "Your accountant explains: 'GAAP (US) and IFRS (International) are accounting frameworks that determine how we report finances. We can also legally reduce taxes through depreciation methods, timing of expenses, and entity structure.' An investor from Europe asks about your compliance. What's your strategy?",
+         "choice_a_text": "Follow GAAP with aggressive depreciation and strategic expense timing to minimize taxes legally", 
+         "choice_a_exp_reward": 150, "choice_a_cash_change": 500, "choice_a_reputation_change": 8,
+         "choice_a_feedback": "Masterful! Accelerated depreciation front-loads deductions, reducing early-year taxes. Combined with proper expense timing, this maximizes cash flow while staying compliant. CFO-level thinking!",
+         "choice_b_text": "Follow GAAP strictly with conservative accounting - less risk of audit issues", 
+         "choice_b_exp_reward": 110, "choice_b_cash_change": 0, "choice_b_reputation_change": 6,
+         "choice_b_feedback": "Conservative accounting is defensible and builds credibility with investors. You pay more taxes now but have cleaner books for future funding rounds.",
+         "choice_c_text": "Use whatever methods show the highest profit to impress investors", 
+         "choice_c_exp_reward": 50, "choice_c_cash_change": -500, "choice_c_reputation_change": -5,
+         "choice_c_feedback": "Dangerous! Aggressive accounting to inflate profits can lead to fraud charges. Enron collapsed this way. Always prioritize compliance over appearance.", 
+         "subskill_focus": "Tax Strategy"},
+    ]
+    
+    for scenario in scenarios:
+        cur.execute("""
+            INSERT INTO scenario_master (world_type, industry, discipline, required_level, scenario_title, scenario_narrative,
+                choice_a_text, choice_a_exp_reward, choice_a_cash_change, choice_a_reputation_change, choice_a_feedback,
+                choice_b_text, choice_b_exp_reward, choice_b_cash_change, choice_b_reputation_change, choice_b_feedback,
+                choice_c_text, choice_c_exp_reward, choice_c_cash_change, choice_c_reputation_change, choice_c_feedback,
+                subskill_focus)
+            VALUES (%(world_type)s, %(industry)s, %(discipline)s, %(required_level)s, %(scenario_title)s, %(scenario_narrative)s,
+                %(choice_a_text)s, %(choice_a_exp_reward)s, %(choice_a_cash_change)s, %(choice_a_reputation_change)s, %(choice_a_feedback)s,
+                %(choice_b_text)s, %(choice_b_exp_reward)s, %(choice_b_cash_change)s, %(choice_b_reputation_change)s, %(choice_b_feedback)s,
+                %(choice_c_text)s, %(choice_c_exp_reward)s, %(choice_c_cash_change)s, %(choice_c_reputation_change)s, %(choice_c_feedback)s,
+                %(subskill_focus)s)
+        """, scenario)
+    
+    conn.commit()
+    print(f"Seeded {len(scenarios)} Accounting Curriculum scenarios (Levels 1-10)!")
+    cur.close()
+    conn.close()
+
+
 if __name__ == "__main__":
     init_database()
     seed_scenarios()
@@ -1684,3 +1869,4 @@ if __name__ == "__main__":
     seed_industrial_rivals()
     seed_modern_restaurant_full()
     seed_marketing_curriculum()
+    seed_accounting_curriculum()

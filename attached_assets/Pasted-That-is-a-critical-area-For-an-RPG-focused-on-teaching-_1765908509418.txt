@@ -1,0 +1,38 @@
+That is a critical area! For an RPG focused on teaching business, Accounting is the bedrock. It's the language of business, and mastering it (Level 10) is essential for strategic decision-making.
+Just like Marketing, we need to structure the 10 levels from absolute zero knowledge, moving from defining basic terms to performing advanced financial analysis across the 3 worlds.
+Here is the complete Accounting Curriculum, designed to progressively teach a beginner everything they need to know to manage the financial health of their in-game business.
+💰 Accounting Curriculum: The 10-Level Masterclass
+Tier 1: Defining the Fundamentals (Levels 1-3)
+Goal: Understanding the core vocabulary, the accounting equation, and the difference between cash and profit.
+| Level | Key Learning Objective | Concept Taught (Real-World Skill) |
+|---|---|---|
+| L1 | The Accounting Equation | Assets = Liabilities + Equity: Learning the fundamental formula that all financial reporting is built upon. Scenario: Tracking initial startup funds and equipment purchased. |
+| L2 | Defining Key Terms | Revenue vs. Expense: Understanding the difference between money coming in (revenue) and money going out (expenses). Scenario: Recording sales vs. recording bills for supplies. |
+| L3 | Cash vs. Accrual Accounting | Cash Basis (Simple) vs. Accrual Basis (Complex): Understanding when to record a transaction. Scenario: Recording a large sale today, even though the cash won't arrive until next month. |
+Tier 2: The Three Financial Statements (Levels 4-6)
+Goal: Learning to build, read, and understand the three essential reports that define a business's health.
+| Level | Key Learning Objective | Concept Taught (Real-World Skill) |
+|---|---|---|
+| L4 | The Income Statement (P&L) | Profit and Loss (P&L): Learning how to calculate Gross Profit and Net Income. This is the statement of performance. Scenario: Identifying why revenue is high but net income is low (high Cost of Goods Sold). |
+| L5 | The Balance Sheet | Snapshot of Health: Learning to categorize Assets (what you own) and Liabilities (what you owe) at a specific point in time. Scenario: Creating the Balance Sheet after taking out a loan. |
+| L6 | The Cash Flow Statement | Tracking Money Movement: Learning the three activities (Operating, Investing, Financing) to see where the cash really went. Scenario: Tracking the cash used to buy a major piece of equipment (Investing Activity). |
+Tier 3: Internal Analysis & Control (Levels 7-8)
+Goal: Using accounting data to make operational and strategic decisions, and preventing fraud.
+| Level | Key Learning Objective | Concept Taught (Real-World Skill) |
+|---|---|---|
+| L7 | Financial Ratios (Liquidity) | Quick and Current Ratios: Using metrics to determine if the business has enough liquid cash to meet short-term obligations. Scenario: A creditor is asking for a report on the company's ability to pay upcoming debts. |
+| L8 | Inventory and Costing | Inventory Valuation (FIFO/LIFO): Understanding how to value inventory and the impact of different costing methods on the P&L statement. Scenario: Choosing between valuing inventory based on the oldest costs (FIFO) or newest costs (LIFO). |
+Tier 4: Strategy & Mastery (Levels 9-10)
+Goal: Advanced analysis, forecasting, and mastering compliance and regulatory issues.
+| Level | Key Learning Objective | Concept Taught (Real-World Skill) |
+|---|---|---|
+| L9 | Budgeting and Variance Analysis | Forecasting and Control: Creating detailed operating budgets and comparing them against actual results (Variance Analysis) to identify spending problems. Scenario: Budgeted labor costs were 20% over actual; the player must determine the cause. |
+| L10 | Tax Strategy and Compliance | Regulatory Compliance (GAAP/IFRS) & Tax Planning: Understanding legal standards and using accounting to minimize tax liability ethically. Scenario: Deciding how to classify a large capital expenditure to maximize depreciation benefits. |
+Implementation Across the 3 Worlds
+This curriculum applies universally, but the transactions are themed:
+| Level | Skill Taught | Modern World (Restaurant) | Fantasy World (Magic Shop) | Sci-Fi World (Construction) |
+|---|---|---|---|---|
+| L4 | Income Statement (P&L) | Reporting profit after deducting the Cost of Goods Sold (COGS) for ingredients. | Reporting profit after deducting the Cost of Spells/Potions (COSS) for ingredients. | Reporting profit after deducting the Cost of Contracted Services (COCS) for raw materials. |
+| L5 | Balance Sheet | Listing Assets as ovens, fridges, and cash; Liabilities as bank loans. | Listing Assets as magical artifacts, enchanted weapons, and gold reserves; Liabilities as guild debts. | Listing Assets as heavy machinery, orbital claims; Liabilities as intergalactic trade credit. |
+| L8 | Inventory Valuation | Using FIFO/LIFO to value perishable food inventory. | Using FIFO/LIFO to value scrolls/potions with limited shelf life or quickly depreciating magic. | Using FIFO/LIFO to value standard vs. rare-earth alloy inventory. |
+By completing this curriculum, the player will not just pass a book-keeping test, but will have the foundational knowledge to read and manipulate financial data to make strategic business moves.

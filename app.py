@@ -6,7 +6,7 @@ from src.database import (init_database, seed_scenarios, seed_achievements, seed
                           seed_milestones, seed_weekly_challenges, seed_avatar_options,
                           seed_fantasy_scenarios, seed_industrial_scenarios, 
                           seed_industrial_events, seed_industrial_rivals, seed_modern_restaurant_full,
-                          seed_marketing_curriculum)
+                          seed_marketing_curriculum, seed_accounting_curriculum)
 from src.game_engine import GameEngine
 from src.leveling import get_level_title, get_progress_bar, get_exp_to_next_level
 
@@ -31,6 +31,7 @@ seed_industrial_events()
 seed_industrial_rivals()
 seed_modern_restaurant_full()
 seed_marketing_curriculum()
+seed_accounting_curriculum()
 
 engine = GameEngine()
 
