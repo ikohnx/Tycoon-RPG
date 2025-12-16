@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Business Dashboard - Business Tycoon RPG{% endblock %}
+{% block title %}Command Center - Tycoon RPG{% endblock %}
 
 {% block body_class %}world-{{ stats.world|lower }}{% endblock %}
 
@@ -8,122 +8,159 @@
 <div class="row fade-in">
     <div class="col-12 mb-4">
         <div class="d-flex justify-content-between align-items-center">
-            <h2><i class="bi bi-graph-up"></i> Business Dashboard</h2>
-            <a href="{{ url_for('hub') }}" class="btn btn-outline-light">
+            <h2 class="game-title">
+                <i class="bi bi-speedometer2" style="-webkit-text-fill-color: #ffd700;"></i> Command Center
+            </h2>
+            <a href="{{ url_for('hub') }}" class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-left"></i> Back to Hub
             </a>
         </div>
     </div>
     
     <div class="col-md-4">
-        <div class="card mb-4">
-            <div class="card-header bg-success">
-                <h5 class="mb-0"><i class="bi bi-cash-stack"></i> Financial Overview</h5>
+        <div class="card mb-4" style="border-color: rgba(80, 200, 120, 0.5);">
+            <div class="card-header" style="background: linear-gradient(180deg, rgba(80,200,120,0.2) 0%, rgba(0,0,0,0.3) 100%); border-color: rgba(80,200,120,0.3);">
+                <h5 class="mb-0" style="color: #50c878;">
+                    <i class="bi bi-coin"></i> Treasury
+                </h5>
             </div>
-            <div class="card-body">
-                <div class="text-center mb-3">
-                    <h2 class="text-success">${{ "{:,.2f}".format(stats.cash) }}</h2>
-                    <small class="text-muted">Current Cash</small>
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="bi bi-cash-stack display-3" style="color: #50c878; filter: drop-shadow(0 0 15px rgba(80,200,120,0.5));"></i>
                 </div>
-                <hr>
-                <div class="d-flex justify-content-between">
-                    <span>Reputation</span>
-                    <span class="text-warning">{{ stats.reputation }}/100</span>
-                </div>
-                <div class="progress mt-2" style="height: 10px;">
-                    <div class="progress-bar bg-warning" style="width: {{ stats.reputation }}%"></div>
+                <h2 style="color: #50c878; font-family: 'Cinzel', serif; text-shadow: 0 0 20px rgba(80,200,120,0.5);">
+                    ${{ "{:,.0f}".format(stats.cash) }}
+                </h2>
+                <p class="game-subtitle mb-3">Gold in Vault</p>
+                
+                <div class="section-divider"></div>
+                
+                <div class="stat-card mt-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="game-subtitle">
+                            <i class="bi bi-star-fill text-warning"></i> Reputation
+                        </span>
+                        <span class="gold-text">{{ stats.reputation }}/100</span>
+                    </div>
+                    <div class="progress mt-2">
+                        <div class="progress-bar" style="width: {{ stats.reputation }}%"></div>
+                    </div>
                 </div>
             </div>
         </div>
         
-        <div class="card mb-4">
-            <div class="card-header bg-info">
-                <h5 class="mb-0"><i class="bi bi-trophy"></i> Milestones Earned</h5>
+        <div class="card mb-4" style="border-color: rgba(255, 215, 0, 0.5);">
+            <div class="card-header" style="background: linear-gradient(180deg, rgba(255,215,0,0.15) 0%, rgba(0,0,0,0.3) 100%);">
+                <h5 class="mb-0 gold-text">
+                    <i class="bi bi-trophy-fill"></i> Achievements Unlocked
+                </h5>
             </div>
             <div class="card-body">
                 {% if milestones.earned %}
                     {% for m in milestones.earned %}
-                    <div class="d-flex align-items-center mb-2">
-                        <i class="bi bi-{{ m.badge_icon }} text-warning me-2"></i>
-                        <span>{{ m.milestone_name }}</span>
+                    <div class="stat-card d-flex align-items-center" style="border-color: rgba(255,215,0,0.3);">
+                        <i class="bi bi-{{ m.badge_icon }} display-6 me-3" style="color: #ffd700; filter: drop-shadow(0 0 10px rgba(255,215,0,0.5));"></i>
+                        <div>
+                            <strong class="gold-text">{{ m.milestone_name }}</strong>
+                            <small class="d-block text-muted">{{ m.milestone_description[:50] }}...</small>
+                        </div>
                     </div>
                     {% endfor %}
                 {% else %}
-                    <p class="text-muted mb-0">No milestones earned yet. Keep playing!</p>
+                    <div class="text-center py-4">
+                        <i class="bi bi-lock-fill display-4 text-muted"></i>
+                        <p class="game-subtitle mt-2 mb-0">No achievements yet</p>
+                        <small class="text-muted">Complete quests to earn rewards!</small>
+                    </div>
                 {% endif %}
             </div>
         </div>
     </div>
     
     <div class="col-md-8">
-        <div class="card mb-4">
-            <div class="card-header bg-primary">
-                <h5 class="mb-0"><i class="bi bi-flag"></i> Available Milestones</h5>
+        <div class="card mb-4" style="border-color: rgba(153, 50, 204, 0.5);">
+            <div class="card-header" style="background: linear-gradient(180deg, rgba(153,50,204,0.2) 0%, rgba(0,0,0,0.3) 100%); border-color: rgba(153,50,204,0.3);">
+                <h5 class="mb-0" style="color: #ba55d3;">
+                    <i class="bi bi-flag-fill"></i> Available Achievements
+                </h5>
             </div>
             <div class="card-body">
                 <div class="row g-3">
                     {% for m in milestones.available[:6] %}
                     <div class="col-md-6">
-                        <div class="card bg-dark">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="bi bi-{{ m.badge_icon }} text-muted me-2 display-6"></i>
-                                    <div>
-                                        <h6 class="mb-0">{{ m.milestone_name }}</h6>
-                                        <small class="text-muted">{{ m.milestone_description }}</small>
-                                    </div>
-                                </div>
-                                <div class="mt-2">
-                                    <span class="badge bg-success">+{{ m.exp_reward }} EXP</span>
-                                    {% if m.cash_reward > 0 %}
-                                    <span class="badge bg-warning text-dark">+${{ m.cash_reward }}</span>
-                                    {% endif %}
+                        <div class="stat-card h-100" style="border-color: rgba(153,50,204,0.3); background: linear-gradient(135deg, rgba(153,50,204,0.1) 0%, rgba(0,0,0,0.3) 100%);">
+                            <div class="d-flex align-items-start mb-2">
+                                <i class="bi bi-{{ m.badge_icon }} display-5 me-3" style="color: #666; opacity: 0.5;"></i>
+                                <div>
+                                    <h6 class="mb-1" style="color: #ba55d3;">{{ m.milestone_name }}</h6>
+                                    <small class="text-muted">{{ m.milestone_description }}</small>
                                 </div>
                             </div>
+                            <div class="mt-3">
+                                <span class="badge" style="background: linear-gradient(135deg, #50c878, #228b22);">
+                                    <i class="bi bi-lightning-fill"></i> +{{ m.exp_reward }} EXP
+                                </span>
+                                {% if m.cash_reward > 0 %}
+                                <span class="badge" style="background: linear-gradient(135deg, #ffd700, #b8860b); color: #1a1a2e;">
+                                    <i class="bi bi-coin"></i> +${{ m.cash_reward }}
+                                </span>
+                                {% endif %}
+                            </div>
                         </div>
+                    </div>
+                    {% else %}
+                    <div class="col-12 text-center py-4">
+                        <i class="bi bi-emoji-smile display-4 gold-text"></i>
+                        <p class="game-subtitle mt-2">All achievements unlocked!</p>
                     </div>
                     {% endfor %}
                 </div>
             </div>
         </div>
         
-        <div class="card mb-4">
-            <div class="card-header bg-danger">
-                <h5 class="mb-0"><i class="bi bi-people-fill"></i> Your Rivals</h5>
+        <div class="card mb-4" style="border-color: rgba(220, 20, 60, 0.5);">
+            <div class="card-header" style="background: linear-gradient(180deg, rgba(220,20,60,0.2) 0%, rgba(0,0,0,0.3) 100%); border-color: rgba(220,20,60,0.3);">
+                <h5 class="mb-0" style="color: #ff6b6b;">
+                    <i class="bi bi-shield-fill-exclamation"></i> Rival Businesses
+                </h5>
             </div>
             <div class="card-body">
                 {% if rivals %}
-                <div class="table-responsive">
-                    <table class="table table-dark table-hover">
-                        <thead>
-                            <tr>
-                                <th>Rival</th>
-                                <th>Business</th>
-                                <th>Difficulty</th>
-                                <th>Your Score</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for r in rivals %}
-                            <tr>
-                                <td>{{ r.rival_name }}</td>
-                                <td>{{ r.rival_business }}</td>
-                                <td>
+                <div class="row g-3">
+                    {% for r in rivals %}
+                    <div class="col-md-6">
+                        <div class="stat-card" style="border-color: rgba(220,20,60,0.3); background: linear-gradient(135deg, rgba(220,20,60,0.1) 0%, rgba(0,0,0,0.3) 100%);">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h6 class="mb-0" style="color: #ff6b6b;">
+                                        <i class="bi bi-person-fill-x"></i> {{ r.rival_name }}
+                                    </h6>
+                                    <small class="text-muted">{{ r.rival_business }}</small>
+                                </div>
+                                <div>
                                     {% for i in range(r.difficulty_level) %}
-                                    <i class="bi bi-star-fill text-warning"></i>
+                                    <i class="bi bi-star-fill" style="color: #ffd700; font-size: 0.7rem;"></i>
                                     {% endfor %}
-                                </td>
-                                <td>
-                                    <span class="text-success">{{ r.wins }}W</span> / 
-                                    <span class="text-danger">{{ r.losses }}L</span>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between mt-3">
+                                <span class="badge" style="background: linear-gradient(135deg, #50c878, #228b22);">
+                                    <i class="bi bi-trophy"></i> {{ r.wins }} Wins
+                                </span>
+                                <span class="badge" style="background: linear-gradient(135deg, #dc143c, #8b0000);">
+                                    <i class="bi bi-x-circle"></i> {{ r.losses }} Losses
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
                 </div>
                 {% else %}
-                <p class="text-muted mb-0">No rivals in your industry yet.</p>
+                <div class="text-center py-4">
+                    <i class="bi bi-shield-slash display-4 text-muted"></i>
+                    <p class="game-subtitle mt-2 mb-0">No rivals discovered</p>
+                    <small class="text-muted">Complete more quests to encounter rivals!</small>
+                </div>
                 {% endif %}
             </div>
         </div>
