@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Joint Ventures - Business Tycoon RPG{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="gold-text mb-0">
+                        <i class="bi bi-briefcase-fill"></i> Joint Ventures
+                    </h2>
+                    <p class="text-muted mb-0">Invest in partnerships for shared rewards</p>
+                </div>
+                <a href="{{ url_for('network') }}" class="btn btn-outline-light">
+                    <i class="bi bi-arrow-left"></i> Back to Network
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        {% for venture in ventures %}
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5>{{ venture.name }}</h5>
+                        <span class="badge bg-{% if venture.status == 'completed' %}success{% elif venture.status == 'active' %}warning{% else %}secondary{% endif %}">
+                            {{ venture.status|title }}
+                        </span>
+                    </div>
+                    <p class="text-muted small">{{ venture.description }}</p>
+                    <p class="small mb-2"><i class="bi bi-building"></i> Partner: {{ venture.partner_name }}</p>
+                    
+                    <div class="row text-center mb-3">
+                        <div class="col-4">
+                            <small class="text-muted d-block">Investment</small>
+                            <strong class="text-warning">${{ "{:,.0f}".format(venture.investment) }}</strong>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted d-block">Duration</small>
+                            <strong>{{ venture.duration_weeks }}w</strong>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted d-block">Return</small>
+                            <strong class="text-success">{{ venture.potential_return }}x</strong>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="badge bg-danger">Risk: {{ venture.risk_level }}/5</span>
+                        </div>
+                        <span class="badge bg-success">+{{ venture.exp_reward }} EXP</span>
+                    </div>
+                </div>
+                {% if venture.status == 'available' %}
+                <div class="card-footer">
+                    <button class="btn btn-game btn-game-gold w-100" disabled>
+                        <i class="bi bi-cash-coin"></i> Invest (Coming Soon)
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12 text-center py-5">
+            <i class="bi bi-briefcase display-1 text-muted"></i>
+            <p class="text-muted mt-3">No joint ventures available. Build partnerships first!</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

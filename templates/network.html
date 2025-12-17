@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Business Network - Business Tycoon RPG{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="gold-text mb-0">
+                        <i class="bi bi-diagram-3"></i> Business Network
+                    </h2>
+                    <p class="text-muted mb-0">Build partnerships and expand your professional network</p>
+                </div>
+                <a href="{{ url_for('hub') }}" class="btn btn-outline-light">
+                    <i class="bi bi-arrow-left"></i> Back to Hub
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+        {% for message in messages %}
+        <div>{{ message }}</div>
+        {% endfor %}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-building"></i> Business Partners
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for partner in partners %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card bg-dark h-100">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h6 class="mb-0">{{ partner.name }}</h6>
+                                        <span class="badge bg-{% if partner.is_partner %}success{% else %}secondary{% endif %}">
+                                            {% if partner.is_partner %}Partner{% else %}Available{% endif %}
+                                        </span>
+                                    </div>
+                                    <small class="text-muted">{{ partner.type|title }} - {{ partner.industry }}</small>
+                                    <p class="small text-muted mt-2 mb-0">{{ partner.description[:80] }}...</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between">
+                    <span><i class="bi bi-calendar-event"></i> Networking Events</span>
+                    <a href="{{ url_for('ventures') }}" class="btn btn-sm btn-outline-info">
+                        <i class="bi bi-briefcase"></i> Joint Ventures
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% for event in events %}
+                    <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-dark rounded">
+                        <div>
+                            <h6 class="mb-1">{{ event.name }}</h6>
+                            <small class="text-muted">{{ event.description[:60] }}...</small>
+                            <div class="mt-1">
+                                <span class="badge bg-info">{{ event.type|title }}</span>
+                                <span class="badge bg-warning text-dark">${{ "{:,.0f}".format(event.entry_cost) }} entry</span>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <div class="mb-1">
+                                <small class="text-success">+{{ event.contacts_gained }} contacts</small>
+                            </div>
+                            <form action="{{ url_for('attend_event', event_id=event.event_id) }}" method="post" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-outline-success">Attend</button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-info bg-opacity-25">
+                    <i class="bi bi-person-lines-fill"></i> Your Contacts ({{ contacts|length }})
+                </div>
+                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                    {% for contact in contacts[:15] %}
+                    <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-dark rounded">
+                        <div>
+                            <small class="d-block">{{ contact.name }}</small>
+                            <small class="text-muted">{{ contact.type|title }}</small>
+                        </div>
+                        <span class="badge bg-secondary">{{ contact.relationship }}/5</span>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center">Attend events to build your network!</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

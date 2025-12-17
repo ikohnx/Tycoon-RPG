@@ -1360,6 +1360,337 @@ def init_database():
         );
     """)
     
+    # Phase 4: Storyline Quest System
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS story_arcs (
+            arc_id SERIAL PRIMARY KEY,
+            arc_name VARCHAR(200) NOT NULL,
+            arc_description TEXT,
+            world_type VARCHAR(50),
+            total_chapters INTEGER DEFAULT 5,
+            unlock_level INTEGER DEFAULT 1,
+            exp_reward INTEGER DEFAULT 500,
+            is_active BOOLEAN DEFAULT TRUE
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS story_chapters (
+            chapter_id SERIAL PRIMARY KEY,
+            arc_id INTEGER REFERENCES story_arcs(arc_id) ON DELETE CASCADE,
+            chapter_number INTEGER NOT NULL,
+            chapter_title VARCHAR(200) NOT NULL,
+            chapter_narrative TEXT,
+            choice_a_text TEXT,
+            choice_a_outcome TEXT,
+            choice_a_next_chapter INTEGER,
+            choice_b_text TEXT,
+            choice_b_outcome TEXT,
+            choice_b_next_chapter INTEGER,
+            choice_c_text TEXT,
+            choice_c_outcome TEXT,
+            choice_c_next_chapter INTEGER,
+            exp_reward INTEGER DEFAULT 100,
+            is_finale BOOLEAN DEFAULT FALSE
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_story_progress (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            arc_id INTEGER REFERENCES story_arcs(arc_id) ON DELETE CASCADE,
+            current_chapter INTEGER DEFAULT 1,
+            choices_made JSONB DEFAULT '[]',
+            status VARCHAR(50) DEFAULT 'in_progress',
+            started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            completed_at TIMESTAMP,
+            UNIQUE(player_id, arc_id)
+        );
+    """)
+    
+    # Phase 4: Mentorship & Advisor Progression
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS advisor_skill_trees (
+            skill_id SERIAL PRIMARY KEY,
+            advisor_id INTEGER REFERENCES advisors(advisor_id) ON DELETE CASCADE,
+            skill_name VARCHAR(100) NOT NULL,
+            skill_description TEXT,
+            skill_tier INTEGER DEFAULT 1,
+            parent_skill_id INTEGER,
+            bonus_type VARCHAR(50),
+            bonus_value DECIMAL(5, 2) DEFAULT 0,
+            unlock_cost INTEGER DEFAULT 100
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_advisor_relationships (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            advisor_id INTEGER REFERENCES advisors(advisor_id) ON DELETE CASCADE,
+            affinity_level INTEGER DEFAULT 0,
+            total_interactions INTEGER DEFAULT 0,
+            unlocked_skills JSONB DEFAULT '[]',
+            is_mentor BOOLEAN DEFAULT FALSE,
+            mentorship_started TIMESTAMP,
+            UNIQUE(player_id, advisor_id)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS mentorship_missions (
+            mission_id SERIAL PRIMARY KEY,
+            advisor_id INTEGER REFERENCES advisors(advisor_id) ON DELETE CASCADE,
+            mission_name VARCHAR(200) NOT NULL,
+            mission_description TEXT,
+            required_affinity INTEGER DEFAULT 10,
+            mission_type VARCHAR(50),
+            objectives JSONB DEFAULT '[]',
+            rewards JSONB DEFAULT '{}',
+            exp_reward INTEGER DEFAULT 200
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_mentor_missions (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            mission_id INTEGER REFERENCES mentorship_missions(mission_id) ON DELETE CASCADE,
+            progress JSONB DEFAULT '{}',
+            status VARCHAR(50) DEFAULT 'active',
+            started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            completed_at TIMESTAMP
+        );
+    """)
+    
+    # Phase 4: Business Network & Partnerships
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS business_partners (
+            partner_id SERIAL PRIMARY KEY,
+            partner_name VARCHAR(200) NOT NULL,
+            partner_type VARCHAR(50),
+            industry VARCHAR(100),
+            description TEXT,
+            reputation_required INTEGER DEFAULT 0,
+            partnership_bonus JSONB DEFAULT '{}'
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_partnerships (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            partner_id INTEGER REFERENCES business_partners(partner_id) ON DELETE CASCADE,
+            partnership_level INTEGER DEFAULT 1,
+            trust_score INTEGER DEFAULT 50,
+            joint_ventures_completed INTEGER DEFAULT 0,
+            total_shared_profit DECIMAL(15, 2) DEFAULT 0,
+            established_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(player_id, partner_id)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS joint_ventures (
+            venture_id SERIAL PRIMARY KEY,
+            venture_name VARCHAR(200) NOT NULL,
+            venture_description TEXT,
+            partner_id INTEGER REFERENCES business_partners(partner_id),
+            investment_required DECIMAL(15, 2) DEFAULT 5000,
+            duration_weeks INTEGER DEFAULT 4,
+            risk_level INTEGER DEFAULT 3,
+            potential_return DECIMAL(5, 2) DEFAULT 1.5,
+            exp_reward INTEGER DEFAULT 150
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_joint_ventures (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            venture_id INTEGER REFERENCES joint_ventures(venture_id) ON DELETE CASCADE,
+            investment_amount DECIMAL(15, 2),
+            start_week INTEGER,
+            end_week INTEGER,
+            status VARCHAR(50) DEFAULT 'active',
+            outcome JSONB DEFAULT '{}',
+            profit_loss DECIMAL(15, 2) DEFAULT 0
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS networking_events (
+            event_id SERIAL PRIMARY KEY,
+            event_name VARCHAR(200) NOT NULL,
+            event_type VARCHAR(50),
+            description TEXT,
+            entry_cost DECIMAL(10, 2) DEFAULT 0,
+            reputation_required INTEGER DEFAULT 0,
+            contacts_gained INTEGER DEFAULT 1,
+            exp_reward INTEGER DEFAULT 100
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_network (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            contact_name VARCHAR(200) NOT NULL,
+            contact_type VARCHAR(50),
+            industry VARCHAR(100),
+            relationship_strength INTEGER DEFAULT 1,
+            met_at_event INTEGER REFERENCES networking_events(event_id),
+            referrals_given INTEGER DEFAULT 0,
+            added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+    
+    # Phase 4: Industry Specialization Tracks
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS industry_tracks (
+            track_id SERIAL PRIMARY KEY,
+            track_name VARCHAR(100) NOT NULL,
+            industry VARCHAR(100) NOT NULL,
+            description TEXT,
+            total_levels INTEGER DEFAULT 5,
+            base_exp_required INTEGER DEFAULT 500
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS industry_certifications (
+            cert_id SERIAL PRIMARY KEY,
+            track_id INTEGER REFERENCES industry_tracks(track_id) ON DELETE CASCADE,
+            cert_name VARCHAR(200) NOT NULL,
+            cert_description TEXT,
+            required_level INTEGER DEFAULT 1,
+            exam_questions JSONB DEFAULT '[]',
+            passing_score INTEGER DEFAULT 70,
+            exp_reward INTEGER DEFAULT 300,
+            badge_icon VARCHAR(100)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_industry_progress (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            track_id INTEGER REFERENCES industry_tracks(track_id) ON DELETE CASCADE,
+            current_level INTEGER DEFAULT 1,
+            current_exp INTEGER DEFAULT 0,
+            certifications_earned JSONB DEFAULT '[]',
+            specialization_bonuses JSONB DEFAULT '{}',
+            UNIQUE(player_id, track_id)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS industry_challenges (
+            challenge_id SERIAL PRIMARY KEY,
+            track_id INTEGER REFERENCES industry_tracks(track_id) ON DELETE CASCADE,
+            challenge_name VARCHAR(200) NOT NULL,
+            challenge_description TEXT,
+            required_level INTEGER DEFAULT 1,
+            challenge_data JSONB DEFAULT '{}',
+            exp_reward INTEGER DEFAULT 150
+        );
+    """)
+    
+    # Phase 4: Dynamic Market Events
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS market_events (
+            event_id SERIAL PRIMARY KEY,
+            event_name VARCHAR(200) NOT NULL,
+            event_type VARCHAR(50),
+            description TEXT,
+            affected_industries JSONB DEFAULT '[]',
+            market_modifier DECIMAL(4, 2) DEFAULT 1.0,
+            duration_days INTEGER DEFAULT 7,
+            is_global BOOLEAN DEFAULT FALSE
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS active_market_events (
+            id SERIAL PRIMARY KEY,
+            event_id INTEGER REFERENCES market_events(event_id) ON DELETE CASCADE,
+            start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            end_time TIMESTAMP,
+            current_phase INTEGER DEFAULT 1,
+            total_phases INTEGER DEFAULT 3,
+            status VARCHAR(50) DEFAULT 'active'
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS market_cycles (
+            cycle_id SERIAL PRIMARY KEY,
+            cycle_name VARCHAR(100) NOT NULL,
+            cycle_type VARCHAR(50),
+            description TEXT,
+            revenue_modifier DECIMAL(4, 2) DEFAULT 1.0,
+            cost_modifier DECIMAL(4, 2) DEFAULT 1.0,
+            opportunity_modifier DECIMAL(4, 2) DEFAULT 1.0,
+            duration_weeks INTEGER DEFAULT 12
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS global_challenges (
+            challenge_id SERIAL PRIMARY KEY,
+            challenge_name VARCHAR(200) NOT NULL,
+            challenge_description TEXT,
+            target_type VARCHAR(50),
+            target_value INTEGER DEFAULT 10000,
+            current_progress INTEGER DEFAULT 0,
+            participants INTEGER DEFAULT 0,
+            reward_pool INTEGER DEFAULT 5000,
+            start_time TIMESTAMP,
+            end_time TIMESTAMP,
+            status VARCHAR(50) DEFAULT 'pending'
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_global_contributions (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            challenge_id INTEGER REFERENCES global_challenges(challenge_id) ON DELETE CASCADE,
+            contribution INTEGER DEFAULT 0,
+            reward_claimed BOOLEAN DEFAULT FALSE,
+            contributed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(player_id, challenge_id)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS breaking_news (
+            news_id SERIAL PRIMARY KEY,
+            headline VARCHAR(300) NOT NULL,
+            news_content TEXT,
+            news_type VARCHAR(50),
+            affected_discipline VARCHAR(100),
+            response_deadline TIMESTAMP,
+            optimal_response TEXT,
+            exp_reward INTEGER DEFAULT 100,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_news_responses (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            news_id INTEGER REFERENCES breaking_news(news_id) ON DELETE CASCADE,
+            response_choice VARCHAR(50),
+            response_quality INTEGER DEFAULT 0,
+            exp_earned INTEGER DEFAULT 0,
+            responded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(player_id, news_id)
+        );
+    """)
+    
     conn.commit()
     cur.close()
     conn.close()
@@ -6928,6 +7259,331 @@ def seed_advanced_simulations():
     
     conn.commit()
     print(f"Seeded {len(simulations)} advanced simulations!")
+    cur.close()
+    conn.close()
+
+
+def seed_story_arcs():
+    """Seed storyline quest system with narrative arcs and chapters."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM story_arcs")
+    if cur.fetchone()['count'] > 0:
+        print("Story arcs already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    arcs = [
+        ('The Restaurant Revival', 'A struggling restaurant needs your expertise to survive and thrive.', 'Modern', 5, 1, 500),
+        ('The Factory Turnaround', 'An old factory faces closure. Can you modernize it?', 'Industrial', 5, 3, 600),
+        ('The Startup Journey', 'From garage to IPO - build the next unicorn.', 'Modern', 7, 5, 800),
+        ('The Franchise Empire', 'Expand a successful concept across the nation.', 'Modern', 6, 7, 750),
+        ('The Crisis Commander', 'Multiple crises threaten your business empire.', 'Modern', 5, 10, 1000)
+    ]
+    
+    for arc in arcs:
+        cur.execute("""
+            INSERT INTO story_arcs (arc_name, arc_description, world_type, total_chapters, unlock_level, exp_reward)
+            VALUES (%s, %s, %s, %s, %s, %s) RETURNING arc_id
+        """, arc)
+        arc_id = cur.fetchone()['arc_id']
+        
+        if arc[0] == 'The Restaurant Revival':
+            chapters = [
+                (arc_id, 1, 'First Day Blues', 'You arrive at the restaurant to find it in worse shape than expected. The kitchen is outdated, staff morale is low, and customers are sparse.',
+                 'Focus on quick wins - fix the menu', 'You streamline the menu, reducing costs. Staff appreciate the clarity.', 2,
+                 'Invest in staff training first', 'The team feels valued. Service improves immediately.', 2,
+                 'Launch a marketing blitz', 'Customers start coming, but the kitchen struggles with demand.', 3, 100, False),
+                (arc_id, 2, 'The Competition Strikes', 'A new trendy restaurant opens across the street, stealing your customers.',
+                 'Match their pricing aggressively', 'You retain customers but margins suffer. Need a new strategy.', 3,
+                 'Differentiate with unique offerings', 'Your specialty dishes become local favorites.', 4,
+                 'Form a partnership with them', 'Surprisingly, they agree. You share customers for events.', 4, 120, False),
+                (arc_id, 3, 'Staff Rebellion', 'Your best chef threatens to quit, taking the kitchen team with them.',
+                 'Offer a significant raise', 'The chef stays, but other staff expect the same treatment.', 4,
+                 'Negotiate profit-sharing', 'The chef becomes invested in success. Innovation follows.', 5,
+                 'Let them go and rebuild', 'Painful short-term, but you find passionate new talent.', 4, 140, False),
+                (arc_id, 4, 'The Health Inspection', 'A surprise health inspection finds several violations.',
+                 'Fix issues quickly and quietly', 'Problems solved, but at a cost. You pass the re-inspection.', 5,
+                 'Use this as a catalyst for complete renovation', 'Expensive but you emerge with a modern, safe kitchen.', 5,
+                 'Contest the findings', 'You win some battles but the negative press hurts business.', 5, 160, False),
+                (arc_id, 5, 'The Grand Reopening', 'After all your efforts, its time for the grand reopening.',
+                 'Host a celebrity chef event', 'The publicity is massive. You become a destination restaurant.', None,
+                 'Focus on community appreciation night', 'Locals love you. Sustainable, loyal customer base.', None,
+                 'Launch delivery and catering services', 'Multiple revenue streams secure your future.', None, 200, True)
+            ]
+            for ch in chapters:
+                cur.execute("""
+                    INSERT INTO story_chapters 
+                    (arc_id, chapter_number, chapter_title, chapter_narrative, 
+                     choice_a_text, choice_a_outcome, choice_a_next_chapter,
+                     choice_b_text, choice_b_outcome, choice_b_next_chapter,
+                     choice_c_text, choice_c_outcome, choice_c_next_chapter, exp_reward, is_finale)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, ch)
+    
+    conn.commit()
+    print(f"Seeded {len(arcs)} story arcs with chapters!")
+    cur.close()
+    conn.close()
+
+
+def seed_mentorship_system():
+    """Seed advisor skill trees and mentorship missions."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM advisor_skill_trees")
+    if cur.fetchone()['count'] > 0:
+        print("Mentorship system already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    cur.execute("SELECT advisor_id, advisor_name, discipline_specialty FROM advisors LIMIT 5")
+    advisors = cur.fetchall()
+    
+    for advisor in advisors:
+        specialty = advisor['discipline_specialty'] or 'Business'
+        skills = [
+            (advisor['advisor_id'], f"{specialty} Basics", f"Learn the fundamentals of {specialty}", 1, None, 'exp_bonus', 5.0, 50),
+            (advisor['advisor_id'], f"{specialty} Insights", f"Gain deeper insights into {specialty}", 2, None, 'exp_bonus', 10.0, 100),
+            (advisor['advisor_id'], f"{specialty} Mastery", f"Master advanced {specialty} techniques", 3, None, 'exp_bonus', 15.0, 200),
+            (advisor['advisor_id'], f"Network Access", f"Access {advisor['advisor_name']}'s professional network", 2, None, 'reputation_bonus', 5.0, 150),
+            (advisor['advisor_id'], f"Secret Strategy", f"Learn {advisor['advisor_name']}'s secret success strategy", 3, None, 'cash_bonus', 10.0, 250)
+        ]
+        
+        for skill in skills:
+            cur.execute("""
+                INSERT INTO advisor_skill_trees 
+                (advisor_id, skill_name, skill_description, skill_tier, parent_skill_id, bonus_type, bonus_value, unlock_cost)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """, skill)
+        
+        missions = [
+            (advisor['advisor_id'], f"{advisor['advisor_name']}'s First Lesson", f"Complete your first challenge in {specialty}", 5, 'training',
+             json.dumps(['Complete 1 scenario', 'Score at least 2 stars']), json.dumps({'exp': 100, 'affinity': 5}), 150),
+            (advisor['advisor_id'], f"Prove Your Worth", f"Show {advisor['advisor_name']} you're serious about learning", 15, 'challenge',
+             json.dumps(['Complete 5 scenarios', 'Maintain 3-star average']), json.dumps({'exp': 250, 'affinity': 10, 'skill_unlock': True}), 300),
+            (advisor['advisor_id'], f"The Master Test", f"{advisor['advisor_name']} challenges you to demonstrate mastery", 30, 'mastery',
+             json.dumps(['Complete all discipline scenarios', 'No failures']), json.dumps({'exp': 500, 'affinity': 20, 'title': 'Mentee of ' + advisor['advisor_name']}), 500)
+        ]
+        
+        for mission in missions:
+            cur.execute("""
+                INSERT INTO mentorship_missions 
+                (advisor_id, mission_name, mission_description, required_affinity, mission_type, objectives, rewards, exp_reward)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """, mission)
+    
+    conn.commit()
+    print("Mentorship system seeded!")
+    cur.close()
+    conn.close()
+
+
+def seed_business_network():
+    """Seed business partners, joint ventures, and networking events."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM business_partners")
+    if cur.fetchone()['count'] > 0:
+        print("Business network already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    partners = [
+        ('TechVentures Capital', 'investor', 'Technology', 'A venture capital firm focused on tech startups.', 30, json.dumps({'investment_access': True, 'valuation_bonus': 10})),
+        ('GlobalSupply Co', 'supplier', 'Manufacturing', 'International supply chain solutions provider.', 20, json.dumps({'cost_reduction': 5, 'reliability': 95})),
+        ('MarketPro Agency', 'service', 'Marketing', 'Full-service digital marketing agency.', 15, json.dumps({'marketing_boost': 15, 'brand_awareness': 10})),
+        ('LegalEagle LLP', 'service', 'Legal', 'Business law specialists with startup experience.', 25, json.dumps({'legal_protection': True, 'contract_review': True})),
+        ('CloudScale Solutions', 'technology', 'Technology', 'Cloud infrastructure and scaling expertise.', 35, json.dumps({'tech_efficiency': 20, 'scalability': True})),
+        ('EcoFriendly Packaging', 'supplier', 'Manufacturing', 'Sustainable packaging solutions.', 40, json.dumps({'sustainability_score': 25, 'cost_premium': 10})),
+        ('TalentBridge HR', 'service', 'Human Resources', 'Executive search and HR consulting.', 30, json.dumps({'hiring_speed': 30, 'quality_bonus': 15})),
+        ('FinanceFirst Consulting', 'service', 'Finance', 'CFO services and financial planning.', 45, json.dumps({'financial_accuracy': 20, 'tax_optimization': 10}))
+    ]
+    
+    for p in partners:
+        cur.execute("""
+            INSERT INTO business_partners (partner_name, partner_type, industry, description, reputation_required, partnership_bonus)
+            VALUES (%s, %s, %s, %s, %s, %s) RETURNING partner_id
+        """, p)
+        partner_id = cur.fetchone()['partner_id']
+        
+        ventures = [
+            (f"Joint Project with {p[0]}", f"Collaborate with {p[0]} on a strategic initiative.", partner_id, 5000, 4, 3, 1.5, 150),
+            (f"Expansion Deal", f"Partner with {p[0]} to expand into new markets.", partner_id, 15000, 8, 4, 2.0, 300)
+        ]
+        
+        for v in ventures:
+            cur.execute("""
+                INSERT INTO joint_ventures (venture_name, venture_description, partner_id, investment_required, duration_weeks, risk_level, potential_return, exp_reward)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """, v)
+    
+    events = [
+        ('Industry Mixer', 'casual', 'Casual networking with local business professionals.', 50, 10, 2, 75),
+        ('Startup Conference', 'conference', 'Annual gathering of entrepreneurs and investors.', 200, 30, 5, 150),
+        ('Chamber of Commerce Dinner', 'formal', 'Formal networking with established business leaders.', 150, 40, 3, 125),
+        ('Tech Meetup', 'casual', 'Monthly gathering of tech enthusiasts and founders.', 25, 15, 2, 60),
+        ('Investor Demo Day', 'pitch', 'Present to a room full of potential investors.', 0, 50, 4, 200),
+        ('Business Awards Gala', 'formal', 'Annual celebration of business excellence.', 500, 60, 6, 300),
+        ('Mastermind Retreat', 'workshop', 'Intensive weekend with successful entrepreneurs.', 1000, 70, 8, 400)
+    ]
+    
+    for e in events:
+        cur.execute("""
+            INSERT INTO networking_events (event_name, event_type, description, entry_cost, reputation_required, contacts_gained, exp_reward)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, e)
+    
+    conn.commit()
+    print("Business network seeded!")
+    cur.close()
+    conn.close()
+
+
+def seed_industry_tracks():
+    """Seed industry specialization tracks and certifications."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM industry_tracks")
+    if cur.fetchone()['count'] > 0:
+        print("Industry tracks already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    tracks = [
+        ('Technology Specialist', 'Technology', 'Master the tech industry from startups to enterprise.', 5, 500),
+        ('Healthcare Expert', 'Healthcare', 'Navigate the complex healthcare business landscape.', 5, 600),
+        ('Retail Strategist', 'Retail', 'Excel in retail from e-commerce to brick-and-mortar.', 5, 450),
+        ('Manufacturing Pro', 'Manufacturing', 'Optimize production and supply chain operations.', 5, 550),
+        ('Financial Services', 'Finance', 'Understand banking, insurance, and investment.', 5, 650),
+        ('Hospitality Master', 'Hospitality', 'Lead in hotels, restaurants, and tourism.', 5, 500),
+        ('Real Estate Developer', 'Real Estate', 'Build expertise in property development and management.', 5, 600),
+        ('Media & Entertainment', 'Media', 'Create and manage content businesses.', 5, 500)
+    ]
+    
+    for t in tracks:
+        cur.execute("""
+            INSERT INTO industry_tracks (track_name, industry, description, total_levels, base_exp_required)
+            VALUES (%s, %s, %s, %s, %s) RETURNING track_id
+        """, t)
+        track_id = cur.fetchone()['track_id']
+        
+        certs = [
+            (track_id, f"{t[1]} Fundamentals", f"Demonstrate basic {t[1].lower()} knowledge.", 1,
+             json.dumps([{'q': f'What is the primary driver of success in {t[1].lower()}?', 'options': ['Innovation', 'Cost control', 'Customer focus', 'All of the above'], 'correct': 3}]),
+             70, 200, 'cert_basic'),
+            (track_id, f"{t[1]} Professional", f"Prove professional-level {t[1].lower()} competency.", 3,
+             json.dumps([{'q': f'How do you measure ROI in {t[1].lower()} projects?', 'options': ['Revenue only', 'Profit/Investment', 'Customer growth', 'Market share'], 'correct': 1}]),
+             75, 400, 'cert_pro'),
+            (track_id, f"{t[1]} Expert", f"Achieve expert status in {t[1].lower()}.", 5,
+             json.dumps([{'q': f'What advanced strategy works best for {t[1].lower()} growth?', 'options': ['Diversification', 'Focus', 'Innovation', 'Depends on context'], 'correct': 3}]),
+             80, 600, 'cert_expert')
+        ]
+        
+        for c in certs:
+            cur.execute("""
+                INSERT INTO industry_certifications (track_id, cert_name, cert_description, required_level, exam_questions, passing_score, exp_reward, badge_icon)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """, c)
+        
+        challenges = [
+            (track_id, f"{t[1]} Case Study", f"Analyze a real {t[1].lower()} business case.", 1, json.dumps({'type': 'case_study', 'time_limit': 30}), 100),
+            (track_id, f"{t[1]} Strategy Challenge", f"Develop a strategy for a {t[1].lower()} company.", 3, json.dumps({'type': 'strategy', 'complexity': 'medium'}), 200),
+            (track_id, f"{t[1]} Crisis Simulation", f"Handle a crisis in the {t[1].lower()} sector.", 5, json.dumps({'type': 'crisis', 'difficulty': 'hard'}), 350)
+        ]
+        
+        for ch in challenges:
+            cur.execute("""
+                INSERT INTO industry_challenges (track_id, challenge_name, challenge_description, required_level, challenge_data, exp_reward)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, ch)
+    
+    conn.commit()
+    print("Industry tracks seeded!")
+    cur.close()
+    conn.close()
+
+
+def seed_market_events():
+    """Seed dynamic market events and global challenges."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM market_events")
+    if cur.fetchone()['count'] > 0:
+        print("Market events already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    events = [
+        ('Economic Boom', 'boom', 'The economy is thriving! Increased consumer spending.', json.dumps(['Retail', 'Hospitality', 'Technology']), 1.25, 14, True),
+        ('Recession Warning', 'recession', 'Economic indicators suggest a slowdown ahead.', json.dumps(['All']), 0.80, 21, True),
+        ('Tech Innovation Wave', 'opportunity', 'New technologies create business opportunities.', json.dumps(['Technology', 'Manufacturing']), 1.15, 10, False),
+        ('Supply Chain Crisis', 'crisis', 'Global supply chains are disrupted.', json.dumps(['Manufacturing', 'Retail']), 0.85, 14, True),
+        ('Consumer Confidence Surge', 'boom', 'Consumers are optimistic and spending more.', json.dumps(['Retail', 'Hospitality']), 1.20, 7, False),
+        ('Regulatory Changes', 'neutral', 'New regulations affect business operations.', json.dumps(['Finance', 'Healthcare']), 0.95, 30, True),
+        ('Talent War', 'challenge', 'Competition for skilled workers intensifies.', json.dumps(['Technology', 'Finance']), 1.10, 14, False),
+        ('Sustainability Push', 'opportunity', 'Growing demand for eco-friendly businesses.', json.dumps(['Manufacturing', 'Retail']), 1.15, 21, True)
+    ]
+    
+    for e in events:
+        cur.execute("""
+            INSERT INTO market_events (event_name, event_type, description, affected_industries, market_modifier, duration_days, is_global)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, e)
+    
+    cycles = [
+        ('Growth Phase', 'expansion', 'Economic expansion with rising opportunities.', 1.15, 0.95, 1.25, 16),
+        ('Peak Period', 'peak', 'Economy at its highest point. Competition intense.', 1.10, 1.10, 1.00, 8),
+        ('Contraction', 'contraction', 'Economic slowdown begins. Caution advised.', 0.90, 1.05, 0.85, 12),
+        ('Trough', 'recession', 'Economic bottom. Opportunities for prepared businesses.', 0.80, 1.15, 0.70, 8),
+        ('Recovery', 'recovery', 'Economy begins to rebound. Early movers benefit.', 1.05, 1.00, 1.15, 12)
+    ]
+    
+    for c in cycles:
+        cur.execute("""
+            INSERT INTO market_cycles (cycle_name, cycle_type, description, revenue_modifier, cost_modifier, opportunity_modifier, duration_weeks)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, c)
+    
+    global_challenges = [
+        ('Community Business Week', 'Complete 1000 scenarios as a community.', 'scenarios', 1000, 0, 0, 5000),
+        ('Innovation Marathon', 'Earn 50000 EXP collectively in Technology.', 'exp', 50000, 0, 0, 7500),
+        ('Sustainability Initiative', 'Make 500 eco-friendly business decisions.', 'decisions', 500, 0, 0, 4000),
+        ('Mentorship Movement', 'Complete 200 mentorship missions globally.', 'missions', 200, 0, 0, 6000)
+    ]
+    
+    for gc in global_challenges:
+        cur.execute("""
+            INSERT INTO global_challenges (challenge_name, challenge_description, target_type, target_value, current_progress, participants, reward_pool)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, gc)
+    
+    news = [
+        ('Tech Giant Announces Major Acquisition', 'Industry shakeup as leading tech company acquires competitor.', 'acquisition', 'Strategy', None, 'Analyze implications for your business strategy', 100),
+        ('New Trade Tariffs Announced', 'Government implements new import tariffs affecting multiple industries.', 'regulation', 'Operations', None, 'Evaluate supply chain alternatives', 120),
+        ('Consumer Spending Hits Record High', 'Holiday season sees unprecedented consumer spending.', 'market', 'Marketing', None, 'Capitalize on increased demand', 80),
+        ('Labor Shortage Reaches Critical Level', 'Industries struggle to find qualified workers.', 'hr', 'Human Resources', None, 'Implement retention strategies', 110),
+        ('Interest Rates Rise Again', 'Central bank raises interest rates for third consecutive time.', 'finance', 'Finance', None, 'Review debt and investment strategy', 130)
+    ]
+    
+    for n in news:
+        cur.execute("""
+            INSERT INTO breaking_news (headline, news_content, news_type, affected_discipline, response_deadline, optimal_response, exp_reward)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, n)
+    
+    conn.commit()
+    print("Market events seeded!")
     cur.close()
     conn.close()
 

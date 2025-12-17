@@ -14,7 +14,9 @@ from src.database import (init_database, seed_scenarios, seed_achievements, seed
                           seed_cash_flow_challenges, seed_negotiation_scenarios, seed_risk_categories,
                           seed_market_simulation, seed_hr_management, seed_investor_pitch,
                           seed_learning_analytics, seed_educational_achievements,
-                          seed_competitions, seed_advanced_simulations)
+                          seed_competitions, seed_advanced_simulations,
+                          seed_story_arcs, seed_mentorship_system, seed_business_network,
+                          seed_industry_tracks, seed_market_events)
 from src.game_engine import GameEngine
 from src.leveling import get_level_title, get_progress_bar, get_exp_to_next_level
 
@@ -62,6 +64,11 @@ seed_learning_analytics()
 seed_educational_achievements()
 seed_competitions()
 seed_advanced_simulations()
+seed_story_arcs()
+seed_mentorship_system()
+seed_business_network()
+seed_industry_tracks()
+seed_market_events()
 
 engine = GameEngine()
 
@@ -1924,6 +1931,257 @@ def complete_tutorial(section_id):
     
     flash('Tutorial section completed!')
     return redirect(url_for('tutorial'))
+
+
+# ============================================================================
+# PHASE 4: STORYLINE QUEST SYSTEM ROUTES
+# ============================================================================
+
+@app.route('/stories')
+def stories():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    from src.game_engine import get_story_arcs
+    level = stats.get('overall_level', 1) if isinstance(stats, dict) else 1
+    arcs = get_story_arcs(player_id, level)
+    
+    return render_template('stories.html', stats=stats, arcs=arcs)
+
+
+@app.route('/stories/<int:arc_id>')
+def story_arc(arc_id):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    from src.game_engine import get_story_arcs, get_story_chapter
+    arcs = get_story_arcs(player_id, 99)
+    arc = next((a for a in arcs if a['arc_id'] == arc_id), None)
+    
+    if not arc:
+        flash('Story not found')
+        return redirect(url_for('stories'))
+    
+    chapter_num = arc['current_chapter'] or 1
+    chapter = get_story_chapter(arc_id, chapter_num)
+    
+    return render_template('story_chapter.html', stats=stats, arc=arc, chapter=chapter)
+
+
+@app.route('/stories/<int:arc_id>/start', methods=['POST'])
+def start_story(arc_id):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    from src.game_engine import start_story_arc
+    start_story_arc(player_id, arc_id)
+    
+    return redirect(url_for('story_arc', arc_id=arc_id))
+
+
+@app.route('/stories/<int:arc_id>/chapter/<int:chapter_num>/choice', methods=['POST'])
+def story_choice(arc_id, chapter_num):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    choice = request.form.get('choice', 'a')
+    
+    from src.game_engine import make_story_choice
+    result = make_story_choice(player_id, arc_id, chapter_num, choice)
+    
+    if result.get('success'):
+        flash(f"{result['outcome']} +{result['exp_earned']} EXP")
+        if result.get('is_finale'):
+            flash('Congratulations! You completed the story arc!')
+            return redirect(url_for('stories'))
+    
+    return redirect(url_for('story_arc', arc_id=arc_id))
+
+
+# ============================================================================
+# PHASE 4: MENTORSHIP ROUTES
+# ============================================================================
+
+@app.route('/mentorship')
+def mentorship():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    from src.game_engine import get_advisor_relationships, get_mentorship_missions
+    
+    advisors = get_advisor_relationships(player_id)
+    missions = get_mentorship_missions(player_id)
+    
+    return render_template('mentorship.html', stats=stats, advisors=advisors, missions=missions)
+
+
+@app.route('/mentorship/advisor/<int:advisor_id>')
+def advisor_detail(advisor_id):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    from src.game_engine import get_advisor_relationships, get_advisor_skill_tree, get_mentorship_missions
+    
+    advisors = get_advisor_relationships(player_id)
+    advisor = next((a for a in advisors if a['advisor_id'] == advisor_id), None)
+    skills = get_advisor_skill_tree(advisor_id)
+    missions = get_mentorship_missions(player_id, advisor_id)
+    
+    return render_template('advisor_detail.html', stats=stats, advisor=advisor, skills=skills, missions=missions)
+
+
+# ============================================================================
+# PHASE 4: BUSINESS NETWORK ROUTES
+# ============================================================================
+
+@app.route('/network')
+def network():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    from src.game_engine import get_business_partners, get_networking_events, get_player_network
+    
+    reputation = stats.get('reputation', 50) if isinstance(stats, dict) else 50
+    partners = get_business_partners(player_id, reputation)
+    events = get_networking_events(reputation)
+    contacts = get_player_network(player_id)
+    
+    return render_template('network.html', stats=stats, partners=partners, events=events, contacts=contacts)
+
+
+@app.route('/network/event/<int:event_id>/attend', methods=['POST'])
+def attend_event(event_id):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    from src.game_engine import attend_networking_event
+    result = attend_networking_event(player_id, event_id)
+    
+    if result.get('success'):
+        flash(f"Great networking! You made {result['contacts_gained']} new contacts. +{result['exp_earned']} EXP")
+    
+    return redirect(url_for('network'))
+
+
+@app.route('/network/ventures')
+def ventures():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    from src.game_engine import get_joint_ventures
+    ventures = get_joint_ventures(player_id)
+    
+    return render_template('ventures.html', stats=stats, ventures=ventures)
+
+
+# ============================================================================
+# PHASE 4: INDUSTRY TRACKS ROUTES
+# ============================================================================
+
+@app.route('/industries')
+def industries():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    from src.game_engine import get_industry_tracks
+    tracks = get_industry_tracks(player_id)
+    
+    return render_template('industries.html', stats=stats, tracks=tracks)
+
+
+@app.route('/industries/<int:track_id>')
+def industry_detail(track_id):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    from src.game_engine import get_industry_tracks, get_industry_certifications, get_industry_challenges
+    
+    tracks = get_industry_tracks(player_id)
+    track = next((t for t in tracks if t['track_id'] == track_id), None)
+    
+    if not track:
+        flash('Industry track not found')
+        return redirect(url_for('industries'))
+    
+    certs = get_industry_certifications(track_id, track['current_level'])
+    challenges = get_industry_challenges(track_id, track['current_level'])
+    
+    return render_template('industry_detail.html', stats=stats, track=track, certifications=certs, challenges=challenges)
+
+
+# ============================================================================
+# PHASE 4: MARKET EVENTS ROUTES
+# ============================================================================
+
+@app.route('/market-events')
+def market_events():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    from src.game_engine import get_active_market_events, get_current_market_cycle, get_global_challenges, get_breaking_news
+    
+    events = get_active_market_events()
+    cycle = get_current_market_cycle()
+    challenges = get_global_challenges()
+    news = get_breaking_news()
+    
+    return render_template('market_events.html', stats=stats, events=events, cycle=cycle, global_challenges=challenges, news=news)
+
+
+@app.route('/market-events/news/<int:news_id>/respond', methods=['POST'])
+def respond_news(news_id):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    response = request.form.get('response', 'standard')
+    
+    from src.game_engine import respond_to_news
+    result = respond_to_news(player_id, news_id, response)
+    
+    if result.get('success'):
+        flash(f"Response submitted! +{result['exp_earned']} EXP")
+    
+    return redirect(url_for('market_events'))
 
 
 if __name__ == '__main__':

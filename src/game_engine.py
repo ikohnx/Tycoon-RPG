@@ -5313,3 +5313,693 @@ def complete_tutorial_section(player_id, section_id):
     conn.close()
     
     return {'success': True}
+
+
+# ============================================================================
+# PHASE 4: STORYLINE QUEST SYSTEM
+# ============================================================================
+
+def get_story_arcs(player_id, player_level=1):
+    """Get available story arcs for a player."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT sa.*, psp.current_chapter, psp.status as player_status, psp.choices_made
+        FROM story_arcs sa
+        LEFT JOIN player_story_progress psp ON sa.arc_id = psp.arc_id AND psp.player_id = %s
+        WHERE sa.is_active = TRUE AND sa.unlock_level <= %s
+        ORDER BY sa.unlock_level
+    """, (player_id, player_level))
+    
+    arcs = []
+    for row in cur.fetchall():
+        arcs.append({
+            'arc_id': row['arc_id'],
+            'arc_name': row['arc_name'],
+            'description': row['arc_description'],
+            'world_type': row['world_type'],
+            'total_chapters': row['total_chapters'],
+            'current_chapter': row['current_chapter'] or 0,
+            'status': row['player_status'] or 'not_started',
+            'exp_reward': row['exp_reward'],
+            'progress_pct': int((row['current_chapter'] or 0) / row['total_chapters'] * 100) if row['total_chapters'] > 0 else 0
+        })
+    
+    cur.close()
+    conn.close()
+    return arcs
+
+
+def get_story_chapter(arc_id, chapter_number):
+    """Get a specific story chapter."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT sc.*, sa.arc_name FROM story_chapters sc
+        JOIN story_arcs sa ON sc.arc_id = sa.arc_id
+        WHERE sc.arc_id = %s AND sc.chapter_number = %s
+    """, (arc_id, chapter_number))
+    
+    chapter = cur.fetchone()
+    cur.close()
+    conn.close()
+    
+    if chapter:
+        return {
+            'chapter_id': chapter['chapter_id'],
+            'arc_id': chapter['arc_id'],
+            'arc_name': chapter['arc_name'],
+            'chapter_number': chapter['chapter_number'],
+            'title': chapter['chapter_title'],
+            'narrative': chapter['chapter_narrative'],
+            'choices': [
+                {'id': 'a', 'text': chapter['choice_a_text'], 'next': chapter['choice_a_next_chapter']},
+                {'id': 'b', 'text': chapter['choice_b_text'], 'next': chapter['choice_b_next_chapter']},
+                {'id': 'c', 'text': chapter['choice_c_text'], 'next': chapter['choice_c_next_chapter']} if chapter['choice_c_text'] else None
+            ],
+            'outcomes': {
+                'a': chapter['choice_a_outcome'],
+                'b': chapter['choice_b_outcome'],
+                'c': chapter['choice_c_outcome']
+            },
+            'exp_reward': chapter['exp_reward'],
+            'is_finale': chapter['is_finale']
+        }
+    return None
+
+
+def start_story_arc(player_id, arc_id):
+    """Start a new story arc for a player."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        INSERT INTO player_story_progress (player_id, arc_id, current_chapter, status)
+        VALUES (%s, %s, 1, 'in_progress')
+        ON CONFLICT (player_id, arc_id) DO NOTHING
+        RETURNING id
+    """, (player_id, arc_id))
+    
+    result = cur.fetchone()
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    return {'success': result is not None, 'started': result is not None}
+
+
+def make_story_choice(player_id, arc_id, chapter_number, choice):
+    """Process a player's choice in a story chapter."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    chapter = get_story_chapter(arc_id, chapter_number)
+    if not chapter:
+        cur.close()
+        conn.close()
+        return {'success': False, 'error': 'Chapter not found'}
+    
+    choice_idx = {'a': 0, 'b': 1, 'c': 2}.get(choice.lower(), 0)
+    next_chapter = chapter['choices'][choice_idx]['next'] if chapter['choices'][choice_idx] else None
+    outcome = chapter['outcomes'].get(choice.lower(), '')
+    exp_earned = chapter['exp_reward']
+    
+    if chapter['is_finale']:
+        cur.execute("""
+            UPDATE player_story_progress 
+            SET status = 'completed', completed_at = CURRENT_TIMESTAMP,
+                choices_made = choices_made || %s::jsonb
+            WHERE player_id = %s AND arc_id = %s
+        """, (json.dumps([{'chapter': chapter_number, 'choice': choice}]), player_id, arc_id))
+    else:
+        cur.execute("""
+            UPDATE player_story_progress 
+            SET current_chapter = %s,
+                choices_made = choices_made || %s::jsonb
+            WHERE player_id = %s AND arc_id = %s
+        """, (next_chapter or chapter_number + 1, json.dumps([{'chapter': chapter_number, 'choice': choice}]), player_id, arc_id))
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    return {
+        'success': True,
+        'outcome': outcome,
+        'exp_earned': exp_earned,
+        'is_finale': chapter['is_finale'],
+        'next_chapter': next_chapter
+    }
+
+
+# ============================================================================
+# PHASE 4: MENTORSHIP & ADVISOR PROGRESSION
+# ============================================================================
+
+def get_advisor_relationships(player_id):
+    """Get player's relationships with all advisors."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT a.*, par.affinity_level, par.total_interactions, par.is_mentor, par.unlocked_skills
+        FROM advisors a
+        LEFT JOIN player_advisor_relationships par ON a.advisor_id = par.advisor_id AND par.player_id = %s
+        ORDER BY a.advisor_name
+    """, (player_id,))
+    
+    advisors = []
+    for row in cur.fetchall():
+        advisors.append({
+            'advisor_id': row['advisor_id'],
+            'name': row['advisor_name'],
+            'specialty': row['discipline_specialty'] or 'Business',
+            'affinity': row['affinity_level'] or 0,
+            'interactions': row['total_interactions'] or 0,
+            'is_mentor': row['is_mentor'] or False,
+            'unlocked_skills': row['unlocked_skills'] or []
+        })
+    
+    cur.close()
+    conn.close()
+    return advisors
+
+
+def get_advisor_skill_tree(advisor_id):
+    """Get the skill tree for a specific advisor."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT * FROM advisor_skill_trees WHERE advisor_id = %s ORDER BY skill_tier, skill_id
+    """, (advisor_id,))
+    
+    skills = []
+    for row in cur.fetchall():
+        skills.append({
+            'skill_id': row['skill_id'],
+            'name': row['skill_name'],
+            'description': row['skill_description'],
+            'tier': row['skill_tier'],
+            'bonus_type': row['bonus_type'],
+            'bonus_value': float(row['bonus_value']),
+            'unlock_cost': row['unlock_cost']
+        })
+    
+    cur.close()
+    conn.close()
+    return skills
+
+
+def get_mentorship_missions(player_id, advisor_id=None):
+    """Get available mentorship missions."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    if advisor_id:
+        cur.execute("""
+            SELECT mm.*, a.advisor_name, pmm.status as player_status
+            FROM mentorship_missions mm
+            JOIN advisors a ON mm.advisor_id = a.advisor_id
+            LEFT JOIN player_mentor_missions pmm ON mm.mission_id = pmm.mission_id AND pmm.player_id = %s
+            WHERE mm.advisor_id = %s
+            ORDER BY mm.required_affinity
+        """, (player_id, advisor_id))
+    else:
+        cur.execute("""
+            SELECT mm.*, a.advisor_name, pmm.status as player_status
+            FROM mentorship_missions mm
+            JOIN advisors a ON mm.advisor_id = a.advisor_id
+            LEFT JOIN player_mentor_missions pmm ON mm.mission_id = pmm.mission_id AND pmm.player_id = %s
+            ORDER BY mm.required_affinity
+        """, (player_id,))
+    
+    missions = []
+    for row in cur.fetchall():
+        missions.append({
+            'mission_id': row['mission_id'],
+            'advisor_id': row['advisor_id'],
+            'advisor_name': row['advisor_name'],
+            'name': row['mission_name'],
+            'description': row['mission_description'],
+            'required_affinity': row['required_affinity'],
+            'mission_type': row['mission_type'],
+            'exp_reward': row['exp_reward'],
+            'status': row['player_status'] or 'available'
+        })
+    
+    cur.close()
+    conn.close()
+    return missions
+
+
+def increase_advisor_affinity(player_id, advisor_id, amount=1):
+    """Increase affinity with an advisor."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        INSERT INTO player_advisor_relationships (player_id, advisor_id, affinity_level, total_interactions)
+        VALUES (%s, %s, %s, 1)
+        ON CONFLICT (player_id, advisor_id) 
+        DO UPDATE SET affinity_level = player_advisor_relationships.affinity_level + %s,
+                      total_interactions = player_advisor_relationships.total_interactions + 1
+        RETURNING affinity_level
+    """, (player_id, advisor_id, amount, amount))
+    
+    result = cur.fetchone()
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    return {'success': True, 'new_affinity': result['affinity_level'] if result else amount}
+
+
+# ============================================================================
+# PHASE 4: BUSINESS NETWORK & PARTNERSHIPS
+# ============================================================================
+
+def get_business_partners(player_id, player_reputation=50):
+    """Get available business partners."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT bp.*, pp.partnership_level, pp.trust_score, pp.joint_ventures_completed
+        FROM business_partners bp
+        LEFT JOIN player_partnerships pp ON bp.partner_id = pp.partner_id AND pp.player_id = %s
+        WHERE bp.reputation_required <= %s
+        ORDER BY bp.reputation_required
+    """, (player_id, player_reputation))
+    
+    partners = []
+    for row in cur.fetchall():
+        partners.append({
+            'partner_id': row['partner_id'],
+            'name': row['partner_name'],
+            'type': row['partner_type'],
+            'industry': row['industry'],
+            'description': row['description'],
+            'reputation_required': row['reputation_required'],
+            'partnership_level': row['partnership_level'] or 0,
+            'trust_score': row['trust_score'] or 0,
+            'ventures_completed': row['joint_ventures_completed'] or 0,
+            'is_partner': row['partnership_level'] is not None
+        })
+    
+    cur.close()
+    conn.close()
+    return partners
+
+
+def get_joint_ventures(player_id, partner_id=None):
+    """Get available joint ventures."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    if partner_id:
+        cur.execute("""
+            SELECT jv.*, bp.partner_name, pjv.status as player_status
+            FROM joint_ventures jv
+            JOIN business_partners bp ON jv.partner_id = bp.partner_id
+            LEFT JOIN player_joint_ventures pjv ON jv.venture_id = pjv.venture_id AND pjv.player_id = %s
+            WHERE jv.partner_id = %s
+        """, (player_id, partner_id))
+    else:
+        cur.execute("""
+            SELECT jv.*, bp.partner_name, pjv.status as player_status
+            FROM joint_ventures jv
+            JOIN business_partners bp ON jv.partner_id = bp.partner_id
+            LEFT JOIN player_joint_ventures pjv ON jv.venture_id = pjv.venture_id AND pjv.player_id = %s
+        """, (player_id,))
+    
+    ventures = []
+    for row in cur.fetchall():
+        ventures.append({
+            'venture_id': row['venture_id'],
+            'name': row['venture_name'],
+            'description': row['venture_description'],
+            'partner_name': row['partner_name'],
+            'investment': float(row['investment_required']),
+            'duration_weeks': row['duration_weeks'],
+            'risk_level': row['risk_level'],
+            'potential_return': float(row['potential_return']),
+            'exp_reward': row['exp_reward'],
+            'status': row['player_status'] or 'available'
+        })
+    
+    cur.close()
+    conn.close()
+    return ventures
+
+
+def get_networking_events(player_reputation=50):
+    """Get available networking events."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT * FROM networking_events 
+        WHERE reputation_required <= %s
+        ORDER BY reputation_required
+    """, (player_reputation,))
+    
+    events = []
+    for row in cur.fetchall():
+        events.append({
+            'event_id': row['event_id'],
+            'name': row['event_name'],
+            'type': row['event_type'],
+            'description': row['description'],
+            'entry_cost': float(row['entry_cost']),
+            'reputation_required': row['reputation_required'],
+            'contacts_gained': row['contacts_gained'],
+            'exp_reward': row['exp_reward']
+        })
+    
+    cur.close()
+    conn.close()
+    return events
+
+
+def attend_networking_event(player_id, event_id):
+    """Attend a networking event and gain contacts."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT * FROM networking_events WHERE event_id = %s", (event_id,))
+    event = cur.fetchone()
+    
+    if not event:
+        cur.close()
+        conn.close()
+        return {'success': False, 'error': 'Event not found'}
+    
+    contact_names = ['Alex Chen', 'Jordan Smith', 'Morgan Lee', 'Taylor Davis', 'Casey Brown', 'Riley Johnson']
+    contact_types = ['investor', 'supplier', 'mentor', 'peer', 'expert']
+    
+    import random
+    for _ in range(event['contacts_gained']):
+        cur.execute("""
+            INSERT INTO player_network (player_id, contact_name, contact_type, industry, relationship_strength, met_at_event)
+            VALUES (%s, %s, %s, %s, 1, %s)
+        """, (player_id, random.choice(contact_names), random.choice(contact_types), 'General', event_id))
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    return {
+        'success': True,
+        'contacts_gained': event['contacts_gained'],
+        'exp_earned': event['exp_reward']
+    }
+
+
+def get_player_network(player_id):
+    """Get player's business network contacts."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT pn.*, ne.event_name FROM player_network pn
+        LEFT JOIN networking_events ne ON pn.met_at_event = ne.event_id
+        WHERE pn.player_id = %s
+        ORDER BY pn.added_at DESC
+    """, (player_id,))
+    
+    contacts = []
+    for row in cur.fetchall():
+        contacts.append({
+            'name': row['contact_name'],
+            'type': row['contact_type'],
+            'industry': row['industry'],
+            'relationship': row['relationship_strength'],
+            'met_at': row['event_name'] or 'Direct Contact',
+            'referrals': row['referrals_given']
+        })
+    
+    cur.close()
+    conn.close()
+    return contacts
+
+
+# ============================================================================
+# PHASE 4: INDUSTRY SPECIALIZATION TRACKS
+# ============================================================================
+
+def get_industry_tracks(player_id):
+    """Get all industry tracks with player progress."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT it.*, pip.current_level, pip.current_exp, pip.certifications_earned
+        FROM industry_tracks it
+        LEFT JOIN player_industry_progress pip ON it.track_id = pip.track_id AND pip.player_id = %s
+        ORDER BY it.track_name
+    """, (player_id,))
+    
+    tracks = []
+    for row in cur.fetchall():
+        tracks.append({
+            'track_id': row['track_id'],
+            'name': row['track_name'],
+            'industry': row['industry'],
+            'description': row['description'],
+            'total_levels': row['total_levels'],
+            'current_level': row['current_level'] or 0,
+            'current_exp': row['current_exp'] or 0,
+            'exp_to_next': row['base_exp_required'] * ((row['current_level'] or 0) + 1),
+            'certifications': row['certifications_earned'] or []
+        })
+    
+    cur.close()
+    conn.close()
+    return tracks
+
+
+def get_industry_certifications(track_id, player_level=0):
+    """Get certifications for a track."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT * FROM industry_certifications 
+        WHERE track_id = %s AND required_level <= %s
+        ORDER BY required_level
+    """, (track_id, player_level + 2))
+    
+    certs = []
+    for row in cur.fetchall():
+        certs.append({
+            'cert_id': row['cert_id'],
+            'name': row['cert_name'],
+            'description': row['cert_description'],
+            'required_level': row['required_level'],
+            'passing_score': row['passing_score'],
+            'exp_reward': row['exp_reward'],
+            'is_unlocked': player_level >= row['required_level']
+        })
+    
+    cur.close()
+    conn.close()
+    return certs
+
+
+def get_industry_challenges(track_id, player_level=0):
+    """Get challenges for an industry track."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT * FROM industry_challenges
+        WHERE track_id = %s AND required_level <= %s
+        ORDER BY required_level
+    """, (track_id, player_level + 1))
+    
+    challenges = []
+    for row in cur.fetchall():
+        challenges.append({
+            'challenge_id': row['challenge_id'],
+            'name': row['challenge_name'],
+            'description': row['challenge_description'],
+            'required_level': row['required_level'],
+            'exp_reward': row['exp_reward']
+        })
+    
+    cur.close()
+    conn.close()
+    return challenges
+
+
+# ============================================================================
+# PHASE 4: DYNAMIC MARKET EVENTS
+# ============================================================================
+
+def get_active_market_events():
+    """Get currently active market events."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT me.*, ame.start_time, ame.end_time, ame.current_phase, ame.status
+        FROM active_market_events ame
+        JOIN market_events me ON ame.event_id = me.event_id
+        WHERE ame.status = 'active'
+        ORDER BY ame.start_time DESC
+    """)
+    
+    events = []
+    for row in cur.fetchall():
+        events.append({
+            'event_id': row['event_id'],
+            'name': row['event_name'],
+            'type': row['event_type'],
+            'description': row['description'],
+            'modifier': float(row['market_modifier']),
+            'is_global': row['is_global'],
+            'phase': row['current_phase'],
+            'status': row['status']
+        })
+    
+    cur.close()
+    conn.close()
+    return events
+
+
+def get_current_market_cycle():
+    """Get the current market cycle."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT * FROM market_cycles ORDER BY cycle_id LIMIT 1")
+    cycle = cur.fetchone()
+    
+    cur.close()
+    conn.close()
+    
+    if cycle:
+        return {
+            'name': cycle['cycle_name'],
+            'type': cycle['cycle_type'],
+            'description': cycle['description'],
+            'revenue_modifier': float(cycle['revenue_modifier']),
+            'cost_modifier': float(cycle['cost_modifier']),
+            'opportunity_modifier': float(cycle['opportunity_modifier'])
+        }
+    return None
+
+
+def get_global_challenges():
+    """Get active global challenges."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT * FROM global_challenges 
+        WHERE status IN ('active', 'pending')
+        ORDER BY start_time
+    """)
+    
+    challenges = []
+    for row in cur.fetchall():
+        challenges.append({
+            'challenge_id': row['challenge_id'],
+            'name': row['challenge_name'],
+            'description': row['challenge_description'],
+            'target': row['target_value'],
+            'progress': row['current_progress'],
+            'participants': row['participants'],
+            'reward_pool': row['reward_pool'],
+            'progress_pct': int(row['current_progress'] / row['target_value'] * 100) if row['target_value'] > 0 else 0,
+            'status': row['status']
+        })
+    
+    cur.close()
+    conn.close()
+    return challenges
+
+
+def contribute_to_global_challenge(player_id, challenge_id, amount):
+    """Contribute to a global challenge."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        INSERT INTO player_global_contributions (player_id, challenge_id, contribution)
+        VALUES (%s, %s, %s)
+        ON CONFLICT (player_id, challenge_id) 
+        DO UPDATE SET contribution = player_global_contributions.contribution + %s
+    """, (player_id, challenge_id, amount, amount))
+    
+    cur.execute("""
+        UPDATE global_challenges 
+        SET current_progress = current_progress + %s,
+            participants = (SELECT COUNT(DISTINCT player_id) FROM player_global_contributions WHERE challenge_id = %s)
+        WHERE challenge_id = %s
+    """, (amount, challenge_id, challenge_id))
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    return {'success': True}
+
+
+def get_breaking_news():
+    """Get recent breaking news."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT * FROM breaking_news 
+        ORDER BY created_at DESC
+        LIMIT 5
+    """)
+    
+    news = []
+    for row in cur.fetchall():
+        news.append({
+            'news_id': row['news_id'],
+            'headline': row['headline'],
+            'content': row['news_content'],
+            'type': row['news_type'],
+            'discipline': row['affected_discipline'],
+            'exp_reward': row['exp_reward']
+        })
+    
+    cur.close()
+    conn.close()
+    return news
+
+
+def respond_to_news(player_id, news_id, response):
+    """Respond to a breaking news event."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT * FROM breaking_news WHERE news_id = %s", (news_id,))
+    news = cur.fetchone()
+    
+    if not news:
+        cur.close()
+        conn.close()
+        return {'success': False, 'error': 'News not found'}
+    
+    quality = 70 if response == 'optimal' else 50
+    exp_earned = int(news['exp_reward'] * (quality / 100))
+    
+    cur.execute("""
+        INSERT INTO player_news_responses (player_id, news_id, response_choice, response_quality, exp_earned)
+        VALUES (%s, %s, %s, %s, %s)
+        ON CONFLICT (player_id, news_id) DO NOTHING
+    """, (player_id, news_id, response, quality, exp_earned))
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    return {'success': True, 'exp_earned': exp_earned}

@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Story Campaigns - Business Tycoon RPG{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="gold-text mb-0">
+                        <i class="bi bi-book"></i> Story Campaigns
+                    </h2>
+                    <p class="text-muted mb-0">Embark on narrative adventures with branching storylines</p>
+                </div>
+                <a href="{{ url_for('hub') }}" class="btn btn-outline-light">
+                    <i class="bi bi-arrow-left"></i> Back to Hub
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+        {% for message in messages %}
+        <div>{{ message }}</div>
+        {% endfor %}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        {% for arc in arcs %}
+        <div class="col-md-6 mb-4">
+            <div class="card h-100 {% if arc.status == 'completed' %}border-success{% elif arc.status == 'in_progress' %}border-warning{% endif %}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="gold-text">{{ arc.arc_name }}</h5>
+                        {% if arc.status == 'completed' %}
+                        <span class="badge bg-success">Completed</span>
+                        {% elif arc.status == 'in_progress' %}
+                        <span class="badge bg-warning text-dark">In Progress</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Not Started</span>
+                        {% endif %}
+                    </div>
+                    <p class="text-muted">{{ arc.description }}</p>
+                    
+                    <div class="mb-3">
+                        <small class="text-muted">Progress: {{ arc.current_chapter }}/{{ arc.total_chapters }} chapters</small>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-warning" style="width: {{ arc.progress_pct }}%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="badge bg-info">{{ arc.world_type }}</span>
+                        <span class="badge bg-success">+{{ arc.exp_reward }} EXP</span>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    {% if arc.status == 'not_started' %}
+                    <form action="{{ url_for('start_story', arc_id=arc.arc_id) }}" method="post">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-game btn-game-gold w-100">
+                            <i class="bi bi-play-fill"></i> Begin Story
+                        </button>
+                    </form>
+                    {% elif arc.status == 'in_progress' %}
+                    <a href="{{ url_for('story_arc', arc_id=arc.arc_id) }}" class="btn btn-game btn-game-emerald w-100">
+                        <i class="bi bi-arrow-right"></i> Continue
+                    </a>
+                    {% else %}
+                    <a href="{{ url_for('story_arc', arc_id=arc.arc_id) }}" class="btn btn-outline-success w-100">
+                        <i class="bi bi-eye"></i> Review Story
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12 text-center py-5">
+            <i class="bi bi-book display-1 text-muted"></i>
+            <p class="text-muted mt-3">No stories available at your level yet. Keep progressing!</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

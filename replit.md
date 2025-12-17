@@ -31,6 +31,11 @@ The game is built as a Flask web application with a responsive, mobile-first UI.
 -   **Competitive Features:** Business competitions between players with league rankings by discipline, weekly challenges with leaderboards, and reward multipliers.
 -   **Advanced Simulations:** Complex business scenarios including M&A (mergers & acquisitions), international expansion, crisis management, and full business lifecycle simulation.
 -   **Tutorial/Onboarding:** Guided tutorial system for new player onboarding with progress tracking across 6 core sections.
+-   **Storyline Quest System:** Multi-chapter narrative arcs with branching decisions, 5 story arcs across different world themes (Modern, Industrial, Fantasy, Sci-Fi), player progress tracking, and experience rewards for story completion.
+-   **Mentorship & Advisor Progression:** Deep relationships with NPC advisors, affinity system tracking interactions, mentor missions with specialized rewards, skill tree unlocking mechanics, and advisor-specific training paths.
+-   **Business Network & Partnerships:** Player networking system with business partners, joint ventures with shared rewards/risks, networking events with contact gains, and partnership management across industries.
+-   **Industry Specialization Tracks:** Deep-dive career paths for 5 industries (Tech Startups, Healthcare, Retail, Financial Services, Manufacturing), industry-specific challenges, professional certifications with exams, and mastery achievements.
+-   **Dynamic Market Events:** Real-time economic events affecting gameplay, market cycles (expansion/recession/stable), breaking news with time-limited responses, global community challenges with shared reward pools, and industry-specific impact modifiers.
 
 ## External Dependencies
 -   **PostgreSQL:** Relational database for all game data persistence.
