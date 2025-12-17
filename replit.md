@@ -26,6 +26,11 @@ The game is built as a Flask web application with a responsive, mobile-first UI.
 -   **Market Simulation:** Price-demand dynamics teaching elasticity, competitive responses, seasonal trends, and promotion ROI. Features 5 challenge types (pricing, competition, marketing ROI, segmentation, positioning) across multiple market segments.
 -   **HR Performance Management:** Complete employee lifecycle from recruitment through retention. Covers hiring decisions, performance reviews, team dynamics, conflict resolution, and succession planning with interactive challenges.
 -   **Investor Pitch Simulator:** Guided pitch deck creation with 8 sections (Problem, Solution, Market, Financials, Team, Ask, etc.) and mentor scoring. Practice presentations with different investor profiles (angels, VCs, strategic) who ask targeted questions.
+-   **Learning Analytics Dashboard:** Comprehensive skill progress tracking across all 8 educational systems, weak area identification, personalized learning recommendations, and skill development visualizations.
+-   **Achievement System:** Educational badges tied to module completion, mastery rewards for each discipline, streak tracking for consistent learning, and special scenario unlocks.
+-   **Competitive Features:** Business competitions between players with league rankings by discipline, weekly challenges with leaderboards, and reward multipliers.
+-   **Advanced Simulations:** Complex business scenarios including M&A (mergers & acquisitions), international expansion, crisis management, and full business lifecycle simulation.
+-   **Tutorial/Onboarding:** Guided tutorial system for new player onboarding with progress tracking across 6 core sections.
 
 ## External Dependencies
 -   **PostgreSQL:** Relational database for all game data persistence.

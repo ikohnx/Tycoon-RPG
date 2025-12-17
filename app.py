@@ -12,7 +12,9 @@ from src.database import (init_database, seed_scenarios, seed_achievements, seed
                           seed_equipment, seed_daily_missions, seed_interactive_challenges,
                           seed_advanced_challenges, seed_scheduling_challenges,
                           seed_cash_flow_challenges, seed_negotiation_scenarios, seed_risk_categories,
-                          seed_market_simulation, seed_hr_management, seed_investor_pitch)
+                          seed_market_simulation, seed_hr_management, seed_investor_pitch,
+                          seed_learning_analytics, seed_educational_achievements,
+                          seed_competitions, seed_advanced_simulations)
 from src.game_engine import GameEngine
 from src.leveling import get_level_title, get_progress_bar, get_exp_to_next_level
 
@@ -56,6 +58,10 @@ seed_risk_categories()
 seed_market_simulation()
 seed_hr_management()
 seed_investor_pitch()
+seed_learning_analytics()
+seed_educational_achievements()
+seed_competitions()
+seed_advanced_simulations()
 
 engine = GameEngine()
 
@@ -1689,6 +1695,235 @@ def submit_pitch(session_id):
         flash(result.get('error', 'Pitch session failed'))
     
     return redirect(url_for('pitch'))
+
+
+# ============================================================================
+# LEARNING ANALYTICS ROUTES
+# ============================================================================
+
+@app.route('/analytics')
+def analytics():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    from src.game_engine import get_player_analytics, get_player_skill_chart_data
+    
+    analytics_data = get_player_analytics(player_id)
+    chart_data = get_player_skill_chart_data(player_id)
+    
+    return render_template('analytics.html',
+                          stats=stats,
+                          analytics=analytics_data,
+                          chart_data=chart_data)
+
+
+# ============================================================================
+# ACHIEVEMENTS ROUTES
+# ============================================================================
+
+@app.route('/achievements')
+def achievements():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    from src.game_engine import get_player_achievements
+    
+    player_achievements = get_player_achievements(player_id)
+    
+    unlocked = [a for a in player_achievements if a['is_unlocked']]
+    in_progress = [a for a in player_achievements if not a['is_unlocked'] and a['progress'] > 0]
+    locked = [a for a in player_achievements if not a['is_unlocked'] and a['progress'] == 0]
+    
+    return render_template('achievements.html',
+                          stats=stats,
+                          unlocked=unlocked,
+                          in_progress=in_progress,
+                          locked=locked)
+
+
+# ============================================================================
+# COMPETITIONS ROUTES
+# ============================================================================
+
+@app.route('/competitions')
+def competitions():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    from src.game_engine import get_active_competitions, get_player_league
+    
+    active_comps = get_active_competitions()
+    league = get_player_league(player_id)
+    
+    return render_template('competitions.html',
+                          stats=stats,
+                          competitions=active_comps,
+                          league=league)
+
+
+@app.route('/competitions/join/<int:active_id>', methods=['POST'])
+def join_competition(active_id):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    from src.game_engine import join_competition as do_join
+    result = do_join(player_id, active_id)
+    
+    if result.get('success'):
+        flash('You have joined the competition!')
+    else:
+        flash(result.get('error', 'Failed to join competition'))
+    
+    return redirect(url_for('competitions'))
+
+
+@app.route('/competitions/<int:active_id>/leaderboard')
+def competition_leaderboard(active_id):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    from src.game_engine import get_competition_leaderboard, get_active_competitions
+    
+    leaderboard = get_competition_leaderboard(active_id)
+    comps = get_active_competitions()
+    competition = next((c for c in comps if c['active_id'] == active_id), None)
+    
+    return render_template('leaderboard.html',
+                          stats=stats,
+                          leaderboard=leaderboard,
+                          competition=competition)
+
+
+# ============================================================================
+# ADVANCED SIMULATIONS ROUTES
+# ============================================================================
+
+@app.route('/simulations')
+def simulations():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    from src.game_engine import get_advanced_simulations
+    
+    level = stats.get('overall_level', 1) if isinstance(stats, dict) else 1
+    sims = get_advanced_simulations(level)
+    
+    ma_sims = [s for s in sims if s['simulation_type'] == 'ma']
+    intl_sims = [s for s in sims if s['simulation_type'] == 'international']
+    crisis_sims = [s for s in sims if s['simulation_type'] == 'crisis']
+    
+    return render_template('simulations.html',
+                          stats=stats,
+                          ma_simulations=ma_sims,
+                          international_simulations=intl_sims,
+                          crisis_simulations=crisis_sims)
+
+
+@app.route('/simulations/<int:simulation_id>')
+def simulation_detail(simulation_id):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    from src.game_engine import get_simulation
+    sim = get_simulation(simulation_id)
+    
+    if not sim:
+        flash('Simulation not found')
+        return redirect(url_for('simulations'))
+    
+    return render_template('simulation_detail.html',
+                          stats=stats,
+                          simulation=sim)
+
+
+@app.route('/simulations/<int:simulation_id>/start', methods=['POST'])
+def start_simulation(simulation_id):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    from src.game_engine import start_simulation as do_start
+    result = do_start(player_id, simulation_id)
+    
+    if result.get('success'):
+        flash('Simulation started!')
+        return redirect(url_for('simulation_play', progress_id=result['progress_id']))
+    else:
+        flash('Failed to start simulation')
+        return redirect(url_for('simulations'))
+
+
+@app.route('/simulations/play/<int:progress_id>')
+def simulation_play(progress_id):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    return render_template('simulation_play.html',
+                          stats=stats,
+                          progress_id=progress_id)
+
+
+# ============================================================================
+# TUTORIAL ROUTES
+# ============================================================================
+
+@app.route('/tutorial')
+def tutorial():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    from src.game_engine import get_tutorial_progress
+    progress = get_tutorial_progress(player_id)
+    
+    return render_template('tutorial.html',
+                          stats=stats,
+                          sections=progress)
+
+
+@app.route('/tutorial/<section_id>/complete', methods=['POST'])
+def complete_tutorial(section_id):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    from src.game_engine import complete_tutorial_section
+    complete_tutorial_section(player_id, section_id)
+    
+    flash('Tutorial section completed!')
+    return redirect(url_for('tutorial'))
 
 
 if __name__ == '__main__':

@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Tutorial - Business Tycoon RPG{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="gold-text mb-0">
+                        <i class="bi bi-mortarboard"></i> Tutorial
+                    </h2>
+                    <p class="text-muted mb-0">Learn how to play Business Tycoon RPG</p>
+                </div>
+                <a href="{{ url_for('hub') }}" class="btn btn-outline-light">
+                    <i class="bi bi-arrow-left"></i> Back to Hub
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+        {% for message in messages %}
+        <div>{{ message }}</div>
+        {% endfor %}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            {% for section in sections %}
+            <div class="card mb-3 {% if section.is_completed %}border-success{% endif %}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <div class="me-3">
+                                <span class="badge {% if section.is_completed %}bg-success{% else %}bg-secondary{% endif %} rounded-circle" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                    {% if section.is_completed %}
+                                    <i class="bi bi-check-lg"></i>
+                                    {% else %}
+                                    {{ section.order }}
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div>
+                                <h5 class="mb-0 {% if section.is_completed %}text-success{% endif %}">{{ section.title }}</h5>
+                                {% if section.id == 'welcome' %}
+                                <small class="text-muted">Learn about the game's goals and how to get started.</small>
+                                {% elif section.id == 'navigation' %}
+                                <small class="text-muted">Discover the Hub and how to access different features.</small>
+                                {% elif section.id == 'scenarios' %}
+                                <small class="text-muted">Understand how to play scenarios and make decisions.</small>
+                                {% elif section.id == 'disciplines' %}
+                                <small class="text-muted">Learn about the 6 business disciplines you'll master.</small>
+                                {% elif section.id == 'challenges' %}
+                                <small class="text-muted">Explore interactive challenges and simulations.</small>
+                                {% elif section.id == 'simulations' %}
+                                <small class="text-muted">Tackle advanced business simulations.</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div>
+                            {% if section.is_completed %}
+                            <span class="badge bg-success">Completed</span>
+                            {% else %}
+                            <form action="{{ url_for('complete_tutorial', section_id=section.id) }}" method="post">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-outline-primary btn-sm">
+                                    Mark Complete
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+            {% set completed_count = sections|selectattr('is_completed')|list|length %}
+            <div class="text-center mt-4">
+                <div class="progress mb-3" style="height: 20px;">
+                    <div class="progress-bar bg-success" style="width: {{ (completed_count / sections|length) * 100 }}%">
+                        {{ completed_count }}/{{ sections|length }} Complete
+                    </div>
+                </div>
+                {% if completed_count == sections|length %}
+                <div class="alert alert-success">
+                    <i class="bi bi-trophy-fill"></i> You've completed the tutorial! You're ready to become a Business Tycoon!
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1212,6 +1212,154 @@ def init_database():
         );
     """)
     
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS learning_recommendations (
+            recommendation_id SERIAL PRIMARY KEY,
+            discipline VARCHAR(50) NOT NULL,
+            min_level INTEGER DEFAULT 1,
+            title VARCHAR(200) NOT NULL,
+            description TEXT
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_learning_progress (
+            progress_id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            discipline VARCHAR(50) NOT NULL,
+            scenarios_completed INTEGER DEFAULT 0,
+            challenges_completed INTEGER DEFAULT 0,
+            correct_answers INTEGER DEFAULT 0,
+            total_attempts INTEGER DEFAULT 0,
+            time_spent_minutes INTEGER DEFAULT 0,
+            last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            strengths JSONB DEFAULT '[]',
+            weaknesses JSONB DEFAULT '[]'
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS educational_achievements (
+            achievement_id SERIAL PRIMARY KEY,
+            achievement_name VARCHAR(200) NOT NULL,
+            description TEXT,
+            category VARCHAR(50) NOT NULL,
+            requirement_count INTEGER DEFAULT 1,
+            exp_reward INTEGER DEFAULT 100,
+            tier VARCHAR(20) DEFAULT 'bronze'
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_educational_achievements (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            achievement_id INTEGER REFERENCES educational_achievements(achievement_id),
+            progress_count INTEGER DEFAULT 0,
+            is_unlocked BOOLEAN DEFAULT FALSE,
+            unlocked_at TIMESTAMP,
+            UNIQUE(player_id, achievement_id)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS competition_types (
+            competition_id SERIAL PRIMARY KEY,
+            competition_name VARCHAR(200) NOT NULL,
+            description TEXT,
+            competition_type VARCHAR(50) NOT NULL,
+            duration_days INTEGER DEFAULT 7,
+            exp_reward INTEGER DEFAULT 500,
+            scoring_criteria JSONB DEFAULT '[]'
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS leagues (
+            league_id SERIAL PRIMARY KEY,
+            league_name VARCHAR(100) NOT NULL,
+            tier INTEGER NOT NULL,
+            min_exp INTEGER DEFAULT 0,
+            max_exp INTEGER DEFAULT 999999,
+            reward_multiplier DECIMAL(3, 2) DEFAULT 1.0
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS active_competitions (
+            active_id SERIAL PRIMARY KEY,
+            competition_id INTEGER REFERENCES competition_types(competition_id),
+            start_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            end_date TIMESTAMP,
+            status VARCHAR(50) DEFAULT 'active'
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS competition_entries (
+            entry_id SERIAL PRIMARY KEY,
+            active_id INTEGER REFERENCES active_competitions(active_id) ON DELETE CASCADE,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            score INTEGER DEFAULT 0,
+            rank INTEGER,
+            metrics JSONB DEFAULT '{}',
+            joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(active_id, player_id)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_league_status (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            league_id INTEGER REFERENCES leagues(league_id),
+            season INTEGER DEFAULT 1,
+            season_exp INTEGER DEFAULT 0,
+            rank_in_league INTEGER,
+            promoted BOOLEAN DEFAULT FALSE,
+            relegated BOOLEAN DEFAULT FALSE,
+            UNIQUE(player_id, season)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS advanced_simulations (
+            simulation_id SERIAL PRIMARY KEY,
+            simulation_name VARCHAR(200) NOT NULL,
+            simulation_type VARCHAR(50) NOT NULL,
+            description TEXT,
+            difficulty INTEGER DEFAULT 3,
+            scenario_data JSONB DEFAULT '{}',
+            solution_guide JSONB DEFAULT '{}',
+            exp_reward INTEGER DEFAULT 300
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_simulation_progress (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            simulation_id INTEGER REFERENCES advanced_simulations(simulation_id),
+            current_step INTEGER DEFAULT 0,
+            decisions JSONB DEFAULT '[]',
+            outcome_score INTEGER DEFAULT 0,
+            status VARCHAR(50) DEFAULT 'in_progress',
+            started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            completed_at TIMESTAMP
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS tutorial_progress (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            tutorial_section VARCHAR(100) NOT NULL,
+            is_completed BOOLEAN DEFAULT FALSE,
+            completed_at TIMESTAMP,
+            UNIQUE(player_id, tutorial_section)
+        );
+    """)
+    
     conn.commit()
     cur.close()
     conn.close()
@@ -6586,6 +6734,200 @@ def seed_investor_pitch():
     
     conn.commit()
     print(f"Seeded {len(templates)} pitch templates and {len(investors)} investor profiles!")
+    cur.close()
+    conn.close()
+
+
+def seed_learning_analytics():
+    """Seed learning analytics recommendations."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM learning_recommendations")
+    if cur.fetchone()['count'] > 0:
+        print("Learning analytics already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    recommendations = [
+        ('marketing', 1, 'Start with basic marketing concepts', 'Complete Marketing 101 scenarios to build your foundation.'),
+        ('marketing', 3, 'Practice market segmentation', 'Try the Market Simulation challenges to sharpen your skills.'),
+        ('marketing', 5, 'Master competitive positioning', 'Advanced marketing scenarios await - focus on differentiation.'),
+        ('finance', 1, 'Learn basic accounting', 'Start with the Accounting Hub to understand debits and credits.'),
+        ('finance', 3, 'Practice cash flow management', 'The Cash Flow Forecast system will help you master timing.'),
+        ('finance', 5, 'Advanced financial analysis', 'Work on ROI calculations and break-even analysis.'),
+        ('operations', 1, 'Understand supply chain basics', 'Begin with the Supply Chain Simulator.'),
+        ('operations', 3, 'Optimize inventory management', 'Practice reorder points and safety stock calculations.'),
+        ('operations', 5, 'Master project scheduling', 'Use the Scheduling Challenges to learn critical path.'),
+        ('hr', 1, 'Learn hiring fundamentals', 'HR Management challenges teach recruitment basics.'),
+        ('hr', 3, 'Practice performance reviews', 'Work on giving balanced, constructive feedback.'),
+        ('hr', 5, 'Master conflict resolution', 'Advanced HR scenarios cover difficult conversations.'),
+        ('legal', 1, 'Understand business contracts', 'Legal scenarios introduce contract fundamentals.'),
+        ('legal', 3, 'Risk management basics', 'Use the Risk Dashboard to identify and mitigate risks.'),
+        ('strategy', 1, 'Business planning fundamentals', 'Start with the Business Plan Workshop.'),
+        ('strategy', 3, 'Practice negotiation', 'Negotiation Simulator teaches BATNA and anchoring.'),
+        ('strategy', 5, 'Investor relations', 'Master pitch decks with the Investor Pitch Simulator.')
+    ]
+    
+    for rec in recommendations:
+        cur.execute("""
+            INSERT INTO learning_recommendations 
+            (discipline, min_level, title, description)
+            VALUES (%s, %s, %s, %s)
+        """, rec)
+    
+    conn.commit()
+    print(f"Seeded {len(recommendations)} learning recommendations!")
+    cur.close()
+    conn.close()
+
+
+def seed_educational_achievements():
+    """Seed educational achievement milestones."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM educational_achievements")
+    if cur.fetchone()['count'] > 0:
+        print("Educational achievements already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    achievements = [
+        ('Cash Flow Master', 'Complete all cash flow challenges', 'cash_flow', 5, 500, 'gold'),
+        ('Business Planner', 'Create a complete business plan', 'business_plan', 1, 300, 'silver'),
+        ('Negotiation Pro', 'Win 10 negotiations', 'negotiation', 10, 400, 'gold'),
+        ('Risk Manager', 'Identify and mitigate 20 risks', 'risk', 20, 350, 'silver'),
+        ('Supply Chain Expert', 'Manage 50 purchase orders', 'supply_chain', 50, 450, 'gold'),
+        ('Market Strategist', 'Complete all market challenges', 'market', 5, 500, 'gold'),
+        ('HR Leader', 'Hire and manage 10 employees', 'hr', 10, 400, 'silver'),
+        ('Pitch Perfect', 'Successfully pitch to 5 investors', 'pitch', 5, 500, 'gold'),
+        ('Accounting Ace', 'Close 12 monthly periods', 'accounting', 12, 600, 'platinum'),
+        ('Project Manager', 'Complete 10 scheduling challenges', 'scheduling', 10, 400, 'silver'),
+        ('Marketing Maven', 'Reach level 5 in Marketing', 'discipline_level', 5, 300, 'silver'),
+        ('Finance Guru', 'Reach level 5 in Finance', 'discipline_level', 5, 300, 'silver'),
+        ('Operations Expert', 'Reach level 5 in Operations', 'discipline_level', 5, 300, 'silver'),
+        ('HR Specialist', 'Reach level 5 in HR', 'discipline_level', 5, 300, 'silver'),
+        ('Legal Eagle', 'Reach level 5 in Legal', 'discipline_level', 5, 300, 'silver'),
+        ('Strategy Master', 'Reach level 5 in Strategy', 'discipline_level', 5, 300, 'silver'),
+        ('Business Tycoon', 'Reach level 10 in all disciplines', 'discipline_level', 60, 2000, 'diamond'),
+        ('Weekly Warrior', 'Complete 10 weekly challenges', 'weekly', 10, 250, 'bronze'),
+        ('Daily Dedication', 'Log in 30 consecutive days', 'streak', 30, 500, 'gold'),
+        ('First Steps', 'Complete your first scenario', 'scenario', 1, 50, 'bronze')
+    ]
+    
+    for ach in achievements:
+        cur.execute("""
+            INSERT INTO educational_achievements 
+            (achievement_name, description, category, requirement_count, exp_reward, tier)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, ach)
+    
+    conn.commit()
+    print(f"Seeded {len(achievements)} educational achievements!")
+    cur.close()
+    conn.close()
+
+
+def seed_competitions():
+    """Seed competition types and leagues."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM competition_types")
+    if cur.fetchone()['count'] > 0:
+        print("Competitions already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    comp_types = [
+        ('Weekly Sprint', 'Complete the most challenges in a week', 'weekly', 7, 500, json.dumps(['scenarios_completed', 'exp_earned'])),
+        ('Profit Masters', 'Highest profit in simulations', 'weekly', 7, 600, json.dumps(['simulation_profit', 'efficiency'])),
+        ('Pitch Competition', 'Best investor pitch scores', 'event', 3, 1000, json.dumps(['pitch_score', 'investor_approval'])),
+        ('Risk Assessment', 'Most comprehensive risk management', 'weekly', 7, 400, json.dumps(['risks_identified', 'risks_mitigated'])),
+        ('Hiring Challenge', 'Build the best team', 'event', 5, 750, json.dumps(['team_performance', 'budget_efficiency'])),
+        ('Market Domination', 'Highest market share gains', 'weekly', 7, 550, json.dumps(['market_share', 'revenue_growth']))
+    ]
+    
+    for comp in comp_types:
+        cur.execute("""
+            INSERT INTO competition_types 
+            (competition_name, description, competition_type, duration_days, exp_reward, scoring_criteria)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, comp)
+    
+    leagues = [
+        ('Bronze League', 1, 0, 999, 1.0),
+        ('Silver League', 2, 1000, 4999, 1.2),
+        ('Gold League', 3, 5000, 14999, 1.5),
+        ('Platinum League', 4, 15000, 49999, 2.0),
+        ('Diamond League', 5, 50000, 999999999, 3.0)
+    ]
+    
+    for league in leagues:
+        cur.execute("""
+            INSERT INTO leagues 
+            (league_name, tier, min_exp, max_exp, reward_multiplier)
+            VALUES (%s, %s, %s, %s, %s)
+        """, league)
+    
+    conn.commit()
+    print(f"Seeded {len(comp_types)} competition types and {len(leagues)} leagues!")
+    cur.close()
+    conn.close()
+
+
+def seed_advanced_simulations():
+    """Seed M&A, international expansion, and crisis scenarios."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM advanced_simulations")
+    if cur.fetchone()['count'] > 0:
+        print("Advanced simulations already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    simulations = [
+        ('Startup Acquisition', 'ma', 'A tech startup is for sale. Evaluate the deal.', 3,
+         json.dumps({'target_company': 'TechStart Inc', 'asking_price': 5000000, 'revenue': 1200000, 'growth_rate': 40, 'employees': 25, 'tech_assets': ['AI Platform', 'Customer Data'], 'synergies': 800000}),
+         json.dumps({'steps': ['Due diligence', 'Valuation', 'Negotiation', 'Integration planning']}), 400),
+        ('Hostile Takeover Defense', 'ma', 'A competitor is attempting a hostile takeover. Defend your company.', 4,
+         json.dumps({'acquirer': 'MegaCorp', 'offer_premium': 30, 'your_market_cap': 50000000, 'defense_options': ['Poison pill', 'White knight', 'Pac-man', 'Crown jewel']}),
+         json.dumps({'optimal_defense': 'white_knight', 'negotiation_points': ['Price', 'Culture', 'Jobs']}), 500),
+        ('European Expansion', 'international', 'Expand your business to the European market.', 3,
+         json.dumps({'markets': [{'country': 'UK', 'market_size': 10000000, 'competition': 'high', 'regulations': 'moderate'}, {'country': 'Germany', 'market_size': 15000000, 'competition': 'medium', 'regulations': 'strict'}, {'country': 'Spain', 'market_size': 8000000, 'competition': 'low', 'regulations': 'moderate'}], 'budget': 2000000}),
+         json.dumps({'considerations': ['Market size', 'Competition', 'Regulations', 'Cultural fit', 'Language']}), 350),
+        ('Asia Pacific Entry', 'international', 'Enter the rapidly growing Asia Pacific market.', 4,
+         json.dumps({'markets': [{'country': 'Japan', 'market_size': 20000000, 'entry_barrier': 'high', 'partner_required': True}, {'country': 'Singapore', 'market_size': 5000000, 'entry_barrier': 'low', 'partner_required': False}, {'country': 'India', 'market_size': 50000000, 'entry_barrier': 'medium', 'partner_required': True}]}),
+         json.dumps({'entry_modes': ['Joint venture', 'Subsidiary', 'Franchise', 'Export']}), 400),
+        ('Product Recall Crisis', 'crisis', 'A major product defect has been discovered affecting 10,000 customers.', 5,
+         json.dumps({'affected_units': 10000, 'injury_reports': 5, 'media_coverage': 'high', 'stock_drop': 15, 'options': ['Full recall', 'Partial recall', 'Fix on request', 'Deny issue']}),
+         json.dumps({'best_response': 'full_recall', 'communication_plan': ['Press release', 'Customer notification', 'Social media', 'Regulatory filing']}), 500),
+        ('Data Breach Response', 'crisis', 'Hackers have stolen customer data. How do you respond?', 5,
+         json.dumps({'records_exposed': 50000, 'data_types': ['Names', 'Emails', 'Payment info'], 'discovered_by': 'security_team', 'time_since_breach': 48}),
+         json.dumps({'response_steps': ['Contain', 'Investigate', 'Notify', 'Remediate', 'Review']}), 550),
+        ('Supply Chain Disruption', 'crisis', 'Your main supplier has gone bankrupt. Production stops in 2 weeks.', 4,
+         json.dumps({'supplier_dependency': 70, 'alternative_suppliers': 3, 'inventory_days': 14, 'customer_commitments': 50000}),
+         json.dumps({'mitigation_options': ['Emergency sourcing', 'Production pause', 'Customer communication', 'Inventory rationing']}), 400),
+        ('Executive Scandal', 'crisis', 'Your CEO has been accused of misconduct. The board must act.', 4,
+         json.dumps({'allegation_severity': 'high', 'media_attention': 'viral', 'stock_impact': -20, 'employee_morale': 'low', 'board_options': ['Suspend pending investigation', 'Immediate termination', 'Public defense', 'Quiet resignation']}),
+         json.dumps({'recommended_action': 'suspend_pending_investigation', 'communication_priority': ['Board', 'Employees', 'Investors', 'Media']}), 450)
+    ]
+    
+    for sim in simulations:
+        cur.execute("""
+            INSERT INTO advanced_simulations 
+            (simulation_name, simulation_type, description, difficulty, scenario_data, solution_guide, exp_reward)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, sim)
+    
+    conn.commit()
+    print(f"Seeded {len(simulations)} advanced simulations!")
     cur.close()
     conn.close()
 

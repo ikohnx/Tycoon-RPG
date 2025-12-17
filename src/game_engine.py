@@ -4827,3 +4827,489 @@ def submit_pitch_answers(session_id: int, answers: list) -> dict:
         'equity_requested': equity_requested,
         'exp_earned': exp_earned
     }
+
+
+# ============================================================================
+# LEARNING ANALYTICS FUNCTIONS
+# ============================================================================
+
+def get_player_analytics(player_id):
+    """Get comprehensive learning analytics for a player."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT marketing_exp, finance_exp, operations_exp, 
+               human_resources_exp, legal_exp, strategy_exp,
+               scenarios_completed, login_streak, total_playtime_minutes
+        FROM player_profiles WHERE player_id = %s
+    """, (player_id,))
+    player = cur.fetchone()
+    
+    if not player:
+        cur.close()
+        conn.close()
+        return None
+    
+    disciplines = {
+        'Marketing': {'exp': player['marketing_exp'], 'level': get_current_level(player['marketing_exp'])},
+        'Finance': {'exp': player['finance_exp'], 'level': get_current_level(player['finance_exp'])},
+        'Operations': {'exp': player['operations_exp'], 'level': get_current_level(player['operations_exp'])},
+        'HR': {'exp': player['human_resources_exp'], 'level': get_current_level(player['human_resources_exp'])},
+        'Legal': {'exp': player['legal_exp'], 'level': get_current_level(player['legal_exp'])},
+        'Strategy': {'exp': player['strategy_exp'], 'level': get_current_level(player['strategy_exp'])}
+    }
+    
+    total_exp = sum(d['exp'] for d in disciplines.values())
+    avg_level = sum(d['level'] for d in disciplines.values()) / 6
+    
+    strengths = sorted(disciplines.items(), key=lambda x: x[1]['exp'], reverse=True)[:2]
+    weaknesses = sorted(disciplines.items(), key=lambda x: x[1]['exp'])[:2]
+    
+    cur.execute("""
+        SELECT discipline, min_level, title, description 
+        FROM learning_recommendations 
+        ORDER BY discipline, min_level
+    """)
+    all_recs = cur.fetchall()
+    
+    recommendations = []
+    for disc_name, disc_data in weaknesses:
+        disc_key = disc_name.lower()
+        for rec in all_recs:
+            if rec['discipline'] == disc_key and rec['min_level'] <= disc_data['level'] + 1:
+                recommendations.append({
+                    'discipline': disc_name,
+                    'title': rec['title'],
+                    'description': rec['description']
+                })
+                break
+    
+    cur.close()
+    conn.close()
+    
+    return {
+        'disciplines': disciplines,
+        'total_exp': total_exp,
+        'avg_level': round(avg_level, 1),
+        'scenarios_completed': player['scenarios_completed'],
+        'login_streak': player['login_streak'],
+        'playtime_hours': round(player['total_playtime_minutes'] / 60, 1),
+        'strengths': [(s[0], s[1]['level']) for s in strengths],
+        'weaknesses': [(w[0], w[1]['level']) for w in weaknesses],
+        'recommendations': recommendations[:3]
+    }
+
+
+def get_player_skill_chart_data(player_id):
+    """Get data formatted for radar chart visualization."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT marketing_exp, finance_exp, operations_exp, 
+               human_resources_exp, legal_exp, strategy_exp
+        FROM player_profiles WHERE player_id = %s
+    """, (player_id,))
+    player = cur.fetchone()
+    
+    cur.close()
+    conn.close()
+    
+    if not player:
+        return None
+    
+    max_exp = max(
+        player['marketing_exp'], player['finance_exp'], player['operations_exp'],
+        player['human_resources_exp'], player['legal_exp'], player['strategy_exp'], 1000
+    )
+    
+    return {
+        'labels': ['Marketing', 'Finance', 'Operations', 'HR', 'Legal', 'Strategy'],
+        'values': [
+            round(player['marketing_exp'] / max_exp * 100),
+            round(player['finance_exp'] / max_exp * 100),
+            round(player['operations_exp'] / max_exp * 100),
+            round(player['human_resources_exp'] / max_exp * 100),
+            round(player['legal_exp'] / max_exp * 100),
+            round(player['strategy_exp'] / max_exp * 100)
+        ]
+    }
+
+
+# ============================================================================
+# ACHIEVEMENT FUNCTIONS
+# ============================================================================
+
+def get_player_achievements(player_id):
+    """Get all achievements and player progress."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT ea.*, pea.progress_count, pea.is_unlocked, pea.unlocked_at
+        FROM educational_achievements ea
+        LEFT JOIN player_educational_achievements pea 
+            ON ea.achievement_id = pea.achievement_id AND pea.player_id = %s
+        ORDER BY ea.tier, ea.achievement_name
+    """, (player_id,))
+    achievements = cur.fetchall()
+    
+    cur.close()
+    conn.close()
+    
+    result = []
+    for ach in achievements:
+        progress = ach['progress_count'] or 0
+        result.append({
+            'achievement_id': ach['achievement_id'],
+            'name': ach['achievement_name'],
+            'description': ach['description'],
+            'category': ach['category'],
+            'requirement': ach['requirement_count'],
+            'progress': progress,
+            'progress_pct': min(100, round(progress / ach['requirement_count'] * 100)),
+            'exp_reward': ach['exp_reward'],
+            'tier': ach['tier'],
+            'is_unlocked': ach['is_unlocked'] or False,
+            'unlocked_at': ach['unlocked_at']
+        })
+    
+    return result
+
+
+def update_achievement_progress(player_id, category, increment=1):
+    """Update progress on achievements for a category."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT achievement_id, requirement_count, exp_reward
+        FROM educational_achievements WHERE category = %s
+    """, (category,))
+    achievements = cur.fetchall()
+    
+    unlocked = []
+    
+    for ach in achievements:
+        cur.execute("""
+            INSERT INTO player_educational_achievements (player_id, achievement_id, progress_count)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (player_id, achievement_id) 
+            DO UPDATE SET progress_count = player_educational_achievements.progress_count + %s
+            RETURNING progress_count, is_unlocked
+        """, (player_id, ach['achievement_id'], increment, increment))
+        result = cur.fetchone()
+        
+        if result and not result['is_unlocked'] and result['progress_count'] >= ach['requirement_count']:
+            cur.execute("""
+                UPDATE player_educational_achievements 
+                SET is_unlocked = TRUE, unlocked_at = CURRENT_TIMESTAMP
+                WHERE player_id = %s AND achievement_id = %s
+            """, (player_id, ach['achievement_id']))
+            unlocked.append({
+                'achievement_id': ach['achievement_id'],
+                'exp_reward': ach['exp_reward']
+            })
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    return unlocked
+
+
+# ============================================================================
+# COMPETITION FUNCTIONS
+# ============================================================================
+
+def get_active_competitions():
+    """Get all active competitions."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT ac.*, ct.competition_name, ct.description, ct.competition_type, 
+               ct.duration_days, ct.exp_reward, ct.scoring_criteria
+        FROM active_competitions ac
+        JOIN competition_types ct ON ac.competition_id = ct.competition_id
+        WHERE ac.status = 'active' AND ac.end_date > CURRENT_TIMESTAMP
+        ORDER BY ac.end_date
+    """)
+    competitions = cur.fetchall()
+    
+    cur.close()
+    conn.close()
+    
+    return [dict(c) for c in competitions]
+
+
+def get_competition_leaderboard(active_id, limit=10):
+    """Get leaderboard for a competition."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT ce.*, pp.name
+        FROM competition_entries ce
+        JOIN player_profiles pp ON ce.player_id = pp.player_id
+        WHERE ce.active_id = %s
+        ORDER BY ce.score DESC
+        LIMIT %s
+    """, (active_id, limit))
+    entries = cur.fetchall()
+    
+    cur.close()
+    conn.close()
+    
+    return [dict(e) for e in entries]
+
+
+def join_competition(player_id, active_id):
+    """Join a competition."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    try:
+        cur.execute("""
+            INSERT INTO competition_entries (active_id, player_id)
+            VALUES (%s, %s)
+            ON CONFLICT (active_id, player_id) DO NOTHING
+            RETURNING entry_id
+        """, (active_id, player_id))
+        result = cur.fetchone()
+        conn.commit()
+        cur.close()
+        conn.close()
+        return {'success': True, 'joined': result is not None}
+    except Exception as e:
+        conn.rollback()
+        cur.close()
+        conn.close()
+        return {'success': False, 'error': str(e)}
+
+
+def get_player_league(player_id):
+    """Get player's current league status."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT SUM(marketing_exp + finance_exp + operations_exp + 
+                   human_resources_exp + legal_exp + strategy_exp) as total_exp
+        FROM player_profiles WHERE player_id = %s
+    """, (player_id,))
+    player = cur.fetchone()
+    
+    if not player:
+        cur.close()
+        conn.close()
+        return None
+    
+    total_exp = player['total_exp'] or 0
+    
+    cur.execute("""
+        SELECT * FROM leagues 
+        WHERE min_exp <= %s AND max_exp >= %s
+        ORDER BY tier DESC LIMIT 1
+    """, (total_exp, total_exp))
+    league = cur.fetchone()
+    
+    cur.close()
+    conn.close()
+    
+    if league:
+        return {
+            'league_id': league['league_id'],
+            'league_name': league['league_name'],
+            'tier': league['tier'],
+            'player_exp': total_exp,
+            'next_tier_exp': league['max_exp'] + 1,
+            'reward_multiplier': float(league['reward_multiplier'])
+        }
+    
+    return None
+
+
+# ============================================================================
+# ADVANCED SIMULATION FUNCTIONS
+# ============================================================================
+
+def get_advanced_simulations(player_level=1):
+    """Get available advanced simulations."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT * FROM advanced_simulations 
+        WHERE difficulty <= %s + 2
+        ORDER BY difficulty, simulation_name
+    """, (player_level,))
+    simulations = cur.fetchall()
+    
+    cur.close()
+    conn.close()
+    
+    return [dict(s) for s in simulations]
+
+
+def get_simulation(simulation_id):
+    """Get a specific simulation."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT * FROM advanced_simulations WHERE simulation_id = %s", (simulation_id,))
+    sim = cur.fetchone()
+    
+    cur.close()
+    conn.close()
+    
+    if sim:
+        result = dict(sim)
+        if isinstance(result['scenario_data'], str):
+            result['scenario_data'] = json.loads(result['scenario_data'])
+        if isinstance(result['solution_guide'], str):
+            result['solution_guide'] = json.loads(result['solution_guide'])
+        return result
+    return None
+
+
+def start_simulation(player_id, simulation_id):
+    """Start an advanced simulation."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        INSERT INTO player_simulation_progress (player_id, simulation_id)
+        VALUES (%s, %s)
+        RETURNING id
+    """, (player_id, simulation_id))
+    result = cur.fetchone()
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    return {'success': True, 'progress_id': result['id']}
+
+
+def submit_simulation_decision(progress_id, decision):
+    """Submit a decision in a simulation."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT psp.*, asm.solution_guide, asm.exp_reward
+        FROM player_simulation_progress psp
+        JOIN advanced_simulations asm ON psp.simulation_id = asm.simulation_id
+        WHERE psp.id = %s
+    """, (progress_id,))
+    progress = cur.fetchone()
+    
+    if not progress:
+        cur.close()
+        conn.close()
+        return {'success': False, 'error': 'Progress not found'}
+    
+    decisions = progress['decisions'] if progress['decisions'] else []
+    if isinstance(decisions, str):
+        decisions = json.loads(decisions)
+    decisions.append(decision)
+    
+    new_step = progress['current_step'] + 1
+    
+    cur.execute("""
+        UPDATE player_simulation_progress 
+        SET current_step = %s, decisions = %s
+        WHERE id = %s
+    """, (new_step, json.dumps(decisions), progress_id))
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    return {'success': True, 'step': new_step}
+
+
+def complete_simulation(progress_id, final_score):
+    """Complete an advanced simulation."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        UPDATE player_simulation_progress 
+        SET status = 'completed', outcome_score = %s, completed_at = CURRENT_TIMESTAMP
+        WHERE id = %s
+        RETURNING player_id, simulation_id
+    """, (final_score, progress_id))
+    result = cur.fetchone()
+    
+    if result:
+        cur.execute("SELECT exp_reward FROM advanced_simulations WHERE simulation_id = %s", (result['simulation_id'],))
+        sim = cur.fetchone()
+        exp_earned = int(sim['exp_reward'] * (final_score / 100)) if sim else 0
+    else:
+        exp_earned = 0
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    return {'success': True, 'exp_earned': exp_earned}
+
+
+# ============================================================================
+# TUTORIAL FUNCTIONS
+# ============================================================================
+
+TUTORIAL_SECTIONS = [
+    {'id': 'welcome', 'title': 'Welcome to Business Tycoon', 'order': 1},
+    {'id': 'navigation', 'title': 'Navigating the Hub', 'order': 2},
+    {'id': 'scenarios', 'title': 'Playing Scenarios', 'order': 3},
+    {'id': 'disciplines', 'title': 'Understanding Disciplines', 'order': 4},
+    {'id': 'challenges', 'title': 'Educational Challenges', 'order': 5},
+    {'id': 'simulations', 'title': 'Advanced Simulations', 'order': 6}
+]
+
+
+def get_tutorial_progress(player_id):
+    """Get player's tutorial progress."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT tutorial_section, is_completed FROM tutorial_progress
+        WHERE player_id = %s
+    """, (player_id,))
+    completed = {row['tutorial_section']: row['is_completed'] for row in cur.fetchall()}
+    
+    cur.close()
+    conn.close()
+    
+    result = []
+    for section in TUTORIAL_SECTIONS:
+        result.append({
+            **section,
+            'is_completed': completed.get(section['id'], False)
+        })
+    
+    return result
+
+
+def complete_tutorial_section(player_id, section_id):
+    """Mark a tutorial section as complete."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        INSERT INTO tutorial_progress (player_id, tutorial_section, is_completed, completed_at)
+        VALUES (%s, %s, TRUE, CURRENT_TIMESTAMP)
+        ON CONFLICT (player_id, tutorial_section) 
+        DO UPDATE SET is_completed = TRUE, completed_at = CURRENT_TIMESTAMP
+    """, (player_id, section_id))
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    return {'success': True}

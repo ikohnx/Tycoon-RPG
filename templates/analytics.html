@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}Learning Analytics - Business Tycoon RPG{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="gold-text mb-0">
+                        <i class="bi bi-bar-chart-line"></i> Learning Analytics
+                    </h2>
+                    <p class="text-muted mb-0">Track your progress and identify areas for improvement</p>
+                </div>
+                <a href="{{ url_for('hub') }}" class="btn btn-outline-light">
+                    <i class="bi bi-arrow-left"></i> Back to Hub
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-success mb-0">{{ "{:,}".format(analytics.total_exp) }}</h3>
+                    <small class="text-muted">Total EXP</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-info mb-0">{{ analytics.avg_level }}</h3>
+                    <small class="text-muted">Avg Level</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-warning mb-0">{{ analytics.scenarios_completed }}</h3>
+                    <small class="text-muted">Scenarios Completed</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-primary mb-0">{{ analytics.playtime_hours }}h</h3>
+                    <small class="text-muted">Total Playtime</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-graph-up"></i> Skill Progress by Discipline
+                </div>
+                <div class="card-body">
+                    {% for disc_name, disc_data in analytics.disciplines.items() %}
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>{{ disc_name }}</span>
+                            <span class="text-muted">Level {{ disc_data.level }} ({{ "{:,}".format(disc_data.exp) }} EXP)</span>
+                        </div>
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar bg-gradient" style="width: {{ (disc_data.level / 10) * 100 }}%; background: linear-gradient(90deg, #6366f1, #8b5cf6);">
+                                {{ disc_data.level }}/10
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-lightbulb"></i> Personalized Recommendations
+                </div>
+                <div class="card-body">
+                    {% if analytics.recommendations %}
+                    {% for rec in analytics.recommendations %}
+                    <div class="d-flex mb-3 p-3 bg-dark rounded">
+                        <div class="me-3">
+                            <span class="badge bg-info">{{ rec.discipline }}</span>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">{{ rec.title }}</h6>
+                            <p class="text-muted mb-0 small">{{ rec.description }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <p class="text-muted">Complete more challenges to receive personalized recommendations.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header bg-success bg-opacity-25">
+                    <i class="bi bi-trophy"></i> Strengths
+                </div>
+                <div class="card-body">
+                    {% for strength in analytics.strengths %}
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>{{ strength[0] }}</span>
+                        <span class="badge bg-success">Level {{ strength[1] }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header bg-warning bg-opacity-25">
+                    <i class="bi bi-arrow-up-circle"></i> Areas to Improve
+                </div>
+                <div class="card-body">
+                    {% for weakness in analytics.weaknesses %}
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>{{ weakness[0] }}</span>
+                        <span class="badge bg-warning text-dark">Level {{ weakness[1] }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-fire"></i> Streaks
+                </div>
+                <div class="card-body text-center">
+                    <h2 class="text-warning mb-0">{{ analytics.login_streak }}</h2>
+                    <p class="text-muted">Day Login Streak</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
