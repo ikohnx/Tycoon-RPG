@@ -1691,6 +1691,419 @@ def init_database():
         );
     """)
     
+    # ============================================================================
+    # PHASE 5A: MULTIPLAYER & SOCIAL FEATURES
+    # ============================================================================
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS guilds (
+            guild_id SERIAL PRIMARY KEY,
+            guild_name VARCHAR(100) UNIQUE NOT NULL,
+            guild_tag VARCHAR(10) NOT NULL,
+            guild_description TEXT,
+            leader_id INTEGER REFERENCES player_profiles(player_id) ON DELETE SET NULL,
+            guild_level INTEGER DEFAULT 1,
+            guild_exp INTEGER DEFAULT 0,
+            guild_treasury INTEGER DEFAULT 0,
+            max_members INTEGER DEFAULT 20,
+            guild_banner VARCHAR(100),
+            is_public BOOLEAN DEFAULT TRUE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS guild_members (
+            id SERIAL PRIMARY KEY,
+            guild_id INTEGER REFERENCES guilds(guild_id) ON DELETE CASCADE,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            member_role VARCHAR(50) DEFAULT 'member',
+            contribution_exp INTEGER DEFAULT 0,
+            contribution_gold INTEGER DEFAULT 0,
+            joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(player_id)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS guild_wars (
+            war_id SERIAL PRIMARY KEY,
+            guild_a_id INTEGER REFERENCES guilds(guild_id) ON DELETE CASCADE,
+            guild_b_id INTEGER REFERENCES guilds(guild_id) ON DELETE CASCADE,
+            war_type VARCHAR(50) DEFAULT 'challenge',
+            guild_a_score INTEGER DEFAULT 0,
+            guild_b_score INTEGER DEFAULT 0,
+            winner_id INTEGER REFERENCES guilds(guild_id),
+            reward_pool INTEGER DEFAULT 1000,
+            start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            end_time TIMESTAMP,
+            status VARCHAR(50) DEFAULT 'active'
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS coop_challenges (
+            challenge_id SERIAL PRIMARY KEY,
+            challenge_name VARCHAR(200) NOT NULL,
+            challenge_description TEXT,
+            challenge_type VARCHAR(50) DEFAULT 'duo',
+            min_players INTEGER DEFAULT 2,
+            max_players INTEGER DEFAULT 4,
+            difficulty INTEGER DEFAULT 1,
+            scenario_data JSONB,
+            exp_reward INTEGER DEFAULT 200,
+            bonus_reward INTEGER DEFAULT 50,
+            time_limit_minutes INTEGER DEFAULT 30,
+            is_active BOOLEAN DEFAULT TRUE
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS coop_sessions (
+            session_id SERIAL PRIMARY KEY,
+            challenge_id INTEGER REFERENCES coop_challenges(challenge_id) ON DELETE CASCADE,
+            host_player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            session_code VARCHAR(10) UNIQUE,
+            status VARCHAR(50) DEFAULT 'waiting',
+            current_phase INTEGER DEFAULT 1,
+            total_score INTEGER DEFAULT 0,
+            started_at TIMESTAMP,
+            completed_at TIMESTAMP,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS coop_participants (
+            id SERIAL PRIMARY KEY,
+            session_id INTEGER REFERENCES coop_sessions(session_id) ON DELETE CASCADE,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            contribution_score INTEGER DEFAULT 0,
+            is_ready BOOLEAN DEFAULT FALSE,
+            joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(session_id, player_id)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS trade_listings (
+            listing_id SERIAL PRIMARY KEY,
+            seller_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            item_type VARCHAR(50) NOT NULL,
+            item_id INTEGER,
+            item_name VARCHAR(200),
+            item_data JSONB,
+            asking_price INTEGER NOT NULL,
+            quantity INTEGER DEFAULT 1,
+            status VARCHAR(50) DEFAULT 'active',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            expires_at TIMESTAMP
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS trade_transactions (
+            transaction_id SERIAL PRIMARY KEY,
+            listing_id INTEGER REFERENCES trade_listings(listing_id) ON DELETE CASCADE,
+            seller_id INTEGER REFERENCES player_profiles(player_id) ON DELETE SET NULL,
+            buyer_id INTEGER REFERENCES player_profiles(player_id) ON DELETE SET NULL,
+            item_type VARCHAR(50),
+            item_name VARCHAR(200),
+            price INTEGER,
+            quantity INTEGER DEFAULT 1,
+            completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_mentoring (
+            mentoring_id SERIAL PRIMARY KEY,
+            mentor_player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            mentee_player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            discipline_focus VARCHAR(100),
+            sessions_completed INTEGER DEFAULT 0,
+            mentor_rating DECIMAL(3, 2) DEFAULT 0,
+            status VARCHAR(50) DEFAULT 'active',
+            started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(mentor_player_id, mentee_player_id)
+        );
+    """)
+    
+    # ============================================================================
+    # PHASE 5B: SEASONAL CONTENT & LIVE EVENTS
+    # ============================================================================
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS seasons (
+            season_id SERIAL PRIMARY KEY,
+            season_name VARCHAR(100) NOT NULL,
+            season_theme VARCHAR(100),
+            description TEXT,
+            start_date TIMESTAMP,
+            end_date TIMESTAMP,
+            is_active BOOLEAN DEFAULT FALSE
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS battle_passes (
+            pass_id SERIAL PRIMARY KEY,
+            season_id INTEGER REFERENCES seasons(season_id) ON DELETE CASCADE,
+            pass_name VARCHAR(100) NOT NULL,
+            max_tier INTEGER DEFAULT 50,
+            premium_price INTEGER DEFAULT 500,
+            free_rewards JSONB,
+            premium_rewards JSONB
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_battle_pass (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            pass_id INTEGER REFERENCES battle_passes(pass_id) ON DELETE CASCADE,
+            current_tier INTEGER DEFAULT 1,
+            current_exp INTEGER DEFAULT 0,
+            is_premium BOOLEAN DEFAULT FALSE,
+            rewards_claimed JSONB DEFAULT '[]',
+            UNIQUE(player_id, pass_id)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS seasonal_events (
+            event_id SERIAL PRIMARY KEY,
+            event_name VARCHAR(200) NOT NULL,
+            event_type VARCHAR(50),
+            event_theme VARCHAR(100),
+            description TEXT,
+            start_time TIMESTAMP,
+            end_time TIMESTAMP,
+            bonus_multiplier DECIMAL(3, 2) DEFAULT 1.5,
+            special_rewards JSONB,
+            is_active BOOLEAN DEFAULT FALSE
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS limited_time_bosses (
+            boss_id SERIAL PRIMARY KEY,
+            boss_name VARCHAR(200) NOT NULL,
+            boss_title VARCHAR(200),
+            description TEXT,
+            difficulty INTEGER DEFAULT 5,
+            health_points INTEGER DEFAULT 10000,
+            current_hp INTEGER DEFAULT 10000,
+            scenario_data JSONB,
+            exp_reward INTEGER DEFAULT 500,
+            exclusive_rewards JSONB,
+            available_from TIMESTAMP,
+            available_until TIMESTAMP,
+            is_defeated BOOLEAN DEFAULT FALSE
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS weekly_rotations (
+            rotation_id SERIAL PRIMARY KEY,
+            rotation_type VARCHAR(50) NOT NULL,
+            content_ids JSONB,
+            bonus_discipline VARCHAR(100),
+            bonus_multiplier DECIMAL(3, 2) DEFAULT 1.25,
+            week_start TIMESTAMP,
+            week_end TIMESTAMP
+        );
+    """)
+    
+    # ============================================================================
+    # PHASE 5C: AI-POWERED PERSONALIZATION
+    # ============================================================================
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_learning_profiles (
+            profile_id SERIAL PRIMARY KEY,
+            player_id INTEGER UNIQUE REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            learning_style VARCHAR(50) DEFAULT 'balanced',
+            preferred_difficulty DECIMAL(3, 2) DEFAULT 1.0,
+            weak_areas JSONB DEFAULT '[]',
+            strong_areas JSONB DEFAULT '[]',
+            recommended_path JSONB,
+            last_analysis TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS adaptive_difficulty (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            discipline VARCHAR(100),
+            current_difficulty DECIMAL(3, 2) DEFAULT 1.0,
+            success_streak INTEGER DEFAULT 0,
+            failure_streak INTEGER DEFAULT 0,
+            total_attempts INTEGER DEFAULT 0,
+            average_score DECIMAL(5, 2) DEFAULT 0,
+            last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(player_id, discipline)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS learning_recommendations (
+            recommendation_id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            recommendation_type VARCHAR(50),
+            content_type VARCHAR(50),
+            content_id INTEGER,
+            content_name VARCHAR(200),
+            reason TEXT,
+            priority INTEGER DEFAULT 1,
+            is_completed BOOLEAN DEFAULT FALSE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS coach_messages (
+            message_id SERIAL PRIMARY KEY,
+            trigger_type VARCHAR(50),
+            trigger_condition JSONB,
+            message_text TEXT NOT NULL,
+            message_category VARCHAR(50),
+            priority INTEGER DEFAULT 1,
+            is_active BOOLEAN DEFAULT TRUE
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_coach_history (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            message_id INTEGER REFERENCES coach_messages(message_id) ON DELETE CASCADE,
+            shown_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            was_helpful BOOLEAN
+        );
+    """)
+    
+    # ============================================================================
+    # PHASE 5D: CONTENT EXPANSION
+    # ============================================================================
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS expanded_worlds (
+            world_id SERIAL PRIMARY KEY,
+            world_name VARCHAR(100) UNIQUE NOT NULL,
+            world_type VARCHAR(50),
+            description TEXT,
+            unlock_level INTEGER DEFAULT 1,
+            theme_color VARCHAR(20),
+            backdrop_image VARCHAR(200),
+            special_mechanics TEXT,
+            is_active BOOLEAN DEFAULT TRUE
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS case_studies (
+            case_id SERIAL PRIMARY KEY,
+            case_title VARCHAR(200) NOT NULL,
+            company_name VARCHAR(100),
+            industry VARCHAR(100),
+            discipline VARCHAR(100),
+            difficulty INTEGER DEFAULT 3,
+            case_background TEXT,
+            case_challenge TEXT,
+            learning_objectives JSONB,
+            solution_analysis TEXT,
+            key_takeaways JSONB,
+            exp_reward INTEGER DEFAULT 300,
+            is_premium BOOLEAN DEFAULT FALSE
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_case_progress (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            case_id INTEGER REFERENCES case_studies(case_id) ON DELETE CASCADE,
+            status VARCHAR(50) DEFAULT 'not_started',
+            player_analysis TEXT,
+            score INTEGER DEFAULT 0,
+            completed_at TIMESTAMP,
+            UNIQUE(player_id, case_id)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS guest_mentors (
+            mentor_id SERIAL PRIMARY KEY,
+            mentor_name VARCHAR(100) NOT NULL,
+            mentor_title VARCHAR(200),
+            company VARCHAR(100),
+            bio TEXT,
+            expertise_areas JSONB,
+            avatar_image VARCHAR(200),
+            special_scenarios JSONB,
+            unlock_requirement TEXT,
+            is_available BOOLEAN DEFAULT TRUE
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS advanced_disciplines (
+            discipline_id SERIAL PRIMARY KEY,
+            base_discipline VARCHAR(100),
+            advanced_name VARCHAR(100) NOT NULL,
+            description TEXT,
+            unlock_level INTEGER DEFAULT 10,
+            max_level INTEGER DEFAULT 15,
+            special_skills JSONB,
+            is_active BOOLEAN DEFAULT TRUE
+        );
+    """)
+    
+    # ============================================================================
+    # PHASE 5E: POLISH & ACCESSIBILITY
+    # ============================================================================
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_preferences (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER UNIQUE REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            theme VARCHAR(50) DEFAULT 'dark',
+            font_size VARCHAR(20) DEFAULT 'medium',
+            high_contrast BOOLEAN DEFAULT FALSE,
+            reduced_motion BOOLEAN DEFAULT FALSE,
+            screen_reader_mode BOOLEAN DEFAULT FALSE,
+            color_blind_mode VARCHAR(50),
+            notification_settings JSONB DEFAULT '{}',
+            offline_content JSONB DEFAULT '[]',
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS offline_progress (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            content_type VARCHAR(50),
+            content_id INTEGER,
+            progress_data JSONB,
+            synced BOOLEAN DEFAULT FALSE,
+            created_offline_at TIMESTAMP,
+            synced_at TIMESTAMP
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS performance_metrics (
+            id SERIAL PRIMARY KEY,
+            metric_type VARCHAR(50),
+            metric_name VARCHAR(100),
+            metric_value DECIMAL(10, 2),
+            recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+    
     conn.commit()
     cur.close()
     conn.close()
@@ -7584,6 +7997,252 @@ def seed_market_events():
     
     conn.commit()
     print("Market events seeded!")
+    cur.close()
+    conn.close()
+
+
+# ============================================================================
+# PHASE 5 SEEDING FUNCTIONS
+# ============================================================================
+
+def seed_phase5_social():
+    """Seed Phase 5A: Multiplayer & Social Features."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM coop_challenges")
+    if cur.fetchone()['count'] > 0:
+        print("Phase 5 social features already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    coop_challenges = [
+        ('Startup Sprint', 'Work together to launch a startup in 30 minutes.', 'duo', 2, 2, 2,
+         json.dumps({'phases': 3, 'scenario_type': 'startup'}), 300, 100, 30),
+        ('Crisis Management Team', 'Handle a company crisis as a team.', 'team', 3, 4, 3,
+         json.dumps({'phases': 4, 'scenario_type': 'crisis'}), 400, 150, 45),
+        ('Merger Negotiation', 'Negotiate a merger between two companies.', 'duo', 2, 2, 4,
+         json.dumps({'phases': 5, 'scenario_type': 'negotiation'}), 500, 200, 60),
+        ('Product Launch Party', 'Coordinate a successful product launch.', 'team', 2, 4, 2,
+         json.dumps({'phases': 3, 'scenario_type': 'marketing'}), 350, 125, 40),
+        ('Budget Battle', 'Compete to create the best budget proposal.', 'competitive', 2, 4, 3,
+         json.dumps({'phases': 4, 'scenario_type': 'finance'}), 450, 175, 50)
+    ]
+    
+    for c in coop_challenges:
+        cur.execute("""
+            INSERT INTO coop_challenges (challenge_name, challenge_description, challenge_type, min_players, max_players, difficulty, scenario_data, exp_reward, bonus_reward, time_limit_minutes)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, c)
+    
+    coach_messages = [
+        ('login', json.dumps({'days_inactive': 3}), "Welcome back! Ready to continue your business journey?", 'greeting', 1),
+        ('achievement', json.dumps({'type': 'first_scenario'}), "Great job completing your first scenario! Keep going!", 'encouragement', 1),
+        ('streak', json.dumps({'days': 7}), "Amazing 7-day streak! Your dedication is paying off.", 'milestone', 2),
+        ('failure', json.dumps({'consecutive': 3}), "Don't give up! Try reviewing the training materials for this topic.", 'support', 3),
+        ('level_up', json.dumps({'level': 5}), "Level 5! You're becoming a true business tycoon.", 'celebration', 2),
+        ('weak_area', json.dumps({'discipline': 'any'}), "I noticed you could use some practice in this area. Want me to recommend some scenarios?", 'guidance', 2)
+    ]
+    
+    for m in coach_messages:
+        cur.execute("""
+            INSERT INTO coach_messages (trigger_type, trigger_condition, message_text, message_category, priority)
+            VALUES (%s, %s, %s, %s, %s)
+        """, m)
+    
+    conn.commit()
+    print("Phase 5 social features seeded!")
+    cur.close()
+    conn.close()
+
+
+def seed_phase5_seasons():
+    """Seed Phase 5B: Seasonal Content & Live Events."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM seasons")
+    if cur.fetchone()['count'] > 0:
+        print("Phase 5 seasons already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    from datetime import datetime, timedelta
+    now = datetime.now()
+    
+    seasons = [
+        ('Season 1: The Founders', 'startup', 'Build your empire from the ground up.', now, now + timedelta(days=90), True),
+        ('Season 2: Global Expansion', 'international', 'Take your business worldwide.', now + timedelta(days=90), now + timedelta(days=180), False),
+        ('Season 3: Innovation Era', 'technology', 'Lead the next tech revolution.', now + timedelta(days=180), now + timedelta(days=270), False)
+    ]
+    
+    for s in seasons:
+        cur.execute("""
+            INSERT INTO seasons (season_name, season_theme, description, start_date, end_date, is_active)
+            VALUES (%s, %s, %s, %s, %s, %s) RETURNING season_id
+        """, s)
+        season_id = cur.fetchone()['season_id']
+        
+        free_rewards = json.dumps([
+            {'tier': 1, 'reward': 'exp', 'amount': 100},
+            {'tier': 5, 'reward': 'gold', 'amount': 500},
+            {'tier': 10, 'reward': 'title', 'name': 'Newcomer'},
+            {'tier': 25, 'reward': 'avatar_frame', 'id': 1},
+            {'tier': 50, 'reward': 'exclusive_scenario', 'id': 1}
+        ])
+        premium_rewards = json.dumps([
+            {'tier': 1, 'reward': 'exp', 'amount': 200},
+            {'tier': 5, 'reward': 'gold', 'amount': 1000},
+            {'tier': 10, 'reward': 'exclusive_advisor', 'id': 1},
+            {'tier': 25, 'reward': 'premium_equipment', 'id': 1},
+            {'tier': 50, 'reward': 'legendary_title', 'name': 'Season Master'}
+        ])
+        
+        cur.execute("""
+            INSERT INTO battle_passes (season_id, pass_name, max_tier, premium_price, free_rewards, premium_rewards)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (season_id, f"{s[0]} Battle Pass", 50, 500, free_rewards, premium_rewards))
+    
+    seasonal_events = [
+        ('Black Friday Bonanza', 'sales', 'Black Friday', 'Double rewards on all retail scenarios!', 
+         now + timedelta(days=30), now + timedelta(days=32), 2.0, json.dumps({'bonus_disciplines': ['Marketing', 'Operations']})),
+        ('Tax Season Challenge', 'challenge', 'Tax Season', 'Master accounting before the deadline!',
+         now + timedelta(days=60), now + timedelta(days=75), 1.5, json.dumps({'bonus_disciplines': ['Finance']})),
+        ('Summer Startup Sprint', 'competition', 'Summer', 'Launch the hottest new startup!',
+         now + timedelta(days=120), now + timedelta(days=135), 1.75, json.dumps({'bonus_disciplines': ['Strategy']}))
+    ]
+    
+    for e in seasonal_events:
+        cur.execute("""
+            INSERT INTO seasonal_events (event_name, event_type, event_theme, description, start_time, end_time, bonus_multiplier, special_rewards)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, e)
+    
+    limited_bosses = [
+        ('The Corporate Raider', 'Legendary Business Tycoon', 'A ruthless corporate raider threatens to take over your company.',
+         5, 10000, 10000, json.dumps({'phases': 5, 'attack_pattern': 'aggressive'}), 1000, 
+         json.dumps({'title': 'Raider Slayer', 'equipment_id': 1}), now, now + timedelta(days=7)),
+        ('The Regulatory Nightmare', 'Government Inspector', 'Navigate impossible compliance requirements.',
+         4, 8000, 8000, json.dumps({'phases': 4, 'attack_pattern': 'tricky'}), 800,
+         json.dumps({'title': 'Compliance Master', 'exp_bonus': 500}), now + timedelta(days=14), now + timedelta(days=21))
+    ]
+    
+    for b in limited_bosses:
+        cur.execute("""
+            INSERT INTO limited_time_bosses (boss_name, boss_title, description, difficulty, health_points, current_hp, scenario_data, exp_reward, exclusive_rewards, available_from, available_until)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, b)
+    
+    conn.commit()
+    print("Phase 5 seasons seeded!")
+    cur.close()
+    conn.close()
+
+
+def seed_phase5_content():
+    """Seed Phase 5D: Content Expansion."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM expanded_worlds")
+    if cur.fetchone()['count'] > 0:
+        print("Phase 5 content already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    worlds = [
+        ('Pirate Trade Routes', 'adventure', 'Navigate treacherous seas of commerce in the Age of Sail.', 10, '#8B4513', 'pirate_backdrop.png', 'Trade negotiations, risk calculation, crew management'),
+        ('Space Commerce', 'scifi', 'Build an interstellar trading empire across the galaxy.', 15, '#0F0F3F', 'space_backdrop.png', 'Resource mining, alien diplomacy, tech research'),
+        ('Wild West Business', 'western', 'Strike it rich in the frontier towns of the Old West.', 8, '#DAA520', 'western_backdrop.png', 'Gold rush economics, railroad investment, saloon management'),
+        ('Ancient Empire', 'historical', 'Manage trade in ancient civilizations.', 12, '#CD853F', 'ancient_backdrop.png', 'Caravan routes, temple economics, conquest funding')
+    ]
+    
+    for w in worlds:
+        cur.execute("""
+            INSERT INTO expanded_worlds (world_name, world_type, description, unlock_level, theme_color, backdrop_image, special_mechanics)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, w)
+    
+    case_studies = [
+        ('The Fall of BlockBuster', 'BlockBuster', 'Entertainment', 'Strategy', 4,
+         'BlockBuster was once the undisputed king of video rental, with over 9,000 stores worldwide...',
+         'Analyze why BlockBuster failed to adapt to streaming technology and how Netflix succeeded.',
+         json.dumps(['Understand disruption', 'Recognize pivot opportunities', 'Value innovation']),
+         'BlockBuster had multiple opportunities to acquire Netflix but declined. Their failure to embrace digital...',
+         json.dumps(['Adapt or die', 'Customer convenience wins', 'Legacy assets can be liabilities']), 400, False),
+        ('Apple Store Revolution', 'Apple', 'Retail', 'Marketing', 3,
+         'When Apple announced its retail stores in 2001, critics predicted failure...',
+         'Examine how Apple created a revolutionary retail experience that defied conventional wisdom.',
+         json.dumps(['Customer experience design', 'Brand building', 'Premium positioning']),
+         'Apple focused on experience over sales metrics, using stores as brand temples...',
+         json.dumps(['Experience sells', 'Train for service not sales', 'Location matters']), 350, False),
+        ('Toyota Production System', 'Toyota', 'Manufacturing', 'Operations', 4,
+         'Toyota transformed manufacturing with its innovative production system...',
+         'Learn how lean manufacturing principles created one of the most efficient companies in the world.',
+         json.dumps(['Just-in-time inventory', 'Continuous improvement', 'Employee empowerment']),
+         'The Toyota Production System eliminated waste through kaizen and kanban...',
+         json.dumps(['Small improvements compound', 'Respect workers', 'Quality at source']), 400, False),
+        ('Zappos Culture', 'Zappos', 'Retail', 'Human Resources', 3,
+         'Zappos built a billion-dollar company on an unusual foundation: employee happiness...',
+         'Discover how Zappos prioritized culture to create exceptional customer service.',
+         json.dumps(['Culture building', 'Employee engagement', 'Service excellence']),
+         'Zappos offered new employees $2000 to quit, ensuring only committed people stayed...',
+         json.dumps(['Culture is strategy', 'Happy employees = happy customers', 'Values over profits']), 350, False)
+    ]
+    
+    for c in case_studies:
+        cur.execute("""
+            INSERT INTO case_studies (case_title, company_name, industry, discipline, difficulty, case_background, case_challenge, learning_objectives, solution_analysis, key_takeaways, exp_reward, is_premium)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, c)
+    
+    guest_mentors = [
+        ('Sarah Chen', 'Serial Entrepreneur & Investor', 'TechVentures Capital', 
+         'Founded 3 successful startups before age 35. Now helps the next generation of founders.',
+         json.dumps(['Startup Strategy', 'Fundraising', 'Product-Market Fit']), 'sarah_chen.png',
+         json.dumps([{'id': 1, 'name': 'The Pivot Decision'}]), 'Complete 10 Strategy scenarios'),
+        ('Marcus Williams', 'Former Fortune 500 CFO', 'Williams Consulting',
+         'Led finance at three Fortune 500 companies. Expert in turnarounds and growth financing.',
+         json.dumps(['Financial Strategy', 'M&A', 'Capital Markets']), 'marcus_williams.png',
+         json.dumps([{'id': 2, 'name': 'The Acquisition'}]), 'Complete all Finance training'),
+        ('Elena Rodriguez', 'Marketing Maven', 'Global Brands Inc.',
+         'Built iconic brands across 50 countries. Pioneer in digital and experiential marketing.',
+         json.dumps(['Brand Building', 'Global Marketing', 'Digital Strategy']), 'elena_rodriguez.png',
+         json.dumps([{'id': 3, 'name': 'Going Viral'}]), 'Reach Marketing Level 8')
+    ]
+    
+    for m in guest_mentors:
+        cur.execute("""
+            INSERT INTO guest_mentors (mentor_name, mentor_title, company, bio, expertise_areas, avatar_image, special_scenarios, unlock_requirement)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, m)
+    
+    advanced_disciplines = [
+        ('Marketing', 'Growth Hacking', 'Master viral growth and unconventional marketing tactics.', 10, 15, 
+         json.dumps(['Viral loops', 'A/B testing', 'Conversion optimization', 'Referral systems'])),
+        ('Finance', 'Private Equity', 'Lead leveraged buyouts and portfolio company turnarounds.', 10, 15,
+         json.dumps(['LBO modeling', 'Due diligence', 'Value creation', 'Exit strategies'])),
+        ('Operations', 'Supply Chain Mastery', 'Optimize global supply chains and logistics.', 10, 15,
+         json.dumps(['Global logistics', 'Supplier networks', 'Inventory optimization', 'Risk mitigation'])),
+        ('Strategy', 'Corporate Development', 'Lead M&A, partnerships, and corporate strategy.', 10, 15,
+         json.dumps(['M&A strategy', 'Integration planning', 'Synergy realization', 'Strategic alliances'])),
+        ('Human Resources', 'Organizational Design', 'Shape culture and structure for high performance.', 10, 15,
+         json.dumps(['Culture engineering', 'Change management', 'Talent systems', 'Leadership development'])),
+        ('Legal', 'Corporate Governance', 'Master boardroom dynamics and regulatory strategy.', 10, 15,
+         json.dumps(['Board relations', 'Compliance strategy', 'Risk governance', 'Shareholder activism']))
+    ]
+    
+    for d in advanced_disciplines:
+        cur.execute("""
+            INSERT INTO advanced_disciplines (base_discipline, advanced_name, description, unlock_level, max_level, special_skills)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, d)
+    
+    conn.commit()
+    print("Phase 5 content seeded!")
     cur.close()
     conn.close()
 

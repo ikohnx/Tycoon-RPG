@@ -16,7 +16,8 @@ from src.database import (init_database, seed_scenarios, seed_achievements, seed
                           seed_learning_analytics, seed_educational_achievements,
                           seed_competitions, seed_advanced_simulations,
                           seed_story_arcs, seed_mentorship_system, seed_business_network,
-                          seed_industry_tracks, seed_market_events)
+                          seed_industry_tracks, seed_market_events,
+                          seed_phase5_social, seed_phase5_seasons, seed_phase5_content)
 from src.game_engine import GameEngine
 from src.leveling import get_level_title, get_progress_bar, get_exp_to_next_level
 
@@ -69,6 +70,9 @@ seed_mentorship_system()
 seed_business_network()
 seed_industry_tracks()
 seed_market_events()
+seed_phase5_social()
+seed_phase5_seasons()
+seed_phase5_content()
 
 engine = GameEngine()
 
@@ -2182,6 +2186,180 @@ def respond_news(news_id):
         flash(f"Response submitted! +{result['exp_earned']} EXP")
     
     return redirect(url_for('market_events'))
+
+
+# ============================================================================
+# PHASE 5A: MULTIPLAYER & SOCIAL ROUTES
+# ============================================================================
+
+@app.route('/guilds')
+def guilds():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    from src.game_engine import get_guilds, get_player_guild
+    
+    all_guilds = get_guilds(player_id)
+    my_guild = get_player_guild(player_id)
+    
+    return render_template('guilds.html', stats=stats, guilds=all_guilds, my_guild=my_guild)
+
+
+@app.route('/coop')
+def coop():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    from src.game_engine import get_coop_challenges
+    challenges = get_coop_challenges()
+    
+    return render_template('coop.html', stats=stats, challenges=challenges)
+
+
+@app.route('/trading')
+def trading():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    from src.game_engine import get_trade_listings
+    listings = get_trade_listings(player_id)
+    
+    return render_template('trading.html', stats=stats, listings=listings)
+
+
+# ============================================================================
+# PHASE 5B: SEASONAL CONTENT ROUTES
+# ============================================================================
+
+@app.route('/seasons')
+def seasons():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    from src.game_engine import get_current_season, get_player_battle_pass, get_seasonal_events, get_limited_bosses
+    
+    season = get_current_season()
+    battle_pass = get_player_battle_pass(player_id)
+    events = get_seasonal_events()
+    bosses = get_limited_bosses()
+    
+    return render_template('seasons.html', stats=stats, season=season, battle_pass=battle_pass, events=events, bosses=bosses)
+
+
+# ============================================================================
+# PHASE 5C: AI PERSONALIZATION ROUTES
+# ============================================================================
+
+@app.route('/coach')
+def coach():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    from src.game_engine import get_learning_profile, get_learning_recommendations
+    
+    profile = get_learning_profile(player_id)
+    recommendations = get_learning_recommendations(player_id)
+    
+    return render_template('coach.html', stats=stats, profile=profile, recommendations=recommendations)
+
+
+# ============================================================================
+# PHASE 5D: CONTENT EXPANSION ROUTES
+# ============================================================================
+
+@app.route('/worlds')
+def worlds():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    from src.game_engine import get_expanded_worlds
+    level = stats.get('overall_level', 1) if isinstance(stats, dict) else 1
+    all_worlds = get_expanded_worlds(level)
+    
+    return render_template('worlds.html', stats=stats, worlds=all_worlds)
+
+
+@app.route('/case-studies')
+def case_studies():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    from src.game_engine import get_case_studies, get_guest_mentors
+    
+    cases = get_case_studies()
+    mentors = get_guest_mentors()
+    
+    return render_template('case_studies.html', stats=stats, cases=cases, mentors=mentors)
+
+
+# ============================================================================
+# PHASE 5E: ACCESSIBILITY ROUTES
+# ============================================================================
+
+@app.route('/settings')
+def settings():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    from src.game_engine import get_player_preferences
+    preferences = get_player_preferences(player_id)
+    
+    return render_template('settings.html', stats=stats, preferences=preferences)
+
+
+@app.route('/settings/update', methods=['POST'])
+def update_settings():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    from src.game_engine import update_player_preferences
+    
+    preferences = {
+        'theme': request.form.get('theme'),
+        'font_size': request.form.get('font_size'),
+        'high_contrast': request.form.get('high_contrast') == 'on',
+        'reduced_motion': request.form.get('reduced_motion') == 'on',
+        'screen_reader_mode': request.form.get('screen_reader_mode') == 'on',
+        'color_blind_mode': request.form.get('color_blind_mode')
+    }
+    
+    update_player_preferences(player_id, preferences)
+    flash('Settings updated successfully!')
+    
+    return redirect(url_for('settings'))
 
 
 if __name__ == '__main__':

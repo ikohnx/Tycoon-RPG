@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Seasons - Business Tycoon RPG{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="gold-text mb-0">
+                        <i class="bi bi-calendar-event"></i> Seasons & Events
+                    </h2>
+                    <p class="text-muted mb-0">Limited-time content and battle passes</p>
+                </div>
+                <a href="{{ url_for('hub') }}" class="btn btn-outline-light">
+                    <i class="bi bi-arrow-left"></i> Back to Hub
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% if season %}
+    <div class="card mb-4" style="background: linear-gradient(135deg, rgba(255,193,7,0.2), rgba(0,0,0,0.3));">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h3 class="gold-text">{{ season.name }}</h3>
+                    <p class="text-muted">{{ season.description }}</p>
+                    <span class="badge bg-info">Theme: {{ season.theme|title }}</span>
+                </div>
+                <div class="col-md-4 text-end">
+                    {% if season.battle_pass %}
+                    <div class="mb-2">
+                        <strong>{{ season.battle_pass.name }}</strong>
+                        <div class="text-muted small">{{ season.battle_pass.max_tier }} tiers</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-star-fill"></i> Seasonal Events
+                </div>
+                <div class="card-body">
+                    {% for event in events %}
+                    <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-dark rounded">
+                        <div>
+                            <h6 class="mb-1">{{ event.name }}</h6>
+                            <small class="text-muted">{{ event.description }}</small>
+                            <div class="mt-1">
+                                <span class="badge bg-info">{{ event.theme }}</span>
+                                <span class="badge bg-success">{{ event.bonus_multiplier }}x Bonus</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center">No active seasonal events.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-danger bg-opacity-25">
+                    <i class="bi bi-skull"></i> Limited-Time Bosses
+                </div>
+                <div class="card-body">
+                    {% for boss in bosses %}
+                    <div class="mb-3 p-3 bg-dark rounded">
+                        <h6 class="mb-1 text-danger">{{ boss.name }}</h6>
+                        <small class="text-muted">{{ boss.title }}</small>
+                        <div class="progress my-2" style="height: 8px;">
+                            <div class="progress-bar bg-danger" style="width: {{ (boss.hp / boss.max_hp) * 100 }}%"></div>
+                        </div>
+                        <div class="d-flex justify-content-between small">
+                            <span>HP: {{ "{:,}".format(boss.hp) }}/{{ "{:,}".format(boss.max_hp) }}</span>
+                            <span class="text-success">+{{ boss.exp_reward }} EXP</span>
+                        </div>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center">No limited bosses active.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

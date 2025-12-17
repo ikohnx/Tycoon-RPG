@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Guilds - Business Tycoon RPG{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="gold-text mb-0">
+                        <i class="bi bi-shield-fill"></i> Business Guilds
+                    </h2>
+                    <p class="text-muted mb-0">Join forces with other entrepreneurs</p>
+                </div>
+                <a href="{{ url_for('hub') }}" class="btn btn-outline-light">
+                    <i class="bi bi-arrow-left"></i> Back to Hub
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% if my_guild %}
+    <div class="card mb-4 border-success">
+        <div class="card-header bg-success bg-opacity-25">
+            <i class="bi bi-shield-fill-check"></i> Your Guild
+        </div>
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h4>[{{ my_guild.tag }}] {{ my_guild.name }}</h4>
+                    <p class="text-muted">Level {{ my_guild.level }} Guild</p>
+                    <span class="badge bg-info">{{ my_guild.role|title }}</span>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="mb-2">
+                        <small class="text-muted">Your Contribution</small>
+                        <div class="text-warning">{{ "{:,}".format(my_guild.contribution_exp) }} EXP</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="card">
+        <div class="card-header">
+            <i class="bi bi-people-fill"></i> Available Guilds
+        </div>
+        <div class="card-body">
+            <div class="row">
+                {% for guild in guilds %}
+                <div class="col-md-6 mb-3">
+                    <div class="card bg-dark h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h5>[{{ guild.tag }}] {{ guild.name }}</h5>
+                                    <p class="text-muted small">{{ guild.description[:100] }}...</p>
+                                </div>
+                                <span class="badge bg-info">Lv {{ guild.level }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <small class="text-muted">{{ guild.member_count }}/{{ guild.max_members }} members</small>
+                                {% if not my_guild and guild.member_count < guild.max_members %}
+                                <button class="btn btn-sm btn-outline-success" disabled>Join (Coming Soon)</button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="col-12 text-center py-5">
+                    <i class="bi bi-shield display-1 text-muted"></i>
+                    <p class="text-muted mt-3">No guilds available. Be the first to create one!</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

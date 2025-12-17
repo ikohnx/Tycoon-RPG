@@ -36,6 +36,11 @@ The game is built as a Flask web application with a responsive, mobile-first UI.
 -   **Business Network & Partnerships:** Player networking system with business partners, joint ventures with shared rewards/risks, networking events with contact gains, and partnership management across industries.
 -   **Industry Specialization Tracks:** Deep-dive career paths for 5 industries (Tech Startups, Healthcare, Retail, Financial Services, Manufacturing), industry-specific challenges, professional certifications with exams, and mastery achievements.
 -   **Dynamic Market Events:** Real-time economic events affecting gameplay, market cycles (expansion/recession/stable), breaking news with time-limited responses, global community challenges with shared reward pools, and industry-specific impact modifiers.
+-   **Phase 5A - Multiplayer & Social:** Guild/alliance system with guild wars, co-op challenges requiring team coordination, player-to-player trading marketplace, and player mentoring system for knowledge sharing.
+-   **Phase 5B - Seasonal Content:** Rotating weekly/monthly events with themed rewards, seasonal battle pass progression system, limited-time boss challenges, and holiday-themed special events.
+-   **Phase 5C - AI Personalization:** Adaptive difficulty system, AI-powered learning path recommendations, personalized scenario generation, virtual business coach with weak area identification and learning style detection.
+-   **Phase 5D - Content Expansion:** New world themes (Pirate for maritime trade, Space for futuristic commerce), real-world business case studies, guest mentor NPCs from famous companies, and deeper industry specialization tracks.
+-   **Phase 5E - Accessibility & Polish:** PWA optimization, screen reader support, color blind modes (protanopia, deuteranopia, tritanopia), high contrast mode, reduced motion settings, and customizable font sizes.
 
 ## External Dependencies
 -   **PostgreSQL:** Relational database for all game data persistence.

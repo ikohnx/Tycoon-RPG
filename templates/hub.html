@@ -336,6 +336,80 @@
                 </div>
             </div>
         </div>
+        
+        <div class="card mb-4" style="background: linear-gradient(135deg, rgba(138,43,226,0.1), rgba(0,191,255,0.1)); border: 2px solid rgba(138,43,226,0.4);">
+            <div class="card-header" style="background: linear-gradient(90deg, rgba(138,43,226,0.2), rgba(0,191,255,0.2));">
+                <i class="bi bi-stars"></i> Multiplayer & Social
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('guilds') }}" class="btn btn-game btn-game-purple">
+                        <i class="bi bi-shield-fill"></i> Guilds & Alliances
+                    </a>
+                    <a href="{{ url_for('coop') }}" class="btn btn-outline-info">
+                        <i class="bi bi-people-fill"></i> Co-op Challenges
+                    </a>
+                    <a href="{{ url_for('trading') }}" class="btn btn-outline-success">
+                        <i class="bi bi-shop"></i> Trading Post
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-4" style="background: linear-gradient(135deg, rgba(255,69,0,0.1), rgba(255,215,0,0.1)); border: 2px solid rgba(255,140,0,0.4);">
+            <div class="card-header" style="background: linear-gradient(90deg, rgba(255,69,0,0.2), rgba(255,215,0,0.2));">
+                <i class="bi bi-calendar-event"></i> Seasonal Content
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('seasons') }}" class="btn btn-game btn-game-gold">
+                        <i class="bi bi-calendar-event"></i> Seasons & Battle Pass
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-4" style="background: linear-gradient(135deg, rgba(0,191,255,0.1), rgba(0,255,127,0.1)); border: 2px solid rgba(0,191,255,0.4);">
+            <div class="card-header" style="background: linear-gradient(90deg, rgba(0,191,255,0.2), rgba(0,255,127,0.2));">
+                <i class="bi bi-robot"></i> AI Features
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('coach') }}" class="btn btn-game btn-game-emerald">
+                        <i class="bi bi-robot"></i> AI Business Coach
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-4" style="background: linear-gradient(135deg, rgba(255,215,0,0.1), rgba(255,105,180,0.1)); border: 2px solid rgba(255,215,0,0.4);">
+            <div class="card-header" style="background: linear-gradient(90deg, rgba(255,215,0,0.2), rgba(255,105,180,0.2));">
+                <i class="bi bi-globe-americas"></i> Expanded Content
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('worlds') }}" class="btn btn-game btn-game-gold">
+                        <i class="bi bi-globe-americas"></i> Expanded Worlds
+                    </a>
+                    <a href="{{ url_for('case_studies') }}" class="btn btn-outline-info">
+                        <i class="bi bi-journal-text"></i> Case Studies
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-gear-fill"></i> Settings
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('settings') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-gear-fill"></i> Accessibility & Settings
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
     
     <div class="col-md-8">

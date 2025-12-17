@@ -6003,3 +6003,607 @@ def respond_to_news(player_id, news_id, response):
     conn.close()
     
     return {'success': True, 'exp_earned': exp_earned}
+
+
+# ============================================================================
+# PHASE 5A: MULTIPLAYER & SOCIAL FEATURES
+# ============================================================================
+
+def get_guilds(player_id=None):
+    """Get available guilds."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT g.*, 
+               (SELECT COUNT(*) FROM guild_members WHERE guild_id = g.guild_id) as member_count,
+               (SELECT member_role FROM guild_members WHERE guild_id = g.guild_id AND player_id = %s) as player_role
+        FROM guilds g
+        WHERE g.is_public = TRUE
+        ORDER BY g.guild_level DESC, g.guild_exp DESC
+    """, (player_id,))
+    
+    guilds = []
+    for row in cur.fetchall():
+        guilds.append({
+            'guild_id': row['guild_id'],
+            'name': row['guild_name'],
+            'tag': row['guild_tag'],
+            'description': row['guild_description'],
+            'level': row['guild_level'],
+            'exp': row['guild_exp'],
+            'member_count': row['member_count'],
+            'max_members': row['max_members'],
+            'player_role': row['player_role']
+        })
+    
+    cur.close()
+    conn.close()
+    return guilds
+
+
+def get_player_guild(player_id):
+    """Get the guild the player belongs to."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT g.*, gm.member_role, gm.contribution_exp, gm.contribution_gold
+        FROM guild_members gm
+        JOIN guilds g ON gm.guild_id = g.guild_id
+        WHERE gm.player_id = %s
+    """, (player_id,))
+    
+    result = cur.fetchone()
+    cur.close()
+    conn.close()
+    
+    if result:
+        return {
+            'guild_id': result['guild_id'],
+            'name': result['guild_name'],
+            'tag': result['guild_tag'],
+            'level': result['guild_level'],
+            'role': result['member_role'],
+            'contribution_exp': result['contribution_exp'],
+            'contribution_gold': result['contribution_gold']
+        }
+    return None
+
+
+def create_guild(player_id, guild_name, guild_tag, description=""):
+    """Create a new guild."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    try:
+        cur.execute("""
+            INSERT INTO guilds (guild_name, guild_tag, guild_description, leader_id)
+            VALUES (%s, %s, %s, %s) RETURNING guild_id
+        """, (guild_name, guild_tag, description, player_id))
+        guild_id = cur.fetchone()['guild_id']
+        
+        cur.execute("""
+            INSERT INTO guild_members (guild_id, player_id, member_role)
+            VALUES (%s, %s, 'leader')
+        """, (guild_id, player_id))
+        
+        conn.commit()
+        cur.close()
+        conn.close()
+        return {'success': True, 'guild_id': guild_id}
+    except Exception as e:
+        conn.rollback()
+        cur.close()
+        conn.close()
+        return {'success': False, 'error': str(e)}
+
+
+def join_guild(player_id, guild_id):
+    """Join an existing guild."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as cnt FROM guild_members WHERE player_id = %s", (player_id,))
+    if cur.fetchone()['cnt'] > 0:
+        cur.close()
+        conn.close()
+        return {'success': False, 'error': 'Already in a guild'}
+    
+    try:
+        cur.execute("""
+            INSERT INTO guild_members (guild_id, player_id, member_role)
+            VALUES (%s, %s, 'member')
+        """, (guild_id, player_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return {'success': True}
+    except:
+        conn.rollback()
+        cur.close()
+        conn.close()
+        return {'success': False, 'error': 'Could not join guild'}
+
+
+def get_coop_challenges():
+    """Get available co-op challenges."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT * FROM coop_challenges WHERE is_active = TRUE ORDER BY difficulty")
+    
+    challenges = []
+    for row in cur.fetchall():
+        challenges.append({
+            'challenge_id': row['challenge_id'],
+            'name': row['challenge_name'],
+            'description': row['challenge_description'],
+            'type': row['challenge_type'],
+            'min_players': row['min_players'],
+            'max_players': row['max_players'],
+            'difficulty': row['difficulty'],
+            'exp_reward': row['exp_reward'],
+            'time_limit': row['time_limit_minutes']
+        })
+    
+    cur.close()
+    conn.close()
+    return challenges
+
+
+def get_trade_listings(player_id=None):
+    """Get active trade listings."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT tl.*, pp.player_name as seller_name
+        FROM trade_listings tl
+        JOIN player_profiles pp ON tl.seller_id = pp.player_id
+        WHERE tl.status = 'active'
+        ORDER BY tl.created_at DESC
+        LIMIT 50
+    """)
+    
+    listings = []
+    for row in cur.fetchall():
+        listings.append({
+            'listing_id': row['listing_id'],
+            'seller_name': row['seller_name'],
+            'item_type': row['item_type'],
+            'item_name': row['item_name'],
+            'price': row['asking_price'],
+            'quantity': row['quantity'],
+            'is_own': row['seller_id'] == player_id
+        })
+    
+    cur.close()
+    conn.close()
+    return listings
+
+
+# ============================================================================
+# PHASE 5B: SEASONAL CONTENT & LIVE EVENTS
+# ============================================================================
+
+def get_current_season():
+    """Get the current active season."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT * FROM seasons WHERE is_active = TRUE LIMIT 1")
+    season = cur.fetchone()
+    
+    if not season:
+        cur.close()
+        conn.close()
+        return None
+    
+    cur.execute("SELECT * FROM battle_passes WHERE season_id = %s", (season['season_id'],))
+    battle_pass = cur.fetchone()
+    
+    cur.close()
+    conn.close()
+    
+    return {
+        'season_id': season['season_id'],
+        'name': season['season_name'],
+        'theme': season['season_theme'],
+        'description': season['description'],
+        'end_date': season['end_date'],
+        'battle_pass': {
+            'pass_id': battle_pass['pass_id'],
+            'name': battle_pass['pass_name'],
+            'max_tier': battle_pass['max_tier']
+        } if battle_pass else None
+    }
+
+
+def get_player_battle_pass(player_id):
+    """Get player's battle pass progress."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT pbp.*, bp.pass_name, bp.max_tier, bp.free_rewards, bp.premium_rewards
+        FROM player_battle_pass pbp
+        JOIN battle_passes bp ON pbp.pass_id = bp.pass_id
+        JOIN seasons s ON bp.season_id = s.season_id
+        WHERE pbp.player_id = %s AND s.is_active = TRUE
+    """, (player_id,))
+    
+    result = cur.fetchone()
+    cur.close()
+    conn.close()
+    
+    if result:
+        return {
+            'pass_id': result['pass_id'],
+            'name': result['pass_name'],
+            'current_tier': result['current_tier'],
+            'current_exp': result['current_exp'],
+            'max_tier': result['max_tier'],
+            'is_premium': result['is_premium'],
+            'rewards_claimed': result['rewards_claimed']
+        }
+    return None
+
+
+def get_seasonal_events():
+    """Get active seasonal events."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT * FROM seasonal_events 
+        WHERE is_active = TRUE OR (start_time <= CURRENT_TIMESTAMP AND end_time >= CURRENT_TIMESTAMP)
+        ORDER BY start_time
+    """)
+    
+    events = []
+    for row in cur.fetchall():
+        events.append({
+            'event_id': row['event_id'],
+            'name': row['event_name'],
+            'type': row['event_type'],
+            'theme': row['event_theme'],
+            'description': row['description'],
+            'bonus_multiplier': float(row['bonus_multiplier']),
+            'end_time': row['end_time']
+        })
+    
+    cur.close()
+    conn.close()
+    return events
+
+
+def get_limited_bosses():
+    """Get available limited-time bosses."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT * FROM limited_time_bosses 
+        WHERE available_from <= CURRENT_TIMESTAMP AND available_until >= CURRENT_TIMESTAMP
+        AND is_defeated = FALSE
+        ORDER BY difficulty
+    """)
+    
+    bosses = []
+    for row in cur.fetchall():
+        bosses.append({
+            'boss_id': row['boss_id'],
+            'name': row['boss_name'],
+            'title': row['boss_title'],
+            'description': row['description'],
+            'difficulty': row['difficulty'],
+            'hp': row['current_hp'],
+            'max_hp': row['health_points'],
+            'exp_reward': row['exp_reward'],
+            'available_until': row['available_until']
+        })
+    
+    cur.close()
+    conn.close()
+    return bosses
+
+
+# ============================================================================
+# PHASE 5C: AI-POWERED PERSONALIZATION
+# ============================================================================
+
+def get_learning_profile(player_id):
+    """Get or create player's learning profile."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT * FROM player_learning_profiles WHERE player_id = %s", (player_id,))
+    profile = cur.fetchone()
+    
+    if not profile:
+        cur.execute("""
+            INSERT INTO player_learning_profiles (player_id)
+            VALUES (%s) RETURNING *
+        """, (player_id,))
+        profile = cur.fetchone()
+        conn.commit()
+    
+    cur.close()
+    conn.close()
+    
+    return {
+        'learning_style': profile['learning_style'],
+        'difficulty': float(profile['preferred_difficulty']),
+        'weak_areas': profile['weak_areas'] or [],
+        'strong_areas': profile['strong_areas'] or [],
+        'recommended_path': profile['recommended_path']
+    }
+
+
+def get_adaptive_difficulty(player_id, discipline):
+    """Get adaptive difficulty for a discipline."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT * FROM adaptive_difficulty 
+        WHERE player_id = %s AND discipline = %s
+    """, (player_id, discipline))
+    
+    result = cur.fetchone()
+    cur.close()
+    conn.close()
+    
+    if result:
+        return float(result['current_difficulty'])
+    return 1.0
+
+
+def update_adaptive_difficulty(player_id, discipline, success):
+    """Update adaptive difficulty based on performance."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        INSERT INTO adaptive_difficulty (player_id, discipline, current_difficulty, success_streak, failure_streak, total_attempts)
+        VALUES (%s, %s, 1.0, %s, %s, 1)
+        ON CONFLICT (player_id, discipline) DO UPDATE SET
+            success_streak = CASE WHEN %s THEN adaptive_difficulty.success_streak + 1 ELSE 0 END,
+            failure_streak = CASE WHEN %s THEN 0 ELSE adaptive_difficulty.failure_streak + 1 END,
+            total_attempts = adaptive_difficulty.total_attempts + 1,
+            current_difficulty = CASE 
+                WHEN %s AND adaptive_difficulty.success_streak >= 2 THEN LEAST(adaptive_difficulty.current_difficulty * 1.1, 2.0)
+                WHEN NOT %s AND adaptive_difficulty.failure_streak >= 2 THEN GREATEST(adaptive_difficulty.current_difficulty * 0.9, 0.5)
+                ELSE adaptive_difficulty.current_difficulty
+            END,
+            last_updated = CURRENT_TIMESTAMP
+    """, (player_id, discipline, 1 if success else 0, 0 if success else 1, 
+          success, success, success, success))
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+
+
+def get_learning_recommendations(player_id):
+    """Get personalized learning recommendations."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT * FROM learning_recommendations 
+        WHERE player_id = %s AND is_completed = FALSE
+        ORDER BY priority DESC
+        LIMIT 5
+    """, (player_id,))
+    
+    recommendations = []
+    for row in cur.fetchall():
+        recommendations.append({
+            'id': row['recommendation_id'],
+            'type': row['recommendation_type'],
+            'content_type': row['content_type'],
+            'content_name': row['content_name'],
+            'reason': row['reason'],
+            'priority': row['priority']
+        })
+    
+    cur.close()
+    conn.close()
+    return recommendations
+
+
+def get_coach_message(player_id, trigger_type):
+    """Get a contextual coach message."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT * FROM coach_messages 
+        WHERE trigger_type = %s AND is_active = TRUE
+        ORDER BY priority DESC
+        LIMIT 1
+    """, (trigger_type,))
+    
+    message = cur.fetchone()
+    cur.close()
+    conn.close()
+    
+    if message:
+        return message['message_text']
+    return None
+
+
+# ============================================================================
+# PHASE 5D: CONTENT EXPANSION
+# ============================================================================
+
+def get_expanded_worlds(player_level=1):
+    """Get available expanded worlds."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT * FROM expanded_worlds 
+        WHERE is_active = TRUE
+        ORDER BY unlock_level
+    """)
+    
+    worlds = []
+    for row in cur.fetchall():
+        worlds.append({
+            'world_id': row['world_id'],
+            'name': row['world_name'],
+            'type': row['world_type'],
+            'description': row['description'],
+            'unlock_level': row['unlock_level'],
+            'is_unlocked': player_level >= row['unlock_level'],
+            'theme_color': row['theme_color'],
+            'mechanics': row['special_mechanics']
+        })
+    
+    cur.close()
+    conn.close()
+    return worlds
+
+
+def get_case_studies(discipline=None):
+    """Get available case studies."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    if discipline:
+        cur.execute("SELECT * FROM case_studies WHERE discipline = %s ORDER BY difficulty", (discipline,))
+    else:
+        cur.execute("SELECT * FROM case_studies ORDER BY difficulty")
+    
+    cases = []
+    for row in cur.fetchall():
+        cases.append({
+            'case_id': row['case_id'],
+            'title': row['case_title'],
+            'company': row['company_name'],
+            'industry': row['industry'],
+            'discipline': row['discipline'],
+            'difficulty': row['difficulty'],
+            'background': row['case_background'],
+            'exp_reward': row['exp_reward'],
+            'is_premium': row['is_premium']
+        })
+    
+    cur.close()
+    conn.close()
+    return cases
+
+
+def get_guest_mentors():
+    """Get available guest mentors."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT * FROM guest_mentors WHERE is_available = TRUE")
+    
+    mentors = []
+    for row in cur.fetchall():
+        mentors.append({
+            'mentor_id': row['mentor_id'],
+            'name': row['mentor_name'],
+            'title': row['mentor_title'],
+            'company': row['company'],
+            'bio': row['bio'],
+            'expertise': row['expertise_areas'],
+            'unlock_requirement': row['unlock_requirement']
+        })
+    
+    cur.close()
+    conn.close()
+    return mentors
+
+
+def get_advanced_disciplines():
+    """Get advanced discipline tracks."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT * FROM advanced_disciplines WHERE is_active = TRUE ORDER BY base_discipline")
+    
+    disciplines = []
+    for row in cur.fetchall():
+        disciplines.append({
+            'discipline_id': row['discipline_id'],
+            'base': row['base_discipline'],
+            'name': row['advanced_name'],
+            'description': row['description'],
+            'unlock_level': row['unlock_level'],
+            'max_level': row['max_level'],
+            'skills': row['special_skills']
+        })
+    
+    cur.close()
+    conn.close()
+    return disciplines
+
+
+# ============================================================================
+# PHASE 5E: PLAYER PREFERENCES & ACCESSIBILITY
+# ============================================================================
+
+def get_player_preferences(player_id):
+    """Get player accessibility preferences."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT * FROM player_preferences WHERE player_id = %s", (player_id,))
+    prefs = cur.fetchone()
+    
+    if not prefs:
+        cur.execute("""
+            INSERT INTO player_preferences (player_id)
+            VALUES (%s) RETURNING *
+        """, (player_id,))
+        prefs = cur.fetchone()
+        conn.commit()
+    
+    cur.close()
+    conn.close()
+    
+    return {
+        'theme': prefs['theme'],
+        'font_size': prefs['font_size'],
+        'high_contrast': prefs['high_contrast'],
+        'reduced_motion': prefs['reduced_motion'],
+        'screen_reader_mode': prefs['screen_reader_mode'],
+        'color_blind_mode': prefs['color_blind_mode']
+    }
+
+
+def update_player_preferences(player_id, preferences):
+    """Update player accessibility preferences."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        UPDATE player_preferences SET
+            theme = COALESCE(%s, theme),
+            font_size = COALESCE(%s, font_size),
+            high_contrast = COALESCE(%s, high_contrast),
+            reduced_motion = COALESCE(%s, reduced_motion),
+            screen_reader_mode = COALESCE(%s, screen_reader_mode),
+            color_blind_mode = COALESCE(%s, color_blind_mode),
+            updated_at = CURRENT_TIMESTAMP
+        WHERE player_id = %s
+    """, (
+        preferences.get('theme'),
+        preferences.get('font_size'),
+        preferences.get('high_contrast'),
+        preferences.get('reduced_motion'),
+        preferences.get('screen_reader_mode'),
+        preferences.get('color_blind_mode'),
+        player_id
+    ))
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    return {'success': True}
