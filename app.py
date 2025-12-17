@@ -878,5 +878,144 @@ def accounting_entry():
     return redirect(url_for('accounting'))
 
 
+@app.route('/projects')
+def projects():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    from src.database import initialize_player_projects
+    initialize_player_projects(player_id)
+    
+    from src.game_engine import (get_player_initiatives, get_active_initiative, 
+                                  get_player_resources, get_scheduling_challenges,
+                                  get_project_templates_list)
+    
+    active_project = get_active_initiative(player_id)
+    all_initiatives = get_player_initiatives(player_id)
+    resources = get_player_resources(player_id)
+    templates = get_project_templates_list()
+    
+    player_level = stats.get('overall_level', 1) if isinstance(stats, dict) else 1
+    challenges = get_scheduling_challenges(player_level)
+    
+    return render_template('projects.html',
+                          stats=stats,
+                          active_project=active_project,
+                          all_initiatives=all_initiatives,
+                          resources=resources,
+                          templates=templates,
+                          challenges=challenges)
+
+
+@app.route('/projects/start', methods=['POST'])
+def start_project():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    template_index = request.form.get('template_index', 0, type=int)
+    
+    from src.game_engine import create_initiative_from_template
+    result = create_initiative_from_template(player_id, template_index)
+    
+    if result.get('success'):
+        flash(f"Started new project: {result['title']}")
+    else:
+        flash(result.get('error', 'Failed to start project'))
+    
+    return redirect(url_for('projects'))
+
+
+@app.route('/projects/advance', methods=['POST'])
+def advance_project():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    initiative_id = request.form.get('initiative_id', type=int)
+    
+    from src.game_engine import advance_project_week
+    result = advance_project_week(player_id, initiative_id)
+    
+    if result.get('success'):
+        if result.get('project_completed'):
+            bonus_type = "On-Time Bonus!" if result.get('on_time') else "Project Complete!"
+            flash(f"{bonus_type} +{result['exp_earned']} EXP, +${result.get('bonus_earned', 0)} cash!")
+        else:
+            completed = ", ".join(result.get('completed_tasks', []))
+            msg = f"Week {result['new_week']} complete!"
+            if completed:
+                msg += f" Finished: {completed}"
+            if result['exp_earned'] > 0:
+                msg += f" +{result['exp_earned']} EXP"
+            flash(msg)
+    else:
+        flash(result.get('error', 'Failed to advance project'))
+    
+    return redirect(url_for('projects'))
+
+
+@app.route('/projects/challenge/<int:challenge_id>')
+def scheduling_challenge(challenge_id):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    from src.game_engine import get_scheduling_challenge
+    challenge = get_scheduling_challenge(challenge_id)
+    
+    if not challenge:
+        flash('Challenge not found')
+        return redirect(url_for('projects'))
+    
+    return render_template('scheduling_challenge.html',
+                          stats=stats,
+                          challenge=challenge)
+
+
+@app.route('/projects/challenge/<int:challenge_id>/submit', methods=['POST'])
+def submit_scheduling_challenge(challenge_id):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    from src.game_engine import submit_scheduling_challenge as submit_challenge, get_scheduling_challenge
+    
+    challenge = get_scheduling_challenge(challenge_id)
+    if not challenge:
+        flash('Challenge not found')
+        return redirect(url_for('projects'))
+    
+    answer = {}
+    if challenge['challenge_type'] == 'critical_path':
+        answer['duration'] = request.form.get('duration', 0, type=int)
+    elif challenge['challenge_type'] == 'estimation':
+        answer['expected'] = request.form.get('expected', 0, type=float)
+    elif challenge['challenge_type'] == 'compression':
+        answer['choice'] = request.form.get('choice', '')
+    elif challenge['challenge_type'] == 'resource_leveling':
+        answer['assignments'] = {}
+        for key, value in request.form.items():
+            if key.startswith('assign_'):
+                task_id = key.replace('assign_', '')
+                answer['assignments'][task_id] = value
+    
+    result = submit_challenge(player_id, challenge_id, answer)
+    
+    if result['is_correct']:
+        flash(f"Correct! +{result['exp_earned']} EXP earned!")
+    else:
+        flash(f"Not quite right. {result['feedback']} (+{result['exp_earned']} EXP for effort)")
+    
+    return redirect(url_for('projects'))
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

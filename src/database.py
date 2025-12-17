@@ -706,6 +706,116 @@ def init_database():
         );
     """)
     
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS project_initiatives (
+            initiative_id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            title VARCHAR(200) NOT NULL,
+            description TEXT,
+            world_type VARCHAR(50) DEFAULT 'Modern',
+            industry VARCHAR(100),
+            planned_duration_weeks INTEGER DEFAULT 4,
+            actual_duration_weeks INTEGER DEFAULT 0,
+            start_week INTEGER DEFAULT 1,
+            current_week INTEGER DEFAULT 1,
+            status VARCHAR(50) DEFAULT 'planning',
+            budget DECIMAL(15, 2) DEFAULT 0,
+            spent DECIMAL(15, 2) DEFAULT 0,
+            completion_bonus_exp INTEGER DEFAULT 100,
+            completion_bonus_cash DECIMAL(15, 2) DEFAULT 0,
+            on_time_multiplier DECIMAL(3, 2) DEFAULT 1.5,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            completed_at TIMESTAMP
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS project_tasks (
+            task_id SERIAL PRIMARY KEY,
+            initiative_id INTEGER REFERENCES project_initiatives(initiative_id) ON DELETE CASCADE,
+            task_name VARCHAR(200) NOT NULL,
+            description TEXT,
+            estimated_effort_hours INTEGER DEFAULT 8,
+            actual_effort_hours INTEGER DEFAULT 0,
+            planned_start_week INTEGER DEFAULT 1,
+            planned_end_week INTEGER DEFAULT 1,
+            actual_start_week INTEGER,
+            actual_end_week INTEGER,
+            status VARCHAR(50) DEFAULT 'not_started',
+            priority VARCHAR(20) DEFAULT 'medium',
+            is_critical_path BOOLEAN DEFAULT FALSE,
+            task_order INTEGER DEFAULT 0,
+            exp_reward INTEGER DEFAULT 20,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS task_dependencies (
+            dependency_id SERIAL PRIMARY KEY,
+            task_id INTEGER REFERENCES project_tasks(task_id) ON DELETE CASCADE,
+            depends_on_task_id INTEGER REFERENCES project_tasks(task_id) ON DELETE CASCADE,
+            dependency_type VARCHAR(10) DEFAULT 'FS',
+            lag_weeks INTEGER DEFAULT 0,
+            UNIQUE(task_id, depends_on_task_id)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS project_resources (
+            resource_id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            resource_name VARCHAR(100) NOT NULL,
+            resource_type VARCHAR(50) DEFAULT 'staff',
+            capacity_hours_per_week INTEGER DEFAULT 40,
+            hourly_cost DECIMAL(10, 2) DEFAULT 25,
+            skill_bonus INTEGER DEFAULT 0,
+            is_available BOOLEAN DEFAULT TRUE
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS task_resource_assignments (
+            assignment_id SERIAL PRIMARY KEY,
+            task_id INTEGER REFERENCES project_tasks(task_id) ON DELETE CASCADE,
+            resource_id INTEGER REFERENCES project_resources(resource_id) ON DELETE CASCADE,
+            hours_allocated INTEGER DEFAULT 8,
+            hours_worked INTEGER DEFAULT 0,
+            UNIQUE(task_id, resource_id)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS project_history (
+            history_id SERIAL PRIMARY KEY,
+            initiative_id INTEGER REFERENCES project_initiatives(initiative_id) ON DELETE CASCADE,
+            week_number INTEGER NOT NULL,
+            planned_completion_pct DECIMAL(5, 2) DEFAULT 0,
+            actual_completion_pct DECIMAL(5, 2) DEFAULT 0,
+            variance_pct DECIMAL(5, 2) DEFAULT 0,
+            notes TEXT,
+            recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS scheduling_challenges (
+            challenge_id SERIAL PRIMARY KEY,
+            title VARCHAR(200) NOT NULL,
+            description TEXT,
+            challenge_type VARCHAR(50) NOT NULL,
+            difficulty INTEGER DEFAULT 1,
+            world_type VARCHAR(50) DEFAULT 'Modern',
+            required_level INTEGER DEFAULT 1,
+            task_data JSONB,
+            correct_answer JSONB,
+            exp_reward INTEGER DEFAULT 50,
+            time_limit_seconds INTEGER DEFAULT 300,
+            hint_text TEXT,
+            is_active BOOLEAN DEFAULT TRUE
+        );
+    """)
+    
     conn.commit()
     cur.close()
     conn.close()
@@ -5292,6 +5402,221 @@ def initialize_player_accounting(player_id):
     return True
 
 
+def seed_scheduling_challenges():
+    """Seed scheduling challenges for teaching project management concepts."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM scheduling_challenges")
+    if cur.fetchone()['count'] > 0:
+        print("Scheduling challenges already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    import json
+    
+    challenges = [
+        {
+            'title': 'Critical Path Basics',
+            'description': 'Order these restaurant renovation tasks to find the shortest project duration.',
+            'challenge_type': 'critical_path',
+            'difficulty': 1,
+            'world_type': 'Modern',
+            'required_level': 1,
+            'task_data': json.dumps({
+                'tasks': [
+                    {'id': 'A', 'name': 'Plan Layout', 'duration': 1, 'predecessors': []},
+                    {'id': 'B', 'name': 'Order Equipment', 'duration': 2, 'predecessors': ['A']},
+                    {'id': 'C', 'name': 'Paint Walls', 'duration': 1, 'predecessors': ['A']},
+                    {'id': 'D', 'name': 'Install Equipment', 'duration': 2, 'predecessors': ['B', 'C']},
+                    {'id': 'E', 'name': 'Final Inspection', 'duration': 1, 'predecessors': ['D']}
+                ]
+            }),
+            'correct_answer': json.dumps({'critical_path': ['A', 'B', 'D', 'E'], 'duration': 6}),
+            'exp_reward': 50,
+            'time_limit_seconds': 180,
+            'hint_text': 'The critical path is the longest sequence of dependent tasks.'
+        },
+        {
+            'title': 'Resource Allocation',
+            'description': 'Assign your 3 staff members to tasks without over-allocating anyone.',
+            'challenge_type': 'resource_leveling',
+            'difficulty': 2,
+            'world_type': 'Modern',
+            'required_level': 2,
+            'task_data': json.dumps({
+                'resources': [
+                    {'id': 'R1', 'name': 'Chef', 'capacity': 40},
+                    {'id': 'R2', 'name': 'Manager', 'capacity': 40},
+                    {'id': 'R3', 'name': 'Assistant', 'capacity': 40}
+                ],
+                'tasks': [
+                    {'id': 'T1', 'name': 'Menu Planning', 'hours': 20, 'week': 1, 'skills': ['chef', 'manager']},
+                    {'id': 'T2', 'name': 'Vendor Negotiation', 'hours': 30, 'week': 1, 'skills': ['manager']},
+                    {'id': 'T3', 'name': 'Kitchen Prep', 'hours': 25, 'week': 1, 'skills': ['chef', 'assistant']}
+                ]
+            }),
+            'correct_answer': json.dumps({'assignments': {'T1': 'R1', 'T2': 'R2', 'T3': 'R3'}}),
+            'exp_reward': 75,
+            'time_limit_seconds': 240,
+            'hint_text': 'Check each resource capacity vs assigned hours to avoid overload.'
+        },
+        {
+            'title': 'Time Estimation',
+            'description': 'Use the three-point estimate method to calculate expected task duration.',
+            'challenge_type': 'estimation',
+            'difficulty': 2,
+            'world_type': 'Modern',
+            'required_level': 3,
+            'task_data': json.dumps({
+                'optimistic': 4,
+                'most_likely': 6,
+                'pessimistic': 14
+            }),
+            'correct_answer': json.dumps({'expected': 7, 'formula': '(O + 4M + P) / 6'}),
+            'exp_reward': 60,
+            'time_limit_seconds': 120,
+            'hint_text': 'PERT formula: Expected = (Optimistic + 4×Most Likely + Pessimistic) / 6'
+        },
+        {
+            'title': 'Dependency Chain',
+            'description': 'Identify which tasks can run in parallel vs which must be sequential.',
+            'challenge_type': 'dependencies',
+            'difficulty': 1,
+            'world_type': 'Modern',
+            'required_level': 2,
+            'task_data': json.dumps({
+                'tasks': [
+                    {'id': 'A', 'name': 'Design Logo', 'duration': 3},
+                    {'id': 'B', 'name': 'Print Menus', 'duration': 2, 'needs_logo': True},
+                    {'id': 'C', 'name': 'Train Staff', 'duration': 5},
+                    {'id': 'D', 'name': 'Order Supplies', 'duration': 2},
+                    {'id': 'E', 'name': 'Grand Opening', 'duration': 1, 'needs': ['B', 'C', 'D']}
+                ]
+            }),
+            'correct_answer': json.dumps({'parallel': ['A', 'C', 'D'], 'sequential': [['A', 'B'], ['B', 'E'], ['C', 'E'], ['D', 'E']]}),
+            'exp_reward': 55,
+            'time_limit_seconds': 180,
+            'hint_text': 'Tasks without dependencies can run in parallel.'
+        },
+        {
+            'title': 'Schedule Compression',
+            'description': 'Your project is 2 weeks behind. Decide which technique to use: crashing or fast-tracking.',
+            'challenge_type': 'compression',
+            'difficulty': 3,
+            'world_type': 'Modern',
+            'required_level': 4,
+            'task_data': json.dumps({
+                'current_duration': 12,
+                'target_duration': 10,
+                'options': [
+                    {'type': 'crash', 'task': 'Kitchen Install', 'cost': 2000, 'time_saved': 2},
+                    {'type': 'crash', 'task': 'Staff Training', 'cost': 1500, 'time_saved': 1},
+                    {'type': 'fast_track', 'tasks': ['Permits', 'Equipment Order'], 'risk': 'medium', 'time_saved': 2}
+                ]
+            }),
+            'correct_answer': json.dumps({'best_option': 'fast_track', 'reason': 'No additional cost, acceptable risk'}),
+            'exp_reward': 80,
+            'time_limit_seconds': 180,
+            'hint_text': 'Crashing adds cost; fast-tracking adds risk by overlapping tasks.'
+        }
+    ]
+    
+    for ch in challenges:
+        cur.execute("""
+            INSERT INTO scheduling_challenges 
+            (title, description, challenge_type, difficulty, world_type, required_level,
+             task_data, correct_answer, exp_reward, time_limit_seconds, hint_text)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (
+            ch['title'], ch['description'], ch['challenge_type'], ch['difficulty'],
+            ch['world_type'], ch['required_level'], ch['task_data'], ch['correct_answer'],
+            ch['exp_reward'], ch['time_limit_seconds'], ch['hint_text']
+        ))
+    
+    conn.commit()
+    print(f"Seeded {len(challenges)} scheduling challenges!")
+    cur.close()
+    conn.close()
+
+
+def get_project_templates():
+    """Return sample project templates for different worlds/industries."""
+    return [
+        {
+            'title': 'Restaurant Grand Opening',
+            'description': 'Plan and execute the grand opening of your new restaurant location.',
+            'world_type': 'Modern',
+            'industry': 'Restaurant',
+            'planned_duration_weeks': 6,
+            'budget': 15000,
+            'completion_bonus_exp': 200,
+            'completion_bonus_cash': 5000,
+            'tasks': [
+                {'name': 'Site Selection & Lease', 'effort': 16, 'week_start': 1, 'week_end': 2, 'priority': 'high'},
+                {'name': 'Permits & Licensing', 'effort': 8, 'week_start': 1, 'week_end': 2, 'priority': 'high', 'depends_on': []},
+                {'name': 'Interior Design', 'effort': 24, 'week_start': 2, 'week_end': 3, 'priority': 'medium', 'depends_on': ['Site Selection & Lease']},
+                {'name': 'Equipment Procurement', 'effort': 16, 'week_start': 2, 'week_end': 4, 'priority': 'high', 'depends_on': ['Site Selection & Lease']},
+                {'name': 'Staff Hiring', 'effort': 20, 'week_start': 3, 'week_end': 4, 'priority': 'high'},
+                {'name': 'Staff Training', 'effort': 40, 'week_start': 4, 'week_end': 5, 'priority': 'high', 'depends_on': ['Staff Hiring']},
+                {'name': 'Menu Development', 'effort': 16, 'week_start': 3, 'week_end': 4, 'priority': 'medium'},
+                {'name': 'Marketing Campaign', 'effort': 12, 'week_start': 4, 'week_end': 6, 'priority': 'medium'},
+                {'name': 'Soft Opening', 'effort': 8, 'week_start': 5, 'week_end': 5, 'priority': 'high', 'depends_on': ['Staff Training', 'Equipment Procurement']},
+                {'name': 'Grand Opening Event', 'effort': 16, 'week_start': 6, 'week_end': 6, 'priority': 'high', 'depends_on': ['Soft Opening', 'Marketing Campaign']}
+            ]
+        },
+        {
+            'title': 'New Product Launch',
+            'description': 'Coordinate the launch of a new signature dish across all locations.',
+            'world_type': 'Modern',
+            'industry': 'Restaurant',
+            'planned_duration_weeks': 4,
+            'budget': 5000,
+            'completion_bonus_exp': 150,
+            'completion_bonus_cash': 2500,
+            'tasks': [
+                {'name': 'Recipe Development', 'effort': 16, 'week_start': 1, 'week_end': 1, 'priority': 'high'},
+                {'name': 'Cost Analysis', 'effort': 8, 'week_start': 1, 'week_end': 1, 'priority': 'medium', 'depends_on': ['Recipe Development']},
+                {'name': 'Supplier Sourcing', 'effort': 12, 'week_start': 2, 'week_end': 2, 'priority': 'high', 'depends_on': ['Cost Analysis']},
+                {'name': 'Staff Training', 'effort': 16, 'week_start': 2, 'week_end': 3, 'priority': 'high', 'depends_on': ['Recipe Development']},
+                {'name': 'Marketing Materials', 'effort': 12, 'week_start': 2, 'week_end': 3, 'priority': 'medium'},
+                {'name': 'Soft Launch', 'effort': 8, 'week_start': 3, 'week_end': 3, 'priority': 'high', 'depends_on': ['Staff Training', 'Supplier Sourcing']},
+                {'name': 'Full Rollout', 'effort': 8, 'week_start': 4, 'week_end': 4, 'priority': 'high', 'depends_on': ['Soft Launch', 'Marketing Materials']}
+            ]
+        }
+    ]
+
+
+def initialize_player_projects(player_id):
+    """Initialize the project management system for a player with default resources."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM project_resources WHERE player_id = %s", (player_id,))
+    if cur.fetchone()['count'] > 0:
+        cur.close()
+        conn.close()
+        return False
+    
+    default_resources = [
+        {'name': 'You (Manager)', 'type': 'manager', 'capacity': 40, 'cost': 0, 'bonus': 10},
+        {'name': 'Staff Member 1', 'type': 'staff', 'capacity': 40, 'cost': 25, 'bonus': 0},
+        {'name': 'Staff Member 2', 'type': 'staff', 'capacity': 40, 'cost': 25, 'bonus': 0}
+    ]
+    
+    for res in default_resources:
+        cur.execute("""
+            INSERT INTO project_resources (player_id, resource_name, resource_type, capacity_hours_per_week, hourly_cost, skill_bonus)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (player_id, res['name'], res['type'], res['capacity'], res['cost'], res['bonus']))
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    return True
+
+
 if __name__ == "__main__":
     init_database()
     seed_scenarios()
@@ -5320,3 +5645,4 @@ if __name__ == "__main__":
     seed_advisors()
     seed_equipment()
     seed_daily_missions()
+    seed_scheduling_challenges()

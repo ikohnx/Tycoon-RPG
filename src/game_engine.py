@@ -3038,3 +3038,447 @@ def process_pending_transaction(player_id: int, transaction_id: int,
         conn.close()
     
     return result
+
+
+def get_player_initiatives(player_id: int) -> list:
+    """Get all project initiatives for a player."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT initiative_id, title, description, world_type, industry,
+               planned_duration_weeks, actual_duration_weeks, start_week, current_week,
+               status, budget, spent, completion_bonus_exp, completion_bonus_cash,
+               on_time_multiplier, created_at, completed_at
+        FROM project_initiatives
+        WHERE player_id = %s
+        ORDER BY created_at DESC
+    """, (player_id,))
+    
+    initiatives = [dict(row) for row in cur.fetchall()]
+    
+    for initiative in initiatives:
+        cur.execute("""
+            SELECT task_id, task_name, status, planned_start_week, planned_end_week,
+                   actual_start_week, actual_end_week, is_critical_path, priority
+            FROM project_tasks
+            WHERE initiative_id = %s
+            ORDER BY task_order
+        """, (initiative['initiative_id'],))
+        initiative['tasks'] = [dict(row) for row in cur.fetchall()]
+        
+        total_tasks = len(initiative['tasks'])
+        completed_tasks = sum(1 for t in initiative['tasks'] if t['status'] == 'completed')
+        initiative['progress_pct'] = int((completed_tasks / total_tasks * 100) if total_tasks > 0 else 0)
+    
+    cur.close()
+    conn.close()
+    return initiatives
+
+
+def get_active_initiative(player_id: int) -> dict:
+    """Get the player's currently active project initiative."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT initiative_id, title, description, planned_duration_weeks,
+               current_week, status, budget, spent
+        FROM project_initiatives
+        WHERE player_id = %s AND status IN ('planning', 'in_progress')
+        ORDER BY created_at DESC LIMIT 1
+    """, (player_id,))
+    
+    result = cur.fetchone()
+    if not result:
+        cur.close()
+        conn.close()
+        return None
+    
+    initiative = dict(result)
+    
+    cur.execute("""
+        SELECT t.task_id, t.task_name, t.description, t.estimated_effort_hours,
+               t.actual_effort_hours, t.planned_start_week, t.planned_end_week,
+               t.actual_start_week, t.actual_end_week, t.status, t.priority,
+               t.is_critical_path, t.task_order, t.exp_reward
+        FROM project_tasks t
+        WHERE t.initiative_id = %s
+        ORDER BY t.task_order
+    """, (initiative['initiative_id'],))
+    initiative['tasks'] = [dict(row) for row in cur.fetchall()]
+    
+    for task in initiative['tasks']:
+        cur.execute("""
+            SELECT d.depends_on_task_id, pt.task_name
+            FROM task_dependencies d
+            JOIN project_tasks pt ON d.depends_on_task_id = pt.task_id
+            WHERE d.task_id = %s
+        """, (task['task_id'],))
+        task['dependencies'] = [dict(row) for row in cur.fetchall()]
+    
+    cur.close()
+    conn.close()
+    return initiative
+
+
+def create_initiative_from_template(player_id: int, template_index: int = 0) -> dict:
+    """Create a new project initiative from a template."""
+    from src.database import get_project_templates
+    
+    templates = get_project_templates()
+    if template_index >= len(templates):
+        return {'success': False, 'error': 'Invalid template'}
+    
+    template = templates[template_index]
+    
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM project_initiatives WHERE player_id = %s AND status IN ('planning', 'in_progress')", (player_id,))
+    if cur.fetchone()['count'] > 0:
+        cur.close()
+        conn.close()
+        return {'success': False, 'error': 'Complete your current project first'}
+    
+    cur.execute("""
+        INSERT INTO project_initiatives 
+        (player_id, title, description, world_type, industry, planned_duration_weeks,
+         budget, completion_bonus_exp, completion_bonus_cash, status)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 'planning')
+        RETURNING initiative_id
+    """, (
+        player_id, template['title'], template['description'],
+        template['world_type'], template['industry'], template['planned_duration_weeks'],
+        template['budget'], template['completion_bonus_exp'], template['completion_bonus_cash']
+    ))
+    
+    initiative_id = cur.fetchone()['initiative_id']
+    
+    task_name_to_id = {}
+    for i, task in enumerate(template['tasks']):
+        cur.execute("""
+            INSERT INTO project_tasks 
+            (initiative_id, task_name, estimated_effort_hours, planned_start_week,
+             planned_end_week, priority, task_order)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            RETURNING task_id
+        """, (
+            initiative_id, task['name'], task['effort'],
+            task['week_start'], task['week_end'], task['priority'], i
+        ))
+        task_name_to_id[task['name']] = cur.fetchone()['task_id']
+    
+    for task in template['tasks']:
+        if 'depends_on' in task:
+            task_id = task_name_to_id[task['name']]
+            for dep_name in task['depends_on']:
+                if dep_name in task_name_to_id:
+                    cur.execute("""
+                        INSERT INTO task_dependencies (task_id, depends_on_task_id, dependency_type)
+                        VALUES (%s, %s, 'FS')
+                    """, (task_id, task_name_to_id[dep_name]))
+    
+    calculate_critical_path(initiative_id)
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    return {'success': True, 'initiative_id': initiative_id, 'title': template['title']}
+
+
+def calculate_critical_path(initiative_id: int):
+    """Calculate and mark the critical path for a project."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT task_id, task_name, planned_start_week, planned_end_week
+        FROM project_tasks WHERE initiative_id = %s
+        ORDER BY planned_end_week DESC, planned_start_week DESC
+    """, (initiative_id,))
+    tasks = [dict(row) for row in cur.fetchall()]
+    
+    if not tasks:
+        cur.close()
+        conn.close()
+        return
+    
+    cur.execute("UPDATE project_tasks SET is_critical_path = FALSE WHERE initiative_id = %s", (initiative_id,))
+    
+    last_task = tasks[0]
+    cur.execute("UPDATE project_tasks SET is_critical_path = TRUE WHERE task_id = %s", (last_task['task_id'],))
+    
+    critical_tasks = {last_task['task_id']}
+    
+    for _ in range(len(tasks)):
+        for task_id in list(critical_tasks):
+            cur.execute("""
+                SELECT d.depends_on_task_id
+                FROM task_dependencies d
+                WHERE d.task_id = %s
+            """, (task_id,))
+            for row in cur.fetchall():
+                dep_id = row['depends_on_task_id']
+                if dep_id not in critical_tasks:
+                    critical_tasks.add(dep_id)
+                    cur.execute("UPDATE project_tasks SET is_critical_path = TRUE WHERE task_id = %s", (dep_id,))
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+
+
+def advance_project_week(player_id: int, initiative_id: int) -> dict:
+    """Advance the project by one week, updating task progress."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT initiative_id, current_week, planned_duration_weeks, status, budget, spent
+        FROM project_initiatives
+        WHERE initiative_id = %s AND player_id = %s
+    """, (initiative_id, player_id))
+    
+    initiative = cur.fetchone()
+    if not initiative:
+        cur.close()
+        conn.close()
+        return {'success': False, 'error': 'Project not found'}
+    
+    if initiative['status'] == 'completed':
+        cur.close()
+        conn.close()
+        return {'success': False, 'error': 'Project already completed'}
+    
+    current_week = initiative['current_week']
+    new_week = current_week + 1
+    
+    cur.execute("""
+        SELECT task_id, task_name, status, planned_start_week, planned_end_week,
+               estimated_effort_hours, actual_effort_hours
+        FROM project_tasks
+        WHERE initiative_id = %s
+    """, (initiative_id,))
+    tasks = [dict(row) for row in cur.fetchall()]
+    
+    exp_earned = 0
+    completed_this_week = []
+    
+    for task in tasks:
+        if task['status'] == 'not_started' and task['planned_start_week'] <= current_week:
+            cur.execute("""
+                SELECT COUNT(*) as count FROM task_dependencies d
+                JOIN project_tasks pt ON d.depends_on_task_id = pt.task_id
+                WHERE d.task_id = %s AND pt.status != 'completed'
+            """, (task['task_id'],))
+            
+            if cur.fetchone()['count'] == 0:
+                cur.execute("""
+                    UPDATE project_tasks SET status = 'in_progress', actual_start_week = %s
+                    WHERE task_id = %s
+                """, (current_week, task['task_id']))
+        
+        if task['status'] == 'in_progress':
+            progress_hours = min(40, task['estimated_effort_hours'] - task['actual_effort_hours'])
+            new_actual = task['actual_effort_hours'] + progress_hours
+            
+            if new_actual >= task['estimated_effort_hours']:
+                cur.execute("""
+                    UPDATE project_tasks 
+                    SET status = 'completed', actual_effort_hours = %s, actual_end_week = %s
+                    WHERE task_id = %s
+                """, (task['estimated_effort_hours'], current_week, task['task_id']))
+                completed_this_week.append(task['task_name'])
+                exp_earned += 20
+            else:
+                cur.execute("UPDATE project_tasks SET actual_effort_hours = %s WHERE task_id = %s", 
+                           (new_actual, task['task_id']))
+    
+    cur.execute("""
+        SELECT COUNT(*) as total, SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as done
+        FROM project_tasks WHERE initiative_id = %s
+    """, (initiative_id,))
+    progress = cur.fetchone()
+    all_done = progress['total'] == progress['done']
+    
+    project_completed = False
+    bonus_earned = 0
+    
+    if all_done:
+        on_time = new_week <= initiative['planned_duration_weeks']
+        multiplier = float(initiative['on_time_multiplier']) if on_time else 1.0
+        
+        cur.execute("""
+            SELECT completion_bonus_exp, completion_bonus_cash
+            FROM project_initiatives WHERE initiative_id = %s
+        """, (initiative_id,))
+        bonuses = cur.fetchone()
+        
+        bonus_earned = int(bonuses['completion_bonus_exp'] * multiplier)
+        cash_bonus = float(bonuses['completion_bonus_cash']) * multiplier
+        
+        cur.execute("""
+            UPDATE project_initiatives 
+            SET status = 'completed', actual_duration_weeks = %s, current_week = %s,
+                completed_at = CURRENT_TIMESTAMP
+            WHERE initiative_id = %s
+        """, (new_week, new_week, initiative_id))
+        
+        cur.execute("UPDATE player_profiles SET cash = cash + %s WHERE player_id = %s", (cash_bonus, player_id))
+        
+        project_completed = True
+        exp_earned += bonus_earned
+    else:
+        cur.execute("UPDATE project_initiatives SET current_week = %s, status = 'in_progress' WHERE initiative_id = %s", 
+                   (new_week, initiative_id))
+    
+    planned_pct = min(100, (current_week / initiative['planned_duration_weeks']) * 100)
+    actual_pct = (progress['done'] / progress['total'] * 100) if progress['total'] > 0 else 0
+    variance = actual_pct - planned_pct
+    
+    cur.execute("""
+        INSERT INTO project_history (initiative_id, week_number, planned_completion_pct, actual_completion_pct, variance_pct)
+        VALUES (%s, %s, %s, %s, %s)
+    """, (initiative_id, current_week, planned_pct, actual_pct, variance))
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    return {
+        'success': True,
+        'new_week': new_week,
+        'completed_tasks': completed_this_week,
+        'exp_earned': exp_earned,
+        'project_completed': project_completed,
+        'bonus_earned': bonus_earned if project_completed else 0,
+        'on_time': new_week <= initiative['planned_duration_weeks'] if project_completed else None
+    }
+
+
+def get_player_resources(player_id: int) -> list:
+    """Get all resources available to a player."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT resource_id, resource_name, resource_type, capacity_hours_per_week,
+               hourly_cost, skill_bonus, is_available
+        FROM project_resources
+        WHERE player_id = %s
+        ORDER BY resource_id
+    """, (player_id,))
+    
+    resources = [dict(row) for row in cur.fetchall()]
+    cur.close()
+    conn.close()
+    return resources
+
+
+def get_scheduling_challenges(player_level: int = 1) -> list:
+    """Get scheduling challenges available for a player's level."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT challenge_id, title, description, challenge_type, difficulty,
+               required_level, exp_reward, time_limit_seconds, hint_text
+        FROM scheduling_challenges
+        WHERE required_level <= %s AND is_active = TRUE
+        ORDER BY required_level, difficulty
+    """, (player_level,))
+    
+    challenges = [dict(row) for row in cur.fetchall()]
+    cur.close()
+    conn.close()
+    return challenges
+
+
+def get_scheduling_challenge(challenge_id: int) -> dict:
+    """Get a specific scheduling challenge with full data."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT challenge_id, title, description, challenge_type, difficulty,
+               task_data, correct_answer, exp_reward, time_limit_seconds, hint_text
+        FROM scheduling_challenges
+        WHERE challenge_id = %s AND is_active = TRUE
+    """, (challenge_id,))
+    
+    result = cur.fetchone()
+    cur.close()
+    conn.close()
+    
+    if result:
+        import json
+        challenge = dict(result)
+        challenge['task_data'] = json.loads(challenge['task_data']) if challenge['task_data'] else {}
+        challenge['correct_answer'] = json.loads(challenge['correct_answer']) if challenge['correct_answer'] else {}
+        return challenge
+    return None
+
+
+def submit_scheduling_challenge(player_id: int, challenge_id: int, answer: dict) -> dict:
+    """Submit an answer for a scheduling challenge."""
+    challenge = get_scheduling_challenge(challenge_id)
+    if not challenge:
+        return {'success': False, 'error': 'Challenge not found', 'exp_earned': 0}
+    
+    correct = challenge['correct_answer']
+    is_correct = False
+    
+    if challenge['challenge_type'] == 'critical_path':
+        user_duration = answer.get('duration', 0)
+        correct_duration = correct.get('duration', 0)
+        is_correct = abs(user_duration - correct_duration) <= 1
+    
+    elif challenge['challenge_type'] == 'estimation':
+        user_expected = answer.get('expected', 0)
+        correct_expected = correct.get('expected', 0)
+        is_correct = abs(user_expected - correct_expected) <= 0.5
+    
+    elif challenge['challenge_type'] == 'resource_leveling':
+        is_correct = True
+        user_assignments = answer.get('assignments', {})
+        for task_id, resource_id in user_assignments.items():
+            if not resource_id:
+                is_correct = False
+                break
+    
+    elif challenge['challenge_type'] == 'compression':
+        is_correct = answer.get('choice') == correct.get('best_option')
+    
+    else:
+        is_correct = answer == correct
+    
+    exp_earned = challenge['exp_reward'] if is_correct else int(challenge['exp_reward'] * 0.25)
+    
+    return {
+        'success': True,
+        'is_correct': is_correct,
+        'exp_earned': exp_earned,
+        'correct_answer': correct,
+        'feedback': 'Correct! Great scheduling skills!' if is_correct else 'Not quite right. Review the hint and try again.'
+    }
+
+
+def get_project_templates_list() -> list:
+    """Get list of available project templates."""
+    from src.database import get_project_templates
+    templates = get_project_templates()
+    return [
+        {
+            'index': i,
+            'title': t['title'],
+            'description': t['description'],
+            'duration': t['planned_duration_weeks'],
+            'budget': t['budget'],
+            'reward_exp': t['completion_bonus_exp'],
+            'reward_cash': t['completion_bonus_cash'],
+            'task_count': len(t['tasks'])
+        }
+        for i, t in enumerate(templates)
+    ]

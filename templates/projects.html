@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+
+{% block title %}Project HQ - Business Tycoon RPG{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="gold-text mb-0">
+                        <i class="bi bi-kanban"></i> Project HQ
+                    </h2>
+                    <p class="text-muted mb-0">Master project scheduling and resource management</p>
+                </div>
+                <a href="{{ url_for('hub') }}" class="btn btn-outline-light">
+                    <i class="bi bi-arrow-left"></i> Back to Hub
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+        {% for message in messages %}
+        <div>{{ message }}</div>
+        {% endfor %}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        <div class="col-lg-8">
+            {% if active_project %}
+            <div class="card mb-4" style="border: 2px solid rgba(76, 175, 80, 0.5);">
+                <div class="card-header bg-success bg-opacity-25">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-play-circle-fill"></i> {{ active_project.title }}
+                        </h5>
+                        <span class="badge bg-info">Week {{ active_project.current_week }} / {{ active_project.planned_duration_weeks }}</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">{{ active_project.description }}</p>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Progress</span>
+                            <span>{{ active_project.tasks|selectattr('status', 'equalto', 'completed')|list|length }} / {{ active_project.tasks|length }} tasks</span>
+                        </div>
+                        <div class="progress" style="height: 25px;">
+                            {% set completed = active_project.tasks|selectattr('status', 'equalto', 'completed')|list|length %}
+                            {% set total = active_project.tasks|length %}
+                            {% set pct = (completed / total * 100)|int if total > 0 else 0 %}
+                            <div class="progress-bar bg-success" style="width: {{ pct }}%">{{ pct }}%</div>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive mb-3">
+                        <table class="table table-sm table-dark">
+                            <thead>
+                                <tr>
+                                    <th>Task</th>
+                                    <th>Week</th>
+                                    <th>Status</th>
+                                    <th>Priority</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for task in active_project.tasks %}
+                                <tr class="{% if task.is_critical_path %}table-warning{% endif %}">
+                                    <td>
+                                        {{ task.task_name }}
+                                        {% if task.is_critical_path %}
+                                        <span class="badge bg-warning text-dark ms-1" title="Critical Path">CP</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ task.planned_start_week }}-{{ task.planned_end_week }}</td>
+                                    <td>
+                                        {% if task.status == 'completed' %}
+                                        <span class="badge bg-success">Done</span>
+                                        {% elif task.status == 'in_progress' %}
+                                        <span class="badge bg-primary">In Progress</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if task.priority == 'high' %}
+                                        <span class="text-danger">High</span>
+                                        {% elif task.priority == 'medium' %}
+                                        <span class="text-warning">Medium</span>
+                                        {% else %}
+                                        <span class="text-info">Low</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <small class="text-warning">
+                                <i class="bi bi-exclamation-triangle"></i> 
+                                Tasks marked CP are on the Critical Path - delays here delay the whole project!
+                            </small>
+                        </div>
+                        <form action="{{ url_for('advance_project') }}" method="post">
+                            <input type="hidden" name="initiative_id" value="{{ active_project.initiative_id }}">
+                            <button type="submit" class="btn btn-game btn-game-gold">
+                                <i class="bi bi-skip-forward-fill"></i> Advance Week
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-rocket-takeoff"></i> Start New Project
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Select a project template to begin:</p>
+                    
+                    <div class="row g-3">
+                        {% for template in templates %}
+                        <div class="col-md-6">
+                            <div class="card bg-dark h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ template.title }}</h5>
+                                    <p class="card-text small text-muted">{{ template.description }}</p>
+                                    <div class="mb-2">
+                                        <span class="badge bg-info me-1">{{ template.duration }} weeks</span>
+                                        <span class="badge bg-secondary me-1">{{ template.task_count }} tasks</span>
+                                        <span class="badge bg-warning text-dark">${{ template.budget|int }}</span>
+                                    </div>
+                                    <div class="small mb-3">
+                                        <span class="text-success">Reward: +{{ template.reward_exp }} EXP, +${{ template.reward_cash|int }}</span>
+                                    </div>
+                                    <form action="{{ url_for('start_project') }}" method="post">
+                                        <input type="hidden" name="template_index" value="{{ template.index }}">
+                                        <button type="submit" class="btn btn-game btn-game-emerald btn-sm w-100">
+                                            <i class="bi bi-play-fill"></i> Start Project
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-puzzle"></i> Scheduling Challenges
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Practice project scheduling concepts:</p>
+                    
+                    <div class="list-group">
+                        {% for challenge in challenges %}
+                        <a href="{{ url_for('scheduling_challenge', challenge_id=challenge.challenge_id) }}" 
+                           class="list-group-item list-group-item-action bg-dark text-light d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">{{ challenge.title }}</h6>
+                                <small class="text-muted">{{ challenge.description }}</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-purple mb-1">{{ challenge.challenge_type|replace('_', ' ')|title }}</span>
+                                <div>
+                                    <span class="badge bg-success">+{{ challenge.exp_reward }} EXP</span>
+                                </div>
+                            </div>
+                        </a>
+                        {% else %}
+                        <div class="text-center text-muted py-3">
+                            <i class="bi bi-lock"></i> Level up to unlock scheduling challenges
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-people-fill"></i> Your Team
+                </div>
+                <div class="card-body">
+                    {% for resource in resources %}
+                    <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-dark rounded">
+                        <div>
+                            <strong>{{ resource.resource_name }}</strong>
+                            <br>
+                            <small class="text-muted">{{ resource.capacity_hours_per_week }}h/week</small>
+                        </div>
+                        <div class="text-end">
+                            {% if resource.hourly_cost > 0 %}
+                            <span class="badge bg-warning text-dark">${{ resource.hourly_cost }}/hr</span>
+                            {% else %}
+                            <span class="badge bg-success">Free</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-book"></i> PM Concepts
+                </div>
+                <div class="card-body small">
+                    <div class="mb-3">
+                        <strong class="text-warning">Critical Path</strong>
+                        <p class="text-muted mb-0">The longest sequence of dependent tasks. Any delay on the critical path delays the entire project.</p>
+                    </div>
+                    <div class="mb-3">
+                        <strong class="text-info">Task Dependencies</strong>
+                        <p class="text-muted mb-0">Some tasks can't start until others finish. Plan carefully to avoid bottlenecks.</p>
+                    </div>
+                    <div class="mb-3">
+                        <strong class="text-success">Resource Leveling</strong>
+                        <p class="text-muted mb-0">Balance workload across your team. Over-allocation leads to burnout and delays.</p>
+                    </div>
+                    <div>
+                        <strong class="text-danger">Schedule Compression</strong>
+                        <p class="text-muted mb-0">Crashing (add resources) or Fast-tracking (parallelize tasks) to meet tight deadlines.</p>
+                    </div>
+                </div>
+            </div>
+
+            {% if all_initiatives|length > 1 or (all_initiatives|length == 1 and not active_project) %}
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-clock-history"></i> Project History
+                </div>
+                <div class="card-body">
+                    {% for initiative in all_initiatives %}
+                    {% if initiative.status == 'completed' %}
+                    <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-dark rounded">
+                        <div>
+                            <strong>{{ initiative.title }}</strong>
+                            <br>
+                            <small class="text-muted">{{ initiative.actual_duration_weeks }} weeks</small>
+                        </div>
+                        <div>
+                            {% if initiative.actual_duration_weeks <= initiative.planned_duration_weeks %}
+                            <span class="badge bg-success">On Time!</span>
+                            {% else %}
+                            <span class="badge bg-warning text-dark">Late</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.bg-purple {
+    background-color: #9c27b0;
+}
+</style>
+{% endblock %}
