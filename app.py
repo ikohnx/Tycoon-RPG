@@ -10,7 +10,7 @@ from src.database import (init_database, seed_scenarios, seed_achievements, seed
                           seed_legal_curriculum, seed_operations_curriculum, seed_hr_curriculum,
                           seed_strategy_curriculum, seed_daily_login_rewards, seed_advisors,
                           seed_equipment, seed_daily_missions, seed_interactive_challenges,
-                          seed_advanced_challenges)
+                          seed_advanced_challenges, seed_scheduling_challenges)
 from src.game_engine import GameEngine
 from src.leveling import get_level_title, get_progress_bar, get_exp_to_next_level
 
@@ -47,6 +47,7 @@ seed_equipment()
 seed_daily_missions()
 seed_interactive_challenges()
 seed_advanced_challenges()
+seed_scheduling_challenges()
 
 engine = GameEngine()
 
