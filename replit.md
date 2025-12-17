@@ -18,6 +18,11 @@ The game is built as a Flask web application with a responsive, mobile-first UI.
 -   **Educational Mechanics:** Incorporates interactive challenges with real-world calculations (e.g., Budget Calculator, ROI, Break-Even Analysis) and a dedicated training system that provides concept explanations, formulas, and examples before gameplay.
 -   **Financial Engine:** A robust accounting system supports a Chart of Accounts, Journal Entry system with debit/credit validation, Trial Balance, Income Statement, Balance Sheet, and monthly period close.
 -   **Project Management System:** A scheduling subsystem with initiative/task management, critical path calculation, resource allocation, and weekly tick-based simulation. Features 5 interactive scheduling challenges (Critical Path, PERT Estimation, Resource Leveling, Schedule Compression, Task Dependencies) to teach PM concepts before applying them in real projects.
+-   **Cash Flow Forecasting System:** 13-week rolling cash flow forecasts with interactive challenges teaching receivables timing, payables prioritization, seasonal planning, and emergency reserves. Helps players understand the difference between profit and cash.
+-   **Business Plan Workshop:** Guided business plan creation with 8 sections (Executive Summary, Market Analysis, Financial Projections, etc.) and mentor feedback scoring. Players build comprehensive plans and receive actionable guidance.
+-   **Negotiation Simulator:** Interactive deal-making scenarios teaching BATNA, anchoring, concessions, and win-win strategies. Covers vendor, employment, and real estate negotiations with multi-round offer/counter-offer dynamics.
+-   **Risk Management Dashboard:** Portfolio-style risk assessment where players identify, score (probability x impact), and mitigate business risks across 8 categories. Visual risk matrix and mitigation tracking.
+-   **Supply Chain Simulator:** Inventory management with reorder points, safety stock, lead times, and supplier relationships. Players manage products, create purchase orders, and learn EOQ concepts.
 
 ## External Dependencies
 -   **PostgreSQL:** Relational database for all game data persistence.

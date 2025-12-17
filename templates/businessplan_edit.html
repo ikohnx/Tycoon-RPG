@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}{{ plan.plan_name }} - Business Tycoon RPG{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="gold-text mb-0">
+                        <i class="bi bi-pencil-square"></i> {{ plan.plan_name }}
+                    </h2>
+                    <p class="text-muted mb-0">{{ plan.business_type|default('Business')|title }} Plan | Score: {{ plan.overall_score }}/100</p>
+                </div>
+                <a href="{{ url_for('businessplan') }}" class="btn btn-outline-light">
+                    <i class="bi bi-arrow-left"></i> Back to Workshop
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+        {% for message in messages %}
+        <div>{{ message }}</div>
+        {% endfor %}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="progress" style="height: 30px;">
+                <div class="progress-bar bg-success" style="width: {{ plan.completion_pct }}%">
+                    {{ plan.completion_pct|int }}% Complete
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-3">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-list-check"></i> Sections
+                </div>
+                <div class="list-group list-group-flush">
+                    {% for section in plan.sections %}
+                    <a href="#section-{{ section.section_id }}" 
+                       class="list-group-item list-group-item-action bg-dark text-light d-flex justify-content-between align-items-center">
+                        <span>{{ section.name }}</span>
+                        {% if section.is_complete %}
+                        <span class="badge bg-success"><i class="bi bi-check"></i></span>
+                        {% else %}
+                        <span class="badge bg-secondary">{{ section.score }}</span>
+                        {% endif %}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-9">
+            {% for section in plan.sections %}
+            <div class="card mb-4" id="section-{{ section.section_id }}">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="badge bg-secondary me-2">{{ section.section_order }}</span>
+                        {{ section.name }}
+                        {% if section.is_complete %}
+                        <span class="badge bg-success ms-2"><i class="bi bi-check"></i> Complete</span>
+                        {% endif %}
+                    </div>
+                    <span class="badge bg-info">Score: {{ section.score }}/100</span>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-3">{{ section.description }}</p>
+                    
+                    <form action="{{ url_for('save_businessplan_section', section_id=section.section_id) }}" method="post">
+                        <div class="mb-3">
+                            <textarea name="content" class="form-control bg-dark text-light" rows="6" 
+                                      placeholder="Write your {{ section.name|lower }} here...">{{ section.content or '' }}</textarea>
+                        </div>
+                        
+                        {% if section.feedback %}
+                        <div class="alert alert-info mb-3">
+                            <i class="bi bi-chat-left-text"></i> <strong>Mentor Feedback:</strong> {{ section.feedback }}
+                        </div>
+                        {% endif %}
+                        
+                        <button type="submit" class="btn btn-game btn-game-gold btn-sm">
+                            <i class="bi bi-save"></i> Save Section
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

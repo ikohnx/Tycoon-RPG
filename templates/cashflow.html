@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}Cash Flow HQ - Business Tycoon RPG{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="gold-text mb-0">
+                        <i class="bi bi-cash-stack"></i> Cash Flow HQ
+                    </h2>
+                    <p class="text-muted mb-0">Master the timing of money in and out</p>
+                </div>
+                <a href="{{ url_for('hub') }}" class="btn btn-outline-light">
+                    <i class="bi bi-arrow-left"></i> Back to Hub
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+        {% for message in messages %}
+        <div>{{ message }}</div>
+        {% endfor %}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-puzzle"></i> Cash Flow Challenges
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Practice essential cash management skills:</p>
+                    
+                    <div class="list-group">
+                        {% for challenge in challenges %}
+                        <a href="{{ url_for('cashflow_challenge', challenge_id=challenge.challenge_id) }}" 
+                           class="list-group-item list-group-item-action bg-dark text-light d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">{{ challenge.title }}</h6>
+                                <small class="text-muted">{{ challenge.description }}</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-info mb-1">{{ challenge.challenge_type|replace('_', ' ')|title }}</span>
+                                <div>
+                                    <span class="badge bg-success">+{{ challenge.exp_reward }} EXP</span>
+                                </div>
+                            </div>
+                        </a>
+                        {% else %}
+                        <div class="text-center text-muted py-3">
+                            <i class="bi bi-lock"></i> No challenges available yet
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            {% if forecast %}
+            <div class="card mb-4">
+                <div class="card-header bg-success bg-opacity-25">
+                    <i class="bi bi-graph-up"></i> {{ forecast.forecast_name }}
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-dark">
+                            <thead>
+                                <tr>
+                                    <th>Week</th>
+                                    <th class="text-end">Beginning</th>
+                                    <th class="text-end">+ Inflows</th>
+                                    <th class="text-end">- Outflows</th>
+                                    <th class="text-end">Ending</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for period in forecast.periods %}
+                                <tr class="{% if period.ending_cash < 0 %}table-danger{% elif period.ending_cash < 5000 %}table-warning{% endif %}">
+                                    <td>Week {{ period.week_number }}</td>
+                                    <td class="text-end">${{ period.beginning_cash|default(0)|int|abs }},{{ '%02d'|format(((period.beginning_cash|default(0)|abs * 100)|int) % 100) }}</td>
+                                    <td class="text-end text-success">+${{ period.projected_inflows|default(0)|int }}</td>
+                                    <td class="text-end text-danger">-${{ period.projected_outflows|default(0)|int }}</td>
+                                    <td class="text-end fw-bold">${{ period.ending_cash|default(0)|int }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header bg-info bg-opacity-25">
+                    <i class="bi bi-lightbulb"></i> Cash Flow Basics
+                </div>
+                <div class="card-body small">
+                    <div class="mb-3">
+                        <strong class="text-warning">Cash vs Profit</strong>
+                        <p class="text-muted mb-0">Profit shows on paper, but cash pays the bills. Profitable businesses can still fail if they run out of cash.</p>
+                    </div>
+                    <div class="mb-3">
+                        <strong class="text-success">The 13-Week Forecast</strong>
+                        <p class="text-muted mb-0">A rolling forecast that shows exactly when cash will be tight, giving you time to act.</p>
+                    </div>
+                    <div class="mb-3">
+                        <strong class="text-info">Receivables Timing</strong>
+                        <p class="text-muted mb-0">When customers pay matters as much as how much they pay. Faster collection = better cash flow.</p>
+                    </div>
+                    <div>
+                        <strong class="text-danger">Payables Strategy</strong>
+                        <p class="text-muted mb-0">Pay essential bills first. Use payment terms wisely, but never damage key relationships.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-calculator"></i> Quick Formulas
+                </div>
+                <div class="card-body">
+                    <div class="mb-2 p-2 bg-dark rounded">
+                        <small class="text-muted">Ending Cash:</small>
+                        <div><code>Beginning + Inflows - Outflows</code></div>
+                    </div>
+                    <div class="mb-2 p-2 bg-dark rounded">
+                        <small class="text-muted">Days Sales Outstanding:</small>
+                        <div><code>(AR / Revenue) x 365</code></div>
+                    </div>
+                    <div class="p-2 bg-dark rounded">
+                        <small class="text-muted">Cash Runway:</small>
+                        <div><code>Cash / Monthly Burn Rate</code></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

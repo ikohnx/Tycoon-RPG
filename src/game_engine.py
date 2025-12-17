@@ -3482,3 +3482,709 @@ def get_project_templates_list() -> list:
         }
         for i, t in enumerate(templates)
     ]
+
+
+# ============================================================================
+# CASH FLOW FORECASTING SYSTEM
+# ============================================================================
+
+def get_cash_flow_challenges(player_level: int = 1) -> list:
+    """Get cash flow challenges available for the player."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT challenge_id, title, description, challenge_type, difficulty, exp_reward, hint_text
+        FROM cash_flow_challenges
+        WHERE difficulty <= %s AND is_active = TRUE
+        ORDER BY difficulty
+    """, (max(3, player_level),))
+    
+    challenges = [dict(row) for row in cur.fetchall()]
+    cur.close()
+    conn.close()
+    return challenges
+
+
+def get_cash_flow_challenge(challenge_id: int) -> dict:
+    """Get a specific cash flow challenge with full data."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT challenge_id, title, description, challenge_type, difficulty,
+               scenario_data, correct_answer, exp_reward, hint_text
+        FROM cash_flow_challenges
+        WHERE challenge_id = %s AND is_active = TRUE
+    """, (challenge_id,))
+    
+    result = cur.fetchone()
+    cur.close()
+    conn.close()
+    
+    if result:
+        import json
+        challenge = dict(result)
+        challenge['scenario_data'] = json.loads(challenge['scenario_data']) if challenge['scenario_data'] else {}
+        challenge['correct_answer'] = json.loads(challenge['correct_answer']) if challenge['correct_answer'] else {}
+        return challenge
+    return None
+
+
+def submit_cash_flow_challenge(player_id: int, challenge_id: int, answer: dict) -> dict:
+    """Submit an answer for a cash flow challenge."""
+    challenge = get_cash_flow_challenge(challenge_id)
+    if not challenge:
+        return {'success': False, 'error': 'Challenge not found', 'exp_earned': 0}
+    
+    correct = challenge['correct_answer']
+    is_correct = False
+    feedback = ''
+    
+    if challenge['challenge_type'] == 'timing':
+        is_correct = answer.get('choice') == correct.get('best')
+        feedback = correct.get('reason', '') if is_correct else 'Consider the weekly cash balance under each option.'
+    
+    elif challenge['challenge_type'] == 'planning':
+        user_weeks = answer.get('weeks', 0)
+        valid_range = correct.get('range', [8, 8])
+        is_correct = valid_range[0] <= user_weeks <= valid_range[1]
+        feedback = correct.get('reason', '') if is_correct else f'Recommended range is {valid_range[0]}-{valid_range[1]} weeks.'
+    
+    elif challenge['challenge_type'] == 'forecast':
+        user_week = answer.get('credit_needed_week', 0)
+        correct_week = correct.get('credit_needed_week', 0)
+        is_correct = user_week == correct_week
+        feedback = f'The cash dips below minimum in week {correct_week}.' if not is_correct else 'Excellent forecasting!'
+    
+    elif challenge['challenge_type'] == 'prioritization':
+        is_correct = answer.get('priority', [])[:3] == correct.get('priority_order', [])[:3]
+        feedback = correct.get('reasoning', '')
+    
+    elif challenge['challenge_type'] == 'seasonal':
+        user_savings = answer.get('savings_needed', 0)
+        correct_savings = correct.get('savings_needed', 0)
+        is_correct = abs(user_savings - correct_savings) <= 2000
+        feedback = f'You need about ${correct_savings:,} to cover the slow months.'
+    
+    exp_earned = challenge['exp_reward'] if is_correct else int(challenge['exp_reward'] * 0.25)
+    
+    return {
+        'success': True,
+        'is_correct': is_correct,
+        'exp_earned': exp_earned,
+        'correct_answer': correct,
+        'feedback': feedback or ('Correct! Great cash flow thinking!' if is_correct else 'Not quite. Review the hint.')
+    }
+
+
+def create_cash_flow_forecast(player_id: int, forecast_name: str, starting_cash: float) -> dict:
+    """Create a new 13-week cash flow forecast for a player."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT current_month FROM player_profiles WHERE player_id = %s", (player_id,))
+    result = cur.fetchone()
+    start_week = (result['current_month'] - 1) * 4 + 1 if result else 1
+    
+    cur.execute("""
+        INSERT INTO cash_flow_forecasts (player_id, forecast_name, start_week)
+        VALUES (%s, %s, %s)
+        RETURNING forecast_id
+    """, (player_id, forecast_name, start_week))
+    
+    forecast_id = cur.fetchone()['forecast_id']
+    
+    current_balance = starting_cash
+    for week in range(1, 14):
+        cur.execute("""
+            INSERT INTO cash_flow_periods (forecast_id, week_number, beginning_cash, ending_cash)
+            VALUES (%s, %s, %s, %s)
+        """, (forecast_id, week, current_balance, current_balance))
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    return {'success': True, 'forecast_id': forecast_id}
+
+
+def get_player_cash_flow_forecast(player_id: int) -> dict:
+    """Get the player's active cash flow forecast with all periods."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT forecast_id, forecast_name, start_week, created_at
+        FROM cash_flow_forecasts
+        WHERE player_id = %s AND is_active = TRUE
+        ORDER BY created_at DESC
+        LIMIT 1
+    """, (player_id,))
+    
+    forecast = cur.fetchone()
+    if not forecast:
+        cur.close()
+        conn.close()
+        return None
+    
+    forecast = dict(forecast)
+    
+    cur.execute("""
+        SELECT period_id, week_number, beginning_cash, projected_inflows, projected_outflows,
+               ending_cash, actual_inflows, actual_outflows, actual_ending, variance, notes
+        FROM cash_flow_periods
+        WHERE forecast_id = %s
+        ORDER BY week_number
+    """, (forecast['forecast_id'],))
+    
+    forecast['periods'] = [dict(row) for row in cur.fetchall()]
+    
+    cur.close()
+    conn.close()
+    return forecast
+
+
+# ============================================================================
+# BUSINESS PLAN WORKSHOP SYSTEM
+# ============================================================================
+
+BUSINESS_PLAN_SECTIONS = [
+    {'type': 'executive_summary', 'name': 'Executive Summary', 'order': 1, 'description': 'A concise overview of your business concept, goals, and key metrics.'},
+    {'type': 'company_description', 'name': 'Company Description', 'order': 2, 'description': 'What your business does, its mission, and what makes it unique.'},
+    {'type': 'market_analysis', 'name': 'Market Analysis', 'order': 3, 'description': 'Your target market, competition, and industry trends.'},
+    {'type': 'products_services', 'name': 'Products & Services', 'order': 4, 'description': 'What you sell, pricing strategy, and competitive advantages.'},
+    {'type': 'marketing_plan', 'name': 'Marketing Plan', 'order': 5, 'description': 'How you will reach customers and build your brand.'},
+    {'type': 'operations_plan', 'name': 'Operations Plan', 'order': 6, 'description': 'Day-to-day operations, suppliers, and key processes.'},
+    {'type': 'financial_projections', 'name': 'Financial Projections', 'order': 7, 'description': 'Revenue forecasts, expense estimates, and break-even analysis.'},
+    {'type': 'funding_request', 'name': 'Funding Request', 'order': 8, 'description': 'How much funding you need and how you will use it.'}
+]
+
+
+def create_business_plan(player_id: int, plan_name: str, business_type: str = None) -> dict:
+    """Create a new business plan for a player."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        INSERT INTO business_plans (player_id, plan_name, business_type)
+        VALUES (%s, %s, %s)
+        RETURNING plan_id
+    """, (player_id, plan_name, business_type))
+    
+    plan_id = cur.fetchone()['plan_id']
+    
+    for section in BUSINESS_PLAN_SECTIONS:
+        cur.execute("""
+            INSERT INTO business_plan_sections (plan_id, section_type, section_order)
+            VALUES (%s, %s, %s)
+        """, (plan_id, section['type'], section['order']))
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    return {'success': True, 'plan_id': plan_id}
+
+
+def get_player_business_plans(player_id: int) -> list:
+    """Get all business plans for a player."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT plan_id, plan_name, business_type, overall_score, status, created_at, updated_at
+        FROM business_plans
+        WHERE player_id = %s
+        ORDER BY updated_at DESC
+    """, (player_id,))
+    
+    plans = [dict(row) for row in cur.fetchall()]
+    cur.close()
+    conn.close()
+    return plans
+
+
+def get_business_plan(plan_id: int) -> dict:
+    """Get a specific business plan with all sections."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT plan_id, player_id, plan_name, business_type, target_market,
+               overall_score, mentor_feedback, status, created_at
+        FROM business_plans
+        WHERE plan_id = %s
+    """, (plan_id,))
+    
+    plan = cur.fetchone()
+    if not plan:
+        cur.close()
+        conn.close()
+        return None
+    
+    plan = dict(plan)
+    
+    cur.execute("""
+        SELECT section_id, section_type, section_order, content, score, feedback, is_complete
+        FROM business_plan_sections
+        WHERE plan_id = %s
+        ORDER BY section_order
+    """, (plan_id,))
+    
+    sections = [dict(row) for row in cur.fetchall()]
+    
+    for section in sections:
+        section_info = next((s for s in BUSINESS_PLAN_SECTIONS if s['type'] == section['section_type']), None)
+        if section_info:
+            section['name'] = section_info['name']
+            section['description'] = section_info['description']
+    
+    plan['sections'] = sections
+    plan['completion_pct'] = sum(1 for s in sections if s['is_complete']) / len(sections) * 100 if sections else 0
+    
+    cur.close()
+    conn.close()
+    return plan
+
+
+def update_business_plan_section(section_id: int, content: str) -> dict:
+    """Update a business plan section and generate mentor feedback."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    score = min(100, len(content.split()) * 2)
+    feedback = generate_section_feedback(content, score)
+    is_complete = len(content.strip()) >= 50
+    
+    cur.execute("""
+        UPDATE business_plan_sections
+        SET content = %s, score = %s, feedback = %s, is_complete = %s
+        WHERE section_id = %s
+    """, (content, score, feedback, is_complete, section_id))
+    
+    cur.execute("SELECT plan_id FROM business_plan_sections WHERE section_id = %s", (section_id,))
+    plan_id = cur.fetchone()['plan_id']
+    
+    cur.execute("""
+        SELECT AVG(score)::int as avg_score FROM business_plan_sections WHERE plan_id = %s AND is_complete = TRUE
+    """, (plan_id,))
+    avg_score = cur.fetchone()['avg_score'] or 0
+    
+    cur.execute("UPDATE business_plans SET overall_score = %s, updated_at = CURRENT_TIMESTAMP WHERE plan_id = %s", (avg_score, plan_id))
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    return {'success': True, 'score': score, 'feedback': feedback, 'is_complete': is_complete}
+
+
+def generate_section_feedback(content: str, score: int) -> str:
+    """Generate mentor feedback for a business plan section."""
+    word_count = len(content.split())
+    
+    if word_count < 25:
+        return "This section needs more detail. Try to expand on your key points."
+    elif word_count < 50:
+        return "Good start! Consider adding specific numbers, examples, or market data."
+    elif word_count < 100:
+        return "Solid content. Make sure you've addressed all key aspects of this section."
+    elif score >= 80:
+        return "Excellent work! This section is comprehensive and well-thought-out."
+    else:
+        return "Good effort. Consider adding more specific details and actionable insights."
+
+
+# ============================================================================
+# NEGOTIATION SIMULATOR SYSTEM
+# ============================================================================
+
+def get_negotiation_scenarios(player_level: int = 1) -> list:
+    """Get available negotiation scenarios for a player."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT scenario_id, title, description, negotiation_type, difficulty,
+               counterparty_name, exp_reward
+        FROM negotiation_scenarios
+        WHERE difficulty <= %s AND is_active = TRUE
+        ORDER BY difficulty
+    """, (max(3, player_level),))
+    
+    scenarios = [dict(row) for row in cur.fetchall()]
+    cur.close()
+    conn.close()
+    return scenarios
+
+
+def get_negotiation_scenario(scenario_id: int) -> dict:
+    """Get a specific negotiation scenario with full data."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT scenario_id, title, description, negotiation_type, difficulty,
+               counterparty_name, counterparty_style, your_batna, their_batna,
+               issues, opening_position, optimal_outcome, exp_reward
+        FROM negotiation_scenarios
+        WHERE scenario_id = %s AND is_active = TRUE
+    """, (scenario_id,))
+    
+    result = cur.fetchone()
+    cur.close()
+    conn.close()
+    
+    if result:
+        import json
+        scenario = dict(result)
+        for field in ['your_batna', 'their_batna', 'issues', 'opening_position', 'optimal_outcome']:
+            scenario[field] = json.loads(scenario[field]) if scenario[field] else {}
+        return scenario
+    return None
+
+
+def start_negotiation(player_id: int, scenario_id: int) -> dict:
+    """Start a new negotiation session for a player."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    import json
+    
+    cur.execute("""
+        INSERT INTO player_negotiations (player_id, scenario_id, player_offers, counterparty_offers)
+        VALUES (%s, %s, %s, %s)
+        RETURNING negotiation_id
+    """, (player_id, scenario_id, json.dumps([]), json.dumps([])))
+    
+    negotiation_id = cur.fetchone()['negotiation_id']
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    return {'success': True, 'negotiation_id': negotiation_id}
+
+
+def submit_negotiation_offer(negotiation_id: int, offer: dict) -> dict:
+    """Submit a negotiation offer and get counterparty response."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    import json
+    
+    cur.execute("""
+        SELECT n.*, s.issues, s.optimal_outcome, s.counterparty_style, s.exp_reward
+        FROM player_negotiations n
+        JOIN negotiation_scenarios s ON n.scenario_id = s.scenario_id
+        WHERE n.negotiation_id = %s
+    """, (negotiation_id,))
+    
+    result = cur.fetchone()
+    if not result:
+        cur.close()
+        conn.close()
+        return {'success': False, 'error': 'Negotiation not found'}
+    
+    neg = dict(result)
+    issues = json.loads(neg['issues']) if neg['issues'] else []
+    optimal = json.loads(neg['optimal_outcome']) if neg['optimal_outcome'] else {}
+    player_offers = json.loads(neg['player_offers']) if neg['player_offers'] else []
+    counterparty_offers = json.loads(neg['counterparty_offers']) if neg['counterparty_offers'] else []
+    
+    player_offers.append(offer)
+    
+    counter_offer = {}
+    for issue in issues:
+        issue_name = issue['name']
+        player_value = offer.get(issue_name, issue['their_ideal'])
+        their_ideal = issue['their_ideal']
+        your_ideal = issue['your_ideal']
+        
+        movement = (player_value - their_ideal) * 0.3
+        counter_offer[issue_name] = round(their_ideal + movement, 2)
+    
+    counterparty_offers.append(counter_offer)
+    new_round = neg['current_round'] + 1
+    
+    deal_reached = new_round >= 4
+    
+    if deal_reached:
+        final_deal = {}
+        for issue in issues:
+            issue_name = issue['name']
+            final_deal[issue_name] = (offer.get(issue_name, 0) + counter_offer.get(issue_name, 0)) / 2
+        
+        deal_value = calculate_deal_value(final_deal, optimal, issues)
+        exp_earned = int(neg['exp_reward'] * (deal_value / 100))
+        
+        cur.execute("""
+            UPDATE player_negotiations
+            SET player_offers = %s, counterparty_offers = %s, current_round = %s,
+                status = 'completed', final_deal = %s, deal_value = %s, exp_earned = %s,
+                completed_at = CURRENT_TIMESTAMP
+            WHERE negotiation_id = %s
+        """, (json.dumps(player_offers), json.dumps(counterparty_offers), new_round,
+              json.dumps(final_deal), deal_value, exp_earned, negotiation_id))
+        
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        return {
+            'success': True,
+            'deal_reached': True,
+            'final_deal': final_deal,
+            'deal_value': deal_value,
+            'exp_earned': exp_earned,
+            'message': f'Deal reached! You scored {deal_value}% of optimal value.'
+        }
+    
+    cur.execute("""
+        UPDATE player_negotiations
+        SET player_offers = %s, counterparty_offers = %s, current_round = %s
+        WHERE negotiation_id = %s
+    """, (json.dumps(player_offers), json.dumps(counterparty_offers), new_round, negotiation_id))
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    return {
+        'success': True,
+        'deal_reached': False,
+        'counter_offer': counter_offer,
+        'current_round': new_round,
+        'message': f'Round {new_round}: Counterparty made a counter-offer.'
+    }
+
+
+def calculate_deal_value(final_deal: dict, optimal: dict, issues: list) -> float:
+    """Calculate how close the deal is to the optimal outcome as a percentage."""
+    if not issues:
+        return 50.0
+    
+    total_score = 0
+    total_weight = 0
+    
+    for issue in issues:
+        issue_name = issue['name']
+        importance = issue.get('importance_you', 5)
+        your_ideal = issue.get('your_ideal', 0)
+        their_ideal = issue.get('their_ideal', 0)
+        final_value = final_deal.get(issue_name, their_ideal)
+        
+        if their_ideal != your_ideal:
+            score = 100 * (1 - abs(final_value - your_ideal) / abs(their_ideal - your_ideal))
+        else:
+            score = 100
+        
+        total_score += max(0, min(100, score)) * importance
+        total_weight += importance
+    
+    return round(total_score / total_weight, 1) if total_weight > 0 else 50.0
+
+
+# ============================================================================
+# RISK MANAGEMENT DASHBOARD SYSTEM
+# ============================================================================
+
+def get_risk_categories() -> list:
+    """Get all risk categories."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT category_id, category_name, description, icon FROM risk_categories ORDER BY category_id")
+    categories = [dict(row) for row in cur.fetchall()]
+    
+    cur.close()
+    conn.close()
+    return categories
+
+
+def get_player_risks(player_id: int) -> list:
+    """Get all risks identified by a player."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT r.risk_id, r.risk_name, r.description, r.probability, r.impact, r.risk_score,
+               r.mitigation_strategy, r.status, c.category_name, c.icon
+        FROM player_risks r
+        JOIN risk_categories c ON r.category_id = c.category_id
+        WHERE r.player_id = %s
+        ORDER BY r.risk_score DESC
+    """, (player_id,))
+    
+    risks = [dict(row) for row in cur.fetchall()]
+    cur.close()
+    conn.close()
+    return risks
+
+
+def add_player_risk(player_id: int, category_id: int, risk_name: str, description: str,
+                   probability: int, impact: int, mitigation: str = None) -> dict:
+    """Add a new risk to a player's risk register."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        INSERT INTO player_risks (player_id, category_id, risk_name, description, probability, impact, mitigation_strategy)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        RETURNING risk_id, risk_score
+    """, (player_id, category_id, risk_name, description, probability, impact, mitigation))
+    
+    result = cur.fetchone()
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    return {'success': True, 'risk_id': result['risk_id'], 'risk_score': result['risk_score']}
+
+
+def update_risk_mitigation(risk_id: int, mitigation: str) -> dict:
+    """Update the mitigation strategy for a risk."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        UPDATE player_risks SET mitigation_strategy = %s, status = 'mitigated'
+        WHERE risk_id = %s
+    """, (mitigation, risk_id))
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    return {'success': True}
+
+
+# ============================================================================
+# SUPPLY CHAIN SIMULATOR SYSTEM  
+# ============================================================================
+
+def initialize_player_supply_chain(player_id: int) -> bool:
+    """Initialize supply chain with default products and suppliers."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM supply_chain_products WHERE player_id = %s", (player_id,))
+    if cur.fetchone()['count'] > 0:
+        cur.close()
+        conn.close()
+        return False
+    
+    default_products = [
+        ('Fresh Produce', 'PROD-001', 2.50, 8.00, 20, 50, 3, 100, 10),
+        ('Meat & Poultry', 'PROD-002', 8.00, 25.00, 15, 30, 2, 50, 5),
+        ('Dry Goods', 'PROD-003', 1.00, 4.00, 50, 100, 7, 200, 25),
+        ('Beverages', 'PROD-004', 0.75, 3.00, 30, 60, 5, 150, 15),
+        ('Cleaning Supplies', 'PROD-005', 3.00, 0, 10, 25, 7, 50, 5)
+    ]
+    
+    for prod in default_products:
+        cur.execute("""
+            INSERT INTO supply_chain_products 
+            (player_id, product_name, sku, unit_cost, selling_price, reorder_point, reorder_quantity, lead_time_days, current_stock, safety_stock)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (player_id, *prod))
+    
+    default_suppliers = [
+        ('Local Farm Co-op', 90, 70, 2, 100, 'Net 15', 1),
+        ('Regional Distributor', 80, 60, 5, 250, 'Net 30', 1),
+        ('National Wholesaler', 70, 85, 7, 500, 'Net 45', 1),
+        ('Specialty Importer', 75, 40, 14, 1000, 'Net 30', 1)
+    ]
+    
+    for sup in default_suppliers:
+        cur.execute("""
+            INSERT INTO suppliers 
+            (player_id, supplier_name, reliability_score, price_competitiveness, lead_time_days, minimum_order, payment_terms, relationship_level)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, (player_id, *sup))
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    return True
+
+
+def get_player_inventory(player_id: int) -> list:
+    """Get all products in player's inventory."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT product_id, product_name, sku, unit_cost, selling_price, reorder_point,
+               reorder_quantity, lead_time_days, current_stock, safety_stock
+        FROM supply_chain_products
+        WHERE player_id = %s
+        ORDER BY product_name
+    """, (player_id,))
+    
+    products = [dict(row) for row in cur.fetchall()]
+    
+    for prod in products:
+        prod['status'] = 'ok'
+        if prod['current_stock'] <= prod['safety_stock']:
+            prod['status'] = 'critical'
+        elif prod['current_stock'] <= prod['reorder_point']:
+            prod['status'] = 'reorder'
+    
+    cur.close()
+    conn.close()
+    return products
+
+
+def get_player_suppliers(player_id: int) -> list:
+    """Get all suppliers for a player."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT supplier_id, supplier_name, reliability_score, price_competitiveness,
+               lead_time_days, minimum_order, payment_terms, relationship_level
+        FROM suppliers
+        WHERE player_id = %s
+        ORDER BY reliability_score DESC
+    """, (player_id,))
+    
+    suppliers = [dict(row) for row in cur.fetchall()]
+    cur.close()
+    conn.close()
+    return suppliers
+
+
+def create_purchase_order(player_id: int, supplier_id: int, product_id: int, quantity: int) -> dict:
+    """Create a new purchase order."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT unit_cost FROM supply_chain_products WHERE product_id = %s", (product_id,))
+    product = cur.fetchone()
+    if not product:
+        cur.close()
+        conn.close()
+        return {'success': False, 'error': 'Product not found'}
+    
+    cur.execute("SELECT lead_time_days, minimum_order FROM suppliers WHERE supplier_id = %s", (supplier_id,))
+    supplier = cur.fetchone()
+    if not supplier:
+        cur.close()
+        conn.close()
+        return {'success': False, 'error': 'Supplier not found'}
+    
+    total_cost = float(product['unit_cost']) * quantity
+    
+    cur.execute("""
+        INSERT INTO purchase_orders (player_id, supplier_id, product_id, quantity, unit_cost, total_cost, expected_delivery)
+        VALUES (%s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP + INTERVAL '%s days')
+        RETURNING order_id
+    """, (player_id, supplier_id, product_id, quantity, product['unit_cost'], total_cost, supplier['lead_time_days']))
+    
+    order_id = cur.fetchone()['order_id']
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    return {'success': True, 'order_id': order_id, 'total_cost': total_cost}

@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Negotiation Simulator - Business Tycoon RPG{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="gold-text mb-0">
+                        <i class="bi bi-people-fill"></i> Negotiation Simulator
+                    </h2>
+                    <p class="text-muted mb-0">Master the art of deal-making</p>
+                </div>
+                <a href="{{ url_for('hub') }}" class="btn btn-outline-light">
+                    <i class="bi bi-arrow-left"></i> Back to Hub
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+        {% for message in messages %}
+        <div>{{ message }}</div>
+        {% endfor %}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-chat-dots"></i> Available Negotiations
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        {% for scenario in scenarios %}
+                        <div class="col-md-6">
+                            <div class="card bg-dark h-100">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="badge bg-info">{{ scenario.negotiation_type|title }}</span>
+                                        <span class="badge bg-warning text-dark">Difficulty: {{ scenario.difficulty }}</span>
+                                    </div>
+                                    <h5 class="card-title">{{ scenario.title }}</h5>
+                                    <p class="card-text small text-muted">{{ scenario.description }}</p>
+                                    <p class="small mb-3">
+                                        <i class="bi bi-person-fill"></i> {{ scenario.counterparty_name }}
+                                    </p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="text-success">+{{ scenario.exp_reward }} EXP</span>
+                                        <a href="{{ url_for('negotiation_scenario', scenario_id=scenario.scenario_id) }}" 
+                                           class="btn btn-game btn-game-emerald btn-sm">
+                                            <i class="bi bi-play-fill"></i> Start
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="col-12 text-center text-muted py-4">
+                            <i class="bi bi-lock"></i> No scenarios available yet
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header bg-info bg-opacity-25">
+                    <i class="bi bi-book"></i> Negotiation Concepts
+                </div>
+                <div class="card-body small">
+                    <div class="mb-3">
+                        <strong class="text-warning">BATNA</strong>
+                        <p class="text-muted mb-0">Best Alternative To Negotiated Agreement. Know your walkaway point before negotiating.</p>
+                    </div>
+                    <div class="mb-3">
+                        <strong class="text-success">Anchoring</strong>
+                        <p class="text-muted mb-0">The first number on the table influences all subsequent offers.</p>
+                    </div>
+                    <div class="mb-3">
+                        <strong class="text-info">Win-Win</strong>
+                        <p class="text-muted mb-0">Look for creative solutions that expand the pie for both parties.</p>
+                    </div>
+                    <div>
+                        <strong class="text-danger">Concessions</strong>
+                        <p class="text-muted mb-0">Give on things you value less in exchange for things you value more.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-lightning"></i> Quick Tips
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0 small">
+                        <li class="mb-2">Always know your BATNA before starting</li>
+                        <li class="mb-2">Listen more than you talk</li>
+                        <li class="mb-2">Focus on interests, not positions</li>
+                        <li class="mb-2">Be willing to walk away</li>
+                        <li>Aim for relationships, not just deals</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

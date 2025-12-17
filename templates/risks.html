@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+
+{% block title %}Risk Management - Business Tycoon RPG{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="gold-text mb-0">
+                        <i class="bi bi-shield-exclamation"></i> Risk Management Dashboard
+                    </h2>
+                    <p class="text-muted mb-0">Identify, assess, and mitigate business risks</p>
+                </div>
+                <a href="{{ url_for('hub') }}" class="btn btn-outline-light">
+                    <i class="bi bi-arrow-left"></i> Back to Hub
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+        {% for message in messages %}
+        <div>{{ message }}</div>
+        {% endfor %}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-plus-circle"></i> Add New Risk
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('add_risk') }}" method="post">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Risk Category</label>
+                                <select name="category_id" class="form-select bg-dark text-light" required>
+                                    {% for cat in categories %}
+                                    <option value="{{ cat.category_id }}">{{ cat.category_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Risk Name</label>
+                                <input type="text" name="risk_name" class="form-control bg-dark text-light" 
+                                       required placeholder="e.g., Key employee departure">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea name="description" class="form-control bg-dark text-light" rows="2" 
+                                      placeholder="Describe the risk and its potential impact..."></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Probability (1-100)</label>
+                                <input type="number" name="probability" class="form-control bg-dark text-light" 
+                                       min="1" max="100" value="50" required>
+                                <small class="text-muted">How likely is this risk?</small>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Impact (1-100)</label>
+                                <input type="number" name="impact" class="form-control bg-dark text-light" 
+                                       min="1" max="100" value="50" required>
+                                <small class="text-muted">How severe if it happens?</small>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Risk Score</label>
+                                <div class="form-control bg-dark text-warning text-center" id="riskScore">25</div>
+                                <small class="text-muted">Probability x Impact / 100</small>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Mitigation Strategy (Optional)</label>
+                            <textarea name="mitigation" class="form-control bg-dark text-light" rows="2" 
+                                      placeholder="How will you prevent or respond to this risk?"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-game btn-game-crimson">
+                            <i class="bi bi-shield-plus"></i> Add Risk
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            {% if risks %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-clipboard-data"></i> Risk Register
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Risk</th>
+                                    <th>Category</th>
+                                    <th class="text-center">P</th>
+                                    <th class="text-center">I</th>
+                                    <th class="text-center">Score</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for risk in risks %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ risk.risk_name }}</strong>
+                                        {% if risk.description %}
+                                        <br><small class="text-muted">{{ risk.description[:50] }}{% if risk.description|length > 50 %}...{% endif %}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td><i class="{{ risk.icon }}"></i> {{ risk.category_name }}</td>
+                                    <td class="text-center">{{ risk.probability }}</td>
+                                    <td class="text-center">{{ risk.impact }}</td>
+                                    <td class="text-center">
+                                        <span class="badge {% if risk.risk_score >= 50 %}bg-danger{% elif risk.risk_score >= 25 %}bg-warning text-dark{% else %}bg-success{% endif %}">
+                                            {{ risk.risk_score }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if risk.status == 'mitigated' %}
+                                        <span class="badge bg-success">Mitigated</span>
+                                        {% elif risk.status == 'identified' %}
+                                        <span class="badge bg-info">Identified</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">{{ risk.status|title }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-grid-3x3"></i> Risk Matrix
+                </div>
+                <div class="card-body">
+                    <div class="risk-matrix mb-3">
+                        <table class="table table-bordered text-center mb-0" style="font-size: 0.8rem;">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>Low I</th>
+                                    <th>Med I</th>
+                                    <th>High I</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <th>High P</th>
+                                    <td class="bg-warning">Med</td>
+                                    <td class="bg-danger">High</td>
+                                    <td class="bg-danger">Critical</td>
+                                </tr>
+                                <tr>
+                                    <th>Med P</th>
+                                    <td class="bg-success">Low</td>
+                                    <td class="bg-warning">Med</td>
+                                    <td class="bg-danger">High</td>
+                                </tr>
+                                <tr>
+                                    <th>Low P</th>
+                                    <td class="bg-success">Low</td>
+                                    <td class="bg-success">Low</td>
+                                    <td class="bg-warning">Med</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <small class="text-muted">P = Probability, I = Impact</small>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header bg-info bg-opacity-25">
+                    <i class="bi bi-book"></i> Risk Categories
+                </div>
+                <div class="card-body small">
+                    {% for cat in categories %}
+                    <div class="mb-2 d-flex align-items-start">
+                        <i class="{{ cat.icon }} me-2 text-warning"></i>
+                        <div>
+                            <strong>{{ cat.category_name }}</strong>
+                            <p class="text-muted mb-0">{{ cat.description }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const prob = document.querySelector('input[name="probability"]');
+    const impact = document.querySelector('input[name="impact"]');
+    const scoreDisplay = document.getElementById('riskScore');
+    
+    function updateScore() {
+        const score = Math.round((parseInt(prob.value) * parseInt(impact.value)) / 100);
+        scoreDisplay.textContent = score;
+        
+        if (score >= 50) {
+            scoreDisplay.className = 'form-control bg-dark text-danger text-center fw-bold';
+        } else if (score >= 25) {
+            scoreDisplay.className = 'form-control bg-dark text-warning text-center';
+        } else {
+            scoreDisplay.className = 'form-control bg-dark text-success text-center';
+        }
+    }
+    
+    prob.addEventListener('input', updateScore);
+    impact.addEventListener('input', updateScore);
+});
+</script>
+{% endblock %}

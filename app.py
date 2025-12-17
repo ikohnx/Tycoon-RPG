@@ -10,7 +10,8 @@ from src.database import (init_database, seed_scenarios, seed_achievements, seed
                           seed_legal_curriculum, seed_operations_curriculum, seed_hr_curriculum,
                           seed_strategy_curriculum, seed_daily_login_rewards, seed_advisors,
                           seed_equipment, seed_daily_missions, seed_interactive_challenges,
-                          seed_advanced_challenges, seed_scheduling_challenges)
+                          seed_advanced_challenges, seed_scheduling_challenges,
+                          seed_cash_flow_challenges, seed_negotiation_scenarios, seed_risk_categories)
 from src.game_engine import GameEngine
 from src.leveling import get_level_title, get_progress_bar, get_exp_to_next_level
 
@@ -48,6 +49,9 @@ seed_daily_missions()
 seed_interactive_challenges()
 seed_advanced_challenges()
 seed_scheduling_challenges()
+seed_cash_flow_challenges()
+seed_negotiation_scenarios()
+seed_risk_categories()
 
 engine = GameEngine()
 
@@ -1016,6 +1020,340 @@ def submit_scheduling_challenge(challenge_id):
         flash(f"Not quite right. {result['feedback']} (+{result['exp_earned']} EXP for effort)")
     
     return redirect(url_for('projects'))
+
+
+# ============================================================================
+# CASH FLOW FORECASTING ROUTES
+# ============================================================================
+
+@app.route('/cashflow')
+def cashflow():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    from src.game_engine import get_cash_flow_challenges, get_player_cash_flow_forecast
+    
+    challenges = get_cash_flow_challenges(stats.get('overall_level', 1) if isinstance(stats, dict) else 1)
+    forecast = get_player_cash_flow_forecast(player_id)
+    
+    return render_template('cashflow.html',
+                          stats=stats,
+                          challenges=challenges,
+                          forecast=forecast)
+
+
+@app.route('/cashflow/challenge/<int:challenge_id>')
+def cashflow_challenge(challenge_id):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    from src.game_engine import get_cash_flow_challenge
+    challenge = get_cash_flow_challenge(challenge_id)
+    
+    if not challenge:
+        flash('Challenge not found')
+        return redirect(url_for('cashflow'))
+    
+    return render_template('cashflow_challenge.html',
+                          stats=stats,
+                          challenge=challenge)
+
+
+@app.route('/cashflow/challenge/<int:challenge_id>/submit', methods=['POST'])
+def submit_cashflow_challenge(challenge_id):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    from src.game_engine import submit_cash_flow_challenge, get_cash_flow_challenge
+    
+    challenge = get_cash_flow_challenge(challenge_id)
+    if not challenge:
+        flash('Challenge not found')
+        return redirect(url_for('cashflow'))
+    
+    answer = {}
+    if challenge['challenge_type'] == 'timing':
+        answer['choice'] = request.form.get('choice', '')
+    elif challenge['challenge_type'] == 'planning':
+        answer['weeks'] = request.form.get('weeks', 0, type=int)
+    elif challenge['challenge_type'] == 'forecast':
+        answer['credit_needed_week'] = request.form.get('credit_needed_week', 0, type=int)
+    elif challenge['challenge_type'] == 'prioritization':
+        priority_str = request.form.get('priority', '')
+        answer['priority'] = [int(x.strip()) for x in priority_str.split(',') if x.strip().isdigit()]
+    elif challenge['challenge_type'] == 'seasonal':
+        answer['savings_needed'] = request.form.get('savings_needed', 0, type=int)
+    
+    result = submit_cash_flow_challenge(player_id, challenge_id, answer)
+    
+    if result['is_correct']:
+        flash(f"Correct! +{result['exp_earned']} EXP earned! {result['feedback']}")
+    else:
+        flash(f"Not quite right. {result['feedback']} (+{result['exp_earned']} EXP for effort)")
+    
+    return redirect(url_for('cashflow'))
+
+
+# ============================================================================
+# BUSINESS PLAN WORKSHOP ROUTES
+# ============================================================================
+
+@app.route('/businessplan')
+def businessplan():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    from src.game_engine import get_player_business_plans, BUSINESS_PLAN_SECTIONS
+    
+    plans = get_player_business_plans(player_id)
+    
+    return render_template('businessplan.html',
+                          stats=stats,
+                          plans=plans,
+                          section_templates=BUSINESS_PLAN_SECTIONS)
+
+
+@app.route('/businessplan/create', methods=['POST'])
+def create_businessplan():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    plan_name = request.form.get('plan_name', 'My Business Plan')
+    business_type = request.form.get('business_type', '')
+    
+    from src.game_engine import create_business_plan
+    result = create_business_plan(player_id, plan_name, business_type)
+    
+    if result.get('success'):
+        flash(f"Created new business plan: {plan_name}")
+        return redirect(url_for('edit_businessplan', plan_id=result['plan_id']))
+    else:
+        flash('Failed to create business plan')
+        return redirect(url_for('businessplan'))
+
+
+@app.route('/businessplan/<int:plan_id>')
+def edit_businessplan(plan_id):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    from src.game_engine import get_business_plan
+    plan = get_business_plan(plan_id)
+    
+    if not plan or plan['player_id'] != player_id:
+        flash('Business plan not found')
+        return redirect(url_for('businessplan'))
+    
+    return render_template('businessplan_edit.html',
+                          stats=stats,
+                          plan=plan)
+
+
+@app.route('/businessplan/section/<int:section_id>/save', methods=['POST'])
+def save_businessplan_section(section_id):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    content = request.form.get('content', '')
+    
+    from src.game_engine import update_business_plan_section
+    result = update_business_plan_section(section_id, content)
+    
+    if result.get('success'):
+        flash(f"Section saved! Score: {result['score']}/100. {result['feedback']}")
+    else:
+        flash('Failed to save section')
+    
+    return redirect(request.referrer or url_for('businessplan'))
+
+
+# ============================================================================
+# NEGOTIATION SIMULATOR ROUTES
+# ============================================================================
+
+@app.route('/negotiation')
+def negotiation():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    from src.game_engine import get_negotiation_scenarios
+    
+    scenarios = get_negotiation_scenarios(stats.get('overall_level', 1) if isinstance(stats, dict) else 1)
+    
+    return render_template('negotiation.html',
+                          stats=stats,
+                          scenarios=scenarios)
+
+
+@app.route('/negotiation/<int:scenario_id>')
+def negotiation_scenario(scenario_id):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    from src.game_engine import get_negotiation_scenario, start_negotiation
+    
+    scenario = get_negotiation_scenario(scenario_id)
+    if not scenario:
+        flash('Scenario not found')
+        return redirect(url_for('negotiation'))
+    
+    result = start_negotiation(player_id, scenario_id)
+    
+    return render_template('negotiation_play.html',
+                          stats=stats,
+                          scenario=scenario,
+                          negotiation_id=result.get('negotiation_id'))
+
+
+@app.route('/negotiation/offer/<int:negotiation_id>', methods=['POST'])
+def submit_negotiation_offer(negotiation_id):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    from src.game_engine import submit_negotiation_offer as submit_offer
+    
+    offer = {}
+    for key, value in request.form.items():
+        if key.startswith('issue_'):
+            issue_name = key.replace('issue_', '')
+            try:
+                offer[issue_name] = float(value)
+            except ValueError:
+                offer[issue_name] = value
+    
+    result = submit_offer(negotiation_id, offer)
+    
+    if result.get('deal_reached'):
+        flash(f"{result['message']} +{result['exp_earned']} EXP earned!")
+        return redirect(url_for('negotiation'))
+    else:
+        flash(result.get('message', 'Offer submitted'))
+        return redirect(request.referrer or url_for('negotiation'))
+
+
+# ============================================================================
+# RISK MANAGEMENT ROUTES
+# ============================================================================
+
+@app.route('/risks')
+def risks():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    from src.game_engine import get_risk_categories, get_player_risks
+    
+    categories = get_risk_categories()
+    player_risks = get_player_risks(player_id)
+    
+    return render_template('risks.html',
+                          stats=stats,
+                          categories=categories,
+                          risks=player_risks)
+
+
+@app.route('/risks/add', methods=['POST'])
+def add_risk():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    from src.game_engine import add_player_risk
+    
+    category_id = request.form.get('category_id', type=int)
+    risk_name = request.form.get('risk_name', '')
+    description = request.form.get('description', '')
+    probability = request.form.get('probability', 50, type=int)
+    impact = request.form.get('impact', 50, type=int)
+    mitigation = request.form.get('mitigation', '')
+    
+    result = add_player_risk(player_id, category_id, risk_name, description, probability, impact, mitigation)
+    
+    if result.get('success'):
+        flash(f"Risk added! Risk Score: {result['risk_score']}")
+    else:
+        flash('Failed to add risk')
+    
+    return redirect(url_for('risks'))
+
+
+# ============================================================================
+# SUPPLY CHAIN ROUTES
+# ============================================================================
+
+@app.route('/supplychain')
+def supplychain():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    from src.game_engine import initialize_player_supply_chain, get_player_inventory, get_player_suppliers
+    
+    initialize_player_supply_chain(player_id)
+    
+    inventory = get_player_inventory(player_id)
+    suppliers = get_player_suppliers(player_id)
+    
+    return render_template('supplychain.html',
+                          stats=stats,
+                          inventory=inventory,
+                          suppliers=suppliers)
+
+
+@app.route('/supplychain/order', methods=['POST'])
+def create_order():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    from src.game_engine import create_purchase_order
+    
+    supplier_id = request.form.get('supplier_id', type=int)
+    product_id = request.form.get('product_id', type=int)
+    quantity = request.form.get('quantity', type=int)
+    
+    result = create_purchase_order(player_id, supplier_id, product_id, quantity)
+    
+    if result.get('success'):
+        flash(f"Purchase order created! Total: ${result['total_cost']:.2f}")
+    else:
+        flash(result.get('error', 'Failed to create order'))
+    
+    return redirect(url_for('supplychain'))
 
 
 if __name__ == '__main__':

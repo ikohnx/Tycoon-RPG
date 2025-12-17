@@ -816,6 +816,201 @@ def init_database():
         );
     """)
     
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS cash_flow_forecasts (
+            forecast_id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            forecast_name VARCHAR(200) NOT NULL,
+            start_week INTEGER NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            is_active BOOLEAN DEFAULT TRUE
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS cash_flow_periods (
+            period_id SERIAL PRIMARY KEY,
+            forecast_id INTEGER REFERENCES cash_flow_forecasts(forecast_id) ON DELETE CASCADE,
+            week_number INTEGER NOT NULL,
+            beginning_cash DECIMAL(15, 2) DEFAULT 0,
+            projected_inflows DECIMAL(15, 2) DEFAULT 0,
+            projected_outflows DECIMAL(15, 2) DEFAULT 0,
+            ending_cash DECIMAL(15, 2) DEFAULT 0,
+            actual_inflows DECIMAL(15, 2),
+            actual_outflows DECIMAL(15, 2),
+            actual_ending DECIMAL(15, 2),
+            variance DECIMAL(15, 2),
+            notes TEXT,
+            UNIQUE(forecast_id, week_number)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS cash_flow_line_items (
+            item_id SERIAL PRIMARY KEY,
+            period_id INTEGER REFERENCES cash_flow_periods(period_id) ON DELETE CASCADE,
+            item_type VARCHAR(20) NOT NULL,
+            category VARCHAR(100) NOT NULL,
+            description VARCHAR(255),
+            projected_amount DECIMAL(15, 2) DEFAULT 0,
+            actual_amount DECIMAL(15, 2),
+            is_recurring BOOLEAN DEFAULT FALSE,
+            recurrence_weeks INTEGER
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS cash_flow_challenges (
+            challenge_id SERIAL PRIMARY KEY,
+            title VARCHAR(200) NOT NULL,
+            description TEXT,
+            challenge_type VARCHAR(50) NOT NULL,
+            difficulty INTEGER DEFAULT 1,
+            scenario_data JSONB,
+            correct_answer JSONB,
+            exp_reward INTEGER DEFAULT 50,
+            hint_text TEXT,
+            is_active BOOLEAN DEFAULT TRUE
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS business_plans (
+            plan_id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            plan_name VARCHAR(200) NOT NULL,
+            business_type VARCHAR(100),
+            target_market VARCHAR(200),
+            overall_score INTEGER DEFAULT 0,
+            mentor_feedback TEXT,
+            status VARCHAR(50) DEFAULT 'draft',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS business_plan_sections (
+            section_id SERIAL PRIMARY KEY,
+            plan_id INTEGER REFERENCES business_plans(plan_id) ON DELETE CASCADE,
+            section_type VARCHAR(50) NOT NULL,
+            section_order INTEGER NOT NULL,
+            content TEXT,
+            score INTEGER DEFAULT 0,
+            feedback TEXT,
+            is_complete BOOLEAN DEFAULT FALSE,
+            UNIQUE(plan_id, section_type)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS negotiation_scenarios (
+            scenario_id SERIAL PRIMARY KEY,
+            title VARCHAR(200) NOT NULL,
+            description TEXT,
+            negotiation_type VARCHAR(50) NOT NULL,
+            difficulty INTEGER DEFAULT 1,
+            counterparty_name VARCHAR(100),
+            counterparty_style VARCHAR(50),
+            your_batna JSONB,
+            their_batna JSONB,
+            issues JSONB,
+            opening_position JSONB,
+            optimal_outcome JSONB,
+            exp_reward INTEGER DEFAULT 100,
+            is_active BOOLEAN DEFAULT TRUE
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_negotiations (
+            negotiation_id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            scenario_id INTEGER REFERENCES negotiation_scenarios(scenario_id),
+            current_round INTEGER DEFAULT 1,
+            player_offers JSONB,
+            counterparty_offers JSONB,
+            final_deal JSONB,
+            deal_value DECIMAL(15, 2),
+            relationship_impact INTEGER DEFAULT 0,
+            status VARCHAR(50) DEFAULT 'in_progress',
+            exp_earned INTEGER DEFAULT 0,
+            started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            completed_at TIMESTAMP
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS risk_categories (
+            category_id SERIAL PRIMARY KEY,
+            category_name VARCHAR(100) NOT NULL,
+            description TEXT,
+            icon VARCHAR(50)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_risks (
+            risk_id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            category_id INTEGER REFERENCES risk_categories(category_id),
+            risk_name VARCHAR(200) NOT NULL,
+            description TEXT,
+            probability INTEGER DEFAULT 50,
+            impact INTEGER DEFAULT 50,
+            risk_score INTEGER GENERATED ALWAYS AS (probability * impact / 100) STORED,
+            mitigation_strategy TEXT,
+            status VARCHAR(50) DEFAULT 'identified',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS supply_chain_products (
+            product_id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            product_name VARCHAR(200) NOT NULL,
+            sku VARCHAR(50),
+            unit_cost DECIMAL(10, 2) DEFAULT 0,
+            selling_price DECIMAL(10, 2) DEFAULT 0,
+            reorder_point INTEGER DEFAULT 10,
+            reorder_quantity INTEGER DEFAULT 50,
+            lead_time_days INTEGER DEFAULT 7,
+            current_stock INTEGER DEFAULT 0,
+            safety_stock INTEGER DEFAULT 5
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS suppliers (
+            supplier_id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            supplier_name VARCHAR(200) NOT NULL,
+            reliability_score INTEGER DEFAULT 80,
+            price_competitiveness INTEGER DEFAULT 50,
+            lead_time_days INTEGER DEFAULT 7,
+            minimum_order DECIMAL(10, 2) DEFAULT 100,
+            payment_terms VARCHAR(50) DEFAULT 'Net 30',
+            relationship_level INTEGER DEFAULT 1
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS purchase_orders (
+            order_id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            supplier_id INTEGER REFERENCES suppliers(supplier_id),
+            product_id INTEGER REFERENCES supply_chain_products(product_id),
+            quantity INTEGER NOT NULL,
+            unit_cost DECIMAL(10, 2) NOT NULL,
+            total_cost DECIMAL(15, 2) NOT NULL,
+            order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            expected_delivery TIMESTAMP,
+            actual_delivery TIMESTAMP,
+            status VARCHAR(50) DEFAULT 'pending'
+        );
+    """)
+    
     conn.commit()
     cur.close()
     conn.close()
@@ -5617,6 +5812,270 @@ def initialize_player_projects(player_id):
     return True
 
 
+def seed_cash_flow_challenges():
+    """Seed cash flow forecasting challenges."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM cash_flow_challenges")
+    if cur.fetchone()['count'] > 0:
+        print("Cash flow challenges already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    import json
+    
+    challenges = [
+        {
+            'title': 'Receivables Timing',
+            'description': 'Your catering business just landed a $10,000 contract. The client offers 3 payment options. Which maximizes your cash position?',
+            'challenge_type': 'timing',
+            'difficulty': 1,
+            'scenario_data': json.dumps({
+                'contract_value': 10000,
+                'current_cash': 5000,
+                'weekly_expenses': 3000,
+                'options': [
+                    {'id': 'A', 'name': '50% upfront, 50% on delivery', 'upfront': 5000, 'on_delivery': 5000, 'weeks_to_delivery': 4},
+                    {'id': 'B', 'name': '100% on delivery', 'upfront': 0, 'on_delivery': 10000, 'weeks_to_delivery': 4},
+                    {'id': 'C', 'name': '25% upfront, 75% Net 30', 'upfront': 2500, 'on_delivery': 0, 'net30': 7500, 'weeks_to_delivery': 4}
+                ]
+            }),
+            'correct_answer': json.dumps({'best': 'A', 'reason': 'Prevents cash shortage in week 2-3 while still receiving full payment'}),
+            'exp_reward': 60,
+            'hint_text': 'Calculate your cash balance each week under each scenario to see which avoids going negative.'
+        },
+        {
+            'title': 'Emergency Cash Reserve',
+            'description': 'How many weeks of operating expenses should you keep as emergency cash reserve for a restaurant?',
+            'challenge_type': 'planning',
+            'difficulty': 1,
+            'scenario_data': json.dumps({
+                'weekly_fixed_costs': 5000,
+                'weekly_variable_costs': 3000,
+                'average_weekly_revenue': 12000,
+                'industry': 'Restaurant'
+            }),
+            'correct_answer': json.dumps({'weeks': 8, 'range': [6, 12], 'reason': 'Restaurants need 6-12 weeks reserve due to seasonality and unpredictable events'}),
+            'exp_reward': 50,
+            'hint_text': 'Consider what would happen if revenue dropped suddenly for several weeks.'
+        },
+        {
+            'title': '13-Week Forecast',
+            'description': 'Complete this 13-week cash flow forecast. In which week will you first need a credit line?',
+            'challenge_type': 'forecast',
+            'difficulty': 2,
+            'scenario_data': json.dumps({
+                'starting_cash': 20000,
+                'minimum_cash': 5000,
+                'weeks': [
+                    {'week': 1, 'inflows': 8000, 'outflows': 6000},
+                    {'week': 2, 'inflows': 7500, 'outflows': 6000},
+                    {'week': 3, 'inflows': 6000, 'outflows': 6000},
+                    {'week': 4, 'inflows': 5000, 'outflows': 8000},
+                    {'week': 5, 'inflows': 4500, 'outflows': 6000},
+                    {'week': 6, 'inflows': 4000, 'outflows': 6000},
+                    {'week': 7, 'inflows': 5000, 'outflows': 6000},
+                    {'week': 8, 'inflows': 6000, 'outflows': 9000},
+                    {'week': 9, 'inflows': 7000, 'outflows': 6000},
+                    {'week': 10, 'inflows': 8000, 'outflows': 6000},
+                    {'week': 11, 'inflows': 9000, 'outflows': 6000},
+                    {'week': 12, 'inflows': 10000, 'outflows': 6000},
+                    {'week': 13, 'inflows': 11000, 'outflows': 6000}
+                ]
+            }),
+            'correct_answer': json.dumps({'credit_needed_week': 8, 'lowest_balance': 2500, 'amount_needed': 2500}),
+            'exp_reward': 80,
+            'hint_text': 'Track the running balance each week: Ending = Beginning + Inflows - Outflows'
+        },
+        {
+            'title': 'Payables Strategy',
+            'description': 'You have $8,000 cash and $15,000 in bills due. Prioritize which to pay first.',
+            'challenge_type': 'prioritization',
+            'difficulty': 2,
+            'scenario_data': json.dumps({
+                'available_cash': 8000,
+                'bills': [
+                    {'id': 1, 'vendor': 'Rent', 'amount': 3000, 'due': 'Now', 'penalty': 'Eviction', 'discount': 0},
+                    {'id': 2, 'vendor': 'Food Supplier', 'amount': 4000, 'due': '5 days', 'penalty': 'Stop delivery', 'discount': 0.02},
+                    {'id': 3, 'vendor': 'Utilities', 'amount': 800, 'due': '10 days', 'penalty': 'Shutoff', 'discount': 0},
+                    {'id': 4, 'vendor': 'Equipment Lease', 'amount': 2000, 'due': '15 days', 'penalty': 'Late fee $50', 'discount': 0},
+                    {'id': 5, 'vendor': 'Marketing Agency', 'amount': 2500, 'due': '30 days', 'penalty': 'None', 'discount': 0.05},
+                    {'id': 6, 'vendor': 'Linen Service', 'amount': 700, 'due': '7 days', 'penalty': 'Service pause', 'discount': 0}
+                ]
+            }),
+            'correct_answer': json.dumps({'priority_order': [1, 3, 2], 'reasoning': 'Pay essential operational bills first (rent, utilities), then supplies to keep operating'}),
+            'exp_reward': 75,
+            'hint_text': 'Consider which bills, if unpaid, would shut down your business vs just cost you fees.'
+        },
+        {
+            'title': 'Seasonal Cash Planning',
+            'description': 'Your ice cream shop revenue varies seasonally. Plan your cash needs for the slow winter months.',
+            'challenge_type': 'seasonal',
+            'difficulty': 3,
+            'scenario_data': json.dumps({
+                'monthly_revenue': {
+                    'Jan': 8000, 'Feb': 9000, 'Mar': 15000, 'Apr': 22000, 'May': 30000, 'Jun': 40000,
+                    'Jul': 45000, 'Aug': 42000, 'Sep': 28000, 'Oct': 18000, 'Nov': 10000, 'Dec': 12000
+                },
+                'fixed_costs_monthly': 12000,
+                'variable_cost_pct': 0.35,
+                'current_cash': 25000,
+                'start_month': 'September'
+            }),
+            'correct_answer': json.dumps({
+                'months_negative': ['Jan', 'Feb', 'Nov'],
+                'max_shortfall': 6600,
+                'savings_needed': 15000
+            }),
+            'exp_reward': 100,
+            'hint_text': 'Calculate net cash flow each month (Revenue - Fixed Costs - Variable Costs) and track cumulative position.'
+        }
+    ]
+    
+    for ch in challenges:
+        cur.execute("""
+            INSERT INTO cash_flow_challenges 
+            (title, description, challenge_type, difficulty, scenario_data, correct_answer, exp_reward, hint_text)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, (
+            ch['title'], ch['description'], ch['challenge_type'], ch['difficulty'],
+            ch['scenario_data'], ch['correct_answer'], ch['exp_reward'], ch['hint_text']
+        ))
+    
+    conn.commit()
+    print(f"Seeded {len(challenges)} cash flow challenges!")
+    cur.close()
+    conn.close()
+
+
+def seed_negotiation_scenarios():
+    """Seed negotiation simulation scenarios."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM negotiation_scenarios")
+    if cur.fetchone()['count'] > 0:
+        print("Negotiation scenarios already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    import json
+    
+    scenarios = [
+        {
+            'title': 'Vendor Price Negotiation',
+            'description': 'Your main food supplier wants to raise prices 15%. Negotiate a better deal.',
+            'negotiation_type': 'vendor',
+            'difficulty': 1,
+            'counterparty_name': 'Marco, Sales Rep',
+            'counterparty_style': 'collaborative',
+            'your_batna': json.dumps({'alternative': 'Switch to competitor', 'switching_cost': 2000, 'time_to_switch': '4 weeks'}),
+            'their_batna': json.dumps({'lose_account_impact': 'Moderate - you are 5% of their business'}),
+            'issues': json.dumps([
+                {'name': 'price_increase', 'your_ideal': 0, 'their_ideal': 15, 'importance_you': 10, 'importance_them': 8},
+                {'name': 'payment_terms', 'your_ideal': 45, 'their_ideal': 15, 'importance_you': 6, 'importance_them': 9},
+                {'name': 'delivery_frequency', 'your_ideal': 3, 'their_ideal': 1, 'importance_you': 4, 'importance_them': 5}
+            ]),
+            'opening_position': json.dumps({'price_increase': 15, 'payment_terms': 15, 'delivery_frequency': 1}),
+            'optimal_outcome': json.dumps({'price_increase': 5, 'payment_terms': 30, 'delivery_frequency': 2}),
+            'exp_reward': 100
+        },
+        {
+            'title': 'Salary Negotiation',
+            'description': 'Your star chef wants a raise or they will leave. Find a deal that works for both.',
+            'negotiation_type': 'employment',
+            'difficulty': 2,
+            'counterparty_name': 'Chef Sarah',
+            'counterparty_style': 'competitive',
+            'your_batna': json.dumps({'alternative': 'Hire replacement', 'cost': 8000, 'time': '6 weeks', 'quality_drop': 'Significant'}),
+            'their_batna': json.dumps({'other_offer': '$65,000 salary at competitor'}),
+            'issues': json.dumps([
+                {'name': 'base_salary', 'your_ideal': 55000, 'their_ideal': 70000, 'importance_you': 9, 'importance_them': 10},
+                {'name': 'bonus_pct', 'your_ideal': 0, 'their_ideal': 15, 'importance_you': 5, 'importance_them': 7},
+                {'name': 'schedule_flexibility', 'your_ideal': 0, 'their_ideal': 2, 'importance_you': 3, 'importance_them': 8},
+                {'name': 'title', 'your_ideal': 0, 'their_ideal': 1, 'importance_you': 1, 'importance_them': 6}
+            ]),
+            'opening_position': json.dumps({'base_salary': 70000, 'bonus_pct': 15, 'schedule_flexibility': 2, 'title': 1}),
+            'optimal_outcome': json.dumps({'base_salary': 60000, 'bonus_pct': 10, 'schedule_flexibility': 1, 'title': 1}),
+            'exp_reward': 150
+        },
+        {
+            'title': 'Lease Renewal',
+            'description': 'Your restaurant lease is up for renewal. The landlord wants a 20% increase.',
+            'negotiation_type': 'real_estate',
+            'difficulty': 2,
+            'counterparty_name': 'Property Manager Linda',
+            'counterparty_style': 'analytical',
+            'your_batna': json.dumps({'alternative': 'Move locations', 'cost': 50000, 'time': '3 months', 'customer_loss': '30%'}),
+            'their_batna': json.dumps({'vacancy_cost': '$5000/month', 'time_to_relet': '4 months'}),
+            'issues': json.dumps([
+                {'name': 'rent_increase_pct', 'your_ideal': 0, 'their_ideal': 20, 'importance_you': 10, 'importance_them': 9},
+                {'name': 'lease_term_years', 'your_ideal': 2, 'their_ideal': 5, 'importance_you': 7, 'importance_them': 8},
+                {'name': 'improvement_allowance', 'your_ideal': 15000, 'their_ideal': 0, 'importance_you': 6, 'importance_them': 4},
+                {'name': 'signage_rights', 'your_ideal': 1, 'their_ideal': 0, 'importance_you': 5, 'importance_them': 2}
+            ]),
+            'opening_position': json.dumps({'rent_increase_pct': 20, 'lease_term_years': 5, 'improvement_allowance': 0, 'signage_rights': 0}),
+            'optimal_outcome': json.dumps({'rent_increase_pct': 8, 'lease_term_years': 3, 'improvement_allowance': 10000, 'signage_rights': 1}),
+            'exp_reward': 175
+        }
+    ]
+    
+    for sc in scenarios:
+        cur.execute("""
+            INSERT INTO negotiation_scenarios 
+            (title, description, negotiation_type, difficulty, counterparty_name, counterparty_style,
+             your_batna, their_batna, issues, opening_position, optimal_outcome, exp_reward)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (
+            sc['title'], sc['description'], sc['negotiation_type'], sc['difficulty'],
+            sc['counterparty_name'], sc['counterparty_style'], sc['your_batna'], sc['their_batna'],
+            sc['issues'], sc['opening_position'], sc['optimal_outcome'], sc['exp_reward']
+        ))
+    
+    conn.commit()
+    print(f"Seeded {len(scenarios)} negotiation scenarios!")
+    cur.close()
+    conn.close()
+
+
+def seed_risk_categories():
+    """Seed risk categories for the risk management system."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM risk_categories")
+    if cur.fetchone()['count'] > 0:
+        print("Risk categories already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    categories = [
+        ('Operational', 'Risks related to day-to-day operations, equipment, and processes', 'bi-gear'),
+        ('Financial', 'Risks related to cash flow, credit, and market conditions', 'bi-currency-dollar'),
+        ('Legal/Compliance', 'Risks from regulations, contracts, and legal obligations', 'bi-shield-exclamation'),
+        ('Reputational', 'Risks to brand image and customer perception', 'bi-star'),
+        ('Strategic', 'Risks from competition, market changes, and business decisions', 'bi-compass'),
+        ('Human Resources', 'Risks related to staffing, training, and workplace issues', 'bi-people'),
+        ('Technology', 'Risks from IT systems, data security, and digital operations', 'bi-laptop'),
+        ('External/Environmental', 'Risks from natural disasters, supply chain, and external events', 'bi-cloud-lightning')
+    ]
+    
+    for cat in categories:
+        cur.execute("""
+            INSERT INTO risk_categories (category_name, description, icon)
+            VALUES (%s, %s, %s)
+        """, cat)
+    
+    conn.commit()
+    print(f"Seeded {len(categories)} risk categories!")
+    cur.close()
+    conn.close()
+
+
 if __name__ == "__main__":
     init_database()
     seed_scenarios()
@@ -5646,3 +6105,6 @@ if __name__ == "__main__":
     seed_equipment()
     seed_daily_missions()
     seed_scheduling_challenges()
+    seed_cash_flow_challenges()
+    seed_negotiation_scenarios()
+    seed_risk_categories()
