@@ -1,4 +1,5 @@
 import os
+import json
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from dotenv import load_dotenv
@@ -1008,6 +1009,206 @@ def init_database():
             expected_delivery TIMESTAMP,
             actual_delivery TIMESTAMP,
             status VARCHAR(50) DEFAULT 'pending'
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS market_segments (
+            segment_id SERIAL PRIMARY KEY,
+            segment_name VARCHAR(100) NOT NULL,
+            segment_size INTEGER DEFAULT 10000,
+            price_sensitivity INTEGER DEFAULT 50,
+            quality_preference INTEGER DEFAULT 50,
+            brand_loyalty INTEGER DEFAULT 30,
+            growth_rate DECIMAL(5, 2) DEFAULT 0.02,
+            description TEXT
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS market_competitors (
+            competitor_id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            competitor_name VARCHAR(100) NOT NULL,
+            market_share DECIMAL(5, 2) DEFAULT 0.10,
+            price_level INTEGER DEFAULT 50,
+            quality_level INTEGER DEFAULT 50,
+            marketing_spend INTEGER DEFAULT 1000,
+            strategy VARCHAR(50) DEFAULT 'balanced',
+            is_active BOOLEAN DEFAULT TRUE
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_market_position (
+            position_id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            segment_id INTEGER REFERENCES market_segments(segment_id),
+            market_share DECIMAL(5, 4) DEFAULT 0.0100,
+            price_point INTEGER DEFAULT 50,
+            quality_rating INTEGER DEFAULT 50,
+            brand_awareness INTEGER DEFAULT 10,
+            customer_satisfaction INTEGER DEFAULT 70,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS market_simulation_rounds (
+            round_id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            round_number INTEGER NOT NULL,
+            price_decision INTEGER,
+            marketing_spend INTEGER,
+            quality_investment INTEGER,
+            revenue DECIMAL(15, 2),
+            profit DECIMAL(15, 2),
+            market_share_change DECIMAL(5, 4),
+            round_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS market_challenges (
+            challenge_id SERIAL PRIMARY KEY,
+            title VARCHAR(200) NOT NULL,
+            description TEXT,
+            challenge_type VARCHAR(50) NOT NULL,
+            difficulty INTEGER DEFAULT 1,
+            scenario_data JSONB DEFAULT '{}',
+            correct_answer JSONB DEFAULT '{}',
+            hint_text TEXT,
+            exp_reward INTEGER DEFAULT 100,
+            discipline VARCHAR(50) DEFAULT 'Marketing'
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS employee_roles (
+            role_id SERIAL PRIMARY KEY,
+            role_name VARCHAR(100) NOT NULL,
+            department VARCHAR(50) NOT NULL,
+            base_salary DECIMAL(10, 2) NOT NULL,
+            skill_requirements JSONB DEFAULT '{}',
+            responsibilities TEXT,
+            career_path TEXT
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_employees (
+            employee_id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            employee_name VARCHAR(100) NOT NULL,
+            role_id INTEGER REFERENCES employee_roles(role_id),
+            hire_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            salary DECIMAL(10, 2) NOT NULL,
+            performance_score INTEGER DEFAULT 70,
+            satisfaction INTEGER DEFAULT 75,
+            skills JSONB DEFAULT '{}',
+            tenure_months INTEGER DEFAULT 0,
+            status VARCHAR(50) DEFAULT 'active'
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS performance_reviews (
+            review_id SERIAL PRIMARY KEY,
+            employee_id INTEGER REFERENCES player_employees(employee_id) ON DELETE CASCADE,
+            review_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            reviewer_notes TEXT,
+            goals_met INTEGER DEFAULT 0,
+            goals_total INTEGER DEFAULT 5,
+            rating INTEGER DEFAULT 3,
+            feedback_given TEXT,
+            development_plan TEXT,
+            salary_adjustment DECIMAL(5, 2) DEFAULT 0,
+            exp_earned INTEGER DEFAULT 0
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS hr_challenges (
+            challenge_id SERIAL PRIMARY KEY,
+            title VARCHAR(200) NOT NULL,
+            description TEXT,
+            challenge_type VARCHAR(50) NOT NULL,
+            difficulty INTEGER DEFAULT 1,
+            scenario_data JSONB DEFAULT '{}',
+            correct_answer JSONB DEFAULT '{}',
+            hint_text TEXT,
+            exp_reward INTEGER DEFAULT 100
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS pitch_templates (
+            template_id SERIAL PRIMARY KEY,
+            template_name VARCHAR(100) NOT NULL,
+            section_name VARCHAR(100) NOT NULL,
+            section_order INTEGER NOT NULL,
+            description TEXT,
+            example_content TEXT,
+            scoring_criteria JSONB DEFAULT '{}'
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_pitch_decks (
+            deck_id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            deck_name VARCHAR(200) NOT NULL,
+            funding_stage VARCHAR(50) DEFAULT 'seed',
+            target_amount DECIMAL(15, 2) DEFAULT 100000,
+            valuation DECIMAL(15, 2) DEFAULT 500000,
+            overall_score INTEGER DEFAULT 0,
+            status VARCHAR(50) DEFAULT 'draft',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS pitch_deck_sections (
+            section_id SERIAL PRIMARY KEY,
+            deck_id INTEGER REFERENCES player_pitch_decks(deck_id) ON DELETE CASCADE,
+            section_name VARCHAR(100) NOT NULL,
+            section_order INTEGER NOT NULL,
+            content TEXT,
+            score INTEGER DEFAULT 0,
+            feedback TEXT,
+            is_complete BOOLEAN DEFAULT FALSE
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS investor_profiles (
+            investor_id SERIAL PRIMARY KEY,
+            investor_name VARCHAR(100) NOT NULL,
+            investor_type VARCHAR(50) NOT NULL,
+            focus_areas JSONB DEFAULT '[]',
+            investment_range_min DECIMAL(15, 2) DEFAULT 25000,
+            investment_range_max DECIMAL(15, 2) DEFAULT 500000,
+            risk_tolerance INTEGER DEFAULT 50,
+            priorities JSONB DEFAULT '{}',
+            personality VARCHAR(50) DEFAULT 'analytical'
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS pitch_sessions (
+            session_id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            deck_id INTEGER REFERENCES player_pitch_decks(deck_id),
+            investor_id INTEGER REFERENCES investor_profiles(investor_id),
+            session_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            questions_asked JSONB DEFAULT '[]',
+            answers_given JSONB DEFAULT '[]',
+            investor_interest INTEGER DEFAULT 50,
+            funding_offered DECIMAL(15, 2),
+            equity_requested DECIMAL(5, 2),
+            outcome VARCHAR(50) DEFAULT 'pending',
+            exp_earned INTEGER DEFAULT 0
         );
     """)
     
@@ -6072,6 +6273,319 @@ def seed_risk_categories():
     
     conn.commit()
     print(f"Seeded {len(categories)} risk categories!")
+    cur.close()
+    conn.close()
+
+
+def seed_market_simulation():
+    """Seed market segments, challenges, and competitor data."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM market_segments")
+    if cur.fetchone()['count'] > 0:
+        print("Market simulation already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    segments = [
+        ('Budget Conscious', 25000, 90, 30, 20, 0.01, 'Price-sensitive customers who prioritize affordability over quality'),
+        ('Value Seekers', 40000, 60, 60, 40, 0.03, 'Customers looking for the best balance of price and quality'),
+        ('Premium Buyers', 15000, 20, 90, 60, 0.02, 'Quality-focused customers willing to pay more for excellence'),
+        ('Brand Loyalists', 10000, 40, 70, 90, 0.01, 'Customers who stick with brands they trust regardless of alternatives'),
+        ('Early Adopters', 5000, 30, 50, 25, 0.05, 'Trend-seekers who try new products and influence others')
+    ]
+    
+    for seg in segments:
+        cur.execute("""
+            INSERT INTO market_segments 
+            (segment_name, segment_size, price_sensitivity, quality_preference, brand_loyalty, growth_rate, description)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, seg)
+    
+    challenges = [
+        {
+            'title': 'Price Elasticity Challenge',
+            'description': 'Your product currently sells at $50 with 1000 units/month. Research shows a 10% price increase would reduce demand by 15%. Calculate the new revenue.',
+            'challenge_type': 'pricing',
+            'difficulty': 1,
+            'scenario_data': json.dumps({'current_price': 50, 'current_units': 1000, 'price_change_pct': 10, 'demand_change_pct': -15}),
+            'correct_answer': json.dumps({'new_revenue': 46750}),
+            'hint_text': 'New Revenue = New Price × New Quantity. New Price = $50 × 1.10. New Quantity = 1000 × 0.85',
+            'exp_reward': 100
+        },
+        {
+            'title': 'Market Share Battle',
+            'description': 'Your competitor launched a 20% off sale. You have 15% market share, they have 25%. If you match their discount, you keep share. If not, you lose 3%. What should you do if your margin is 30%?',
+            'challenge_type': 'competition',
+            'difficulty': 2,
+            'scenario_data': json.dumps({'your_share': 15, 'their_share': 25, 'your_margin': 30, 'their_discount': 20, 'share_loss_if_ignore': 3}),
+            'correct_answer': json.dumps({'decision': 'ignore', 'reason': 'Losing 3% share costs less than 20% margin reduction'}),
+            'hint_text': 'Compare the cost of losing 3% market share vs. giving 20% discount on all sales. Sometimes it\'s better to let competitors have the price-sensitive customers.',
+            'exp_reward': 150
+        },
+        {
+            'title': 'Marketing ROI Calculation',
+            'description': 'You spent $5000 on a marketing campaign. It generated 200 new customers with an average order value of $75 and 40% profit margin. Calculate your ROI.',
+            'challenge_type': 'marketing',
+            'difficulty': 1,
+            'scenario_data': json.dumps({'marketing_spend': 5000, 'new_customers': 200, 'avg_order': 75, 'margin_pct': 40}),
+            'correct_answer': json.dumps({'roi': 20, 'profit': 6000, 'net_gain': 1000}),
+            'hint_text': 'Profit = Customers × Order Value × Margin%. ROI = (Profit - Cost) / Cost × 100',
+            'exp_reward': 100
+        },
+        {
+            'title': 'Segment Targeting Decision',
+            'description': 'You can only afford to target one market segment. Premium Buyers (15K customers, $120 avg purchase, 50% margin) or Value Seekers (40K customers, $50 avg purchase, 25% margin). Assume you can capture 5% of either segment.',
+            'challenge_type': 'segmentation',
+            'difficulty': 2,
+            'scenario_data': json.dumps({
+                'segments': [
+                    {'name': 'Premium Buyers', 'size': 15000, 'avg_purchase': 120, 'margin': 50},
+                    {'name': 'Value Seekers', 'size': 40000, 'avg_purchase': 50, 'margin': 25}
+                ],
+                'capture_rate': 5
+            }),
+            'correct_answer': json.dumps({'best_segment': 'Premium Buyers', 'profit': 45000}),
+            'hint_text': 'Calculate expected profit for each: Size × Capture Rate × Avg Purchase × Margin',
+            'exp_reward': 125
+        },
+        {
+            'title': 'Competitive Positioning',
+            'description': 'Map your position: You have Quality=70, Price=60. Competitor A: Quality=80, Price=90. Competitor B: Quality=50, Price=40. Which gap in the market should you target?',
+            'challenge_type': 'positioning',
+            'difficulty': 3,
+            'scenario_data': json.dumps({
+                'your_position': {'quality': 70, 'price': 60},
+                'competitors': [
+                    {'name': 'A', 'quality': 80, 'price': 90},
+                    {'name': 'B', 'quality': 50, 'price': 40}
+                ]
+            }),
+            'correct_answer': json.dumps({'strategy': 'value_leader', 'reason': 'High quality at moderate price fills gap between premium A and budget B'}),
+            'hint_text': 'Look for gaps in the market where customer needs are unmet. You are positioned between a premium and budget competitor.',
+            'exp_reward': 175
+        }
+    ]
+    
+    for ch in challenges:
+        cur.execute("""
+            INSERT INTO market_challenges 
+            (title, description, challenge_type, difficulty, scenario_data, correct_answer, hint_text, exp_reward)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, (ch['title'], ch['description'], ch['challenge_type'], ch['difficulty'],
+              ch['scenario_data'], ch['correct_answer'], ch['hint_text'], ch['exp_reward']))
+    
+    conn.commit()
+    print(f"Seeded {len(segments)} market segments and {len(challenges)} market challenges!")
+    cur.close()
+    conn.close()
+
+
+def seed_hr_management():
+    """Seed employee roles and HR challenges."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM employee_roles")
+    if cur.fetchone()['count'] > 0:
+        print("HR management already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    roles = [
+        ('Sales Associate', 'Sales', 35000, json.dumps({'communication': 3, 'product_knowledge': 2}), 
+         'Handle customer inquiries, process sales, meet quotas', 'Sales Associate → Senior Sales → Sales Manager'),
+        ('Customer Service Rep', 'Support', 32000, json.dumps({'communication': 4, 'patience': 3, 'problem_solving': 2}),
+         'Resolve customer issues, handle complaints, process returns', 'CSR → Senior CSR → Support Manager'),
+        ('Marketing Coordinator', 'Marketing', 42000, json.dumps({'creativity': 3, 'analytics': 2, 'social_media': 3}),
+         'Execute marketing campaigns, manage social media, track metrics', 'Coordinator → Specialist → Marketing Manager'),
+        ('Operations Manager', 'Operations', 55000, json.dumps({'leadership': 4, 'organization': 4, 'analytics': 3}),
+         'Oversee daily operations, manage staff, optimize processes', 'Ops Manager → Director → VP Operations'),
+        ('Financial Analyst', 'Finance', 60000, json.dumps({'analytics': 5, 'excel': 4, 'attention_to_detail': 4}),
+         'Analyze financial data, create reports, support decision-making', 'Analyst → Senior Analyst → Finance Manager'),
+        ('HR Generalist', 'Human Resources', 48000, json.dumps({'communication': 4, 'empathy': 4, 'organization': 3}),
+         'Handle recruiting, onboarding, employee relations, compliance', 'Generalist → Senior HR → HR Director'),
+        ('Software Developer', 'Technology', 75000, json.dumps({'coding': 5, 'problem_solving': 4, 'teamwork': 3}),
+         'Build and maintain software systems, collaborate with team', 'Developer → Senior Dev → Tech Lead → CTO'),
+        ('Administrative Assistant', 'Administration', 30000, json.dumps({'organization': 4, 'communication': 3, 'multitasking': 4}),
+         'Manage schedules, handle correspondence, support executives', 'Admin → Executive Assistant → Office Manager')
+    ]
+    
+    for role in roles:
+        cur.execute("""
+            INSERT INTO employee_roles 
+            (role_name, department, base_salary, skill_requirements, responsibilities, career_path)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, role)
+    
+    challenges = [
+        {
+            'title': 'The Hiring Decision',
+            'description': 'You need to hire a Sales Associate. Candidate A has 5 years experience but asks for $45K. Candidate B is a recent graduate asking $32K with high potential. Your budget is $38K.',
+            'challenge_type': 'hiring',
+            'difficulty': 1,
+            'scenario_data': json.dumps({
+                'role': 'Sales Associate',
+                'budget': 38000,
+                'candidates': [
+                    {'name': 'Candidate A', 'experience': 5, 'ask': 45000, 'potential': 70},
+                    {'name': 'Candidate B', 'experience': 0, 'ask': 32000, 'potential': 90}
+                ]
+            }),
+            'correct_answer': json.dumps({'choice': 'B', 'reason': 'Within budget with higher long-term potential and trainability'}),
+            'hint_text': 'Consider both immediate fit and long-term potential. Budget constraints matter.',
+            'exp_reward': 100
+        },
+        {
+            'title': 'Performance Review Prep',
+            'description': 'Employee has met 3 of 5 goals (60%), received positive customer feedback, but has attendance issues (late 6 times). What rating would you give: 1-5?',
+            'challenge_type': 'performance',
+            'difficulty': 1,
+            'scenario_data': json.dumps({
+                'goals_met': 3,
+                'goals_total': 5,
+                'customer_feedback': 'positive',
+                'attendance_issues': 6,
+                'peer_reviews': 'average'
+            }),
+            'correct_answer': json.dumps({'rating': 3, 'reason': 'Meets expectations with room for improvement'}),
+            'hint_text': 'Balance the positives (goals met, good feedback) against negatives (attendance).',
+            'exp_reward': 75
+        },
+        {
+            'title': 'Conflict Resolution',
+            'description': 'Two employees are in conflict. Employee A claims B takes credit for shared work. B claims A doesn\'t pull their weight. Both are valuable. How do you handle this?',
+            'challenge_type': 'conflict',
+            'difficulty': 2,
+            'scenario_data': json.dumps({
+                'employee_a': {'tenure': 3, 'performance': 85, 'complaint': 'credit_taking'},
+                'employee_b': {'tenure': 2, 'performance': 80, 'complaint': 'lack_of_effort'}
+            }),
+            'correct_answer': json.dumps({'approach': 'mediate', 'actions': ['Meet separately', 'Meet together', 'Set clear expectations', 'Document']}),
+            'hint_text': 'Avoid taking sides. Focus on understanding both perspectives and finding common ground.',
+            'exp_reward': 125
+        },
+        {
+            'title': 'Retention Challenge',
+            'description': 'Your top performer got an outside offer for 20% more salary. They make $60K. You can offer 10% raise max. What else can you offer to retain them?',
+            'challenge_type': 'retention',
+            'difficulty': 2,
+            'scenario_data': json.dumps({
+                'current_salary': 60000,
+                'outside_offer': 72000,
+                'max_raise_pct': 10,
+                'available_perks': ['flexible_schedule', 'remote_work', 'title_promotion', 'training_budget', 'bonus_plan']
+            }),
+            'correct_answer': json.dumps({'strategy': 'total_compensation', 'offer': {'raise_pct': 10, 'perks': ['flexible_schedule', 'title_promotion', 'bonus_plan']}}),
+            'hint_text': 'Total compensation includes more than salary. Think about flexibility, growth, and recognition.',
+            'exp_reward': 150
+        },
+        {
+            'title': 'Team Building Budget',
+            'description': 'You have $2000 for team building. Team of 10. Options: A) Team dinner ($50/person), B) Escape room ($30/person + transport), C) Volunteer day ($20/person). What maximizes engagement?',
+            'challenge_type': 'culture',
+            'difficulty': 1,
+            'scenario_data': json.dumps({
+                'budget': 2000,
+                'team_size': 10,
+                'options': [
+                    {'name': 'Team Dinner', 'cost_per_person': 50, 'engagement_score': 6},
+                    {'name': 'Escape Room', 'cost_per_person': 45, 'engagement_score': 9},
+                    {'name': 'Volunteer Day', 'cost_per_person': 20, 'engagement_score': 8}
+                ]
+            }),
+            'correct_answer': json.dumps({'choice': 'Escape Room', 'reason': 'Highest engagement within budget, promotes teamwork'}),
+            'hint_text': 'Consider what builds collaboration and team bonds, not just fun.',
+            'exp_reward': 75
+        }
+    ]
+    
+    for ch in challenges:
+        cur.execute("""
+            INSERT INTO hr_challenges 
+            (title, description, challenge_type, difficulty, scenario_data, correct_answer, hint_text, exp_reward)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, (ch['title'], ch['description'], ch['challenge_type'], ch['difficulty'],
+              ch['scenario_data'], ch['correct_answer'], ch['hint_text'], ch['exp_reward']))
+    
+    conn.commit()
+    print(f"Seeded {len(roles)} employee roles and {len(challenges)} HR challenges!")
+    cur.close()
+    conn.close()
+
+
+def seed_investor_pitch():
+    """Seed pitch templates and investor profiles."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM pitch_templates")
+    if cur.fetchone()['count'] > 0:
+        print("Investor pitch already seeded.")
+        cur.close()
+        conn.close()
+        return
+    
+    templates = [
+        ('Standard Pitch Deck', 'Title Slide', 1, 'Company name, tagline, your name and title',
+         'Acme Corp - Making the World a Better Place, One Widget at a Time. Jane Doe, CEO & Founder',
+         json.dumps({'has_company_name': 10, 'has_tagline': 10, 'memorable': 10})),
+        ('Standard Pitch Deck', 'Problem', 2, 'The pain point you\'re solving - make it relatable and quantifiable',
+         '70% of small businesses fail within 10 years, often due to poor financial management. Current solutions are expensive and complex.',
+         json.dumps({'clear_problem': 15, 'quantified': 15, 'relatable': 10})),
+        ('Standard Pitch Deck', 'Solution', 3, 'Your product/service and how it solves the problem',
+         'FinanceEasy is an AI-powered CFO for small businesses. Automated bookkeeping, cash flow predictions, and actionable insights for $99/month.',
+         json.dumps({'solves_problem': 15, 'unique_approach': 10, 'clear_value': 15})),
+        ('Standard Pitch Deck', 'Market Opportunity', 4, 'TAM, SAM, SOM - the size of your opportunity',
+         'TAM: $50B global SMB finance market. SAM: $8B US market. SOM: $400M (5% of US market in 5 years).',
+         json.dumps({'tam_defined': 10, 'sam_defined': 10, 'som_realistic': 15, 'growing_market': 5})),
+        ('Standard Pitch Deck', 'Business Model', 5, 'How you make money',
+         'SaaS subscription: $99/month Basic, $249/month Pro, $599/month Enterprise. 85% gross margin. Upsell consulting services.',
+         json.dumps({'clear_revenue': 15, 'pricing_justified': 10, 'margins_shown': 10, 'scalable': 5})),
+        ('Standard Pitch Deck', 'Traction', 6, 'Proof that it\'s working - metrics, customers, revenue',
+         '500 paying customers, $45K MRR, 15% month-over-month growth. Key customers: TechStart Inc, LocalBiz Co.',
+         json.dumps({'revenue_shown': 20, 'growth_rate': 15, 'customer_names': 5})),
+        ('Standard Pitch Deck', 'Team', 7, 'Why you\'re the right team to solve this',
+         'Jane Doe (CEO) - 10 years at Goldman Sachs. John Smith (CTO) - Ex-Google engineer. Advisory board includes CFOs from Fortune 500.',
+         json.dumps({'relevant_experience': 15, 'complete_team': 10, 'advisors': 5})),
+        ('Standard Pitch Deck', 'The Ask', 8, 'How much you need and what you\'ll do with it',
+         'Raising $2M seed round. Use of funds: 50% engineering (hire 3), 30% sales/marketing, 20% operations. 18-month runway to Series A milestones.',
+         json.dumps({'amount_clear': 10, 'use_of_funds': 15, 'milestones': 10, 'runway': 5}))
+    ]
+    
+    for t in templates:
+        cur.execute("""
+            INSERT INTO pitch_templates 
+            (template_name, section_name, section_order, description, example_content, scoring_criteria)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, t)
+    
+    investors = [
+        ('Sarah Chen', 'angel', json.dumps(['SaaS', 'FinTech', 'B2B']), 25000, 150000, 70,
+         json.dumps({'team': 30, 'traction': 25, 'market': 25, 'product': 20}), 'collaborative'),
+        ('Marcus Williams', 'vc_associate', json.dumps(['Enterprise', 'AI', 'Deep Tech']), 500000, 3000000, 40,
+         json.dumps({'market': 35, 'traction': 30, 'team': 20, 'product': 15}), 'analytical'),
+        ('Emily Rodriguez', 'angel_group', json.dumps(['Consumer', 'E-commerce', 'Marketplace']), 50000, 500000, 60,
+         json.dumps({'traction': 35, 'product': 25, 'team': 25, 'market': 15}), 'skeptical'),
+        ('David Kim', 'vc_partner', json.dumps(['HealthTech', 'EdTech', 'Impact']), 1000000, 10000000, 30,
+         json.dumps({'market': 40, 'team': 30, 'traction': 20, 'product': 10}), 'strategic'),
+        ('Lisa Thompson', 'family_office', json.dumps(['Real Estate Tech', 'Sustainability', 'Consumer']), 100000, 2000000, 50,
+         json.dumps({'team': 35, 'product': 25, 'market': 20, 'traction': 20}), 'relationship_focused')
+    ]
+    
+    for inv in investors:
+        cur.execute("""
+            INSERT INTO investor_profiles 
+            (investor_name, investor_type, focus_areas, investment_range_min, investment_range_max, 
+             risk_tolerance, priorities, personality)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, inv)
+    
+    conn.commit()
+    print(f"Seeded {len(templates)} pitch templates and {len(investors)} investor profiles!")
     cur.close()
     conn.close()
 

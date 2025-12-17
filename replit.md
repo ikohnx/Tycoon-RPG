@@ -23,6 +23,9 @@ The game is built as a Flask web application with a responsive, mobile-first UI.
 -   **Negotiation Simulator:** Interactive deal-making scenarios teaching BATNA, anchoring, concessions, and win-win strategies. Covers vendor, employment, and real estate negotiations with multi-round offer/counter-offer dynamics.
 -   **Risk Management Dashboard:** Portfolio-style risk assessment where players identify, score (probability x impact), and mitigate business risks across 8 categories. Visual risk matrix and mitigation tracking.
 -   **Supply Chain Simulator:** Inventory management with reorder points, safety stock, lead times, and supplier relationships. Players manage products, create purchase orders, and learn EOQ concepts.
+-   **Market Simulation:** Price-demand dynamics teaching elasticity, competitive responses, seasonal trends, and promotion ROI. Features 5 challenge types (pricing, competition, marketing ROI, segmentation, positioning) across multiple market segments.
+-   **HR Performance Management:** Complete employee lifecycle from recruitment through retention. Covers hiring decisions, performance reviews, team dynamics, conflict resolution, and succession planning with interactive challenges.
+-   **Investor Pitch Simulator:** Guided pitch deck creation with 8 sections (Problem, Solution, Market, Financials, Team, Ask, etc.) and mentor scoring. Practice presentations with different investor profiles (angels, VCs, strategic) who ask targeted questions.
 
 ## External Dependencies
 -   **PostgreSQL:** Relational database for all game data persistence.

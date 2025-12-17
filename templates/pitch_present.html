@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Pitching to {{ investor.investor_name }} - Business Tycoon RPG{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="gold-text mb-0">
+                        <i class="bi bi-mic-fill"></i> Pitch Session
+                    </h2>
+                    <p class="text-muted mb-0">Presenting {{ deck.deck_name }} to {{ investor.investor_name }}</p>
+                </div>
+                <a href="{{ url_for('pitch') }}" class="btn btn-outline-light">
+                    <i class="bi bi-arrow-left"></i> Exit Pitch
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+        {% for message in messages %}
+        <div>{{ message }}</div>
+        {% endfor %}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header bg-dark">
+                    <i class="bi bi-chat-dots"></i> Investor Questions
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">The investor has reviewed your pitch deck and has some questions:</p>
+                    
+                    <form action="{{ url_for('submit_pitch', session_id=session_id) }}" method="post">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        {% for question in questions %}
+                        <div class="mb-4 p-3 bg-dark rounded">
+                            <label class="form-label">
+                                <i class="bi bi-question-circle text-warning"></i>
+                                <strong>Q{{ loop.index }}:</strong> {{ question }}
+                            </label>
+                            <textarea name="answer_{{ loop.index0 }}" class="form-control bg-secondary text-light" 
+                                      rows="3" required placeholder="Your answer..."></textarea>
+                        </div>
+                        {% endfor %}
+                        
+                        <button type="submit" class="btn btn-game btn-game-gold btn-lg w-100">
+                            <i class="bi bi-send-fill"></i> Submit Answers & Complete Pitch
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header bg-dark">
+                    <i class="bi bi-person-workspace"></i> {{ investor.investor_name }}
+                </div>
+                <div class="card-body text-center">
+                    <div class="display-1 mb-3">
+                        {% if investor.personality == 'collaborative' %}
+                        <i class="bi bi-emoji-smile text-success"></i>
+                        {% elif investor.personality == 'skeptical' %}
+                        <i class="bi bi-emoji-neutral text-warning"></i>
+                        {% elif investor.personality == 'analytical' %}
+                        <i class="bi bi-bar-chart-line text-info"></i>
+                        {% else %}
+                        <i class="bi bi-person-circle text-secondary"></i>
+                        {% endif %}
+                    </div>
+                    <p class="mb-1"><strong>Type:</strong> {{ investor.investor_type|replace('_', ' ')|title }}</p>
+                    <p class="mb-1"><strong>Style:</strong> {{ investor.personality|title }}</p>
+                    <p class="mb-3">
+                        <strong>Investment Range:</strong><br>
+                        ${{ "{:,.0f}".format(investor.investment_range_min) }} - ${{ "{:,.0f}".format(investor.investment_range_max) }}
+                    </p>
+                    <div class="mb-2">
+                        <strong>Focus Areas:</strong>
+                    </div>
+                    <div>
+                        {% for area in investor.focus_areas %}
+                        <span class="badge bg-secondary">{{ area }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header bg-info bg-opacity-25">
+                    <i class="bi bi-lightbulb"></i> Pitch Tips
+                </div>
+                <div class="card-body small">
+                    <ul class="mb-0">
+                        <li class="mb-2">Be specific with numbers and timelines</li>
+                        <li class="mb-2">Acknowledge risks honestly</li>
+                        <li class="mb-2">Show passion but remain professional</li>
+                        <li class="mb-2">Address the investor's priorities</li>
+                        <li>End with a clear ask</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

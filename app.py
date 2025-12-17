@@ -11,7 +11,8 @@ from src.database import (init_database, seed_scenarios, seed_achievements, seed
                           seed_strategy_curriculum, seed_daily_login_rewards, seed_advisors,
                           seed_equipment, seed_daily_missions, seed_interactive_challenges,
                           seed_advanced_challenges, seed_scheduling_challenges,
-                          seed_cash_flow_challenges, seed_negotiation_scenarios, seed_risk_categories)
+                          seed_cash_flow_challenges, seed_negotiation_scenarios, seed_risk_categories,
+                          seed_market_simulation, seed_hr_management, seed_investor_pitch)
 from src.game_engine import GameEngine
 from src.leveling import get_level_title, get_progress_bar, get_exp_to_next_level
 
@@ -52,6 +53,9 @@ seed_scheduling_challenges()
 seed_cash_flow_challenges()
 seed_negotiation_scenarios()
 seed_risk_categories()
+seed_market_simulation()
+seed_hr_management()
+seed_investor_pitch()
 
 engine = GameEngine()
 
@@ -1354,6 +1358,337 @@ def create_order():
         flash(result.get('error', 'Failed to create order'))
     
     return redirect(url_for('supplychain'))
+
+
+# ============================================================================
+# MARKET SIMULATION ROUTES
+# ============================================================================
+
+@app.route('/market')
+def market():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    from src.game_engine import get_market_segments, get_market_challenges, initialize_player_market, get_player_market_position
+    
+    initialize_player_market(player_id)
+    
+    segments = get_market_segments()
+    challenges = get_market_challenges(stats.get('overall_level', 1) if isinstance(stats, dict) else 1)
+    position = get_player_market_position(player_id)
+    
+    return render_template('market.html',
+                          stats=stats,
+                          segments=segments,
+                          challenges=challenges,
+                          position=position)
+
+
+@app.route('/market/challenge/<int:challenge_id>')
+def market_challenge(challenge_id):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    from src.game_engine import get_market_challenge
+    challenge = get_market_challenge(challenge_id)
+    
+    if not challenge:
+        flash('Challenge not found')
+        return redirect(url_for('market'))
+    
+    return render_template('market_challenge.html',
+                          stats=stats,
+                          challenge=challenge)
+
+
+@app.route('/market/challenge/<int:challenge_id>/submit', methods=['POST'])
+def submit_market_challenge(challenge_id):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    from src.game_engine import submit_market_challenge as submit_challenge, get_market_challenge
+    
+    challenge = get_market_challenge(challenge_id)
+    if not challenge:
+        flash('Challenge not found')
+        return redirect(url_for('market'))
+    
+    answer = {}
+    if challenge['challenge_type'] == 'pricing':
+        answer['new_revenue'] = request.form.get('new_revenue', 0, type=float)
+    elif challenge['challenge_type'] == 'competition':
+        answer['decision'] = request.form.get('decision', '')
+    elif challenge['challenge_type'] == 'marketing':
+        answer['roi'] = request.form.get('roi', 0, type=float)
+    elif challenge['challenge_type'] == 'segmentation':
+        answer['best_segment'] = request.form.get('best_segment', '')
+    elif challenge['challenge_type'] == 'positioning':
+        answer['strategy'] = request.form.get('strategy', '')
+    
+    result = submit_challenge(player_id, challenge_id, answer)
+    
+    if result['is_correct']:
+        flash(f"Correct! +{result['exp_earned']} EXP earned! {result['feedback']}")
+    else:
+        flash(f"Not quite right. {result['feedback']} (+{result['exp_earned']} EXP for effort)")
+    
+    return redirect(url_for('market'))
+
+
+# ============================================================================
+# HR MANAGEMENT ROUTES
+# ============================================================================
+
+@app.route('/hrmanagement')
+def hrmanagement():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    from src.game_engine import get_employee_roles, get_hr_challenges, get_player_employees
+    
+    roles = get_employee_roles()
+    challenges = get_hr_challenges(stats.get('overall_level', 1) if isinstance(stats, dict) else 1)
+    employees = get_player_employees(player_id)
+    
+    return render_template('hrmanagement.html',
+                          stats=stats,
+                          roles=roles,
+                          challenges=challenges,
+                          employees=employees)
+
+
+@app.route('/hrmanagement/challenge/<int:challenge_id>')
+def hr_challenge(challenge_id):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    from src.game_engine import get_hr_challenge
+    challenge = get_hr_challenge(challenge_id)
+    
+    if not challenge:
+        flash('Challenge not found')
+        return redirect(url_for('hrmanagement'))
+    
+    return render_template('hr_challenge.html',
+                          stats=stats,
+                          challenge=challenge)
+
+
+@app.route('/hrmanagement/challenge/<int:challenge_id>/submit', methods=['POST'])
+def submit_hr_challenge(challenge_id):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    from src.game_engine import submit_hr_challenge as submit_challenge, get_hr_challenge
+    
+    challenge = get_hr_challenge(challenge_id)
+    if not challenge:
+        flash('Challenge not found')
+        return redirect(url_for('hrmanagement'))
+    
+    answer = {}
+    if challenge['challenge_type'] == 'hiring':
+        answer['choice'] = request.form.get('choice', '')
+    elif challenge['challenge_type'] == 'performance':
+        answer['rating'] = request.form.get('rating', 0, type=int)
+    elif challenge['challenge_type'] == 'conflict':
+        answer['approach'] = request.form.get('approach', '')
+    elif challenge['challenge_type'] == 'retention':
+        perks_str = request.form.get('perks', '')
+        answer['perks'] = [p.strip() for p in perks_str.split(',') if p.strip()]
+    elif challenge['challenge_type'] == 'culture':
+        answer['choice'] = request.form.get('choice', '')
+    
+    result = submit_challenge(player_id, challenge_id, answer)
+    
+    if result['is_correct']:
+        flash(f"Correct! +{result['exp_earned']} EXP earned! {result['feedback']}")
+    else:
+        flash(f"Not quite right. {result['feedback']} (+{result['exp_earned']} EXP for effort)")
+    
+    return redirect(url_for('hrmanagement'))
+
+
+@app.route('/hrmanagement/hire', methods=['POST'])
+def hire_employee():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    from src.game_engine import hire_employee as do_hire
+    
+    role_id = request.form.get('role_id', type=int)
+    employee_name = request.form.get('employee_name', '')
+    salary = request.form.get('salary', type=float)
+    
+    result = do_hire(player_id, role_id, employee_name, salary)
+    
+    if result.get('success'):
+        flash(f"Hired {employee_name}!")
+    else:
+        flash('Failed to hire employee')
+    
+    return redirect(url_for('hrmanagement'))
+
+
+# ============================================================================
+# INVESTOR PITCH ROUTES
+# ============================================================================
+
+@app.route('/pitch')
+def pitch():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    from src.game_engine import get_player_pitch_decks, get_investor_profiles, PITCH_SECTIONS
+    
+    decks = get_player_pitch_decks(player_id)
+    investors = get_investor_profiles()
+    
+    return render_template('pitch.html',
+                          stats=stats,
+                          decks=decks,
+                          investors=investors,
+                          section_templates=PITCH_SECTIONS)
+
+
+@app.route('/pitch/create', methods=['POST'])
+def create_pitch():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    deck_name = request.form.get('deck_name', 'My Pitch Deck')
+    funding_stage = request.form.get('funding_stage', 'seed')
+    target_amount = request.form.get('target_amount', 100000, type=float)
+    
+    from src.game_engine import create_pitch_deck
+    result = create_pitch_deck(player_id, deck_name, funding_stage, target_amount)
+    
+    if result.get('success'):
+        flash(f"Created new pitch deck: {deck_name}")
+        return redirect(url_for('edit_pitch', deck_id=result['deck_id']))
+    else:
+        flash('Failed to create pitch deck')
+        return redirect(url_for('pitch'))
+
+
+@app.route('/pitch/<int:deck_id>')
+def edit_pitch(deck_id):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    from src.game_engine import get_pitch_deck
+    deck = get_pitch_deck(deck_id)
+    
+    if not deck or deck['player_id'] != player_id:
+        flash('Pitch deck not found')
+        return redirect(url_for('pitch'))
+    
+    return render_template('pitch_edit.html',
+                          stats=stats,
+                          deck=deck)
+
+
+@app.route('/pitch/section/<int:section_id>/save', methods=['POST'])
+def save_pitch_section(section_id):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    content = request.form.get('content', '')
+    
+    from src.game_engine import update_pitch_section
+    result = update_pitch_section(section_id, content)
+    
+    if result.get('success'):
+        flash(f"Section saved! Score: {result['score']}/100. {result['feedback']}")
+    else:
+        flash('Failed to save section')
+    
+    return redirect(request.referrer or url_for('pitch'))
+
+
+@app.route('/pitch/<int:deck_id>/present/<int:investor_id>')
+def present_pitch(deck_id, investor_id):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    from src.game_engine import start_pitch_session, get_pitch_deck
+    
+    deck = get_pitch_deck(deck_id)
+    if not deck or deck['player_id'] != player_id:
+        flash('Pitch deck not found')
+        return redirect(url_for('pitch'))
+    
+    result = start_pitch_session(player_id, deck_id, investor_id)
+    
+    if not result.get('success'):
+        flash(result.get('error', 'Failed to start pitch session'))
+        return redirect(url_for('pitch'))
+    
+    return render_template('pitch_present.html',
+                          stats=stats,
+                          deck=deck,
+                          investor=result['investor'],
+                          questions=result['questions'],
+                          session_id=result['session_id'])
+
+
+@app.route('/pitch/session/<int:session_id>/submit', methods=['POST'])
+def submit_pitch(session_id):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    answers = []
+    i = 0
+    while True:
+        answer = request.form.get(f'answer_{i}')
+        if answer is None:
+            break
+        answers.append(answer)
+        i += 1
+    
+    from src.game_engine import submit_pitch_answers
+    result = submit_pitch_answers(session_id, answers)
+    
+    if result.get('success'):
+        flash(f"{result['message']} +{result['exp_earned']} EXP earned!")
+    else:
+        flash(result.get('error', 'Pitch session failed'))
+    
+    return redirect(url_for('pitch'))
 
 
 if __name__ == '__main__':

@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}{{ challenge.title }} - Business Tycoon RPG{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="gold-text mb-0">
+                        <i class="bi bi-graph-up"></i> {{ challenge.title }}
+                    </h2>
+                    <p class="text-muted mb-0">{{ challenge.challenge_type|title }} Challenge</p>
+                </div>
+                <a href="{{ url_for('market') }}" class="btn btn-outline-light">
+                    <i class="bi bi-arrow-left"></i> Back to Market
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-question-circle"></i> Challenge
+                </div>
+                <div class="card-body">
+                    <p class="lead">{{ challenge.description }}</p>
+                    
+                    <form action="{{ url_for('submit_market_challenge', challenge_id=challenge.challenge_id) }}" method="post">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        {% if challenge.challenge_type == 'pricing' %}
+                        <div class="alert alert-secondary">
+                            <p><strong>Current Price:</strong> ${{ challenge.scenario_data.current_price }}</p>
+                            <p><strong>Current Units:</strong> {{ challenge.scenario_data.current_units }}</p>
+                            <p><strong>Price Change:</strong> +{{ challenge.scenario_data.price_change_pct }}%</p>
+                            <p class="mb-0"><strong>Demand Change:</strong> {{ challenge.scenario_data.demand_change_pct }}%</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">What is the new revenue?</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" name="new_revenue" class="form-control bg-dark text-light" 
+                                       required placeholder="Enter revenue amount">
+                            </div>
+                        </div>
+                        
+                        {% elif challenge.challenge_type == 'competition' %}
+                        <div class="alert alert-secondary">
+                            <p><strong>Your Market Share:</strong> {{ challenge.scenario_data.your_share }}%</p>
+                            <p><strong>Competitor's Share:</strong> {{ challenge.scenario_data.their_share }}%</p>
+                            <p><strong>Your Margin:</strong> {{ challenge.scenario_data.your_margin }}%</p>
+                            <p><strong>Their Discount:</strong> {{ challenge.scenario_data.their_discount }}%</p>
+                            <p class="mb-0"><strong>Share Loss if Ignore:</strong> {{ challenge.scenario_data.share_loss_if_ignore }}%</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">What should you do?</label>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="decision" value="match" id="match" required>
+                                <label class="form-check-label" for="match">Match their discount</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="decision" value="ignore" id="ignore">
+                                <label class="form-check-label" for="ignore">Ignore and maintain prices</label>
+                            </div>
+                        </div>
+                        
+                        {% elif challenge.challenge_type == 'marketing' %}
+                        <div class="alert alert-secondary">
+                            <p><strong>Marketing Spend:</strong> ${{ challenge.scenario_data.marketing_spend }}</p>
+                            <p><strong>New Customers:</strong> {{ challenge.scenario_data.new_customers }}</p>
+                            <p><strong>Avg Order Value:</strong> ${{ challenge.scenario_data.avg_order }}</p>
+                            <p class="mb-0"><strong>Profit Margin:</strong> {{ challenge.scenario_data.margin_pct }}%</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">What is the ROI (as a percentage)?</label>
+                            <div class="input-group">
+                                <input type="number" name="roi" class="form-control bg-dark text-light" 
+                                       required placeholder="Enter ROI percentage" step="0.1">
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+                        
+                        {% elif challenge.challenge_type == 'segmentation' %}
+                        <div class="alert alert-secondary">
+                            <p class="mb-0"><strong>Capture Rate:</strong> {{ challenge.scenario_data.capture_rate }}% of segment</p>
+                        </div>
+                        <div class="table-responsive mb-3">
+                            <table class="table table-sm table-dark">
+                                <thead>
+                                    <tr>
+                                        <th>Segment</th>
+                                        <th>Size</th>
+                                        <th>Avg Purchase</th>
+                                        <th>Margin</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for seg in challenge.scenario_data.segments %}
+                                    <tr>
+                                        <td>{{ seg.name }}</td>
+                                        <td>{{ "{:,}".format(seg.size) }}</td>
+                                        <td>${{ seg.avg_purchase }}</td>
+                                        <td>{{ seg.margin }}%</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Which segment should you target?</label>
+                            <select name="best_segment" class="form-select bg-dark text-light" required>
+                                <option value="">Select a segment...</option>
+                                {% for seg in challenge.scenario_data.segments %}
+                                <option value="{{ seg.name }}">{{ seg.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        {% elif challenge.challenge_type == 'positioning' %}
+                        <div class="alert alert-secondary">
+                            <p><strong>Your Position:</strong> Quality={{ challenge.scenario_data.your_position.quality }}, Price={{ challenge.scenario_data.your_position.price }}</p>
+                            {% for comp in challenge.scenario_data.competitors %}
+                            <p class="mb-0"><strong>Competitor {{ comp.name }}:</strong> Quality={{ comp.quality }}, Price={{ comp.price }}</p>
+                            {% endfor %}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">What positioning strategy should you pursue?</label>
+                            <select name="strategy" class="form-select bg-dark text-light" required>
+                                <option value="">Select a strategy...</option>
+                                <option value="premium_leader">Premium Leader (highest quality & price)</option>
+                                <option value="value_leader">Value Leader (high quality, moderate price)</option>
+                                <option value="cost_leader">Cost Leader (lowest price)</option>
+                                <option value="niche_specialist">Niche Specialist (focused on specific needs)</option>
+                            </select>
+                        </div>
+                        {% endif %}
+                        
+                        <button type="submit" class="btn btn-game btn-game-gold btn-lg w-100">
+                            <i class="bi bi-check-circle"></i> Submit Answer
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header bg-info bg-opacity-25">
+                    <i class="bi bi-lightbulb"></i> Hint
+                </div>
+                <div class="card-body">
+                    <p class="mb-0">{{ challenge.hint_text }}</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-trophy"></i> Reward
+                </div>
+                <div class="card-body text-center">
+                    <h3 class="text-success">+{{ challenge.exp_reward }} EXP</h3>
+                    <p class="text-muted mb-0">For correct answer</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

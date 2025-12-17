@@ -4188,3 +4188,642 @@ def create_purchase_order(player_id: int, supplier_id: int, product_id: int, qua
     conn.close()
     
     return {'success': True, 'order_id': order_id, 'total_cost': total_cost}
+
+
+# ============================================================================
+# MARKET SIMULATION FUNCTIONS
+# ============================================================================
+
+def get_market_segments() -> list:
+    """Get all market segments."""
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM market_segments ORDER BY segment_size DESC")
+    segments = cur.fetchall()
+    cur.close()
+    conn.close()
+    return [dict(s) for s in segments]
+
+
+def get_market_challenges(player_level: int = 1) -> list:
+    """Get market challenges appropriate for player level."""
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT * FROM market_challenges 
+        WHERE difficulty <= %s
+        ORDER BY difficulty, challenge_id
+    """, (player_level,))
+    challenges = cur.fetchall()
+    cur.close()
+    conn.close()
+    
+    result = []
+    for ch in challenges:
+        challenge = dict(ch)
+        if challenge.get('scenario_data'):
+            challenge['scenario_data'] = json.loads(challenge['scenario_data']) if isinstance(challenge['scenario_data'], str) else challenge['scenario_data']
+        if challenge.get('correct_answer'):
+            challenge['correct_answer'] = json.loads(challenge['correct_answer']) if isinstance(challenge['correct_answer'], str) else challenge['correct_answer']
+        result.append(challenge)
+    return result
+
+
+def get_market_challenge(challenge_id: int) -> dict:
+    """Get a specific market challenge."""
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM market_challenges WHERE challenge_id = %s", (challenge_id,))
+    ch = cur.fetchone()
+    cur.close()
+    conn.close()
+    
+    if not ch:
+        return None
+    
+    challenge = dict(ch)
+    if challenge.get('scenario_data'):
+        challenge['scenario_data'] = json.loads(challenge['scenario_data']) if isinstance(challenge['scenario_data'], str) else challenge['scenario_data']
+    if challenge.get('correct_answer'):
+        challenge['correct_answer'] = json.loads(challenge['correct_answer']) if isinstance(challenge['correct_answer'], str) else challenge['correct_answer']
+    return challenge
+
+
+def submit_market_challenge(player_id: int, challenge_id: int, answer: dict) -> dict:
+    """Submit an answer to a market challenge."""
+    challenge = get_market_challenge(challenge_id)
+    if not challenge:
+        return {'is_correct': False, 'feedback': 'Challenge not found', 'exp_earned': 0}
+    
+    correct = challenge['correct_answer']
+    is_correct = False
+    feedback = ''
+    
+    if challenge['challenge_type'] == 'pricing':
+        user_revenue = answer.get('new_revenue', 0)
+        correct_revenue = correct.get('new_revenue', 0)
+        is_correct = abs(user_revenue - correct_revenue) <= 100
+        feedback = f"Correct answer: ${correct_revenue}. New Price × New Quantity = Revenue"
+        
+    elif challenge['challenge_type'] == 'competition':
+        is_correct = answer.get('decision', '').lower() == correct.get('decision', '').lower()
+        feedback = correct.get('reason', 'Consider the long-term cost of each option.')
+        
+    elif challenge['challenge_type'] == 'marketing':
+        user_roi = answer.get('roi', 0)
+        correct_roi = correct.get('roi', 0)
+        is_correct = abs(user_roi - correct_roi) <= 5
+        feedback = f"ROI = (Profit - Cost) / Cost × 100 = {correct_roi}%"
+        
+    elif challenge['challenge_type'] == 'segmentation':
+        is_correct = answer.get('best_segment', '').lower() == correct.get('best_segment', '').lower()
+        feedback = f"Best segment: {correct.get('best_segment')} with expected profit of ${correct.get('profit', 0)}"
+        
+    elif challenge['challenge_type'] == 'positioning':
+        is_correct = 'value' in answer.get('strategy', '').lower()
+        feedback = correct.get('reason', 'Position yourself where competition is weak.')
+    
+    exp_earned = challenge['exp_reward'] if is_correct else challenge['exp_reward'] // 4
+    
+    if is_correct:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            UPDATE player_discipline_progress 
+            SET current_exp = current_exp + %s, total_exp_earned = total_exp_earned + %s
+            WHERE player_id = %s AND discipline_name = 'Marketing'
+        """, (exp_earned, exp_earned, player_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+    
+    return {
+        'is_correct': is_correct,
+        'feedback': feedback,
+        'exp_earned': exp_earned
+    }
+
+
+def initialize_player_market(player_id: int) -> bool:
+    """Initialize player's market position."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM player_market_position WHERE player_id = %s", (player_id,))
+    if cur.fetchone()['count'] > 0:
+        cur.close()
+        conn.close()
+        return True
+    
+    cur.execute("SELECT segment_id FROM market_segments")
+    segments = cur.fetchall()
+    
+    for seg in segments:
+        cur.execute("""
+            INSERT INTO player_market_position 
+            (player_id, segment_id, market_share, price_point, quality_rating, brand_awareness)
+            VALUES (%s, %s, 0.01, 50, 50, 10)
+        """, (player_id, seg['segment_id']))
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    return True
+
+
+def get_player_market_position(player_id: int) -> list:
+    """Get player's market position across all segments."""
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT pmp.*, ms.segment_name, ms.segment_size, ms.price_sensitivity, ms.quality_preference
+        FROM player_market_position pmp
+        JOIN market_segments ms ON pmp.segment_id = ms.segment_id
+        WHERE pmp.player_id = %s
+    """, (player_id,))
+    positions = cur.fetchall()
+    cur.close()
+    conn.close()
+    return [dict(p) for p in positions]
+
+
+# ============================================================================
+# HR MANAGEMENT FUNCTIONS
+# ============================================================================
+
+def get_employee_roles() -> list:
+    """Get all available employee roles."""
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM employee_roles ORDER BY department, base_salary")
+    roles = cur.fetchall()
+    cur.close()
+    conn.close()
+    
+    result = []
+    for r in roles:
+        role = dict(r)
+        if role.get('skill_requirements'):
+            role['skill_requirements'] = json.loads(role['skill_requirements']) if isinstance(role['skill_requirements'], str) else role['skill_requirements']
+        result.append(role)
+    return result
+
+
+def get_hr_challenges(player_level: int = 1) -> list:
+    """Get HR challenges appropriate for player level."""
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT * FROM hr_challenges 
+        WHERE difficulty <= %s
+        ORDER BY difficulty, challenge_id
+    """, (player_level,))
+    challenges = cur.fetchall()
+    cur.close()
+    conn.close()
+    
+    result = []
+    for ch in challenges:
+        challenge = dict(ch)
+        if challenge.get('scenario_data'):
+            challenge['scenario_data'] = json.loads(challenge['scenario_data']) if isinstance(challenge['scenario_data'], str) else challenge['scenario_data']
+        if challenge.get('correct_answer'):
+            challenge['correct_answer'] = json.loads(challenge['correct_answer']) if isinstance(challenge['correct_answer'], str) else challenge['correct_answer']
+        result.append(challenge)
+    return result
+
+
+def get_hr_challenge(challenge_id: int) -> dict:
+    """Get a specific HR challenge."""
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM hr_challenges WHERE challenge_id = %s", (challenge_id,))
+    ch = cur.fetchone()
+    cur.close()
+    conn.close()
+    
+    if not ch:
+        return None
+    
+    challenge = dict(ch)
+    if challenge.get('scenario_data'):
+        challenge['scenario_data'] = json.loads(challenge['scenario_data']) if isinstance(challenge['scenario_data'], str) else challenge['scenario_data']
+    if challenge.get('correct_answer'):
+        challenge['correct_answer'] = json.loads(challenge['correct_answer']) if isinstance(challenge['correct_answer'], str) else challenge['correct_answer']
+    return challenge
+
+
+def submit_hr_challenge(player_id: int, challenge_id: int, answer: dict) -> dict:
+    """Submit an answer to an HR challenge."""
+    challenge = get_hr_challenge(challenge_id)
+    if not challenge:
+        return {'is_correct': False, 'feedback': 'Challenge not found', 'exp_earned': 0}
+    
+    correct = challenge['correct_answer']
+    is_correct = False
+    feedback = ''
+    
+    if challenge['challenge_type'] == 'hiring':
+        is_correct = answer.get('choice', '').upper() == correct.get('choice', '').upper()
+        feedback = correct.get('reason', 'Consider budget and long-term potential.')
+        
+    elif challenge['challenge_type'] == 'performance':
+        user_rating = answer.get('rating', 0)
+        correct_rating = correct.get('rating', 0)
+        is_correct = abs(user_rating - correct_rating) <= 1
+        feedback = correct.get('reason', 'Balance all factors in your assessment.')
+        
+    elif challenge['challenge_type'] == 'conflict':
+        is_correct = 'mediate' in answer.get('approach', '').lower()
+        feedback = 'Best approach: ' + ', '.join(correct.get('actions', []))
+        
+    elif challenge['challenge_type'] == 'retention':
+        has_creative_solution = len(answer.get('perks', [])) >= 2
+        is_correct = has_creative_solution
+        feedback = 'Total compensation includes salary, flexibility, growth opportunities, and recognition.'
+        
+    elif challenge['challenge_type'] == 'culture':
+        is_correct = answer.get('choice', '').lower() == correct.get('choice', '').lower()
+        feedback = correct.get('reason', 'Consider what builds team bonds.')
+    
+    exp_earned = challenge['exp_reward'] if is_correct else challenge['exp_reward'] // 4
+    
+    if is_correct:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            UPDATE player_discipline_progress 
+            SET current_exp = current_exp + %s, total_exp_earned = total_exp_earned + %s
+            WHERE player_id = %s AND discipline_name = 'Human Resources'
+        """, (exp_earned, exp_earned, player_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+    
+    return {
+        'is_correct': is_correct,
+        'feedback': feedback,
+        'exp_earned': exp_earned
+    }
+
+
+def get_player_employees(player_id: int) -> list:
+    """Get all employees for a player."""
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT pe.*, er.role_name, er.department, er.base_salary
+        FROM player_employees pe
+        JOIN employee_roles er ON pe.role_id = er.role_id
+        WHERE pe.player_id = %s AND pe.status = 'active'
+        ORDER BY er.department, pe.employee_name
+    """, (player_id,))
+    employees = cur.fetchall()
+    cur.close()
+    conn.close()
+    return [dict(e) for e in employees]
+
+
+def hire_employee(player_id: int, role_id: int, employee_name: str, salary: float) -> dict:
+    """Hire a new employee."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        INSERT INTO player_employees (player_id, employee_name, role_id, salary)
+        VALUES (%s, %s, %s, %s)
+        RETURNING employee_id
+    """, (player_id, employee_name, role_id, salary))
+    
+    employee_id = cur.fetchone()['employee_id']
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    return {'success': True, 'employee_id': employee_id}
+
+
+def conduct_performance_review(employee_id: int, rating: int, feedback: str, development_plan: str) -> dict:
+    """Conduct a performance review for an employee."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    salary_adjustment = (rating - 3) * 2.0
+    exp_earned = rating * 25
+    
+    cur.execute("""
+        INSERT INTO performance_reviews 
+        (employee_id, rating, feedback_given, development_plan, salary_adjustment, exp_earned)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        RETURNING review_id
+    """, (employee_id, rating, feedback, development_plan, salary_adjustment, exp_earned))
+    
+    review_id = cur.fetchone()['review_id']
+    
+    cur.execute("""
+        UPDATE player_employees 
+        SET performance_score = %s, 
+            salary = salary * (1 + %s / 100)
+        WHERE employee_id = %s
+    """, (rating * 20, salary_adjustment, employee_id))
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    return {'success': True, 'review_id': review_id, 'salary_adjustment_pct': salary_adjustment, 'exp_earned': exp_earned}
+
+
+# ============================================================================
+# INVESTOR PITCH FUNCTIONS
+# ============================================================================
+
+PITCH_SECTIONS = [
+    {'order': 1, 'name': 'Title Slide', 'description': 'Company name, tagline, your name and title'},
+    {'order': 2, 'name': 'Problem', 'description': 'The pain point you\'re solving - make it relatable and quantifiable'},
+    {'order': 3, 'name': 'Solution', 'description': 'Your product/service and how it solves the problem'},
+    {'order': 4, 'name': 'Market Opportunity', 'description': 'TAM, SAM, SOM - the size of your opportunity'},
+    {'order': 5, 'name': 'Business Model', 'description': 'How you make money'},
+    {'order': 6, 'name': 'Traction', 'description': 'Proof that it\'s working - metrics, customers, revenue'},
+    {'order': 7, 'name': 'Team', 'description': 'Why you\'re the right team to solve this'},
+    {'order': 8, 'name': 'The Ask', 'description': 'How much you need and what you\'ll do with it'}
+]
+
+
+def get_investor_profiles() -> list:
+    """Get all investor profiles."""
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM investor_profiles ORDER BY investor_name")
+    investors = cur.fetchall()
+    cur.close()
+    conn.close()
+    
+    result = []
+    for inv in investors:
+        investor = dict(inv)
+        if investor.get('focus_areas'):
+            investor['focus_areas'] = json.loads(investor['focus_areas']) if isinstance(investor['focus_areas'], str) else investor['focus_areas']
+        if investor.get('priorities'):
+            investor['priorities'] = json.loads(investor['priorities']) if isinstance(investor['priorities'], str) else investor['priorities']
+        result.append(investor)
+    return result
+
+
+def create_pitch_deck(player_id: int, deck_name: str, funding_stage: str = 'seed', target_amount: float = 100000) -> dict:
+    """Create a new pitch deck."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        INSERT INTO player_pitch_decks (player_id, deck_name, funding_stage, target_amount)
+        VALUES (%s, %s, %s, %s)
+        RETURNING deck_id
+    """, (player_id, deck_name, funding_stage, target_amount))
+    
+    deck_id = cur.fetchone()['deck_id']
+    
+    for section in PITCH_SECTIONS:
+        cur.execute("""
+            INSERT INTO pitch_deck_sections (deck_id, section_name, section_order)
+            VALUES (%s, %s, %s)
+        """, (deck_id, section['name'], section['order']))
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    return {'success': True, 'deck_id': deck_id}
+
+
+def get_player_pitch_decks(player_id: int) -> list:
+    """Get all pitch decks for a player."""
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT * FROM player_pitch_decks 
+        WHERE player_id = %s 
+        ORDER BY created_at DESC
+    """, (player_id,))
+    decks = cur.fetchall()
+    cur.close()
+    conn.close()
+    return [dict(d) for d in decks]
+
+
+def get_pitch_deck(deck_id: int) -> dict:
+    """Get a pitch deck with all its sections."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT * FROM player_pitch_decks WHERE deck_id = %s", (deck_id,))
+    deck = cur.fetchone()
+    if not deck:
+        cur.close()
+        conn.close()
+        return None
+    
+    deck = dict(deck)
+    
+    cur.execute("""
+        SELECT * FROM pitch_deck_sections 
+        WHERE deck_id = %s 
+        ORDER BY section_order
+    """, (deck_id,))
+    sections = cur.fetchall()
+    
+    deck['sections'] = []
+    completed_count = 0
+    total_score = 0
+    
+    for s in sections:
+        section = dict(s)
+        section['description'] = next((ps['description'] for ps in PITCH_SECTIONS if ps['name'] == section['section_name']), '')
+        deck['sections'].append(section)
+        if section['is_complete']:
+            completed_count += 1
+        total_score += section['score']
+    
+    deck['completion_pct'] = (completed_count / len(sections) * 100) if sections else 0
+    deck['overall_score'] = total_score // len(sections) if sections else 0
+    
+    cur.close()
+    conn.close()
+    return deck
+
+
+def update_pitch_section(section_id: int, content: str) -> dict:
+    """Update a pitch deck section and score it."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT section_name FROM pitch_deck_sections WHERE section_id = %s", (section_id,))
+    section = cur.fetchone()
+    if not section:
+        cur.close()
+        conn.close()
+        return {'success': False}
+    
+    score = 0
+    feedback = ''
+    word_count = len(content.split())
+    
+    if word_count < 10:
+        score = 20
+        feedback = 'Too brief. Add more detail to make your point compelling.'
+    elif word_count < 30:
+        score = 50
+        feedback = 'Good start. Consider adding specific examples or data.'
+    elif word_count < 75:
+        score = 75
+        feedback = 'Solid content. Make sure it answers investor questions.'
+    else:
+        score = 90
+        feedback = 'Comprehensive. Ensure every word earns its place.'
+    
+    if any(char.isdigit() for char in content):
+        score = min(100, score + 10)
+        feedback += ' Good use of specific numbers!'
+    
+    is_complete = score >= 50
+    
+    cur.execute("""
+        UPDATE pitch_deck_sections 
+        SET content = %s, score = %s, feedback = %s, is_complete = %s
+        WHERE section_id = %s
+    """, (content, score, feedback, is_complete, section_id))
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    return {'success': True, 'score': score, 'feedback': feedback}
+
+
+def start_pitch_session(player_id: int, deck_id: int, investor_id: int) -> dict:
+    """Start a pitch session with an investor."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT * FROM investor_profiles WHERE investor_id = %s", (investor_id,))
+    investor = cur.fetchone()
+    if not investor:
+        cur.close()
+        conn.close()
+        return {'success': False, 'error': 'Investor not found'}
+    
+    investor = dict(investor)
+    if investor.get('priorities'):
+        investor['priorities'] = json.loads(investor['priorities']) if isinstance(investor['priorities'], str) else investor['priorities']
+    
+    questions = []
+    priorities = investor.get('priorities', {})
+    
+    if priorities.get('team', 0) > 25:
+        questions.append("Tell me about your team's background and why you're the right people to build this.")
+    if priorities.get('traction', 0) > 25:
+        questions.append("What traction do you have? Walk me through your key metrics.")
+    if priorities.get('market', 0) > 25:
+        questions.append("How did you arrive at your market size estimates? What's your path to capturing it?")
+    if priorities.get('product', 0) > 20:
+        questions.append("What's your competitive advantage? Why can't a bigger player just copy this?")
+    
+    questions.append("What's your biggest risk and how are you addressing it?")
+    
+    cur.execute("""
+        INSERT INTO pitch_sessions (player_id, deck_id, investor_id, questions_asked)
+        VALUES (%s, %s, %s, %s)
+        RETURNING session_id
+    """, (player_id, deck_id, investor_id, json.dumps(questions)))
+    
+    session_id = cur.fetchone()['session_id']
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    return {
+        'success': True,
+        'session_id': session_id,
+        'investor': investor,
+        'questions': questions
+    }
+
+
+def submit_pitch_answers(session_id: int, answers: list) -> dict:
+    """Submit answers to investor questions and get outcome."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT ps.*, ip.priorities, ip.risk_tolerance, ip.investment_range_min, ip.investment_range_max,
+               ppd.target_amount
+        FROM pitch_sessions ps
+        JOIN investor_profiles ip ON ps.investor_id = ip.investor_id
+        JOIN player_pitch_decks ppd ON ps.deck_id = ppd.deck_id
+        WHERE ps.session_id = %s
+    """, (session_id,))
+    session = cur.fetchone()
+    
+    if not session:
+        cur.close()
+        conn.close()
+        return {'success': False, 'error': 'Session not found'}
+    
+    session = dict(session)
+    
+    answer_quality = 0
+    for answer in answers:
+        words = len(answer.split()) if answer else 0
+        if words > 50:
+            answer_quality += 25
+        elif words > 20:
+            answer_quality += 15
+        else:
+            answer_quality += 5
+    
+    answer_quality = min(100, answer_quality)
+    
+    base_interest = 30 + (answer_quality // 2)
+    investor_interest = min(100, base_interest)
+    
+    outcome = 'rejected'
+    funding_offered = None
+    equity_requested = None
+    exp_earned = 50
+    
+    if investor_interest >= 70:
+        outcome = 'term_sheet'
+        target = float(session['target_amount'])
+        funding_offered = min(target, float(session['investment_range_max']))
+        equity_requested = (funding_offered / target) * 15
+        exp_earned = 200
+    elif investor_interest >= 50:
+        outcome = 'follow_up'
+        exp_earned = 100
+    
+    cur.execute("""
+        UPDATE pitch_sessions 
+        SET answers_given = %s, investor_interest = %s, 
+            funding_offered = %s, equity_requested = %s, outcome = %s, exp_earned = %s
+        WHERE session_id = %s
+    """, (json.dumps(answers), investor_interest, funding_offered, equity_requested, outcome, exp_earned, session_id))
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    messages = {
+        'rejected': "The investor passed on this opportunity. Keep refining your pitch!",
+        'follow_up': "The investor wants to schedule a follow-up meeting. Good progress!",
+        'term_sheet': f"Congratulations! You received a term sheet for ${funding_offered:,.0f} at {equity_requested:.1f}% equity!"
+    }
+    
+    return {
+        'success': True,
+        'outcome': outcome,
+        'message': messages[outcome],
+        'investor_interest': investor_interest,
+        'funding_offered': funding_offered,
+        'equity_requested': equity_requested,
+        'exp_earned': exp_earned
+    }
