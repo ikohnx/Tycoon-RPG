@@ -6183,6 +6183,307 @@ def get_trade_listings(player_id=None):
     return listings
 
 
+def leave_guild(player_id):
+    """Leave current guild."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    try:
+        cur.execute("SELECT guild_id, member_role FROM guild_members WHERE player_id = %s", (player_id,))
+        membership = cur.fetchone()
+        
+        if not membership:
+            return {'success': False, 'error': 'You are not in a guild'}
+        
+        if membership['member_role'] == 'master':
+            cur.execute("SELECT COUNT(*) as cnt FROM guild_members WHERE guild_id = %s", (membership['guild_id'],))
+            member_count = cur.fetchone()['cnt']
+            if member_count > 1:
+                return {'success': False, 'error': 'Transfer leadership before leaving'}
+        
+        cur.execute("DELETE FROM guild_members WHERE player_id = %s", (player_id,))
+        conn.commit()
+        return {'success': True}
+    except Exception:
+        conn.rollback()
+        return {'success': False, 'error': 'Could not leave guild'}
+    finally:
+        cur.close()
+        conn.close()
+
+
+def join_coop_challenge(player_id, challenge_id):
+    """Join a co-op challenge."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    try:
+        cur.execute("SELECT * FROM coop_challenges WHERE challenge_id = %s AND is_active = TRUE", (challenge_id,))
+        challenge = cur.fetchone()
+        
+        if not challenge:
+            cur.close()
+            conn.close()
+            return {'success': False, 'error': 'Challenge not found or inactive'}
+        
+        cur.execute("""
+            INSERT INTO coop_participants (challenge_id, player_id, status)
+            VALUES (%s, %s, 'waiting')
+            ON CONFLICT (challenge_id, player_id) DO NOTHING
+        """, (challenge_id, player_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return {'success': True}
+    except:
+        conn.rollback()
+        cur.close()
+        conn.close()
+        return {'success': False, 'error': 'Could not join challenge'}
+
+
+def get_player_inventory(player_id):
+    """Get player's inventory for trading."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT pi.*, i.item_name, i.item_type
+        FROM player_items pi
+        JOIN items i ON pi.item_id = i.item_id
+        WHERE pi.player_id = %s
+    """, (player_id,))
+    
+    items = []
+    for row in cur.fetchall():
+        items.append({
+            'item_id': row['item_id'],
+            'name': row['item_name'],
+            'type': row['item_type'],
+            'quantity': row.get('quantity', 1)
+        })
+    
+    cur.close()
+    conn.close()
+    return items
+
+
+def create_trade_listing(player_id, item_id, price):
+    """Create a trade listing with row locking and atomic operations."""
+    if price <= 0 or price > 10000000:
+        return {'success': False, 'error': 'Invalid price'}
+    
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    try:
+        cur.execute("""
+            SELECT pi.*, i.item_name, i.item_type FROM player_items pi
+            JOIN items i ON pi.item_id = i.item_id
+            WHERE pi.player_id = %s AND pi.item_id = %s
+            FOR UPDATE
+        """, (player_id, item_id))
+        item = cur.fetchone()
+        
+        if not item:
+            conn.rollback()
+            return {'success': False, 'error': 'Item not in inventory'}
+        
+        cur.execute("""
+            INSERT INTO trade_listings (seller_id, item_type, item_id, item_name, asking_price, quantity, status)
+            VALUES (%s, %s, %s, %s, %s, 1, 'active')
+        """, (player_id, item['item_type'], item_id, item['item_name'], price))
+        
+        cur.execute("DELETE FROM player_items WHERE player_id = %s AND item_id = %s", (player_id, item_id))
+        
+        conn.commit()
+        return {'success': True}
+    except Exception:
+        conn.rollback()
+        return {'success': False, 'error': 'Could not create listing'}
+    finally:
+        cur.close()
+        conn.close()
+
+
+def buy_trade_item(player_id, listing_id):
+    """Buy an item from the trading post with row locking and atomic operations."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    try:
+        cur.execute("SELECT * FROM trade_listings WHERE listing_id = %s AND status = 'active' FOR UPDATE", (listing_id,))
+        listing = cur.fetchone()
+        
+        if not listing:
+            conn.rollback()
+            return {'success': False, 'error': 'Listing not found or already sold'}
+        
+        if listing['seller_id'] == player_id:
+            conn.rollback()
+            return {'success': False, 'error': 'Cannot buy your own listing'}
+        
+        cur.execute("SELECT gold FROM player_profiles WHERE player_id = %s FOR UPDATE", (player_id,))
+        buyer = cur.fetchone()
+        
+        if not buyer or buyer['gold'] < listing['asking_price']:
+            conn.rollback()
+            return {'success': False, 'error': 'Not enough gold'}
+        
+        cur.execute("UPDATE trade_listings SET status = 'sold', buyer_id = %s WHERE listing_id = %s",
+                   (player_id, listing_id))
+        
+        cur.execute("UPDATE player_profiles SET gold = gold - %s WHERE player_id = %s", 
+                   (listing['asking_price'], player_id))
+        cur.execute("UPDATE player_profiles SET gold = gold + %s WHERE player_id = %s", 
+                   (listing['asking_price'], listing['seller_id']))
+        
+        cur.execute("""
+            INSERT INTO player_items (player_id, item_id, equipped)
+            VALUES (%s, %s, FALSE)
+        """, (player_id, listing['item_id']))
+        
+        conn.commit()
+        return {'success': True, 'price': listing['asking_price']}
+    except Exception:
+        conn.rollback()
+        return {'success': False, 'error': 'Transaction failed'}
+    finally:
+        cur.close()
+        conn.close()
+
+
+def cancel_trade_listing(player_id, listing_id):
+    """Cancel a trade listing with row locking and atomic operations."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    try:
+        cur.execute("SELECT * FROM trade_listings WHERE listing_id = %s AND seller_id = %s AND status = 'active' FOR UPDATE",
+                   (listing_id, player_id))
+        listing = cur.fetchone()
+        
+        if not listing:
+            conn.rollback()
+            return {'success': False, 'error': 'Listing not found or not yours'}
+        
+        cur.execute("""
+            INSERT INTO player_items (player_id, item_id, equipped)
+            VALUES (%s, %s, FALSE)
+        """, (player_id, listing['item_id']))
+        
+        cur.execute("UPDATE trade_listings SET status = 'cancelled' WHERE listing_id = %s", (listing_id,))
+        
+        conn.commit()
+        return {'success': True}
+    except Exception:
+        conn.rollback()
+        return {'success': False, 'error': 'Could not cancel listing'}
+    finally:
+        cur.close()
+        conn.close()
+
+
+def claim_battle_pass_tier(player_id, tier):
+    """Claim a battle pass tier reward."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    try:
+        cur.execute("""
+            SELECT pbp.*, bp.free_rewards, bp.premium_rewards
+            FROM player_battle_pass pbp
+            JOIN battle_passes bp ON pbp.pass_id = bp.pass_id
+            WHERE pbp.player_id = %s
+        """, (player_id,))
+        progress = cur.fetchone()
+        
+        if not progress:
+            cur.close()
+            conn.close()
+            return {'success': False, 'error': 'No battle pass found'}
+        
+        if tier > progress['current_tier']:
+            cur.close()
+            conn.close()
+            return {'success': False, 'error': 'Tier not reached yet'}
+        
+        claimed = progress['claimed_tiers'] or []
+        if tier in claimed:
+            cur.close()
+            conn.close()
+            return {'success': False, 'error': 'Already claimed'}
+        
+        claimed.append(tier)
+        cur.execute("UPDATE player_battle_pass SET claimed_tiers = %s WHERE player_id = %s",
+                   (claimed, player_id))
+        
+        import json
+        rewards = json.loads(progress['free_rewards']) if progress['free_rewards'] else {}
+        reward_name = rewards.get(str(tier), 'Mystery Reward')
+        
+        conn.commit()
+        cur.close()
+        conn.close()
+        return {'success': True, 'reward': reward_name}
+    except:
+        conn.rollback()
+        cur.close()
+        conn.close()
+        return {'success': False, 'error': 'Could not claim reward'}
+
+
+def attack_limited_boss(player_id, boss_id):
+    """Attack a limited-time boss."""
+    import random
+    
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    try:
+        cur.execute("SELECT * FROM limited_bosses WHERE boss_id = %s AND is_active = TRUE", (boss_id,))
+        boss = cur.fetchone()
+        
+        if not boss:
+            cur.close()
+            conn.close()
+            return {'success': False, 'error': 'Boss not found or inactive'}
+        
+        if boss['current_hp'] <= 0:
+            cur.close()
+            conn.close()
+            return {'success': False, 'error': 'Boss already defeated'}
+        
+        damage = random.randint(500, 2000)
+        new_hp = max(0, boss['current_hp'] - damage)
+        boss_defeated = new_hp <= 0
+        
+        cur.execute("UPDATE limited_bosses SET current_hp = %s WHERE boss_id = %s", (new_hp, boss_id))
+        
+        exp_earned = 50 + (damage // 100)
+        if boss_defeated:
+            exp_earned += boss['exp_reward']
+        
+        cur.execute("UPDATE player_profiles SET total_exp = total_exp + %s WHERE player_id = %s",
+                   (exp_earned, player_id))
+        
+        cur.execute("""
+            INSERT INTO boss_participants (boss_id, player_id, damage_dealt)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (boss_id, player_id) DO UPDATE SET damage_dealt = boss_participants.damage_dealt + %s
+        """, (boss_id, player_id, damage, damage))
+        
+        conn.commit()
+        cur.close()
+        conn.close()
+        return {'success': True, 'damage': damage, 'exp_earned': exp_earned, 'boss_defeated': boss_defeated}
+    except:
+        conn.rollback()
+        cur.close()
+        conn.close()
+        return {'success': False, 'error': 'Attack failed'}
+
+
 # ============================================================================
 # PHASE 5B: SEASONAL CONTENT & LIVE EVENTS
 # ============================================================================

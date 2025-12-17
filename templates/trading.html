@@ -20,12 +20,53 @@
         </div>
     </div>
 
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{% if category == 'error' %}danger{% else %}success{% endif %} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    {% if inventory %}
+    <div class="card mb-4 border-warning">
+        <div class="card-header bg-warning bg-opacity-25">
+            <i class="bi bi-plus-circle"></i> Create New Listing
+        </div>
+        <div class="card-body">
+            <form action="{{ url_for('create_trade_listing') }}" method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="row align-items-end">
+                    <div class="col-md-5 mb-3">
+                        <label class="form-label">Select Item</label>
+                        <select name="item_id" class="form-select bg-dark text-light" required>
+                            <option value="">Choose an item...</option>
+                            {% for item in inventory %}
+                            <option value="{{ item.item_id }}">{{ item.name }} ({{ item.type }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Asking Price (Gold)</label>
+                        <input type="number" name="price" class="form-control bg-dark text-light" required min="1" max="1000000" placeholder="Enter price">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <button type="submit" class="btn btn-game btn-game-gold w-100">
+                            <i class="bi bi-tag"></i> List Item
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
     <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <span><i class="bi bi-bag-fill"></i> Market Listings</span>
-            <button class="btn btn-sm btn-outline-success" disabled>
-                <i class="bi bi-plus"></i> Create Listing (Coming Soon)
-            </button>
+        <div class="card-header">
+            <i class="bi bi-bag-fill"></i> Market Listings
         </div>
         <div class="card-body">
             <div class="table-responsive">
@@ -48,9 +89,19 @@
                             <td class="text-warning">${{ "{:,}".format(listing.price) }}</td>
                             <td>
                                 {% if listing.is_own %}
-                                <button class="btn btn-sm btn-outline-danger" disabled>Cancel</button>
+                                <form action="{{ url_for('cancel_trade_listing', listing_id=listing.listing_id) }}" method="post" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-x"></i> Cancel
+                                    </button>
+                                </form>
                                 {% else %}
-                                <button class="btn btn-sm btn-outline-success" disabled>Buy</button>
+                                <form action="{{ url_for('buy_trade_item', listing_id=listing.listing_id) }}" method="post" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-success" onclick="return confirm('Buy this item for ${{ '{:,}'.format(listing.price) }}?')">
+                                        <i class="bi bi-cart-plus"></i> Buy
+                                    </button>
+                                </form>
                                 {% endif %}
                             </td>
                         </tr>

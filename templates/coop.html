@@ -20,6 +20,17 @@
         </div>
     </div>
 
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{% if category == 'error' %}danger{% else %}success{% endif %} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+
     <div class="row">
         {% for challenge in challenges %}
         <div class="col-md-6 mb-4">
@@ -51,9 +62,12 @@
                     <span class="badge bg-info">{{ challenge.type|title }}</span>
                 </div>
                 <div class="card-footer">
-                    <button class="btn btn-game btn-game-gold w-100" disabled>
-                        <i class="bi bi-play-fill"></i> Find Team (Coming Soon)
-                    </button>
+                    <form action="{{ url_for('join_coop_challenge', challenge_id=challenge.challenge_id) }}" method="post">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-game btn-game-gold w-100">
+                            <i class="bi bi-play-fill"></i> Join Challenge
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
