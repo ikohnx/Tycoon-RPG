@@ -616,6 +616,96 @@ def init_database():
         );
     """)
     
+    # Accounting System Tables
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS chart_of_accounts (
+            account_id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            account_code VARCHAR(20) NOT NULL,
+            account_name VARCHAR(100) NOT NULL,
+            account_type VARCHAR(20) NOT NULL CHECK (account_type IN ('Asset', 'Liability', 'Equity', 'Revenue', 'Expense')),
+            normal_balance VARCHAR(10) NOT NULL CHECK (normal_balance IN ('Debit', 'Credit')),
+            description TEXT,
+            is_active BOOLEAN DEFAULT TRUE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(player_id, account_code)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS accounting_periods (
+            period_id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            period_name VARCHAR(50) NOT NULL,
+            period_number INTEGER NOT NULL,
+            start_date DATE NOT NULL,
+            end_date DATE NOT NULL,
+            is_closed BOOLEAN DEFAULT FALSE,
+            closed_at TIMESTAMP,
+            closing_exp_earned INTEGER DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(player_id, period_number)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS journal_entries (
+            entry_id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            period_id INTEGER REFERENCES accounting_periods(period_id) ON DELETE SET NULL,
+            entry_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            description TEXT NOT NULL,
+            source_type VARCHAR(50),
+            source_id INTEGER,
+            is_posted BOOLEAN DEFAULT FALSE,
+            is_adjusting BOOLEAN DEFAULT FALSE,
+            is_closing BOOLEAN DEFAULT FALSE,
+            total_debits DECIMAL(15, 2) DEFAULT 0,
+            total_credits DECIMAL(15, 2) DEFAULT 0,
+            exp_earned INTEGER DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS journal_lines (
+            line_id SERIAL PRIMARY KEY,
+            entry_id INTEGER REFERENCES journal_entries(entry_id) ON DELETE CASCADE,
+            account_id INTEGER REFERENCES chart_of_accounts(account_id) ON DELETE CASCADE,
+            debit_amount DECIMAL(15, 2) DEFAULT 0,
+            credit_amount DECIMAL(15, 2) DEFAULT 0,
+            memo TEXT
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS account_balances (
+            balance_id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            account_id INTEGER REFERENCES chart_of_accounts(account_id) ON DELETE CASCADE,
+            period_id INTEGER REFERENCES accounting_periods(period_id) ON DELETE CASCADE,
+            opening_balance DECIMAL(15, 2) DEFAULT 0,
+            closing_balance DECIMAL(15, 2) DEFAULT 0,
+            UNIQUE(account_id, period_id)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS pending_transactions (
+            transaction_id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            transaction_type VARCHAR(50) NOT NULL,
+            description TEXT NOT NULL,
+            amount DECIMAL(15, 2) NOT NULL,
+            suggested_debit_account VARCHAR(20),
+            suggested_credit_account VARCHAR(20),
+            source_type VARCHAR(50),
+            source_id INTEGER,
+            is_processed BOOLEAN DEFAULT FALSE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+    
     conn.commit()
     cur.close()
     conn.close()
@@ -5095,6 +5185,111 @@ def seed_advanced_challenges():
     print(f"Seeded {len(challenges)} advanced challenges!")
     cur.close()
     conn.close()
+
+
+def get_default_chart_of_accounts():
+    """Return the standard chart of accounts for a new player's business."""
+    return [
+        # Assets (Debit balance)
+        {'code': '1000', 'name': 'Cash', 'type': 'Asset', 'normal': 'Debit', 'desc': 'Money in the bank and on hand'},
+        {'code': '1100', 'name': 'Accounts Receivable', 'type': 'Asset', 'normal': 'Debit', 'desc': 'Money owed to you by customers'},
+        {'code': '1200', 'name': 'Inventory', 'type': 'Asset', 'normal': 'Debit', 'desc': 'Goods available for sale'},
+        {'code': '1300', 'name': 'Prepaid Expenses', 'type': 'Asset', 'normal': 'Debit', 'desc': 'Expenses paid in advance'},
+        {'code': '1500', 'name': 'Equipment', 'type': 'Asset', 'normal': 'Debit', 'desc': 'Business equipment and tools'},
+        {'code': '1510', 'name': 'Accumulated Depreciation', 'type': 'Asset', 'normal': 'Credit', 'desc': 'Total depreciation of equipment'},
+        # Liabilities (Credit balance)
+        {'code': '2000', 'name': 'Accounts Payable', 'type': 'Liability', 'normal': 'Credit', 'desc': 'Money you owe to suppliers'},
+        {'code': '2100', 'name': 'Wages Payable', 'type': 'Liability', 'normal': 'Credit', 'desc': 'Unpaid employee wages'},
+        {'code': '2200', 'name': 'Taxes Payable', 'type': 'Liability', 'normal': 'Credit', 'desc': 'Taxes owed to government'},
+        {'code': '2300', 'name': 'Unearned Revenue', 'type': 'Liability', 'normal': 'Credit', 'desc': 'Payment received before service delivered'},
+        {'code': '2500', 'name': 'Loans Payable', 'type': 'Liability', 'normal': 'Credit', 'desc': 'Business loans to repay'},
+        # Equity (Credit balance)
+        {'code': '3000', 'name': 'Owner Capital', 'type': 'Equity', 'normal': 'Credit', 'desc': 'Owner investment in business'},
+        {'code': '3100', 'name': 'Retained Earnings', 'type': 'Equity', 'normal': 'Credit', 'desc': 'Accumulated profits kept in business'},
+        {'code': '3200', 'name': 'Owner Withdrawals', 'type': 'Equity', 'normal': 'Debit', 'desc': 'Money taken out by owner'},
+        # Revenue (Credit balance)
+        {'code': '4000', 'name': 'Sales Revenue', 'type': 'Revenue', 'normal': 'Credit', 'desc': 'Income from selling products/services'},
+        {'code': '4100', 'name': 'Service Revenue', 'type': 'Revenue', 'normal': 'Credit', 'desc': 'Income from providing services'},
+        {'code': '4200', 'name': 'Interest Income', 'type': 'Revenue', 'normal': 'Credit', 'desc': 'Interest earned on investments'},
+        {'code': '4900', 'name': 'Other Income', 'type': 'Revenue', 'normal': 'Credit', 'desc': 'Miscellaneous income'},
+        # Expenses (Debit balance)
+        {'code': '5000', 'name': 'Cost of Goods Sold', 'type': 'Expense', 'normal': 'Debit', 'desc': 'Direct cost of products sold'},
+        {'code': '5100', 'name': 'Wages Expense', 'type': 'Expense', 'normal': 'Debit', 'desc': 'Employee salaries and wages'},
+        {'code': '5200', 'name': 'Rent Expense', 'type': 'Expense', 'normal': 'Debit', 'desc': 'Monthly rent payments'},
+        {'code': '5300', 'name': 'Utilities Expense', 'type': 'Expense', 'normal': 'Debit', 'desc': 'Electricity, water, internet'},
+        {'code': '5400', 'name': 'Marketing Expense', 'type': 'Expense', 'normal': 'Debit', 'desc': 'Advertising and promotion costs'},
+        {'code': '5500', 'name': 'Supplies Expense', 'type': 'Expense', 'normal': 'Debit', 'desc': 'Office and operational supplies'},
+        {'code': '5600', 'name': 'Insurance Expense', 'type': 'Expense', 'normal': 'Debit', 'desc': 'Business insurance premiums'},
+        {'code': '5700', 'name': 'Depreciation Expense', 'type': 'Expense', 'normal': 'Debit', 'desc': 'Equipment value reduction'},
+        {'code': '5800', 'name': 'Interest Expense', 'type': 'Expense', 'normal': 'Debit', 'desc': 'Interest on loans'},
+        {'code': '5900', 'name': 'Tax Expense', 'type': 'Expense', 'normal': 'Debit', 'desc': 'Business taxes'},
+        {'code': '5950', 'name': 'Miscellaneous Expense', 'type': 'Expense', 'normal': 'Debit', 'desc': 'Other business expenses'},
+    ]
+
+
+def initialize_player_accounting(player_id):
+    """Initialize the accounting system for a player with default accounts and first period."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    # Check if player already has accounts
+    cur.execute("SELECT COUNT(*) as count FROM chart_of_accounts WHERE player_id = %s", (player_id,))
+    if cur.fetchone()['count'] > 0:
+        cur.close()
+        conn.close()
+        return False
+    
+    # Create default chart of accounts
+    accounts = get_default_chart_of_accounts()
+    for acc in accounts:
+        cur.execute("""
+            INSERT INTO chart_of_accounts (player_id, account_code, account_name, account_type, normal_balance, description)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (player_id, acc['code'], acc['name'], acc['type'], acc['normal'], acc['desc']))
+    
+    # Create first accounting period (Month 1)
+    from datetime import date, timedelta
+    today = date.today()
+    start_of_month = today.replace(day=1)
+    if today.month == 12:
+        end_of_month = today.replace(year=today.year+1, month=1, day=1) - timedelta(days=1)
+    else:
+        end_of_month = today.replace(month=today.month+1, day=1) - timedelta(days=1)
+    
+    cur.execute("""
+        INSERT INTO accounting_periods (player_id, period_name, period_number, start_date, end_date)
+        VALUES (%s, %s, %s, %s, %s)
+    """, (player_id, 'Month 1', 1, start_of_month, end_of_month))
+    
+    # Get the new period ID
+    cur.execute("SELECT period_id FROM accounting_periods WHERE player_id = %s AND period_number = 1", (player_id,))
+    period_id = cur.fetchone()['period_id']
+    
+    # Get cash account and set opening balance from player's current cash
+    cur.execute("SELECT cash FROM player_profiles WHERE player_id = %s", (player_id,))
+    player_cash = cur.fetchone()['cash'] or 0
+    
+    cur.execute("SELECT account_id FROM chart_of_accounts WHERE player_id = %s AND account_code = '1000'", (player_id,))
+    cash_account_id = cur.fetchone()['account_id']
+    
+    cur.execute("""
+        INSERT INTO account_balances (player_id, account_id, period_id, opening_balance, closing_balance)
+        VALUES (%s, %s, %s, %s, %s)
+    """, (player_id, cash_account_id, period_id, player_cash, player_cash))
+    
+    # Set opening balance for Owner Capital to match
+    cur.execute("SELECT account_id FROM chart_of_accounts WHERE player_id = %s AND account_code = '3000'", (player_id,))
+    capital_account_id = cur.fetchone()['account_id']
+    
+    cur.execute("""
+        INSERT INTO account_balances (player_id, account_id, period_id, opening_balance, closing_balance)
+        VALUES (%s, %s, %s, %s, %s)
+    """, (player_id, capital_account_id, period_id, player_cash, player_cash))
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    return True
 
 
 if __name__ == "__main__":

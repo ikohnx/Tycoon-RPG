@@ -603,6 +603,30 @@ class GameEngine:
         
         self.current_player.save_to_db()
         
+        if boosted_cash != 0:
+            if boosted_cash > 0:
+                create_pending_transaction(
+                    self.current_player.player_id,
+                    'scenario_income',
+                    f"Revenue from {scenario['scenario_title']}",
+                    abs(boosted_cash),
+                    '1000',
+                    '4000',
+                    'scenario',
+                    scenario['scenario_id']
+                )
+            else:
+                create_pending_transaction(
+                    self.current_player.player_id,
+                    'scenario_expense',
+                    f"Expense from {scenario['scenario_title']}",
+                    abs(boosted_cash),
+                    '5950',
+                    '1000',
+                    'scenario',
+                    scenario['scenario_id']
+                )
+        
         return {
             "success": True,
             "exp_gained": weighted_exp,
@@ -2552,3 +2576,465 @@ def display_player_stats(stats: dict) -> None:
         if data['exp_to_next'] > 0:
             print(f"    {data['exp_to_next']:,} EXP to Level {data['next_level']}")
         print()
+
+
+# ============================================================================
+# ACCOUNTING SYSTEM FUNCTIONS
+# ============================================================================
+
+def get_player_chart_of_accounts(player_id: int) -> list:
+    """Get the player's chart of accounts organized by type."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT account_id, account_code, account_name, account_type, normal_balance, description
+        FROM chart_of_accounts
+        WHERE player_id = %s AND is_active = TRUE
+        ORDER BY account_code
+    """, (player_id,))
+    
+    accounts = cur.fetchall()
+    cur.close()
+    conn.close()
+    return accounts
+
+
+def get_current_accounting_period(player_id: int) -> dict:
+    """Get the player's current (open) accounting period."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT period_id, period_name, period_number, start_date, end_date, is_closed
+        FROM accounting_periods
+        WHERE player_id = %s AND is_closed = FALSE
+        ORDER BY period_number DESC
+        LIMIT 1
+    """, (player_id,))
+    
+    period = cur.fetchone()
+    cur.close()
+    conn.close()
+    return period
+
+
+def get_pending_transactions(player_id: int) -> list:
+    """Get all unprocessed transactions awaiting journal entry."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT transaction_id, transaction_type, description, amount, 
+               suggested_debit_account, suggested_credit_account, source_type, created_at
+        FROM pending_transactions
+        WHERE player_id = %s AND is_processed = FALSE
+        ORDER BY created_at
+    """, (player_id,))
+    
+    transactions = cur.fetchall()
+    cur.close()
+    conn.close()
+    return transactions
+
+
+def create_pending_transaction(player_id: int, transaction_type: str, description: str, 
+                              amount: float, debit_account: str, credit_account: str,
+                              source_type: str = None, source_id: int = None) -> int:
+    """Create a pending transaction for the player to record in their books."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        INSERT INTO pending_transactions 
+        (player_id, transaction_type, description, amount, suggested_debit_account, 
+         suggested_credit_account, source_type, source_id)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        RETURNING transaction_id
+    """, (player_id, transaction_type, description, amount, debit_account, credit_account, source_type, source_id))
+    
+    transaction_id = cur.fetchone()['transaction_id']
+    conn.commit()
+    cur.close()
+    conn.close()
+    return transaction_id
+
+
+def create_journal_entry(player_id: int, description: str, lines: list, 
+                        is_adjusting: bool = False) -> dict:
+    """
+    Create a journal entry with debit and credit lines.
+    
+    lines should be a list of dicts: [{'account_code': '1000', 'debit': 100, 'credit': 0}, ...]
+    Returns success status and entry info.
+    """
+    if not lines or len(lines) < 2:
+        return {'success': False, 'error': 'Journal entry requires at least 2 lines', 'exp_earned': 0}
+    
+    for line in lines:
+        debit = line.get('debit')
+        credit = line.get('credit')
+        line['debit'] = float(debit) if debit is not None else 0.0
+        line['credit'] = float(credit) if credit is not None else 0.0
+        if not line.get('account_code'):
+            return {'success': False, 'error': 'Missing account code in journal line', 'exp_earned': 0}
+    
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    account_codes = [line['account_code'] for line in lines]
+    placeholders = ','.join(['%s'] * len(account_codes))
+    cur.execute(f"""
+        SELECT account_code FROM chart_of_accounts 
+        WHERE player_id = %s AND account_code IN ({placeholders})
+    """, (player_id, *account_codes))
+    valid_codes = [row['account_code'] for row in cur.fetchall()]
+    
+    for code in account_codes:
+        if code not in valid_codes:
+            cur.close()
+            conn.close()
+            return {'success': False, 'error': f'Invalid account code: {code}', 'exp_earned': 0}
+    
+    total_debits = sum(line['debit'] for line in lines)
+    total_credits = sum(line['credit'] for line in lines)
+    
+    if abs(total_debits - total_credits) > 0.01:
+        cur.close()
+        conn.close()
+        return {
+            'success': False,
+            'error': f'Debits (${total_debits:,.2f}) must equal Credits (${total_credits:,.2f})',
+            'exp_earned': 0
+        }
+    
+    # Get current period
+    cur.execute("""
+        SELECT period_id FROM accounting_periods 
+        WHERE player_id = %s AND is_closed = FALSE 
+        ORDER BY period_number DESC LIMIT 1
+    """, (player_id,))
+    period_result = cur.fetchone()
+    period_id = period_result['period_id'] if period_result else None
+    
+    # Create journal entry
+    cur.execute("""
+        INSERT INTO journal_entries 
+        (player_id, period_id, description, is_adjusting, total_debits, total_credits, is_posted)
+        VALUES (%s, %s, %s, %s, %s, %s, TRUE)
+        RETURNING entry_id
+    """, (player_id, period_id, description, is_adjusting, total_debits, total_credits))
+    
+    entry_id = cur.fetchone()['entry_id']
+    
+    # Create journal lines
+    for line in lines:
+        cur.execute("""
+            SELECT account_id FROM chart_of_accounts 
+            WHERE player_id = %s AND account_code = %s
+        """, (player_id, line['account_code']))
+        account_result = cur.fetchone()
+        
+        if account_result:
+            cur.execute("""
+                INSERT INTO journal_lines (entry_id, account_id, debit_amount, credit_amount)
+                VALUES (%s, %s, %s, %s)
+            """, (entry_id, account_result['account_id'], line.get('debit', 0), line.get('credit', 0)))
+    
+    # Award EXP for correct entry
+    exp_earned = 25 if is_adjusting else 15
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    return {
+        'success': True,
+        'entry_id': entry_id,
+        'total_debits': total_debits,
+        'total_credits': total_credits,
+        'exp_earned': exp_earned
+    }
+
+
+def get_journal_entries(player_id: int, period_id: int = None, limit: int = 20) -> list:
+    """Get player's journal entries, optionally filtered by period."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    if period_id:
+        cur.execute("""
+            SELECT je.entry_id, je.entry_date, je.description, je.total_debits, 
+                   je.total_credits, je.is_adjusting, je.is_closing
+            FROM journal_entries je
+            WHERE je.player_id = %s AND je.period_id = %s AND je.is_posted = TRUE
+            ORDER BY je.entry_date DESC
+            LIMIT %s
+        """, (player_id, period_id, limit))
+    else:
+        cur.execute("""
+            SELECT je.entry_id, je.entry_date, je.description, je.total_debits, 
+                   je.total_credits, je.is_adjusting, je.is_closing
+            FROM journal_entries je
+            WHERE je.player_id = %s AND je.is_posted = TRUE
+            ORDER BY je.entry_date DESC
+            LIMIT %s
+        """, (player_id, limit))
+    
+    entries = cur.fetchall()
+    cur.close()
+    conn.close()
+    return entries
+
+
+def get_journal_entry_lines(entry_id: int) -> list:
+    """Get the lines for a specific journal entry."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT jl.line_id, jl.debit_amount, jl.credit_amount,
+               ca.account_code, ca.account_name, ca.account_type
+        FROM journal_lines jl
+        JOIN chart_of_accounts ca ON jl.account_id = ca.account_id
+        WHERE jl.entry_id = %s
+        ORDER BY jl.debit_amount DESC, jl.credit_amount DESC
+    """, (entry_id,))
+    
+    lines = cur.fetchall()
+    cur.close()
+    conn.close()
+    return lines
+
+
+def get_trial_balance(player_id: int) -> dict:
+    """
+    Generate a trial balance from all posted journal entries.
+    Returns account balances and totals.
+    """
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    # Get all accounts with their debit/credit totals from journal lines
+    cur.execute("""
+        SELECT ca.account_code, ca.account_name, ca.account_type, ca.normal_balance,
+               COALESCE(SUM(jl.debit_amount), 0) as total_debits,
+               COALESCE(SUM(jl.credit_amount), 0) as total_credits
+        FROM chart_of_accounts ca
+        LEFT JOIN journal_lines jl ON ca.account_id = jl.account_id
+        LEFT JOIN journal_entries je ON jl.entry_id = je.entry_id AND je.is_posted = TRUE
+        WHERE ca.player_id = %s AND ca.is_active = TRUE
+        GROUP BY ca.account_id, ca.account_code, ca.account_name, ca.account_type, ca.normal_balance
+        ORDER BY ca.account_code
+    """, (player_id,))
+    
+    accounts = cur.fetchall()
+    
+    # Calculate balances based on normal balance type
+    trial_balance = []
+    total_debit_balance = 0
+    total_credit_balance = 0
+    
+    for acc in accounts:
+        net = float(acc['total_debits']) - float(acc['total_credits'])
+        
+        if acc['normal_balance'] == 'Debit':
+            debit_bal = net if net >= 0 else 0
+            credit_bal = abs(net) if net < 0 else 0
+        else:
+            credit_bal = abs(net) if net <= 0 else 0
+            debit_bal = net if net > 0 else 0
+        
+        if debit_bal != 0 or credit_bal != 0:
+            trial_balance.append({
+                'account_code': acc['account_code'],
+                'account_name': acc['account_name'],
+                'account_type': acc['account_type'],
+                'debit_balance': debit_bal,
+                'credit_balance': credit_bal
+            })
+            total_debit_balance += debit_bal
+            total_credit_balance += credit_bal
+    
+    cur.close()
+    conn.close()
+    
+    return {
+        'accounts': trial_balance,
+        'total_debits': total_debit_balance,
+        'total_credits': total_credit_balance,
+        'is_balanced': abs(total_debit_balance - total_credit_balance) < 0.01
+    }
+
+
+def get_income_statement(player_id: int) -> dict:
+    """Generate an income statement (P&L) from Revenue and Expense accounts."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    # Get Revenue accounts (4xxx)
+    cur.execute("""
+        SELECT ca.account_code, ca.account_name,
+               COALESCE(SUM(jl.credit_amount), 0) - COALESCE(SUM(jl.debit_amount), 0) as balance
+        FROM chart_of_accounts ca
+        LEFT JOIN journal_lines jl ON ca.account_id = jl.account_id
+        LEFT JOIN journal_entries je ON jl.entry_id = je.entry_id AND je.is_posted = TRUE
+        WHERE ca.player_id = %s AND ca.account_type = 'Revenue'
+        GROUP BY ca.account_id, ca.account_code, ca.account_name
+        HAVING COALESCE(SUM(jl.credit_amount), 0) - COALESCE(SUM(jl.debit_amount), 0) != 0
+        ORDER BY ca.account_code
+    """, (player_id,))
+    revenues = cur.fetchall()
+    
+    # Get Expense accounts (5xxx)
+    cur.execute("""
+        SELECT ca.account_code, ca.account_name,
+               COALESCE(SUM(jl.debit_amount), 0) - COALESCE(SUM(jl.credit_amount), 0) as balance
+        FROM chart_of_accounts ca
+        LEFT JOIN journal_lines jl ON ca.account_id = jl.account_id
+        LEFT JOIN journal_entries je ON jl.entry_id = je.entry_id AND je.is_posted = TRUE
+        WHERE ca.player_id = %s AND ca.account_type = 'Expense'
+        GROUP BY ca.account_id, ca.account_code, ca.account_name
+        HAVING COALESCE(SUM(jl.debit_amount), 0) - COALESCE(SUM(jl.credit_amount), 0) != 0
+        ORDER BY ca.account_code
+    """, (player_id,))
+    expenses = cur.fetchall()
+    
+    cur.close()
+    conn.close()
+    
+    total_revenue = sum(float(r['balance']) for r in revenues)
+    total_expenses = sum(float(e['balance']) for e in expenses)
+    net_income = total_revenue - total_expenses
+    
+    return {
+        'revenues': revenues,
+        'expenses': expenses,
+        'total_revenue': total_revenue,
+        'total_expenses': total_expenses,
+        'net_income': net_income
+    }
+
+
+def get_balance_sheet(player_id: int) -> dict:
+    """Generate a balance sheet from Asset, Liability, and Equity accounts."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    # Get Assets
+    cur.execute("""
+        SELECT ca.account_code, ca.account_name, ca.normal_balance,
+               COALESCE(SUM(jl.debit_amount), 0) - COALESCE(SUM(jl.credit_amount), 0) as balance
+        FROM chart_of_accounts ca
+        LEFT JOIN journal_lines jl ON ca.account_id = jl.account_id
+        LEFT JOIN journal_entries je ON jl.entry_id = je.entry_id AND je.is_posted = TRUE
+        WHERE ca.player_id = %s AND ca.account_type = 'Asset'
+        GROUP BY ca.account_id, ca.account_code, ca.account_name, ca.normal_balance
+        ORDER BY ca.account_code
+    """, (player_id,))
+    assets = [a for a in cur.fetchall() if float(a['balance']) != 0]
+    
+    # Get Liabilities
+    cur.execute("""
+        SELECT ca.account_code, ca.account_name,
+               COALESCE(SUM(jl.credit_amount), 0) - COALESCE(SUM(jl.debit_amount), 0) as balance
+        FROM chart_of_accounts ca
+        LEFT JOIN journal_lines jl ON ca.account_id = jl.account_id
+        LEFT JOIN journal_entries je ON jl.entry_id = je.entry_id AND je.is_posted = TRUE
+        WHERE ca.player_id = %s AND ca.account_type = 'Liability'
+        GROUP BY ca.account_id, ca.account_code, ca.account_name
+        ORDER BY ca.account_code
+    """, (player_id,))
+    liabilities = [l for l in cur.fetchall() if float(l['balance']) != 0]
+    
+    # Get Equity
+    cur.execute("""
+        SELECT ca.account_code, ca.account_name, ca.normal_balance,
+               CASE WHEN ca.normal_balance = 'Credit' 
+                    THEN COALESCE(SUM(jl.credit_amount), 0) - COALESCE(SUM(jl.debit_amount), 0)
+                    ELSE COALESCE(SUM(jl.debit_amount), 0) - COALESCE(SUM(jl.credit_amount), 0)
+               END as balance
+        FROM chart_of_accounts ca
+        LEFT JOIN journal_lines jl ON ca.account_id = jl.account_id
+        LEFT JOIN journal_entries je ON jl.entry_id = je.entry_id AND je.is_posted = TRUE
+        WHERE ca.player_id = %s AND ca.account_type = 'Equity'
+        GROUP BY ca.account_id, ca.account_code, ca.account_name, ca.normal_balance
+        ORDER BY ca.account_code
+    """, (player_id,))
+    equity = [e for e in cur.fetchall() if float(e['balance']) != 0]
+    
+    cur.close()
+    conn.close()
+    
+    total_assets = sum(float(a['balance']) for a in assets)
+    total_liabilities = sum(float(l['balance']) for l in liabilities)
+    total_equity = sum(float(e['balance']) for e in equity)
+    
+    return {
+        'assets': assets,
+        'liabilities': liabilities,
+        'equity': equity,
+        'total_assets': total_assets,
+        'total_liabilities': total_liabilities,
+        'total_equity': total_equity,
+        'is_balanced': abs(total_assets - (total_liabilities + total_equity)) < 0.01
+    }
+
+
+def process_pending_transaction(player_id: int, transaction_id: int, 
+                                debit_account: str, credit_account: str) -> dict:
+    """Process a pending transaction by creating a journal entry."""
+    if not debit_account or not credit_account:
+        return {'success': False, 'error': 'Invalid account codes provided', 'exp_earned': 0}
+    
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT account_code FROM chart_of_accounts 
+        WHERE player_id = %s AND account_code IN (%s, %s)
+    """, (player_id, debit_account, credit_account))
+    valid_accounts = [row['account_code'] for row in cur.fetchall()]
+    
+    if debit_account not in valid_accounts or credit_account not in valid_accounts:
+        cur.close()
+        conn.close()
+        return {'success': False, 'error': 'Invalid account codes - account not found', 'exp_earned': 0}
+    
+    cur.execute("""
+        SELECT transaction_id, description, amount 
+        FROM pending_transactions 
+        WHERE transaction_id = %s AND player_id = %s AND is_processed = FALSE
+    """, (transaction_id, player_id))
+    
+    txn = cur.fetchone()
+    if not txn:
+        cur.close()
+        conn.close()
+        return {'success': False, 'error': 'Transaction not found or already processed', 'exp_earned': 0}
+    
+    amount = float(txn['amount']) if txn['amount'] is not None else 0
+    if amount <= 0:
+        cur.close()
+        conn.close()
+        return {'success': False, 'error': 'Invalid transaction amount', 'exp_earned': 0}
+    
+    cur.close()
+    conn.close()
+    
+    lines = [
+        {'account_code': debit_account, 'debit': amount, 'credit': 0},
+        {'account_code': credit_account, 'debit': 0, 'credit': amount}
+    ]
+    
+    result = create_journal_entry(player_id, txn['description'], lines)
+    
+    if result['success']:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("UPDATE pending_transactions SET is_processed = TRUE WHERE transaction_id = %s", (transaction_id,))
+        conn.commit()
+        cur.close()
+        conn.close()
+    
+    return result

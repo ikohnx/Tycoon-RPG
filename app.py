@@ -777,5 +777,106 @@ def boss_challenges():
     
     return render_template('boss_challenges.html', stats=stats, bosses=bosses)
 
+
+@app.route('/accounting')
+def accounting():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    
+    from src.database import initialize_player_accounting
+    initialize_player_accounting(player_id)
+    
+    accounts = engine.get_player_chart_of_accounts(player_id)
+    period = engine.get_current_accounting_period(player_id)
+    pending_transactions = engine.get_pending_transactions(player_id)
+    journal_entries = engine.get_journal_entries(player_id)
+    trial_balance = engine.get_trial_balance(player_id)
+    income_statement = engine.get_income_statement(player_id)
+    balance_sheet = engine.get_balance_sheet(player_id)
+    
+    return render_template('accounting.html', 
+                          stats=stats,
+                          accounts=accounts,
+                          period=period,
+                          pending_transactions=pending_transactions,
+                          journal_entries=journal_entries,
+                          trial_balance=trial_balance,
+                          income_statement=income_statement,
+                          balance_sheet=balance_sheet)
+
+
+@app.route('/accounting/process', methods=['POST'])
+def accounting_process():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    transaction_id = request.form.get('transaction_id', type=int)
+    debit_account = request.form.get('debit_account')
+    credit_account = request.form.get('credit_account')
+    
+    if transaction_id and debit_account and credit_account:
+        result = engine.process_pending_transaction(player_id, transaction_id, debit_account, credit_account)
+        if result.get('success'):
+            flash(f"Transaction posted! +{result['exp_earned']} EXP earned.")
+        else:
+            flash(result.get('error', 'Failed to post transaction'))
+    
+    return redirect(url_for('accounting'))
+
+
+@app.route('/accounting/entry', methods=['POST'])
+def accounting_entry():
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    description = request.form.get('description', '').strip()
+    debit_account = request.form.get('debit_account', '').strip()
+    credit_account = request.form.get('credit_account', '').strip()
+    is_adjusting = request.form.get('is_adjusting') == 'on'
+    
+    try:
+        debit_amount = float(request.form.get('debit_amount', 0) or 0)
+        credit_amount = float(request.form.get('credit_amount', 0) or 0)
+    except (ValueError, TypeError):
+        flash('Invalid amount values!')
+        return redirect(url_for('accounting'))
+    
+    if debit_amount <= 0 or credit_amount <= 0:
+        flash('Amounts must be greater than zero!')
+        return redirect(url_for('accounting'))
+    
+    if abs(debit_amount - credit_amount) > 0.01:
+        flash('Debits must equal Credits!')
+        return redirect(url_for('accounting'))
+    
+    if not debit_account or not credit_account:
+        flash('Please select valid accounts!')
+        return redirect(url_for('accounting'))
+    
+    if not description:
+        flash('Please provide a description!')
+        return redirect(url_for('accounting'))
+    
+    lines = [
+        {'account_code': debit_account, 'debit': debit_amount, 'credit': 0},
+        {'account_code': credit_account, 'debit': 0, 'credit': credit_amount}
+    ]
+    
+    result = engine.create_journal_entry(player_id, description, lines, is_adjusting)
+    
+    if result.get('success'):
+        flash(f"Journal entry posted! +{result['exp_earned']} EXP earned.")
+    else:
+        flash(result.get('error', 'Failed to create entry'))
+    
+    return redirect(url_for('accounting'))
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
