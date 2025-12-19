@@ -157,6 +157,12 @@ def hub():
     engine.load_player(player_id)
     stats = engine.get_player_stats()
     
+    # Check if player is brand new and redirect to tutorial
+    from src.game_engine import get_tutorial_progress
+    tutorial_progress = get_tutorial_progress(player_id)
+    completed_count = sum(1 for s in tutorial_progress if s.get('is_completed', False))
+    is_new_player = completed_count == 0 and stats.get('scenarios_completed', 0) == 0
+    
     for disc, data in stats['disciplines'].items():
         data['title'] = get_level_title(data['level'])
         data['progress_bar'] = get_progress_bar(data['total_exp'], data['level'])
@@ -171,7 +177,8 @@ def hub():
     leaderboard = engine.get_leaderboard(5)
     
     return render_template('hub.html', stats=stats, energy=energy, login_status=login_status, 
-                          idle_income=idle_income, prestige_status=prestige_status, leaderboard=leaderboard)
+                          idle_income=idle_income, prestige_status=prestige_status, leaderboard=leaderboard,
+                          is_new_player=is_new_player)
 
 @app.route('/scenarios/<discipline>')
 @login_required

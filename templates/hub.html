@@ -711,4 +711,43 @@
         <span>Stats</span>
     </a>
 </nav>
+
+{% if is_new_player %}
+<div class="modal fade show" id="welcomeModal" tabindex="-1" style="display: block; background: rgba(0,0,0,0.8);">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border: 2px solid #ffd700;">
+            <div class="modal-header border-0">
+                <h4 class="modal-title w-100 text-center" style="color: #ffd700; font-family: 'Cinzel', serif;">
+                    <i class="bi bi-stars"></i> Welcome, Entrepreneur!
+                </h4>
+            </div>
+            <div class="modal-body text-center py-4">
+                <p class="lead" style="color: #e8e8e8;">
+                    You're about to embark on a journey to become a Business Tycoon!
+                </p>
+                <p style="color: #aaa;">
+                    This game will teach you real-world business skills through interactive scenarios and challenges.
+                </p>
+                <div class="mt-4">
+                    <h5 style="color: #50c878;"><i class="bi bi-lightbulb"></i> Quick Tips:</h5>
+                    <ul class="text-start" style="color: #e8e8e8; list-style: none; padding-left: 0;">
+                        <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i> Start with the <strong>Tutorial</strong> to learn the basics</li>
+                        <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i> Complete <strong>scenarios</strong> to gain experience</li>
+                        <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i> Master all <strong>6 business disciplines</strong></li>
+                        <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i> Build your empire and climb the <strong>leaderboard</strong></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer border-0 justify-content-center gap-3">
+                <a href="{{ url_for('tutorial') }}" class="btn btn-lg" style="background: linear-gradient(135deg, #50c878, #3a9d5d); color: white; font-weight: bold;">
+                    <i class="bi bi-mortarboard"></i> Start Tutorial
+                </a>
+                <button type="button" class="btn btn-lg btn-outline-light" onclick="document.getElementById('welcomeModal').style.display='none'">
+                    Explore Hub
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 {% endblock %}
