@@ -8,7 +8,7 @@ Handles:
 - Game state management
 """
 
-from src.database import get_connection
+from src.database import get_connection, return_connection
 from src.leveling import (
     calculate_weighted_exp, 
     check_level_up, 
@@ -164,7 +164,7 @@ class Player:
         self.achievements = [dict(row) for row in cur.fetchall()]
         
         cur.close()
-        conn.close()
+        return_connection(conn)
         
     def save_to_db(self):
         """Save player data to database."""
@@ -195,7 +195,7 @@ class Player:
         
         conn.commit()
         cur.close()
-        conn.close()
+        return_connection(conn)
     
     def get_discipline_level(self, discipline: str) -> int:
         """Get the current level for a discipline."""
@@ -258,7 +258,7 @@ class GameEngine:
         
         conn.commit()
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         player = Player(player_id)
         player.name = name
@@ -291,7 +291,7 @@ class GameEngine:
         players = cur.fetchall()
         
         cur.close()
-        conn.close()
+        return_connection(conn)
         return players
     
     def authenticate_player(self, player_id: int, password: str = None) -> dict:
@@ -305,7 +305,7 @@ class GameEngine:
         player = cur.fetchone()
         
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         if not player:
             return {"success": False, "error": "Player not found"}
@@ -335,7 +335,7 @@ class GameEngine:
                                    (new_hash, player_id))
                 upgrade_conn.commit()
                 upgrade_cur.close()
-                upgrade_conn.close()
+                upgrade_return_connection(conn)
         
         return {"success": True, "player_id": player['player_id'], "player_name": player['player_name']}
     
@@ -348,7 +348,7 @@ class GameEngine:
         result = cur.fetchone()
         
         cur.close()
-        conn.close()
+        return_connection(conn)
         return result['count'] > 0
     
     def get_scenario_by_id(self, scenario_id: int) -> dict:
@@ -360,7 +360,7 @@ class GameEngine:
         scenario = cur.fetchone()
         
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         return dict(scenario) if scenario else None
     
@@ -374,7 +374,7 @@ class GameEngine:
         result = cur.fetchone()
         
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         if result and result.get('training_content'):
             try:
@@ -465,7 +465,7 @@ class GameEngine:
         result = cur.fetchone()
         
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         return result is not None
     
@@ -501,7 +501,7 @@ class GameEngine:
         scenarios = cur.fetchall()
         
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         self.available_scenarios = scenarios
         return scenarios
@@ -540,7 +540,7 @@ class GameEngine:
         scenarios = [dict(row) for row in cur.fetchall()]
         
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         return scenarios
     
@@ -619,7 +619,7 @@ class GameEngine:
         """, (self.current_player.player_id, scenario['scenario_id'], choice, stars))
         conn.commit()
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         self.current_player.save_to_db()
         
@@ -707,7 +707,7 @@ class GameEngine:
         scenario = cur.fetchone()
         
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         if not scenario:
             return None
@@ -749,7 +749,7 @@ class GameEngine:
         
         if not scenario:
             cur.close()
-            conn.close()
+            return_connection(conn)
             return {"error": "Scenario not found"}
         
         challenge_config = {}
@@ -911,7 +911,7 @@ class GameEngine:
         
         conn.commit()
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         return {
             "success": True,
@@ -994,7 +994,7 @@ class GameEngine:
         cur.execute("SELECT * FROM items ORDER BY purchase_price")
         items = [dict(row) for row in cur.fetchall()]
         cur.close()
-        conn.close()
+        return_connection(conn)
         return items
     
     def purchase_item(self, item_id: int) -> dict:
@@ -1010,13 +1010,13 @@ class GameEngine:
         
         if not item:
             cur.close()
-            conn.close()
+            return_connection(conn)
             return {"error": "Item not found"}
         
         price = float(item['purchase_price'])
         if self.current_player.cash < price:
             cur.close()
-            conn.close()
+            return_connection(conn)
             return {"error": "Not enough cash"}
         
         self.current_player.cash -= price
@@ -1029,7 +1029,7 @@ class GameEngine:
         
         conn.commit()
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         self.current_player.save_to_db()
         self.current_player.load_from_db()
@@ -1052,7 +1052,7 @@ class GameEngine:
         """, (self.current_player.player_id, self.current_player.world))
         npcs = [dict(row) for row in cur.fetchall()]
         cur.close()
-        conn.close()
+        return_connection(conn)
         return npcs
     
     def interact_with_npc(self, npc_id: int) -> dict:
@@ -1068,7 +1068,7 @@ class GameEngine:
         
         if not npc:
             cur.close()
-            conn.close()
+            return_connection(conn)
             return {"error": "NPC not found"}
         
         cur.execute("""
@@ -1084,7 +1084,7 @@ class GameEngine:
         result = cur.fetchone()
         conn.commit()
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         return {"success": True, "npc": dict(npc), "relationship_level": result['relationship_level']}
     
@@ -1116,7 +1116,7 @@ class GameEngine:
                 quests['available'].append(quest)
         
         cur.close()
-        conn.close()
+        return_connection(conn)
         return quests
     
     def start_quest(self, quest_id: int) -> dict:
@@ -1132,7 +1132,7 @@ class GameEngine:
         
         if not quest:
             cur.close()
-            conn.close()
+            return_connection(conn)
             return {"error": "Quest not found"}
         
         cur.execute("""
@@ -1143,7 +1143,7 @@ class GameEngine:
         
         conn.commit()
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         return {"success": True, "quest": dict(quest)}
     
@@ -1163,7 +1163,7 @@ class GameEngine:
         """, (self.current_player.player_id,))
         achievements = [dict(row) for row in cur.fetchall()]
         cur.close()
-        conn.close()
+        return_connection(conn)
         return achievements
 
     def get_random_event(self) -> dict:
@@ -1187,7 +1187,7 @@ class GameEngine:
         
         event = cur.fetchone()
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         return dict(event) if event else None
 
@@ -1204,7 +1204,7 @@ class GameEngine:
         
         if not event:
             cur.close()
-            conn.close()
+            return_connection(conn)
             return {"error": "Event not found"}
         
         if choice.upper() == 'A':
@@ -1227,7 +1227,7 @@ class GameEngine:
         
         conn.commit()
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         return {
             "event_name": event['event_name'],
@@ -1254,7 +1254,7 @@ class GameEngine:
         
         all_milestones = [dict(row) for row in cur.fetchall()]
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         earned = [m for m in all_milestones if m['earned']]
         available = [m for m in all_milestones if not m['earned']]
@@ -1275,7 +1275,7 @@ class GameEngine:
         """, (self.current_player.player_id,))
         history = [dict(row) for row in cur.fetchall()]
         cur.close()
-        conn.close()
+        return_connection(conn)
         return history
 
     def get_rivals(self) -> list:
@@ -1299,7 +1299,7 @@ class GameEngine:
         
         rivals = [dict(row) for row in cur.fetchall()]
         cur.close()
-        conn.close()
+        return_connection(conn)
         return rivals
 
     def get_weekly_challenges(self) -> dict:
@@ -1322,7 +1322,7 @@ class GameEngine:
         
         all_challenges = [dict(row) for row in cur.fetchall()]
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         active = [c for c in all_challenges if not c['is_completed']]
         completed = [c for c in all_challenges if c['is_completed']]
@@ -1336,7 +1336,7 @@ class GameEngine:
         cur.execute("SELECT * FROM avatar_options ORDER BY option_type, unlock_level, unlock_cost")
         options = [dict(row) for row in cur.fetchall()]
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         categorized = {"hair": [], "outfit": [], "accessory": [], "color": []}
         for opt in options:
@@ -1356,7 +1356,7 @@ class GameEngine:
         cur.execute("SELECT * FROM player_avatar WHERE player_id = %s", (self.current_player.player_id,))
         avatar = cur.fetchone()
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         if avatar:
             return dict(avatar)
@@ -1382,7 +1382,7 @@ class GameEngine:
         
         if total_cost > self.current_player.cash:
             cur.close()
-            conn.close()
+            return_connection(conn)
             return {"error": f"Not enough cash! Need ${total_cost:.2f}"}
         
         cur.execute("""
@@ -1397,7 +1397,7 @@ class GameEngine:
         
         conn.commit()
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         return {"success": True}
     
@@ -1449,7 +1449,7 @@ class GameEngine:
         next_recharge_seconds = (5 - (minutes_elapsed % 5)) * 60 if current_energy < max_energy else 0
         
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         return {
             "current_energy": current_energy,
@@ -1481,7 +1481,7 @@ class GameEngine:
         result = cur.fetchone()
         conn.commit()
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         return {"success": True, "new_energy": result['current_energy']}
     
@@ -1502,7 +1502,7 @@ class GameEngine:
         result = cur.fetchone()
         conn.commit()
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         if result:
             return {"success": True, "new_energy": result['current_energy'], "max_energy": result['max_energy']}
@@ -1560,7 +1560,7 @@ class GameEngine:
         reward = cur.fetchone()
         
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         return {
             "current_streak": current_streak,
@@ -1614,7 +1614,7 @@ class GameEngine:
         self.current_player.save_to_db()
         conn.commit()
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         return {
             "success": True,
@@ -1662,7 +1662,7 @@ class GameEngine:
             accumulated = 0
         
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         return {
             "gold_per_minute": gold_per_minute,
@@ -1692,7 +1692,7 @@ class GameEngine:
         total_levels = result['total_levels'] if result['total_levels'] else 6
         
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         base_rate = 0.5
         scenario_bonus = completed * 0.1
@@ -1732,7 +1732,7 @@ class GameEngine:
         
         conn.commit()
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         return {
             "success": True,
@@ -1768,7 +1768,7 @@ class GameEngine:
         by_wealth = [dict(row) for row in cur.fetchall()]
         
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         return {
             "by_stars": by_stars,
@@ -1792,7 +1792,7 @@ class GameEngine:
         equipped = cur.fetchall()
         
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         bonuses = {"charisma": 0, "intelligence": 0, "luck": 0, "negotiation": 0}
         for item in equipped:
@@ -1825,7 +1825,7 @@ class GameEngine:
         active_advisors = cur.fetchall()
         
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         bonuses = {"exp_boost": 0, "gold_boost": 0, "reputation_boost": 0}
         
@@ -1860,7 +1860,7 @@ class GameEngine:
         recruited_ids = {r['advisor_id'] for r in recruited}
         
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         return {
             "all_advisors": [dict(a) for a in all_advisors],
@@ -1881,7 +1881,7 @@ class GameEngine:
         
         if not advisor:
             cur.close()
-            conn.close()
+            return_connection(conn)
             return {"error": "Advisor not found"}
         
         cur.execute("""
@@ -1889,13 +1889,13 @@ class GameEngine:
         """, (self.current_player.player_id, advisor_id))
         if cur.fetchone():
             cur.close()
-            conn.close()
+            return_connection(conn)
             return {"error": "Already recruited this advisor"}
         
         cost = float(advisor['unlock_cost'])
         if self.current_player.cash < cost:
             cur.close()
-            conn.close()
+            return_connection(conn)
             return {"error": f"Not enough gold! Need ${cost:,.0f}"}
         
         self.current_player.cash -= cost
@@ -1908,7 +1908,7 @@ class GameEngine:
         
         conn.commit()
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         return {
             "success": True,
@@ -1938,7 +1938,7 @@ class GameEngine:
         owned_ids = {o['equipment_id'] for o in owned}
         
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         return {
             "all_equipment": [dict(e) for e in all_equipment],
@@ -1959,7 +1959,7 @@ class GameEngine:
         
         if not equip:
             cur.close()
-            conn.close()
+            return_connection(conn)
             return {"error": "Equipment not found"}
         
         cur.execute("""
@@ -1967,13 +1967,13 @@ class GameEngine:
         """, (self.current_player.player_id, equipment_id))
         if cur.fetchone():
             cur.close()
-            conn.close()
+            return_connection(conn)
             return {"error": "Already own this equipment"}
         
         cost = float(equip['purchase_price'])
         if self.current_player.cash < cost:
             cur.close()
-            conn.close()
+            return_connection(conn)
             return {"error": f"Not enough gold! Need ${cost:,.0f}"}
         
         self.current_player.cash -= cost
@@ -1986,7 +1986,7 @@ class GameEngine:
         
         conn.commit()
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         return {
             "success": True,
@@ -2013,7 +2013,7 @@ class GameEngine:
         
         if not equip:
             cur.close()
-            conn.close()
+            return_connection(conn)
             return {"error": "You don't own this equipment"}
         
         slot = equip['slot_type']
@@ -2030,7 +2030,7 @@ class GameEngine:
         
         conn.commit()
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         return {
             "success": True,
@@ -2070,7 +2070,7 @@ class GameEngine:
         next_gold_bonus = 0.15
         
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         return {
             "prestige_level": row['prestige_level'],
@@ -2125,7 +2125,7 @@ class GameEngine:
         
         conn.commit()
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         return {
             "success": True,
@@ -2181,7 +2181,7 @@ class GameEngine:
             missions = cur.fetchall()
         
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         return {
             "missions": [dict(m) for m in missions],
@@ -2210,17 +2210,17 @@ class GameEngine:
         
         if not mission:
             cur.close()
-            conn.close()
+            return_connection(conn)
             return {"error": "Mission not found"}
         
         if not mission['is_completed']:
             cur.close()
-            conn.close()
+            return_connection(conn)
             return {"error": "Mission not completed yet"}
         
         if mission['is_claimed']:
             cur.close()
-            conn.close()
+            return_connection(conn)
             return {"error": "Already claimed this reward"}
         
         reward_type = mission['reward_type']
@@ -2239,7 +2239,7 @@ class GameEngine:
         self.current_player.save_to_db()
         conn.commit()
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         return {
             "success": True,
@@ -2282,12 +2282,12 @@ class GameEngine:
             """)
         else:
             cur.close()
-            conn.close()
+            return_connection(conn)
             return []
         
         results = cur.fetchall()
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         return [dict(r) for r in results]
     
@@ -2309,7 +2309,7 @@ class GameEngine:
         player_power = self._calculate_player_power()
         
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         return {
             "rivals": [dict(r) for r in rivals],
@@ -2342,7 +2342,7 @@ class GameEngine:
         result = cur.fetchone()
         level_power = (result['total'] or 6) * 10
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         return base_power + stat_power + equipment_power + level_power
     
@@ -2359,7 +2359,7 @@ class GameEngine:
         
         if not rival:
             cur.close()
-            conn.close()
+            return_connection(conn)
             return {"error": "Rival not found"}
         
         player_power = self._calculate_player_power()
@@ -2387,7 +2387,7 @@ class GameEngine:
         
         conn.commit()
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         return {
             "success": True,
@@ -2472,7 +2472,7 @@ class GameEngine:
             }
         
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         return campaign_data
     
@@ -2536,7 +2536,7 @@ class GameEngine:
             })
         
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         return boss_scenarios
 
@@ -2616,7 +2616,7 @@ def get_player_chart_of_accounts(player_id: int) -> list:
     
     accounts = cur.fetchall()
     cur.close()
-    conn.close()
+    return_connection(conn)
     return accounts
 
 
@@ -2635,7 +2635,7 @@ def get_current_accounting_period(player_id: int) -> dict:
     
     period = cur.fetchone()
     cur.close()
-    conn.close()
+    return_connection(conn)
     return period
 
 
@@ -2654,7 +2654,7 @@ def get_pending_transactions(player_id: int) -> list:
     
     transactions = cur.fetchall()
     cur.close()
-    conn.close()
+    return_connection(conn)
     return transactions
 
 
@@ -2676,7 +2676,7 @@ def create_pending_transaction(player_id: int, transaction_type: str, descriptio
     transaction_id = cur.fetchone()['transaction_id']
     conn.commit()
     cur.close()
-    conn.close()
+    return_connection(conn)
     return transaction_id
 
 
@@ -2713,7 +2713,7 @@ def create_journal_entry(player_id: int, description: str, lines: list,
     for code in account_codes:
         if code not in valid_codes:
             cur.close()
-            conn.close()
+            return_connection(conn)
             return {'success': False, 'error': f'Invalid account code: {code}', 'exp_earned': 0}
     
     total_debits = sum(line['debit'] for line in lines)
@@ -2721,7 +2721,7 @@ def create_journal_entry(player_id: int, description: str, lines: list,
     
     if abs(total_debits - total_credits) > 0.01:
         cur.close()
-        conn.close()
+        return_connection(conn)
         return {
             'success': False,
             'error': f'Debits (${total_debits:,.2f}) must equal Credits (${total_credits:,.2f})',
@@ -2766,7 +2766,7 @@ def create_journal_entry(player_id: int, description: str, lines: list,
     
     conn.commit()
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     return {
         'success': True,
@@ -2803,7 +2803,7 @@ def get_journal_entries(player_id: int, period_id: int = None, limit: int = 20) 
     
     entries = cur.fetchall()
     cur.close()
-    conn.close()
+    return_connection(conn)
     return entries
 
 
@@ -2823,7 +2823,7 @@ def get_journal_entry_lines(entry_id: int) -> list:
     
     lines = cur.fetchall()
     cur.close()
-    conn.close()
+    return_connection(conn)
     return lines
 
 
@@ -2877,7 +2877,7 @@ def get_trial_balance(player_id: int) -> dict:
             total_credit_balance += credit_bal
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     return {
         'accounts': trial_balance,
@@ -2921,7 +2921,7 @@ def get_income_statement(player_id: int) -> dict:
     expenses = cur.fetchall()
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     total_revenue = sum(float(r['balance']) for r in revenues)
     total_expenses = sum(float(e['balance']) for e in expenses)
@@ -2984,7 +2984,7 @@ def get_balance_sheet(player_id: int) -> dict:
     equity = [e for e in cur.fetchall() if float(e['balance']) != 0]
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     total_assets = sum(float(a['balance']) for a in assets)
     total_liabilities = sum(float(l['balance']) for l in liabilities)
@@ -3018,7 +3018,7 @@ def process_pending_transaction(player_id: int, transaction_id: int,
     
     if debit_account not in valid_accounts or credit_account not in valid_accounts:
         cur.close()
-        conn.close()
+        return_connection(conn)
         return {'success': False, 'error': 'Invalid account codes - account not found', 'exp_earned': 0}
     
     cur.execute("""
@@ -3030,17 +3030,17 @@ def process_pending_transaction(player_id: int, transaction_id: int,
     txn = cur.fetchone()
     if not txn:
         cur.close()
-        conn.close()
+        return_connection(conn)
         return {'success': False, 'error': 'Transaction not found or already processed', 'exp_earned': 0}
     
     amount = float(txn['amount']) if txn['amount'] is not None else 0
     if amount <= 0:
         cur.close()
-        conn.close()
+        return_connection(conn)
         return {'success': False, 'error': 'Invalid transaction amount', 'exp_earned': 0}
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     lines = [
         {'account_code': debit_account, 'debit': amount, 'credit': 0},
@@ -3055,7 +3055,7 @@ def process_pending_transaction(player_id: int, transaction_id: int,
         cur.execute("UPDATE pending_transactions SET is_processed = TRUE WHERE transaction_id = %s", (transaction_id,))
         conn.commit()
         cur.close()
-        conn.close()
+        return_connection(conn)
     
     return result
 
@@ -3092,7 +3092,7 @@ def get_player_initiatives(player_id: int) -> list:
         initiative['progress_pct'] = int((completed_tasks / total_tasks * 100) if total_tasks > 0 else 0)
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     return initiatives
 
 
@@ -3112,7 +3112,7 @@ def get_active_initiative(player_id: int) -> dict:
     result = cur.fetchone()
     if not result:
         cur.close()
-        conn.close()
+        return_connection(conn)
         return None
     
     initiative = dict(result)
@@ -3138,7 +3138,7 @@ def get_active_initiative(player_id: int) -> dict:
         task['dependencies'] = [dict(row) for row in cur.fetchall()]
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     return initiative
 
 
@@ -3158,7 +3158,7 @@ def create_initiative_from_template(player_id: int, template_index: int = 0) -> 
     cur.execute("SELECT COUNT(*) as count FROM project_initiatives WHERE player_id = %s AND status IN ('planning', 'in_progress')", (player_id,))
     if cur.fetchone()['count'] > 0:
         cur.close()
-        conn.close()
+        return_connection(conn)
         return {'success': False, 'error': 'Complete your current project first'}
     
     cur.execute("""
@@ -3203,7 +3203,7 @@ def create_initiative_from_template(player_id: int, template_index: int = 0) -> 
     
     conn.commit()
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     return {'success': True, 'initiative_id': initiative_id, 'title': template['title']}
 
@@ -3222,7 +3222,7 @@ def calculate_critical_path(initiative_id: int):
     
     if not tasks:
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     cur.execute("UPDATE project_tasks SET is_critical_path = FALSE WHERE initiative_id = %s", (initiative_id,))
@@ -3247,7 +3247,7 @@ def calculate_critical_path(initiative_id: int):
     
     conn.commit()
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def advance_project_week(player_id: int, initiative_id: int) -> dict:
@@ -3264,12 +3264,12 @@ def advance_project_week(player_id: int, initiative_id: int) -> dict:
     initiative = cur.fetchone()
     if not initiative:
         cur.close()
-        conn.close()
+        return_connection(conn)
         return {'success': False, 'error': 'Project not found'}
     
     if initiative['status'] == 'completed':
         cur.close()
-        conn.close()
+        return_connection(conn)
         return {'success': False, 'error': 'Project already completed'}
     
     current_week = initiative['current_week']
@@ -3365,7 +3365,7 @@ def advance_project_week(player_id: int, initiative_id: int) -> dict:
     
     conn.commit()
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     return {
         'success': True,
@@ -3393,7 +3393,7 @@ def get_player_resources(player_id: int) -> list:
     
     resources = [dict(row) for row in cur.fetchall()]
     cur.close()
-    conn.close()
+    return_connection(conn)
     return resources
 
 
@@ -3412,7 +3412,7 @@ def get_scheduling_challenges(player_level: int = 1) -> list:
     
     challenges = [dict(row) for row in cur.fetchall()]
     cur.close()
-    conn.close()
+    return_connection(conn)
     return challenges
 
 
@@ -3430,7 +3430,7 @@ def get_scheduling_challenge(challenge_id: int) -> dict:
     
     result = cur.fetchone()
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     if result:
         import json
@@ -3522,7 +3522,7 @@ def get_cash_flow_challenges(player_level: int = 1) -> list:
     
     challenges = [dict(row) for row in cur.fetchall()]
     cur.close()
-    conn.close()
+    return_connection(conn)
     return challenges
 
 
@@ -3540,7 +3540,7 @@ def get_cash_flow_challenge(challenge_id: int) -> dict:
     
     result = cur.fetchone()
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     if result:
         import json
@@ -3624,7 +3624,7 @@ def create_cash_flow_forecast(player_id: int, forecast_name: str, starting_cash:
     
     conn.commit()
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     return {'success': True, 'forecast_id': forecast_id}
 
@@ -3645,7 +3645,7 @@ def get_player_cash_flow_forecast(player_id: int) -> dict:
     forecast = cur.fetchone()
     if not forecast:
         cur.close()
-        conn.close()
+        return_connection(conn)
         return None
     
     forecast = dict(forecast)
@@ -3661,7 +3661,7 @@ def get_player_cash_flow_forecast(player_id: int) -> dict:
     forecast['periods'] = [dict(row) for row in cur.fetchall()]
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     return forecast
 
 
@@ -3702,7 +3702,7 @@ def create_business_plan(player_id: int, plan_name: str, business_type: str = No
     
     conn.commit()
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     return {'success': True, 'plan_id': plan_id}
 
@@ -3721,7 +3721,7 @@ def get_player_business_plans(player_id: int) -> list:
     
     plans = [dict(row) for row in cur.fetchall()]
     cur.close()
-    conn.close()
+    return_connection(conn)
     return plans
 
 
@@ -3740,7 +3740,7 @@ def get_business_plan(plan_id: int) -> dict:
     plan = cur.fetchone()
     if not plan:
         cur.close()
-        conn.close()
+        return_connection(conn)
         return None
     
     plan = dict(plan)
@@ -3764,7 +3764,7 @@ def get_business_plan(plan_id: int) -> dict:
     plan['completion_pct'] = sum(1 for s in sections if s['is_complete']) / len(sections) * 100 if sections else 0
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     return plan
 
 
@@ -3795,7 +3795,7 @@ def update_business_plan_section(section_id: int, content: str) -> dict:
     
     conn.commit()
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     return {'success': True, 'score': score, 'feedback': feedback, 'is_complete': is_complete}
 
@@ -3835,7 +3835,7 @@ def get_negotiation_scenarios(player_level: int = 1) -> list:
     
     scenarios = [dict(row) for row in cur.fetchall()]
     cur.close()
-    conn.close()
+    return_connection(conn)
     return scenarios
 
 
@@ -3854,7 +3854,7 @@ def get_negotiation_scenario(scenario_id: int) -> dict:
     
     result = cur.fetchone()
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     if result:
         import json
@@ -3881,7 +3881,7 @@ def start_negotiation(player_id: int, scenario_id: int) -> dict:
     negotiation_id = cur.fetchone()['negotiation_id']
     conn.commit()
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     return {'success': True, 'negotiation_id': negotiation_id}
 
@@ -3903,7 +3903,7 @@ def submit_negotiation_offer(negotiation_id: int, offer: dict) -> dict:
     result = cur.fetchone()
     if not result:
         cur.close()
-        conn.close()
+        return_connection(conn)
         return {'success': False, 'error': 'Negotiation not found'}
     
     neg = dict(result)
@@ -3949,7 +3949,7 @@ def submit_negotiation_offer(negotiation_id: int, offer: dict) -> dict:
         
         conn.commit()
         cur.close()
-        conn.close()
+        return_connection(conn)
         
         return {
             'success': True,
@@ -3968,7 +3968,7 @@ def submit_negotiation_offer(negotiation_id: int, offer: dict) -> dict:
     
     conn.commit()
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     return {
         'success': True,
@@ -4018,7 +4018,7 @@ def get_risk_categories() -> list:
     categories = [dict(row) for row in cur.fetchall()]
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     return categories
 
 
@@ -4038,7 +4038,7 @@ def get_player_risks(player_id: int) -> list:
     
     risks = [dict(row) for row in cur.fetchall()]
     cur.close()
-    conn.close()
+    return_connection(conn)
     return risks
 
 
@@ -4057,7 +4057,7 @@ def add_player_risk(player_id: int, category_id: int, risk_name: str, descriptio
     result = cur.fetchone()
     conn.commit()
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     return {'success': True, 'risk_id': result['risk_id'], 'risk_score': result['risk_score']}
 
@@ -4074,7 +4074,7 @@ def update_risk_mitigation(risk_id: int, mitigation: str) -> dict:
     
     conn.commit()
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     return {'success': True}
 
@@ -4091,7 +4091,7 @@ def initialize_player_supply_chain(player_id: int) -> bool:
     cur.execute("SELECT COUNT(*) as count FROM supply_chain_products WHERE player_id = %s", (player_id,))
     if cur.fetchone()['count'] > 0:
         cur.close()
-        conn.close()
+        return_connection(conn)
         return False
     
     default_products = [
@@ -4125,7 +4125,7 @@ def initialize_player_supply_chain(player_id: int) -> bool:
     
     conn.commit()
     cur.close()
-    conn.close()
+    return_connection(conn)
     return True
 
 
@@ -4152,7 +4152,7 @@ def get_player_inventory(player_id: int) -> list:
             prod['status'] = 'reorder'
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     return products
 
 
@@ -4171,7 +4171,7 @@ def get_player_suppliers(player_id: int) -> list:
     
     suppliers = [dict(row) for row in cur.fetchall()]
     cur.close()
-    conn.close()
+    return_connection(conn)
     return suppliers
 
 
@@ -4184,14 +4184,14 @@ def create_purchase_order(player_id: int, supplier_id: int, product_id: int, qua
     product = cur.fetchone()
     if not product:
         cur.close()
-        conn.close()
+        return_connection(conn)
         return {'success': False, 'error': 'Product not found'}
     
     cur.execute("SELECT lead_time_days, minimum_order FROM suppliers WHERE supplier_id = %s", (supplier_id,))
     supplier = cur.fetchone()
     if not supplier:
         cur.close()
-        conn.close()
+        return_connection(conn)
         return {'success': False, 'error': 'Supplier not found'}
     
     total_cost = float(product['unit_cost']) * quantity
@@ -4205,7 +4205,7 @@ def create_purchase_order(player_id: int, supplier_id: int, product_id: int, qua
     order_id = cur.fetchone()['order_id']
     conn.commit()
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     return {'success': True, 'order_id': order_id, 'total_cost': total_cost}
 
@@ -4221,7 +4221,7 @@ def get_market_segments() -> list:
     cur.execute("SELECT * FROM market_segments ORDER BY segment_size DESC")
     segments = cur.fetchall()
     cur.close()
-    conn.close()
+    return_connection(conn)
     return [dict(s) for s in segments]
 
 
@@ -4236,7 +4236,7 @@ def get_market_challenges(player_level: int = 1) -> list:
     """, (player_level,))
     challenges = cur.fetchall()
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     result = []
     for ch in challenges:
@@ -4256,7 +4256,7 @@ def get_market_challenge(challenge_id: int) -> dict:
     cur.execute("SELECT * FROM market_challenges WHERE challenge_id = %s", (challenge_id,))
     ch = cur.fetchone()
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     if not ch:
         return None
@@ -4315,7 +4315,7 @@ def submit_market_challenge(player_id: int, challenge_id: int, answer: dict) -> 
         """, (exp_earned, exp_earned, player_id))
         conn.commit()
         cur.close()
-        conn.close()
+        return_connection(conn)
     
     return {
         'is_correct': is_correct,
@@ -4332,7 +4332,7 @@ def initialize_player_market(player_id: int) -> bool:
     cur.execute("SELECT COUNT(*) as count FROM player_market_position WHERE player_id = %s", (player_id,))
     if cur.fetchone()['count'] > 0:
         cur.close()
-        conn.close()
+        return_connection(conn)
         return True
     
     cur.execute("SELECT segment_id FROM market_segments")
@@ -4347,7 +4347,7 @@ def initialize_player_market(player_id: int) -> bool:
     
     conn.commit()
     cur.close()
-    conn.close()
+    return_connection(conn)
     return True
 
 
@@ -4363,7 +4363,7 @@ def get_player_market_position(player_id: int) -> list:
     """, (player_id,))
     positions = cur.fetchall()
     cur.close()
-    conn.close()
+    return_connection(conn)
     return [dict(p) for p in positions]
 
 
@@ -4378,7 +4378,7 @@ def get_employee_roles() -> list:
     cur.execute("SELECT * FROM employee_roles ORDER BY department, base_salary")
     roles = cur.fetchall()
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     result = []
     for r in roles:
@@ -4400,7 +4400,7 @@ def get_hr_challenges(player_level: int = 1) -> list:
     """, (player_level,))
     challenges = cur.fetchall()
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     result = []
     for ch in challenges:
@@ -4420,7 +4420,7 @@ def get_hr_challenge(challenge_id: int) -> dict:
     cur.execute("SELECT * FROM hr_challenges WHERE challenge_id = %s", (challenge_id,))
     ch = cur.fetchone()
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     if not ch:
         return None
@@ -4478,7 +4478,7 @@ def submit_hr_challenge(player_id: int, challenge_id: int, answer: dict) -> dict
         """, (exp_earned, exp_earned, player_id))
         conn.commit()
         cur.close()
-        conn.close()
+        return_connection(conn)
     
     return {
         'is_correct': is_correct,
@@ -4500,7 +4500,7 @@ def get_player_employees(player_id: int) -> list:
     """, (player_id,))
     employees = cur.fetchall()
     cur.close()
-    conn.close()
+    return_connection(conn)
     return [dict(e) for e in employees]
 
 
@@ -4518,7 +4518,7 @@ def hire_employee(player_id: int, role_id: int, employee_name: str, salary: floa
     employee_id = cur.fetchone()['employee_id']
     conn.commit()
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     return {'success': True, 'employee_id': employee_id}
 
@@ -4549,7 +4549,7 @@ def conduct_performance_review(employee_id: int, rating: int, feedback: str, dev
     
     conn.commit()
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     return {'success': True, 'review_id': review_id, 'salary_adjustment_pct': salary_adjustment, 'exp_earned': exp_earned}
 
@@ -4577,7 +4577,7 @@ def get_investor_profiles() -> list:
     cur.execute("SELECT * FROM investor_profiles ORDER BY investor_name")
     investors = cur.fetchall()
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     result = []
     for inv in investors:
@@ -4611,7 +4611,7 @@ def create_pitch_deck(player_id: int, deck_name: str, funding_stage: str = 'seed
     
     conn.commit()
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     return {'success': True, 'deck_id': deck_id}
 
@@ -4627,7 +4627,7 @@ def get_player_pitch_decks(player_id: int) -> list:
     """, (player_id,))
     decks = cur.fetchall()
     cur.close()
-    conn.close()
+    return_connection(conn)
     return [dict(d) for d in decks]
 
 
@@ -4640,7 +4640,7 @@ def get_pitch_deck(deck_id: int) -> dict:
     deck = cur.fetchone()
     if not deck:
         cur.close()
-        conn.close()
+        return_connection(conn)
         return None
     
     deck = dict(deck)
@@ -4668,7 +4668,7 @@ def get_pitch_deck(deck_id: int) -> dict:
     deck['overall_score'] = total_score // len(sections) if sections else 0
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     return deck
 
 
@@ -4681,7 +4681,7 @@ def update_pitch_section(section_id: int, content: str) -> dict:
     section = cur.fetchone()
     if not section:
         cur.close()
-        conn.close()
+        return_connection(conn)
         return {'success': False}
     
     score = 0
@@ -4715,7 +4715,7 @@ def update_pitch_section(section_id: int, content: str) -> dict:
     
     conn.commit()
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     return {'success': True, 'score': score, 'feedback': feedback}
 
@@ -4729,7 +4729,7 @@ def start_pitch_session(player_id: int, deck_id: int, investor_id: int) -> dict:
     investor = cur.fetchone()
     if not investor:
         cur.close()
-        conn.close()
+        return_connection(conn)
         return {'success': False, 'error': 'Investor not found'}
     
     investor = dict(investor)
@@ -4759,7 +4759,7 @@ def start_pitch_session(player_id: int, deck_id: int, investor_id: int) -> dict:
     session_id = cur.fetchone()['session_id']
     conn.commit()
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     return {
         'success': True,
@@ -4786,7 +4786,7 @@ def submit_pitch_answers(session_id: int, answers: list) -> dict:
     
     if not session:
         cur.close()
-        conn.close()
+        return_connection(conn)
         return {'success': False, 'error': 'Session not found'}
     
     session = dict(session)
@@ -4830,7 +4830,7 @@ def submit_pitch_answers(session_id: int, answers: list) -> dict:
     
     conn.commit()
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     messages = {
         'rejected': "The investor passed on this opportunity. Keep refining your pitch!",
@@ -4868,7 +4868,7 @@ def get_player_analytics(player_id):
     
     if not player:
         cur.close()
-        conn.close()
+        return_connection(conn)
         return None
     
     disciplines = {
@@ -4906,7 +4906,7 @@ def get_player_analytics(player_id):
                 break
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     return {
         'disciplines': disciplines,
@@ -4934,7 +4934,7 @@ def get_player_skill_chart_data(player_id):
     player = cur.fetchone()
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     if not player:
         return None
@@ -4976,7 +4976,7 @@ def get_player_achievements(player_id):
     achievements = cur.fetchall()
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     result = []
     for ach in achievements:
@@ -5034,7 +5034,7 @@ def update_achievement_progress(player_id, category, increment=1):
     
     conn.commit()
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     return unlocked
 
@@ -5059,7 +5059,7 @@ def get_active_competitions():
     competitions = cur.fetchall()
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     return [dict(c) for c in competitions]
 
@@ -5080,7 +5080,7 @@ def get_competition_leaderboard(active_id, limit=10):
     entries = cur.fetchall()
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     return [dict(e) for e in entries]
 
@@ -5100,12 +5100,12 @@ def join_competition(player_id, active_id):
         result = cur.fetchone()
         conn.commit()
         cur.close()
-        conn.close()
+        return_connection(conn)
         return {'success': True, 'joined': result is not None}
     except Exception as e:
         conn.rollback()
         cur.close()
-        conn.close()
+        return_connection(conn)
         return {'success': False, 'error': str(e)}
 
 
@@ -5123,7 +5123,7 @@ def get_player_league(player_id):
     
     if not player:
         cur.close()
-        conn.close()
+        return_connection(conn)
         return None
     
     total_exp = player['total_exp'] or 0
@@ -5136,7 +5136,7 @@ def get_player_league(player_id):
     league = cur.fetchone()
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     if league:
         return {
@@ -5168,7 +5168,7 @@ def get_advanced_simulations(player_level=1):
     simulations = cur.fetchall()
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     return [dict(s) for s in simulations]
 
@@ -5182,7 +5182,7 @@ def get_simulation(simulation_id):
     sim = cur.fetchone()
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     if sim:
         result = dict(sim)
@@ -5208,7 +5208,7 @@ def start_simulation(player_id, simulation_id):
     
     conn.commit()
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     return {'success': True, 'progress_id': result['id']}
 
@@ -5228,7 +5228,7 @@ def submit_simulation_decision(progress_id, decision):
     
     if not progress:
         cur.close()
-        conn.close()
+        return_connection(conn)
         return {'success': False, 'error': 'Progress not found'}
     
     decisions = progress['decisions'] if progress['decisions'] else []
@@ -5246,7 +5246,7 @@ def submit_simulation_decision(progress_id, decision):
     
     conn.commit()
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     return {'success': True, 'step': new_step}
 
@@ -5273,7 +5273,7 @@ def complete_simulation(progress_id, final_score):
     
     conn.commit()
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     return {'success': True, 'exp_earned': exp_earned}
 
@@ -5304,7 +5304,7 @@ def get_tutorial_progress(player_id):
     completed = {row['tutorial_section']: row['is_completed'] for row in cur.fetchall()}
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     result = []
     for section in TUTORIAL_SECTIONS:
@@ -5330,7 +5330,7 @@ def complete_tutorial_section(player_id, section_id):
     
     conn.commit()
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     return {'success': True}
 
@@ -5367,7 +5367,7 @@ def get_story_arcs(player_id, player_level=1):
         })
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     return arcs
 
 
@@ -5384,7 +5384,7 @@ def get_story_chapter(arc_id, chapter_number):
     
     chapter = cur.fetchone()
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     if chapter:
         return {
@@ -5425,7 +5425,7 @@ def start_story_arc(player_id, arc_id):
     result = cur.fetchone()
     conn.commit()
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     return {'success': result is not None, 'started': result is not None}
 
@@ -5438,7 +5438,7 @@ def make_story_choice(player_id, arc_id, chapter_number, choice):
     chapter = get_story_chapter(arc_id, chapter_number)
     if not chapter:
         cur.close()
-        conn.close()
+        return_connection(conn)
         return {'success': False, 'error': 'Chapter not found'}
     
     choice_idx = {'a': 0, 'b': 1, 'c': 2}.get(choice.lower(), 0)
@@ -5463,7 +5463,7 @@ def make_story_choice(player_id, arc_id, chapter_number, choice):
     
     conn.commit()
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     return {
         'success': True,
@@ -5503,7 +5503,7 @@ def get_advisor_relationships(player_id):
         })
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     return advisors
 
 
@@ -5529,7 +5529,7 @@ def get_advisor_skill_tree(advisor_id):
         })
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     return skills
 
 
@@ -5571,7 +5571,7 @@ def get_mentorship_missions(player_id, advisor_id=None):
         })
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     return missions
 
 
@@ -5592,7 +5592,7 @@ def increase_advisor_affinity(player_id, advisor_id, amount=1):
     result = cur.fetchone()
     conn.commit()
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     return {'success': True, 'new_affinity': result['affinity_level'] if result else amount}
 
@@ -5630,7 +5630,7 @@ def get_business_partners(player_id, player_reputation=50):
         })
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     return partners
 
 
@@ -5671,7 +5671,7 @@ def get_joint_ventures(player_id, partner_id=None):
         })
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     return ventures
 
 
@@ -5700,7 +5700,7 @@ def get_networking_events(player_reputation=50):
         })
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     return events
 
 
@@ -5714,7 +5714,7 @@ def attend_networking_event(player_id, event_id):
     
     if not event:
         cur.close()
-        conn.close()
+        return_connection(conn)
         return {'success': False, 'error': 'Event not found'}
     
     contact_names = ['Alex Chen', 'Jordan Smith', 'Morgan Lee', 'Taylor Davis', 'Casey Brown', 'Riley Johnson']
@@ -5729,7 +5729,7 @@ def attend_networking_event(player_id, event_id):
     
     conn.commit()
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     return {
         'success': True,
@@ -5762,7 +5762,7 @@ def get_player_network(player_id):
         })
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     return contacts
 
 
@@ -5797,7 +5797,7 @@ def get_industry_tracks(player_id):
         })
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     return tracks
 
 
@@ -5825,7 +5825,7 @@ def get_industry_certifications(track_id, player_level=0):
         })
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     return certs
 
 
@@ -5851,7 +5851,7 @@ def get_industry_challenges(track_id, player_level=0):
         })
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     return challenges
 
 
@@ -5886,7 +5886,7 @@ def get_active_market_events():
         })
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     return events
 
 
@@ -5899,7 +5899,7 @@ def get_current_market_cycle():
     cycle = cur.fetchone()
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     if cycle:
         return {
@@ -5939,7 +5939,7 @@ def get_global_challenges():
         })
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     return challenges
 
 
@@ -5964,7 +5964,7 @@ def contribute_to_global_challenge(player_id, challenge_id, amount):
     
     conn.commit()
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     return {'success': True}
 
@@ -5992,7 +5992,7 @@ def get_breaking_news():
         })
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     return news
 
 
@@ -6006,7 +6006,7 @@ def respond_to_news(player_id, news_id, response):
     
     if not news:
         cur.close()
-        conn.close()
+        return_connection(conn)
         return {'success': False, 'error': 'News not found'}
     
     quality = 70 if response == 'optimal' else 50
@@ -6020,7 +6020,7 @@ def respond_to_news(player_id, news_id, response):
     
     conn.commit()
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     return {'success': True, 'exp_earned': exp_earned}
 
@@ -6058,7 +6058,7 @@ def get_guilds(player_id=None):
         })
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     return guilds
 
 
@@ -6076,7 +6076,7 @@ def get_player_guild(player_id):
     
     result = cur.fetchone()
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     if result:
         return {
@@ -6110,12 +6110,12 @@ def create_guild(player_id, guild_name, guild_tag, description=""):
         
         conn.commit()
         cur.close()
-        conn.close()
+        return_connection(conn)
         return {'success': True, 'guild_id': guild_id}
     except Exception as e:
         conn.rollback()
         cur.close()
-        conn.close()
+        return_connection(conn)
         return {'success': False, 'error': str(e)}
 
 
@@ -6127,7 +6127,7 @@ def join_guild(player_id, guild_id):
     cur.execute("SELECT COUNT(*) as cnt FROM guild_members WHERE player_id = %s", (player_id,))
     if cur.fetchone()['cnt'] > 0:
         cur.close()
-        conn.close()
+        return_connection(conn)
         return {'success': False, 'error': 'Already in a guild'}
     
     try:
@@ -6137,12 +6137,12 @@ def join_guild(player_id, guild_id):
         """, (guild_id, player_id))
         conn.commit()
         cur.close()
-        conn.close()
+        return_connection(conn)
         return {'success': True}
     except:
         conn.rollback()
         cur.close()
-        conn.close()
+        return_connection(conn)
         return {'success': False, 'error': 'Could not join guild'}
 
 
@@ -6168,7 +6168,7 @@ def get_coop_challenges():
         })
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     return challenges
 
 
@@ -6199,7 +6199,7 @@ def get_trade_listings(player_id=None):
         })
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     return listings
 
 
@@ -6229,7 +6229,7 @@ def leave_guild(player_id):
         return {'success': False, 'error': 'Could not leave guild'}
     finally:
         cur.close()
-        conn.close()
+        return_connection(conn)
 
 
 def join_coop_challenge(player_id, challenge_id):
@@ -6243,7 +6243,7 @@ def join_coop_challenge(player_id, challenge_id):
         
         if not challenge:
             cur.close()
-            conn.close()
+            return_connection(conn)
             return {'success': False, 'error': 'Challenge not found or inactive'}
         
         cur.execute("""
@@ -6253,12 +6253,12 @@ def join_coop_challenge(player_id, challenge_id):
         """, (challenge_id, player_id))
         conn.commit()
         cur.close()
-        conn.close()
+        return_connection(conn)
         return {'success': True}
     except:
         conn.rollback()
         cur.close()
-        conn.close()
+        return_connection(conn)
         return {'success': False, 'error': 'Could not join challenge'}
 
 
@@ -6284,7 +6284,7 @@ def get_player_inventory(player_id):
         })
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     return items
 
 
@@ -6323,7 +6323,7 @@ def create_trade_listing(player_id, item_id, price):
         return {'success': False, 'error': 'Could not create listing'}
     finally:
         cur.close()
-        conn.close()
+        return_connection(conn)
 
 
 def buy_trade_item(player_id, listing_id):
@@ -6370,7 +6370,7 @@ def buy_trade_item(player_id, listing_id):
         return {'success': False, 'error': 'Transaction failed'}
     finally:
         cur.close()
-        conn.close()
+        return_connection(conn)
 
 
 def cancel_trade_listing(player_id, listing_id):
@@ -6401,7 +6401,7 @@ def cancel_trade_listing(player_id, listing_id):
         return {'success': False, 'error': 'Could not cancel listing'}
     finally:
         cur.close()
-        conn.close()
+        return_connection(conn)
 
 
 def claim_battle_pass_tier(player_id, tier):
@@ -6420,18 +6420,18 @@ def claim_battle_pass_tier(player_id, tier):
         
         if not progress:
             cur.close()
-            conn.close()
+            return_connection(conn)
             return {'success': False, 'error': 'No battle pass found'}
         
         if tier > progress['current_tier']:
             cur.close()
-            conn.close()
+            return_connection(conn)
             return {'success': False, 'error': 'Tier not reached yet'}
         
         claimed = progress['claimed_tiers'] or []
         if tier in claimed:
             cur.close()
-            conn.close()
+            return_connection(conn)
             return {'success': False, 'error': 'Already claimed'}
         
         claimed.append(tier)
@@ -6444,12 +6444,12 @@ def claim_battle_pass_tier(player_id, tier):
         
         conn.commit()
         cur.close()
-        conn.close()
+        return_connection(conn)
         return {'success': True, 'reward': reward_name}
     except:
         conn.rollback()
         cur.close()
-        conn.close()
+        return_connection(conn)
         return {'success': False, 'error': 'Could not claim reward'}
 
 
@@ -6466,12 +6466,12 @@ def attack_limited_boss(player_id, boss_id):
         
         if not boss:
             cur.close()
-            conn.close()
+            return_connection(conn)
             return {'success': False, 'error': 'Boss not found or inactive'}
         
         if boss['current_hp'] <= 0:
             cur.close()
-            conn.close()
+            return_connection(conn)
             return {'success': False, 'error': 'Boss already defeated'}
         
         damage = random.randint(500, 2000)
@@ -6495,12 +6495,12 @@ def attack_limited_boss(player_id, boss_id):
         
         conn.commit()
         cur.close()
-        conn.close()
+        return_connection(conn)
         return {'success': True, 'damage': damage, 'exp_earned': exp_earned, 'boss_defeated': boss_defeated}
     except:
         conn.rollback()
         cur.close()
-        conn.close()
+        return_connection(conn)
         return {'success': False, 'error': 'Attack failed'}
 
 
@@ -6518,14 +6518,14 @@ def get_current_season():
     
     if not season:
         cur.close()
-        conn.close()
+        return_connection(conn)
         return None
     
     cur.execute("SELECT * FROM battle_passes WHERE season_id = %s", (season['season_id'],))
     battle_pass = cur.fetchone()
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     return {
         'season_id': season['season_id'],
@@ -6556,7 +6556,7 @@ def get_player_battle_pass(player_id):
     
     result = cur.fetchone()
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     if result:
         return {
@@ -6595,7 +6595,7 @@ def get_seasonal_events():
         })
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     return events
 
 
@@ -6626,7 +6626,7 @@ def get_limited_bosses():
         })
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     return bosses
 
 
@@ -6651,7 +6651,7 @@ def get_learning_profile(player_id):
         conn.commit()
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     return {
         'learning_style': profile['learning_style'],
@@ -6674,7 +6674,7 @@ def get_adaptive_difficulty(player_id, discipline):
     
     result = cur.fetchone()
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     if result:
         return float(result['current_difficulty'])
@@ -6704,7 +6704,7 @@ def update_adaptive_difficulty(player_id, discipline, success):
     
     conn.commit()
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def get_learning_recommendations(player_id):
@@ -6731,7 +6731,7 @@ def get_learning_recommendations(player_id):
         })
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     return recommendations
 
 
@@ -6749,7 +6749,7 @@ def get_coach_message(player_id, trigger_type):
     
     message = cur.fetchone()
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     if message:
         return message['message_text']
@@ -6785,7 +6785,7 @@ def get_expanded_worlds(player_level=1):
         })
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     return worlds
 
 
@@ -6814,7 +6814,7 @@ def get_case_studies(discipline=None):
         })
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     return cases
 
 
@@ -6838,7 +6838,7 @@ def get_guest_mentors():
         })
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     return mentors
 
 
@@ -6862,7 +6862,7 @@ def get_advanced_disciplines():
         })
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     return disciplines
 
 
@@ -6887,7 +6887,7 @@ def get_player_preferences(player_id):
         conn.commit()
     
     cur.close()
-    conn.close()
+    return_connection(conn)
     
     return {
         'theme': prefs['theme'],
@@ -6926,5 +6926,5 @@ def update_player_preferences(player_id, preferences):
     
     conn.commit()
     cur.close()
-    conn.close()
+    return_connection(conn)
     return {'success': True}

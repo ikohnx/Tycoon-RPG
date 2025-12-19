@@ -2145,7 +2145,7 @@ def init_database():
     
     conn.commit()
     cur.close()
-    conn.close()
+    return_connection(conn)
     print("Database initialized successfully!")
 
 
@@ -2159,7 +2159,7 @@ def seed_scenarios():
     if result['count'] > 0:
         print("Scenarios already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     scenarios = [
@@ -2425,7 +2425,7 @@ def seed_scenarios():
     conn.commit()
     print(f"Seeded {len(scenarios)} Marketing scenarios successfully!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_achievements():
@@ -2438,7 +2438,7 @@ def seed_achievements():
     if result['count'] > 0:
         print("Achievements already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     achievements = [
@@ -2463,7 +2463,7 @@ def seed_achievements():
     conn.commit()
     print(f"Seeded {len(achievements)} achievements successfully!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_items():
@@ -2476,7 +2476,7 @@ def seed_items():
     if result['count'] > 0:
         print("Items already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     items = [
@@ -2499,7 +2499,7 @@ def seed_items():
     conn.commit()
     print(f"Seeded {len(items)} items successfully!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_npcs():
@@ -2512,7 +2512,7 @@ def seed_npcs():
     if result['count'] > 0:
         print("NPCs already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     npcs = [
@@ -2532,7 +2532,7 @@ def seed_npcs():
     conn.commit()
     print(f"Seeded {len(npcs)} NPCs successfully!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_quests():
@@ -2545,7 +2545,7 @@ def seed_quests():
     if result['count'] > 0:
         print("Quests already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     quests = [
@@ -2565,7 +2565,7 @@ def seed_quests():
     conn.commit()
     print(f"Seeded {len(quests)} quests successfully!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_random_events():
@@ -2578,7 +2578,7 @@ def seed_random_events():
     if result['count'] > 0:
         print("Random events already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     events = [
@@ -2623,7 +2623,7 @@ def seed_random_events():
     conn.commit()
     print(f"Seeded {len(events)} random events successfully!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_rivals():
@@ -2636,7 +2636,7 @@ def seed_rivals():
     if result['count'] > 0:
         print("Rivals already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     rivals = [
@@ -2656,7 +2656,7 @@ def seed_rivals():
     conn.commit()
     print(f"Seeded {len(rivals)} rivals successfully!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_milestones():
@@ -2669,7 +2669,7 @@ def seed_milestones():
     if result['count'] > 0:
         print("Milestones already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     milestones = [
@@ -2696,7 +2696,7 @@ def seed_milestones():
     conn.commit()
     print(f"Seeded {len(milestones)} milestones successfully!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_weekly_challenges():
@@ -2709,7 +2709,7 @@ def seed_weekly_challenges():
     if result['count'] > 0:
         print("Weekly challenges already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     from datetime import date, timedelta
@@ -2733,7 +2733,7 @@ def seed_weekly_challenges():
     conn.commit()
     print(f"Seeded {len(challenges)} weekly challenges successfully!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_avatar_options():
@@ -2746,7 +2746,7 @@ def seed_avatar_options():
     if result['count'] > 0:
         print("Avatar options already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     options = [
@@ -2781,7 +2781,7 @@ def seed_avatar_options():
     conn.commit()
     print(f"Seeded {len(options)} avatar options successfully!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_fantasy_scenarios():
@@ -2794,7 +2794,7 @@ def seed_fantasy_scenarios():
     if result['count'] > 0:
         print("Fantasy scenarios already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     scenarios = [
@@ -2841,7 +2841,7 @@ def seed_fantasy_scenarios():
     conn.commit()
     print(f"Seeded {len(scenarios)} Fantasy scenarios successfully!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_industrial_scenarios():
@@ -2854,7 +2854,7 @@ def seed_industrial_scenarios():
     if result['count'] > 0:
         print("Industrial scenarios already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     scenarios = [
@@ -2966,7 +2966,7 @@ def seed_industrial_scenarios():
     conn.commit()
     print(f"Seeded {len(scenarios)} Industrial scenarios successfully!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_industrial_events():
@@ -2979,7 +2979,7 @@ def seed_industrial_events():
     if result['count'] > 0:
         print("Industrial events already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     events = [
@@ -3030,7 +3030,7 @@ def seed_industrial_events():
     conn.commit()
     print(f"Seeded {len(events)} Industrial random events successfully!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_industrial_rivals():
@@ -3043,7 +3043,7 @@ def seed_industrial_rivals():
     if result['count'] > 0:
         print("Industrial rivals already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     rivals = [
@@ -3068,7 +3068,7 @@ def seed_industrial_rivals():
     conn.commit()
     print(f"Seeded {len(rivals)} Industrial rivals successfully!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_modern_restaurant_full():
@@ -3081,7 +3081,7 @@ def seed_modern_restaurant_full():
     if result['count'] > 0:
         print("Modern Restaurant full disciplines already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     scenarios = [
@@ -3238,7 +3238,7 @@ def seed_modern_restaurant_full():
     conn.commit()
     print(f"Seeded {len(scenarios)} Modern Restaurant scenarios for all disciplines!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_marketing_curriculum():
@@ -3251,7 +3251,7 @@ def seed_marketing_curriculum():
     if result['count'] > 0:
         print("Marketing curriculum already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     scenarios = [
@@ -3423,7 +3423,7 @@ def seed_marketing_curriculum():
     conn.commit()
     print(f"Seeded {len(scenarios)} Marketing Curriculum scenarios (Levels 1-10)!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_accounting_curriculum():
@@ -3436,7 +3436,7 @@ def seed_accounting_curriculum():
     if result['count'] > 0:
         print("Accounting curriculum already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     scenarios = [
@@ -3608,7 +3608,7 @@ def seed_accounting_curriculum():
     conn.commit()
     print(f"Seeded {len(scenarios)} Accounting Curriculum scenarios (Levels 1-10)!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_finance_curriculum():
@@ -3621,7 +3621,7 @@ def seed_finance_curriculum():
     if result['count'] > 0:
         print("Finance curriculum already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     scenarios = [
@@ -4103,7 +4103,7 @@ def seed_finance_curriculum():
     conn.commit()
     print(f"Seeded {len(scenarios)} Finance Curriculum scenarios (Levels 1-10, 3 worlds)!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_legal_curriculum():
@@ -4123,7 +4123,7 @@ def seed_legal_curriculum():
     if result['count'] >= 30:
         print("Legal curriculum already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     scenarios = [
@@ -4605,7 +4605,7 @@ def seed_legal_curriculum():
     conn.commit()
     print(f"Seeded {len(scenarios)} Legal Curriculum scenarios (Levels 1-10, 3 worlds)!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_operations_curriculum():
@@ -4625,7 +4625,7 @@ def seed_operations_curriculum():
     if result['count'] >= 30:
         print("Operations curriculum already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     scenarios = [
@@ -5107,7 +5107,7 @@ def seed_operations_curriculum():
     conn.commit()
     print(f"Seeded {len(scenarios)} Operations Curriculum scenarios (Levels 1-10, 3 worlds)!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_hr_curriculum():
@@ -5127,7 +5127,7 @@ def seed_hr_curriculum():
     if result['count'] >= 30:
         print("HR curriculum already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     scenarios = [
@@ -5609,7 +5609,7 @@ def seed_hr_curriculum():
     conn.commit()
     print(f"Seeded {len(scenarios)} HR Curriculum scenarios (Levels 1-10, 3 worlds)!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_strategy_curriculum():
@@ -5631,7 +5631,7 @@ def seed_strategy_curriculum():
     if result['count'] >= 30:
         print("Strategy curriculum already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     scenarios = [
@@ -6113,7 +6113,7 @@ def seed_strategy_curriculum():
     conn.commit()
     print(f"Seeded {len(scenarios)} Strategy Curriculum scenarios (Levels 1-10, 3 worlds)!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_daily_login_rewards():
@@ -6126,7 +6126,7 @@ def seed_daily_login_rewards():
     if result['count'] > 0:
         print("Daily login rewards already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     rewards = [
@@ -6148,7 +6148,7 @@ def seed_daily_login_rewards():
     conn.commit()
     print("Seeded 7 daily login rewards!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_advisors():
@@ -6161,7 +6161,7 @@ def seed_advisors():
     if result['count'] > 0:
         print("Advisors already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     advisors = [
@@ -6189,7 +6189,7 @@ def seed_advisors():
     conn.commit()
     print("Seeded 12 advisors!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_equipment():
@@ -6202,7 +6202,7 @@ def seed_equipment():
     if result['count'] > 0:
         print("Equipment already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     equipment = [
@@ -6227,7 +6227,7 @@ def seed_equipment():
     conn.commit()
     print("Seeded 9 equipment items!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_daily_missions():
@@ -6240,7 +6240,7 @@ def seed_daily_missions():
     if result['count'] > 0:
         print("Daily missions already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     missions = [
@@ -6262,7 +6262,7 @@ def seed_daily_missions():
     conn.commit()
     print("Seeded 6 daily missions!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_interactive_challenges():
@@ -6276,7 +6276,7 @@ def seed_interactive_challenges():
     if result['count'] > 0:
         print("Interactive challenges already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     challenges = [
@@ -6490,7 +6490,7 @@ def seed_interactive_challenges():
     conn.commit()
     print(f"Seeded {len(challenges)} interactive challenges!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_advanced_challenges():
@@ -6504,7 +6504,7 @@ def seed_advanced_challenges():
     if result['count'] > 0:
         print("Advanced challenges already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     challenges = [
@@ -6621,7 +6621,7 @@ def seed_advanced_challenges():
     conn.commit()
     print(f"Seeded {len(challenges)} advanced challenges!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def get_default_chart_of_accounts():
@@ -6673,7 +6673,7 @@ def initialize_player_accounting(player_id):
     cur.execute("SELECT COUNT(*) as count FROM chart_of_accounts WHERE player_id = %s", (player_id,))
     if cur.fetchone()['count'] > 0:
         cur.close()
-        conn.close()
+        return_connection(conn)
         return False
     
     # Create default chart of accounts
@@ -6725,7 +6725,7 @@ def initialize_player_accounting(player_id):
     
     conn.commit()
     cur.close()
-    conn.close()
+    return_connection(conn)
     return True
 
 
@@ -6738,7 +6738,7 @@ def seed_scheduling_challenges():
     if cur.fetchone()['count'] > 0:
         print("Scheduling challenges already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     import json
@@ -6865,7 +6865,7 @@ def seed_scheduling_challenges():
     conn.commit()
     print(f"Seeded {len(challenges)} scheduling challenges!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def get_project_templates():
@@ -6923,7 +6923,7 @@ def initialize_player_projects(player_id):
     cur.execute("SELECT COUNT(*) as count FROM project_resources WHERE player_id = %s", (player_id,))
     if cur.fetchone()['count'] > 0:
         cur.close()
-        conn.close()
+        return_connection(conn)
         return False
     
     default_resources = [
@@ -6940,7 +6940,7 @@ def initialize_player_projects(player_id):
     
     conn.commit()
     cur.close()
-    conn.close()
+    return_connection(conn)
     return True
 
 
@@ -6953,7 +6953,7 @@ def seed_cash_flow_challenges():
     if cur.fetchone()['count'] > 0:
         print("Cash flow challenges already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     import json
@@ -7079,7 +7079,7 @@ def seed_cash_flow_challenges():
     conn.commit()
     print(f"Seeded {len(challenges)} cash flow challenges!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_negotiation_scenarios():
@@ -7091,7 +7091,7 @@ def seed_negotiation_scenarios():
     if cur.fetchone()['count'] > 0:
         print("Negotiation scenarios already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     import json
@@ -7170,7 +7170,7 @@ def seed_negotiation_scenarios():
     conn.commit()
     print(f"Seeded {len(scenarios)} negotiation scenarios!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_risk_categories():
@@ -7182,7 +7182,7 @@ def seed_risk_categories():
     if cur.fetchone()['count'] > 0:
         print("Risk categories already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     categories = [
@@ -7205,7 +7205,7 @@ def seed_risk_categories():
     conn.commit()
     print(f"Seeded {len(categories)} risk categories!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_market_simulation():
@@ -7217,7 +7217,7 @@ def seed_market_simulation():
     if cur.fetchone()['count'] > 0:
         print("Market simulation already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     segments = [
@@ -7311,7 +7311,7 @@ def seed_market_simulation():
     conn.commit()
     print(f"Seeded {len(segments)} market segments and {len(challenges)} market challenges!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_hr_management():
@@ -7323,7 +7323,7 @@ def seed_hr_management():
     if cur.fetchone()['count'] > 0:
         print("HR management already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     roles = [
@@ -7445,7 +7445,7 @@ def seed_hr_management():
     conn.commit()
     print(f"Seeded {len(roles)} employee roles and {len(challenges)} HR challenges!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_investor_pitch():
@@ -7457,7 +7457,7 @@ def seed_investor_pitch():
     if cur.fetchone()['count'] > 0:
         print("Investor pitch already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     templates = [
@@ -7518,7 +7518,7 @@ def seed_investor_pitch():
     conn.commit()
     print(f"Seeded {len(templates)} pitch templates and {len(investors)} investor profiles!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_learning_analytics():
@@ -7530,7 +7530,7 @@ def seed_learning_analytics():
     if cur.fetchone()['count'] > 0:
         print("Learning analytics already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     recommendations = [
@@ -7563,7 +7563,7 @@ def seed_learning_analytics():
     conn.commit()
     print(f"Seeded {len(recommendations)} learning recommendations!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_educational_achievements():
@@ -7575,7 +7575,7 @@ def seed_educational_achievements():
     if cur.fetchone()['count'] > 0:
         print("Educational achievements already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     achievements = [
@@ -7611,7 +7611,7 @@ def seed_educational_achievements():
     conn.commit()
     print(f"Seeded {len(achievements)} educational achievements!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_competitions():
@@ -7623,7 +7623,7 @@ def seed_competitions():
     if cur.fetchone()['count'] > 0:
         print("Competitions already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     comp_types = [
@@ -7660,7 +7660,7 @@ def seed_competitions():
     conn.commit()
     print(f"Seeded {len(comp_types)} competition types and {len(leagues)} leagues!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_advanced_simulations():
@@ -7672,7 +7672,7 @@ def seed_advanced_simulations():
     if cur.fetchone()['count'] > 0:
         print("Advanced simulations already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     simulations = [
@@ -7712,7 +7712,7 @@ def seed_advanced_simulations():
     conn.commit()
     print(f"Seeded {len(simulations)} advanced simulations!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_story_arcs():
@@ -7724,7 +7724,7 @@ def seed_story_arcs():
     if cur.fetchone()['count'] > 0:
         print("Story arcs already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     arcs = [
@@ -7778,7 +7778,7 @@ def seed_story_arcs():
     conn.commit()
     print(f"Seeded {len(arcs)} story arcs with chapters!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_mentorship_system():
@@ -7790,7 +7790,7 @@ def seed_mentorship_system():
     if cur.fetchone()['count'] > 0:
         print("Mentorship system already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     cur.execute("SELECT advisor_id, advisor_name, discipline_specialty FROM advisors LIMIT 5")
@@ -7832,7 +7832,7 @@ def seed_mentorship_system():
     conn.commit()
     print("Mentorship system seeded!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_business_network():
@@ -7844,7 +7844,7 @@ def seed_business_network():
     if cur.fetchone()['count'] > 0:
         print("Business network already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     partners = [
@@ -7895,7 +7895,7 @@ def seed_business_network():
     conn.commit()
     print("Business network seeded!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_industry_tracks():
@@ -7907,7 +7907,7 @@ def seed_industry_tracks():
     if cur.fetchone()['count'] > 0:
         print("Industry tracks already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     tracks = [
@@ -7961,7 +7961,7 @@ def seed_industry_tracks():
     conn.commit()
     print("Industry tracks seeded!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_market_events():
@@ -7973,7 +7973,7 @@ def seed_market_events():
     if cur.fetchone()['count'] > 0:
         print("Market events already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     events = [
@@ -8037,7 +8037,7 @@ def seed_market_events():
     conn.commit()
     print("Market events seeded!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 # ============================================================================
@@ -8053,7 +8053,7 @@ def seed_phase5_social():
     if cur.fetchone()['count'] > 0:
         print("Phase 5 social features already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     coop_challenges = [
@@ -8093,7 +8093,7 @@ def seed_phase5_social():
     conn.commit()
     print("Phase 5 social features seeded!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_phase5_seasons():
@@ -8105,7 +8105,7 @@ def seed_phase5_seasons():
     if cur.fetchone()['count'] > 0:
         print("Phase 5 seasons already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     from datetime import datetime, timedelta
@@ -8177,7 +8177,7 @@ def seed_phase5_seasons():
     conn.commit()
     print("Phase 5 seasons seeded!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 def seed_phase5_content():
@@ -8189,7 +8189,7 @@ def seed_phase5_content():
     if cur.fetchone()['count'] > 0:
         print("Phase 5 content already seeded.")
         cur.close()
-        conn.close()
+        return_connection(conn)
         return
     
     worlds = [
@@ -8283,7 +8283,7 @@ def seed_phase5_content():
     conn.commit()
     print("Phase 5 content seeded!")
     cur.close()
-    conn.close()
+    return_connection(conn)
 
 
 if __name__ == "__main__":

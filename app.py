@@ -1,6 +1,6 @@
 import os
 from functools import wraps
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, g
 from flask_wtf.csrf import CSRFProtect
 
 
@@ -86,11 +86,15 @@ seed_phase5_social()
 seed_phase5_seasons()
 seed_phase5_content()
 
-engine = GameEngine()
+def get_engine():
+    """Get a request-scoped GameEngine instance to prevent cross-user data leakage."""
+    if 'engine' not in g:
+        g.engine = GameEngine()
+    return g.engine
 
 @app.route('/')
 def index():
-    players = engine.get_all_players()
+    players = get_engine().get_all_players()
     return render_template('index.html', players=players)
 
 @app.route('/new_game', methods=['GET', 'POST'])
@@ -107,7 +111,7 @@ def new_game():
             flash('Password must be at least 4 characters', 'error')
             return render_template('new_game.html')
         
-        if engine.player_name_exists(name):
+        if get_engine().player_name_exists(name):
             flash('That name is already taken. Please choose another.', 'error')
             return render_template('new_game.html')
         
@@ -115,7 +119,7 @@ def new_game():
         industry = request.form.get('industry', 'Restaurant')
         career_path = request.form.get('career_path', 'entrepreneur')
         
-        player = engine.create_new_player(name, world, industry, career_path, password)
+        player = get_engine().create_new_player(name, world, industry, career_path, password)
         session['player_id'] = player.player_id
         
         return redirect(url_for('hub'))
@@ -126,24 +130,24 @@ def new_game():
 def load_game(player_id):
     if request.method == 'POST':
         password = request.form.get('password', '')
-        auth_result = engine.authenticate_player(player_id, password)
+        auth_result = get_engine().authenticate_player(player_id, password)
         
         if auth_result['success']:
-            player = engine.load_player(player_id)
+            player = get_engine().load_player(player_id)
             session['player_id'] = player.player_id
             return redirect(url_for('hub'))
         else:
             flash(auth_result.get('error', 'Login failed'), 'error')
             return render_template('login.html', player_id=player_id, player_name=request.args.get('name', 'Player'))
     
-    auth_check = engine.authenticate_player(player_id, None)
+    auth_check = get_engine().authenticate_player(player_id, None)
     
     if auth_check.get('needs_password'):
-        players = engine.get_all_players()
+        players = get_engine().get_all_players()
         player_name = next((p['player_name'] for p in players if p['player_id'] == player_id), 'Player')
         return render_template('login.html', player_id=player_id, player_name=player_name)
     
-    player = engine.load_player(player_id)
+    player = get_engine().load_player(player_id)
     session['player_id'] = player.player_id
     return redirect(url_for('hub'))
 
@@ -154,8 +158,8 @@ def hub():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     # Check if player is brand new and redirect to tutorial
     from src.game_engine import get_tutorial_progress
@@ -170,11 +174,11 @@ def hub():
         data['exp_to_next'] = exp_needed
         data['next_level'] = next_level
     
-    energy = engine.get_player_energy()
-    login_status = engine.get_daily_login_status()
-    idle_income = engine.get_idle_income_status()
-    prestige_status = engine.get_prestige_status()
-    leaderboard = engine.get_leaderboard(5)
+    energy = get_engine().get_player_energy()
+    login_status = get_engine().get_daily_login_status()
+    idle_income = get_engine().get_idle_income_status()
+    prestige_status = get_engine().get_prestige_status()
+    leaderboard = get_engine().get_leaderboard(5)
     
     return render_template('hub.html', stats=stats, energy=energy, login_status=login_status, 
                           idle_income=idle_income, prestige_status=prestige_status, leaderboard=leaderboard,
@@ -187,9 +191,9 @@ def scenarios(discipline):
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    all_scenarios = engine.get_all_scenarios_with_status(discipline)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    all_scenarios = get_engine().get_all_scenarios_with_status(discipline)
+    stats = get_engine().get_player_stats()
     
     return render_template('scenarios.html', 
                          scenarios=all_scenarios, 
@@ -203,20 +207,20 @@ def training(scenario_id):
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
-    if engine.is_scenario_completed(scenario_id):
+    if get_engine().is_scenario_completed(scenario_id):
         flash("You've already completed this quest!")
         return redirect(url_for('hub'))
     
-    scenario = engine.get_scenario_by_id(scenario_id)
+    scenario = get_engine().get_scenario_by_id(scenario_id)
     
     if not scenario:
         flash("Scenario not found!")
         return redirect(url_for('hub'))
     
-    training_data = engine.get_training_content(scenario_id)
+    training_data = get_engine().get_training_content(scenario_id)
     
     return render_template('training.html', scenario=scenario, training=training_data, stats=stats)
 
@@ -227,14 +231,14 @@ def play_scenario(scenario_id):
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
-    if engine.is_scenario_completed(scenario_id):
+    if get_engine().is_scenario_completed(scenario_id):
         flash("You've already completed this scenario!")
         return redirect(url_for('hub'))
     
-    scenario = engine.get_scenario_by_id(scenario_id)
+    scenario = get_engine().get_scenario_by_id(scenario_id)
     
     if not scenario:
         flash("Scenario not found!")
@@ -249,31 +253,31 @@ def make_choice(scenario_id, choice):
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
+    get_engine().load_player(player_id)
     
-    if engine.is_scenario_completed(scenario_id):
+    if get_engine().is_scenario_completed(scenario_id):
         flash("You've already completed this scenario!")
         return redirect(url_for('hub'))
     
-    energy_result = engine.consume_energy(10)
+    energy_result = get_engine().consume_energy(10)
     if energy_result.get('error'):
         flash(energy_result['error'])
         return redirect(url_for('hub'))
     
-    scenario = engine.get_scenario_by_id(scenario_id)
+    scenario = get_engine().get_scenario_by_id(scenario_id)
     
     if not scenario:
         flash("Scenario not found!")
         return redirect(url_for('hub'))
     
-    result = engine.process_choice(scenario, choice)
+    result = get_engine().process_choice(scenario, choice)
     
     if result.get('error'):
         flash(result['error'])
         return redirect(url_for('hub'))
     
     result['level_title'] = get_level_title(result['new_level'])
-    stats = engine.get_player_stats()
+    stats = get_engine().get_player_stats()
     
     return render_template('result.html', result=result, scenario=scenario, stats=stats)
 
@@ -284,14 +288,14 @@ def play_challenge(scenario_id):
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
-    if engine.is_scenario_completed(scenario_id):
+    if get_engine().is_scenario_completed(scenario_id):
         flash("You've already completed this challenge!")
         return redirect(url_for('hub'))
     
-    challenge = engine.get_challenge_by_id(scenario_id)
+    challenge = get_engine().get_challenge_by_id(scenario_id)
     
     if not challenge:
         flash("Challenge not found!")
@@ -306,13 +310,13 @@ def submit_challenge(scenario_id):
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
+    get_engine().load_player(player_id)
     
-    if engine.is_scenario_completed(scenario_id):
+    if get_engine().is_scenario_completed(scenario_id):
         flash("You've already completed this challenge!")
         return redirect(url_for('hub'))
     
-    energy_result = engine.consume_energy(10)
+    energy_result = get_engine().consume_energy(10)
     if energy_result.get('error'):
         flash(energy_result['error'])
         return redirect(url_for('hub'))
@@ -326,15 +330,15 @@ def submit_challenge(scenario_id):
         flash("Invalid answer format!")
         return redirect(url_for('play_challenge', scenario_id=scenario_id))
     
-    result = engine.evaluate_challenge(scenario_id, challenge_type, answer)
+    result = get_engine().evaluate_challenge(scenario_id, challenge_type, answer)
     
     if result.get('error'):
         flash(result['error'])
         return redirect(url_for('hub'))
     
     result['level_title'] = get_level_title(result['new_level'])
-    stats = engine.get_player_stats()
-    scenario = engine.get_scenario_by_id(scenario_id)
+    stats = get_engine().get_player_stats()
+    scenario = get_engine().get_scenario_by_id(scenario_id)
     
     return render_template('result.html', result=result, scenario=scenario, stats=stats)
 
@@ -345,8 +349,8 @@ def progress():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     for disc, data in stats['disciplines'].items():
         data['title'] = get_level_title(data['level'])
@@ -364,9 +368,9 @@ def character():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
-    achievements = engine.get_all_achievements()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
+    achievements = get_engine().get_all_achievements()
     
     return render_template('character.html', stats=stats, achievements=achievements)
 
@@ -377,8 +381,8 @@ def allocate_stat(stat_name):
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    result = engine.allocate_stat(stat_name)
+    get_engine().load_player(player_id)
+    result = get_engine().allocate_stat(stat_name)
     
     if result.get('error'):
         flash(result['error'])
@@ -394,9 +398,9 @@ def shop():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
-    items = engine.get_shop_items()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
+    items = get_engine().get_shop_items()
     
     return render_template('shop.html', stats=stats, items=items)
 
@@ -407,8 +411,8 @@ def buy_item(item_id):
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    result = engine.purchase_item(item_id)
+    get_engine().load_player(player_id)
+    result = get_engine().purchase_item(item_id)
     
     if result.get('error'):
         flash(result['error'])
@@ -424,8 +428,8 @@ def inventory():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     return render_template('inventory.html', stats=stats)
 
@@ -436,9 +440,9 @@ def npcs():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
-    npc_list = engine.get_npcs()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
+    npc_list = get_engine().get_npcs()
     
     return render_template('npcs.html', stats=stats, npcs=npc_list)
 
@@ -449,9 +453,9 @@ def talk_to_npc(npc_id):
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    result = engine.interact_with_npc(npc_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    result = get_engine().interact_with_npc(npc_id)
+    stats = get_engine().get_player_stats()
     
     if result.get('error'):
         flash(result['error'])
@@ -466,9 +470,9 @@ def quests():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
-    quest_data = engine.get_quests()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
+    quest_data = get_engine().get_quests()
     
     return render_template('quests.html', stats=stats, quests=quest_data)
 
@@ -479,8 +483,8 @@ def start_quest(quest_id):
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    result = engine.start_quest(quest_id)
+    get_engine().load_player(player_id)
+    result = get_engine().start_quest(quest_id)
     
     if result.get('error'):
         flash(result['error'])
@@ -501,11 +505,11 @@ def dashboard():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
-    milestones = engine.get_milestones()
-    financial_history = engine.get_financial_history()
-    rivals = engine.get_rivals()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
+    milestones = get_engine().get_milestones()
+    financial_history = get_engine().get_financial_history()
+    rivals = get_engine().get_rivals()
     
     return render_template('dashboard.html', stats=stats, milestones=milestones, 
                           financial_history=financial_history, rivals=rivals)
@@ -517,9 +521,9 @@ def random_event():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    event = engine.get_random_event()
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    event = get_engine().get_random_event()
+    stats = get_engine().get_player_stats()
     
     if not event:
         flash("No events available right now. Keep playing!")
@@ -534,9 +538,9 @@ def resolve_event(event_id, choice):
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    result = engine.process_random_event(event_id, choice)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    result = get_engine().process_random_event(event_id, choice)
+    stats = get_engine().get_player_stats()
     
     if result.get('error'):
         flash(result['error'])
@@ -551,9 +555,9 @@ def rivals():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
-    rival_list = engine.get_rivals()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
+    rival_list = get_engine().get_rivals()
     
     return render_template('rivals.html', stats=stats, rivals=rival_list)
 
@@ -564,9 +568,9 @@ def challenges():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
-    challenge_data = engine.get_weekly_challenges()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
+    challenge_data = get_engine().get_weekly_challenges()
     
     return render_template('challenges.html', stats=stats, challenges=challenge_data)
 
@@ -577,10 +581,10 @@ def avatar():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
-    avatar_options = engine.get_avatar_options()
-    current_avatar = engine.get_player_avatar()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
+    avatar_options = get_engine().get_avatar_options()
+    current_avatar = get_engine().get_player_avatar()
     
     return render_template('avatar.html', stats=stats, options=avatar_options, current=current_avatar)
 
@@ -591,14 +595,14 @@ def update_avatar():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
+    get_engine().load_player(player_id)
     
     hair = request.form.get('hair', 'default')
     outfit = request.form.get('outfit', 'default')
     accessory = request.form.get('accessory', 'none')
     color = request.form.get('color', 'blue')
     
-    result = engine.update_avatar(hair, outfit, accessory, color)
+    result = get_engine().update_avatar(hair, outfit, accessory, color)
     
     if result.get('error'):
         flash(result['error'])
@@ -614,9 +618,9 @@ def daily_login():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    login_status = engine.get_daily_login_status()
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    login_status = get_engine().get_daily_login_status()
+    stats = get_engine().get_player_stats()
     
     return render_template('daily_login.html', stats=stats, login_status=login_status)
 
@@ -627,8 +631,8 @@ def claim_daily():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    result = engine.claim_daily_login()
+    get_engine().load_player(player_id)
+    result = get_engine().claim_daily_login()
     
     if result.get('error'):
         flash(result['error'])
@@ -645,8 +649,8 @@ def collect_idle():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    result = engine.collect_idle_income()
+    get_engine().load_player(player_id)
+    result = get_engine().collect_idle_income()
     
     if result.get('error'):
         flash(result['error'])
@@ -662,9 +666,9 @@ def advisors():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
-    advisor_data = engine.get_advisors()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
+    advisor_data = get_engine().get_advisors()
     
     return render_template('advisors.html', stats=stats, advisor_data=advisor_data)
 
@@ -675,8 +679,8 @@ def recruit_advisor(advisor_id):
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    result = engine.recruit_advisor(advisor_id)
+    get_engine().load_player(player_id)
+    result = get_engine().recruit_advisor(advisor_id)
     
     if result.get('error'):
         flash(result['error'])
@@ -692,9 +696,9 @@ def equipment():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
-    equipment_data = engine.get_equipment()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
+    equipment_data = get_engine().get_equipment()
     
     return render_template('equipment.html', stats=stats, equipment_data=equipment_data)
 
@@ -705,8 +709,8 @@ def purchase_equipment(equipment_id):
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    result = engine.purchase_equipment(equipment_id)
+    get_engine().load_player(player_id)
+    result = get_engine().purchase_equipment(equipment_id)
     
     if result.get('error'):
         flash(result['error'])
@@ -722,8 +726,8 @@ def equip_item(equipment_id):
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    result = engine.equip_item(equipment_id)
+    get_engine().load_player(player_id)
+    result = get_engine().equip_item(equipment_id)
     
     if result.get('error'):
         flash(result['error'])
@@ -739,9 +743,9 @@ def prestige():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
-    prestige_status = engine.get_prestige_status()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
+    prestige_status = get_engine().get_prestige_status()
     
     return render_template('prestige.html', stats=stats, prestige_status=prestige_status)
 
@@ -752,8 +756,8 @@ def perform_prestige():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    result = engine.perform_prestige()
+    get_engine().load_player(player_id)
+    result = get_engine().perform_prestige()
     
     if result.get('error'):
         flash(result['error'])
@@ -769,9 +773,9 @@ def daily_missions():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
-    missions_data = engine.get_daily_missions()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
+    missions_data = get_engine().get_daily_missions()
     
     return render_template('daily_missions.html', stats=stats, missions_data=missions_data)
 
@@ -782,8 +786,8 @@ def claim_mission(mission_id):
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    result = engine.claim_daily_mission(mission_id)
+    get_engine().load_player(player_id)
+    result = get_engine().claim_daily_mission(mission_id)
     
     if result.get('error'):
         flash(result['error'])
@@ -799,11 +803,11 @@ def leaderboard():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     category = request.args.get('category', 'stars')
-    rankings = engine.get_leaderboard(category)
+    rankings = get_engine().get_leaderboard(category)
     
     return render_template('leaderboard.html', stats=stats, rankings=rankings, category=category)
 
@@ -814,9 +818,9 @@ def battle_arena():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
-    battle_data = engine.get_rival_battle_status()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
+    battle_data = get_engine().get_rival_battle_status()
     
     return render_template('battle_arena.html', stats=stats, battle_data=battle_data)
 
@@ -827,9 +831,9 @@ def battle_rival(rival_id):
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    result = engine.battle_rival(rival_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    result = get_engine().battle_rival(rival_id)
+    stats = get_engine().get_player_stats()
     
     if result.get('error'):
         flash(result['error'])
@@ -844,9 +848,9 @@ def campaign_map():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
-    campaign_data = engine.get_campaign_map()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
+    campaign_data = get_engine().get_campaign_map()
     
     return render_template('campaign_map.html', stats=stats, campaign=campaign_data)
 
@@ -857,9 +861,9 @@ def boss_challenges():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
-    bosses = engine.get_boss_scenarios()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
+    bosses = get_engine().get_boss_scenarios()
     
     return render_template('boss_challenges.html', stats=stats, bosses=bosses)
 
@@ -871,19 +875,19 @@ def accounting():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     from src.database import initialize_player_accounting
     initialize_player_accounting(player_id)
     
-    accounts = engine.get_player_chart_of_accounts(player_id)
-    period = engine.get_current_accounting_period(player_id)
-    pending_transactions = engine.get_pending_transactions(player_id)
-    journal_entries = engine.get_journal_entries(player_id)
-    trial_balance = engine.get_trial_balance(player_id)
-    income_statement = engine.get_income_statement(player_id)
-    balance_sheet = engine.get_balance_sheet(player_id)
+    accounts = get_engine().get_player_chart_of_accounts(player_id)
+    period = get_engine().get_current_accounting_period(player_id)
+    pending_transactions = get_engine().get_pending_transactions(player_id)
+    journal_entries = get_engine().get_journal_entries(player_id)
+    trial_balance = get_engine().get_trial_balance(player_id)
+    income_statement = get_engine().get_income_statement(player_id)
+    balance_sheet = get_engine().get_balance_sheet(player_id)
     
     return render_template('accounting.html', 
                           stats=stats,
@@ -908,7 +912,7 @@ def accounting_process():
     credit_account = request.form.get('credit_account')
     
     if transaction_id and debit_account and credit_account:
-        result = engine.process_pending_transaction(player_id, transaction_id, debit_account, credit_account)
+        result = get_engine().process_pending_transaction(player_id, transaction_id, debit_account, credit_account)
         if result.get('success'):
             flash(f"Transaction posted! +{result['exp_earned']} EXP earned.")
         else:
@@ -957,7 +961,7 @@ def accounting_entry():
         {'account_code': credit_account, 'debit': 0, 'credit': credit_amount}
     ]
     
-    result = engine.create_journal_entry(player_id, description, lines, is_adjusting)
+    result = get_engine().create_journal_entry(player_id, description, lines, is_adjusting)
     
     if result.get('success'):
         flash(f"Journal entry posted! +{result['exp_earned']} EXP earned.")
@@ -974,8 +978,8 @@ def projects():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     from src.database import initialize_player_projects
     initialize_player_projects(player_id)
@@ -1058,8 +1062,8 @@ def scheduling_challenge(challenge_id):
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     from src.game_engine import get_scheduling_challenge
     challenge = get_scheduling_challenge(challenge_id)
@@ -1122,8 +1126,8 @@ def cashflow():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     from src.game_engine import get_cash_flow_challenges, get_player_cash_flow_forecast
     
@@ -1143,8 +1147,8 @@ def cashflow_challenge(challenge_id):
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     from src.game_engine import get_cash_flow_challenge
     challenge = get_cash_flow_challenge(challenge_id)
@@ -1206,8 +1210,8 @@ def businessplan():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     from src.game_engine import get_player_business_plans, BUSINESS_PLAN_SECTIONS
     
@@ -1247,8 +1251,8 @@ def edit_businessplan(plan_id):
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     from src.game_engine import get_business_plan
     plan = get_business_plan(plan_id)
@@ -1293,8 +1297,8 @@ def negotiation():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     from src.game_engine import get_negotiation_scenarios
     
@@ -1312,8 +1316,8 @@ def negotiation_scenario(scenario_id):
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     from src.game_engine import get_negotiation_scenario, start_negotiation
     
@@ -1369,8 +1373,8 @@ def risks():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     from src.game_engine import get_risk_categories, get_player_risks
     
@@ -1420,8 +1424,8 @@ def supplychain():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     from src.game_engine import initialize_player_supply_chain, get_player_inventory, get_player_suppliers
     
@@ -1470,8 +1474,8 @@ def market():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     from src.game_engine import get_market_segments, get_market_challenges, initialize_player_market, get_player_market_position
     
@@ -1495,8 +1499,8 @@ def market_challenge(challenge_id):
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     from src.game_engine import get_market_challenge
     challenge = get_market_challenge(challenge_id)
@@ -1557,8 +1561,8 @@ def hrmanagement():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     from src.game_engine import get_employee_roles, get_hr_challenges, get_player_employees
     
@@ -1580,8 +1584,8 @@ def hr_challenge(challenge_id):
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     from src.game_engine import get_hr_challenge
     challenge = get_hr_challenge(challenge_id)
@@ -1666,8 +1670,8 @@ def pitch():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     from src.game_engine import get_player_pitch_decks, get_investor_profiles, PITCH_SECTIONS
     
@@ -1710,8 +1714,8 @@ def edit_pitch(deck_id):
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     from src.game_engine import get_pitch_deck
     deck = get_pitch_deck(deck_id)
@@ -1752,8 +1756,8 @@ def present_pitch(deck_id, investor_id):
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     from src.game_engine import start_pitch_session, get_pitch_deck
     
@@ -1814,8 +1818,8 @@ def analytics():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     from src.game_engine import get_player_analytics, get_player_skill_chart_data
     
@@ -1839,8 +1843,8 @@ def achievements():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     from src.game_engine import get_player_achievements
     
@@ -1868,8 +1872,8 @@ def competitions():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     from src.game_engine import get_active_competitions, get_player_league
     
@@ -1907,8 +1911,8 @@ def competition_leaderboard(active_id):
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     from src.game_engine import get_competition_leaderboard, get_active_competitions
     
@@ -1933,8 +1937,8 @@ def simulations():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     from src.game_engine import get_advanced_simulations
     
@@ -1959,8 +1963,8 @@ def simulation_detail(simulation_id):
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     from src.game_engine import get_simulation
     sim = get_simulation(simulation_id)
@@ -1999,8 +2003,8 @@ def simulation_play(progress_id):
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     return render_template('simulation_play.html',
                           stats=stats,
@@ -2018,8 +2022,8 @@ def tutorial():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     from src.game_engine import get_tutorial_progress
     progress = get_tutorial_progress(player_id)
@@ -2054,8 +2058,8 @@ def stories():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     from src.game_engine import get_story_arcs
     level = stats.get('overall_level', 1) if isinstance(stats, dict) else 1
@@ -2071,8 +2075,8 @@ def story_arc(arc_id):
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     from src.game_engine import get_story_arcs, get_story_chapter
     arcs = get_story_arcs(player_id, 99)
@@ -2133,8 +2137,8 @@ def mentorship():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     from src.game_engine import get_advisor_relationships, get_mentorship_missions
     
@@ -2151,8 +2155,8 @@ def advisor_detail(advisor_id):
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     from src.game_engine import get_advisor_relationships, get_advisor_skill_tree, get_mentorship_missions
     
@@ -2175,8 +2179,8 @@ def network():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     from src.game_engine import get_business_partners, get_networking_events, get_player_network
     
@@ -2211,8 +2215,8 @@ def ventures():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     from src.game_engine import get_joint_ventures
     ventures = get_joint_ventures(player_id)
@@ -2231,8 +2235,8 @@ def industries():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     from src.game_engine import get_industry_tracks
     tracks = get_industry_tracks(player_id)
@@ -2247,8 +2251,8 @@ def industry_detail(track_id):
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     from src.game_engine import get_industry_tracks, get_industry_certifications, get_industry_challenges
     
@@ -2276,8 +2280,8 @@ def market_events():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     from src.game_engine import get_active_market_events, get_current_market_cycle, get_global_challenges, get_breaking_news
     
@@ -2318,8 +2322,8 @@ def guilds():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     from src.game_engine import get_guilds, get_player_guild
     
@@ -2401,8 +2405,8 @@ def coop():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     from src.game_engine import get_coop_challenges
     challenges = get_coop_challenges()
@@ -2436,8 +2440,8 @@ def trading():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     from src.game_engine import get_trade_listings, get_player_inventory
     listings = get_trade_listings(player_id)
@@ -2525,8 +2529,8 @@ def seasons():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     from src.game_engine import get_current_season, get_player_battle_pass, get_seasonal_events, get_limited_bosses
     
@@ -2589,8 +2593,8 @@ def coach():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     from src.game_engine import get_learning_profile, get_learning_recommendations
     
@@ -2611,8 +2615,8 @@ def worlds():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     from src.game_engine import get_expanded_worlds
     level = stats.get('overall_level', 1) if isinstance(stats, dict) else 1
@@ -2628,8 +2632,8 @@ def case_studies():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     from src.game_engine import get_case_studies, get_guest_mentors
     
@@ -2650,8 +2654,8 @@ def settings():
     if not player_id:
         return redirect(url_for('index'))
     
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
     
     from src.game_engine import get_player_preferences
     preferences = get_player_preferences(player_id)
