@@ -45,3 +45,25 @@ The game is built as a Flask web application with a responsive, mobile-first UI.
 ## External Dependencies
 -   **PostgreSQL:** Relational database for all game data persistence.
 -   **Flask-WTF:** Used for CSRF protection in web forms.
+
+## Mobile & Cross-Platform Support (December 2024)
+The game now works seamlessly across mobile and desktop platforms:
+
+-   **Progressive Web App (PWA):** Full PWA implementation with:
+    -   Web app manifest (`static/manifest.json`) with app icons and shortcuts
+    -   Service worker (`static/sw.js`) for offline caching and network-first strategies
+    -   Install prompt banner for "Add to Home Screen" functionality
+    -   Offline fallback page for network-less gameplay
+
+-   **Native Mobile (Capacitor):** Configuration for iOS and Android builds:
+    -   `capacitor.config.json` ready for native compilation
+    -   Splash screen and status bar configurations
+    -   Safe area inset support for notched devices
+
+-   **Responsive Design Enhancements:**
+    -   Touch-friendly interactions (44px minimum touch targets)
+    -   Safe area padding for iOS notch and Android gesture nav
+    -   Landscape orientation optimization
+    -   Reduced motion and high contrast accessibility modes
+
+-   **App Icons:** Generated icon set from 72x72 to 512x512 pixels in `static/icons/`
