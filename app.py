@@ -181,6 +181,15 @@ def play_scenario(scenario_id):
     get_engine().load_player(player_id)
     stats = get_engine().get_player_stats()
     
+    # Check if mentorship is required before playing
+    from src.game_engine import check_scenario_mentorship_ready
+    mentorship_check = check_scenario_mentorship_ready(player_id, scenario_id)
+    if not mentorship_check['ready'] and mentorship_check['module']:
+        flash("Complete the lesson first to learn the concepts!")
+        return redirect(url_for('mentorship_lesson', 
+                               module_id=mentorship_check['module']['module_id'], 
+                               scenario_id=scenario_id))
+    
     if get_engine().is_scenario_completed(scenario_id):
         flash("You've already completed this scenario!")
         return redirect(url_for('hub'))
@@ -1992,6 +2001,76 @@ def complete_tutorial(section_id):
     
     flash('Tutorial section completed!')
     return redirect(url_for('tutorial'))
+
+
+# ============================================================================
+# MENTORSHIP SYSTEM ROUTES - Learn before playing scenarios
+# ============================================================================
+
+@app.route('/learn/<int:module_id>')
+@login_required
+def mentorship_lesson(module_id):
+    """View a mentorship lesson."""
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    from src.game_engine import get_mentorship_module, start_mentorship
+    
+    module = get_mentorship_module(module_id)
+    if not module:
+        flash('Lesson not found')
+        return redirect(url_for('scenarios'))
+    
+    start_mentorship(player_id, module_id)
+    
+    scenario_id = request.args.get('scenario_id')
+    
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
+    
+    return render_template('mentorship_lesson.html', 
+                          stats=stats, 
+                          module=module,
+                          scenario_id=scenario_id)
+
+
+@app.route('/learn/<int:module_id>/complete', methods=['POST'])
+@login_required
+def complete_mentorship_route(module_id):
+    """Mark a mentorship lesson as complete."""
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    from src.game_engine import complete_mentorship
+    
+    complete_mentorship(player_id, module_id)
+    
+    scenario_id = request.form.get('scenario_id')
+    if scenario_id:
+        flash('Lesson complete! Now you can apply what you learned.')
+        return redirect(url_for('play_scenario', scenario_id=scenario_id))
+    
+    flash('Lesson completed!')
+    return redirect(url_for('hub'))
+
+
+@app.route('/learn/required/<int:scenario_id>')
+@login_required
+def mentorship_required(scenario_id):
+    """Show required mentorship before a scenario."""
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    from src.game_engine import get_mentorship_for_scenario
+    
+    module = get_mentorship_for_scenario(scenario_id)
+    if not module:
+        return redirect(url_for('play_scenario', scenario_id=scenario_id))
+    
+    return redirect(url_for('mentorship_lesson', module_id=module['module_id'], scenario_id=scenario_id))
 
 
 # ============================================================================

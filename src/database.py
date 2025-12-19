@@ -203,6 +203,52 @@ def init_database():
         ADD COLUMN IF NOT EXISTS training_content TEXT DEFAULT NULL;
     """)
     
+    # Mentorship system tables - require learning before quests
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS mentorship_modules (
+            module_id SERIAL PRIMARY KEY,
+            module_code VARCHAR(100) UNIQUE NOT NULL,
+            module_title VARCHAR(255) NOT NULL,
+            discipline VARCHAR(100) NOT NULL,
+            required_level INTEGER DEFAULT 1,
+            theory_content TEXT NOT NULL,
+            key_concepts TEXT,
+            formulas TEXT,
+            real_world_example TEXT,
+            practice_question TEXT,
+            practice_answer TEXT,
+            practice_explanation TEXT,
+            mentor_name VARCHAR(100) DEFAULT 'Business Mentor',
+            mentor_avatar VARCHAR(100) DEFAULT 'mentor_default',
+            estimated_minutes INTEGER DEFAULT 5,
+            is_active BOOLEAN DEFAULT TRUE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS scenario_mentorship (
+            id SERIAL PRIMARY KEY,
+            scenario_id INTEGER REFERENCES scenario_master(scenario_id) ON DELETE CASCADE,
+            module_id INTEGER REFERENCES mentorship_modules(module_id) ON DELETE CASCADE,
+            is_required BOOLEAN DEFAULT TRUE,
+            UNIQUE(scenario_id, module_id)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_mentorship_progress (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            module_id INTEGER REFERENCES mentorship_modules(module_id) ON DELETE CASCADE,
+            started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            completed_at TIMESTAMP,
+            practice_score INTEGER DEFAULT 0,
+            is_completed BOOLEAN DEFAULT FALSE,
+            UNIQUE(player_id, module_id)
+        );
+    """)
+    
     cur.execute("""
         CREATE TABLE IF NOT EXISTS player_stats (
             stat_id SERIAL PRIMARY KEY,
@@ -8291,6 +8337,224 @@ def seed_phase5_content():
     return_connection(conn)
 
 
+def seed_mentorship_modules():
+    """Seed mentorship learning modules that teach concepts before scenarios."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM mentorship_modules")
+    if cur.fetchone()['count'] > 0:
+        print("Mentorship modules already seeded.")
+        cur.close()
+        return_connection(conn)
+        return
+    
+    modules = [
+        {
+            'module_code': 'FINANCE_L1_ACCOUNTING_EQ',
+            'module_title': 'The Accounting Equation',
+            'discipline': 'Finance',
+            'required_level': 1,
+            'theory_content': '''<p>Every business transaction follows one fundamental rule: <strong>Assets = Liabilities + Equity</strong></p>
+<p>This is the foundation of all accounting. Let's break it down:</p>
+<ul>
+<li><strong>Assets</strong> - Everything your business OWNS (cash, equipment, inventory, buildings)</li>
+<li><strong>Liabilities</strong> - Everything your business OWES (loans, accounts payable, mortgages)</li>
+<li><strong>Equity</strong> - What's left over for the owners (Assets minus Liabilities)</li>
+</ul>
+<p>Think of it like your personal finances: If you have a $300,000 house (asset) with a $200,000 mortgage (liability), your equity is $100,000.</p>''',
+            'key_concepts': '''<strong>The equation must ALWAYS balance.</strong> Every transaction affects at least two accounts. If you buy equipment with cash, assets stay the same (equipment up, cash down). If you take a loan to buy equipment, both assets AND liabilities increase.''',
+            'formulas': '''<strong>Assets = Liabilities + Equity</strong><br><br>
+Rearranged: <strong>Equity = Assets - Liabilities</strong><br><br>
+Example: $50,000 Assets - $20,000 Loan = $30,000 Equity''',
+            'real_world_example': '''A restaurant has: $50,000 in cash and equipment (assets), a $20,000 bank loan (liability). Using the equation: Equity = $50,000 - $20,000 = <strong>$30,000</strong>. This means the owner truly "owns" $30,000 worth of the business.''',
+            'practice_question': 'A business has $80,000 in assets and $30,000 in liabilities. What is the equity?',
+            'practice_answer': '$50,000',
+            'practice_explanation': 'Equity = Assets - Liabilities = $80,000 - $30,000 = $50,000. The owners have $50,000 stake in the business.',
+            'estimated_minutes': 5
+        },
+        {
+            'module_code': 'FINANCE_L2_REVENUE_EXPENSE',
+            'module_title': 'Revenue vs Expenses',
+            'discipline': 'Finance',
+            'required_level': 2,
+            'theory_content': '''<p><strong>Revenue</strong> is money coming IN from selling goods or services.</p>
+<p><strong>Expenses</strong> are costs going OUT to operate your business.</p>
+<p><strong>Profit = Revenue - Expenses</strong></p>
+<p>Understanding this difference is crucial for business success. High revenue means nothing if expenses eat it all up!</p>''',
+            'key_concepts': '''<strong>Revenue</strong> includes: sales, service fees, interest income, rent received<br><br>
+<strong>Expenses</strong> include: wages, rent paid, utilities, supplies, marketing costs, insurance''',
+            'formulas': '''<strong>Net Profit = Total Revenue - Total Expenses</strong><br><br>
+<strong>Profit Margin = (Net Profit / Revenue) x 100%</strong>''',
+            'real_world_example': '''A restaurant earns $40,000 in monthly sales. Expenses: $15,000 ingredients, $8,000 wages, $5,000 rent. Profit = $40,000 - $28,000 = <strong>$12,000</strong>. Profit margin = 30%.''',
+            'practice_question': 'Revenue is $60,000, expenses are $45,000. What is the profit?',
+            'practice_answer': '$15,000',
+            'practice_explanation': 'Profit = Revenue - Expenses = $60,000 - $45,000 = $15,000',
+            'estimated_minutes': 5
+        },
+        {
+            'module_code': 'MARKETING_L1_FOUR_PS',
+            'module_title': 'The 4 Ps of Marketing',
+            'discipline': 'Marketing',
+            'required_level': 1,
+            'theory_content': '''<p>The <strong>Marketing Mix</strong> consists of 4 key elements:</p>
+<ul>
+<li><strong>Product</strong> - What you're selling (features, quality, design)</li>
+<li><strong>Price</strong> - How much you charge (strategy, discounts)</li>
+<li><strong>Place</strong> - Where customers can buy it (channels, locations)</li>
+<li><strong>Promotion</strong> - How you communicate (advertising, PR, social media)</li>
+</ul>
+<p>All four must work together for marketing success!</p>''',
+            'key_concepts': '''Each P must align with your target customer. A luxury product needs premium pricing, upscale locations, and sophisticated promotion. A budget product needs low prices, convenient access, and value-focused messaging.''',
+            'formulas': None,
+            'real_world_example': '''Apple iPhone: Premium <strong>Product</strong> (innovative design), Premium <strong>Price</strong> ($999+), Selective <strong>Place</strong> (Apple Stores, carriers), Aspirational <strong>Promotion</strong> (lifestyle advertising).''',
+            'practice_question': 'Which of the 4 Ps refers to where and how customers buy your product?',
+            'practice_answer': 'Place',
+            'practice_explanation': 'Place refers to distribution channels and locations where customers can access your product.',
+            'estimated_minutes': 4
+        },
+        {
+            'module_code': 'OPERATIONS_L1_SUPPLY_CHAIN',
+            'module_title': 'Supply Chain Basics',
+            'discipline': 'Operations',
+            'required_level': 1,
+            'theory_content': '''<p>A <strong>supply chain</strong> is the network of activities to deliver a product from raw materials to the customer.</p>
+<p>Key stages:</p>
+<ul>
+<li><strong>Sourcing</strong> - Finding and selecting suppliers</li>
+<li><strong>Manufacturing</strong> - Creating the product</li>
+<li><strong>Distribution</strong> - Moving products to where they're sold</li>
+<li><strong>Delivery</strong> - Getting products to customers</li>
+</ul>''',
+            'key_concepts': '''<strong>Lead time</strong> is how long it takes from ordering to receiving goods. <strong>Safety stock</strong> is extra inventory to prevent stockouts. Managing both is crucial for smooth operations.''',
+            'formulas': '''<strong>Reorder Point = (Daily Usage x Lead Time) + Safety Stock</strong><br><br>
+Example: Use 10 units/day, 5-day lead time, 20 safety stock = Reorder at 70 units''',
+            'real_world_example': '''A coffee shop uses 50 lbs of beans weekly, supplier takes 3 days to deliver, keeps 20 lbs safety stock. Reorder point = (50/7 x 3) + 20 = about <strong>41 lbs</strong>''',
+            'practice_question': 'Daily usage is 20 units, lead time is 4 days, safety stock is 30 units. What is the reorder point?',
+            'practice_answer': '110',
+            'practice_explanation': 'Reorder Point = (20 x 4) + 30 = 80 + 30 = 110 units',
+            'estimated_minutes': 5
+        },
+        {
+            'module_code': 'HR_L1_HIRING',
+            'module_title': 'Hiring the Right People',
+            'discipline': 'Human Resources',
+            'required_level': 1,
+            'theory_content': '''<p>Hiring is one of the most important business decisions. The wrong hire can cost 2-3x their salary!</p>
+<p>Key steps in the hiring process:</p>
+<ul>
+<li><strong>Job Analysis</strong> - Define what the role needs</li>
+<li><strong>Sourcing</strong> - Find candidates (job boards, referrals, recruiters)</li>
+<li><strong>Screening</strong> - Review resumes and applications</li>
+<li><strong>Interviewing</strong> - Assess skills, culture fit, potential</li>
+<li><strong>Selection</strong> - Make an offer to the best candidate</li>
+</ul>''',
+            'key_concepts': '''<strong>Skills</strong> can be taught, but <strong>attitude</strong> and <strong>culture fit</strong> are harder to change. Look for both technical abilities and soft skills like communication and teamwork.''',
+            'formulas': None,
+            'real_world_example': '''A startup hiring a developer: They need coding skills (technical), but also creativity and willingness to wear multiple hats (soft skills). They prioritize a growth mindset over years of experience.''',
+            'practice_question': 'What is typically harder to change in an employee - skills or attitude?',
+            'practice_answer': 'attitude',
+            'practice_explanation': 'Skills can be trained, but attitude and personality are more ingrained. This is why many companies "hire for attitude, train for skills."',
+            'estimated_minutes': 4
+        },
+        {
+            'module_code': 'STRATEGY_L1_SWOT',
+            'module_title': 'SWOT Analysis',
+            'discipline': 'Strategy',
+            'required_level': 1,
+            'theory_content': '''<p><strong>SWOT Analysis</strong> helps you understand your competitive position:</p>
+<ul>
+<li><strong>S</strong>trengths - What you do well (internal)</li>
+<li><strong>W</strong>eaknesses - Where you struggle (internal)</li>
+<li><strong>O</strong>pportunities - External factors you can exploit</li>
+<li><strong>T</strong>hreats - External risks to your business</li>
+</ul>
+<p>Strengths and Weaknesses are INTERNAL (you can control). Opportunities and Threats are EXTERNAL (you must respond to).</p>''',
+            'key_concepts': '''Use strengths to capitalize on opportunities. Address weaknesses that could be exploited by threats. A good strategy aligns internal capabilities with external conditions.''',
+            'formulas': None,
+            'real_world_example': '''A local bakery: <strong>Strength</strong> - unique recipes. <strong>Weakness</strong> - limited parking. <strong>Opportunity</strong> - growing demand for artisan bread. <strong>Threat</strong> - new grocery store bakery opening nearby.''',
+            'practice_question': 'Are "Opportunities" internal or external factors?',
+            'practice_answer': 'external',
+            'practice_explanation': 'Opportunities and Threats are external factors in the environment. Strengths and Weaknesses are internal to your organization.',
+            'estimated_minutes': 4
+        },
+        {
+            'module_code': 'LEGAL_L1_CONTRACTS',
+            'module_title': 'Contract Basics',
+            'discipline': 'Legal',
+            'required_level': 1,
+            'theory_content': '''<p>A <strong>contract</strong> is a legally binding agreement. For a contract to be valid, it needs:</p>
+<ul>
+<li><strong>Offer</strong> - One party proposes terms</li>
+<li><strong>Acceptance</strong> - Other party agrees to the terms</li>
+<li><strong>Consideration</strong> - Something of value exchanged (money, services)</li>
+<li><strong>Capacity</strong> - Both parties can legally enter the contract</li>
+<li><strong>Legality</strong> - The contract is for legal purposes</li>
+</ul>''',
+            'key_concepts': '''<strong>Always get it in writing!</strong> Verbal contracts are hard to enforce. Key contract terms include: payment terms, delivery dates, warranties, termination clauses, and dispute resolution.''',
+            'formulas': None,
+            'real_world_example': '''A freelancer agrees to build a website for $5,000. The contract specifies: deliverables, timeline, payment schedule, revision limits, and what happens if either party wants to cancel.''',
+            'practice_question': 'What is "consideration" in a contract?',
+            'practice_answer': 'something of value exchanged',
+            'practice_explanation': 'Consideration means each party gives something of value - typically money for goods/services. Without consideration, there is no contract.',
+            'estimated_minutes': 5
+        }
+    ]
+    
+    for m in modules:
+        cur.execute("""
+            INSERT INTO mentorship_modules 
+            (module_code, module_title, discipline, required_level, theory_content, key_concepts, 
+             formulas, real_world_example, practice_question, practice_answer, practice_explanation, estimated_minutes)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (m['module_code'], m['module_title'], m['discipline'], m['required_level'],
+              m['theory_content'], m['key_concepts'], m['formulas'], m['real_world_example'],
+              m['practice_question'], m['practice_answer'], m['practice_explanation'], m['estimated_minutes']))
+    
+    conn.commit()
+    
+    # Link mentorship modules to scenarios
+    # Get module IDs we just created
+    cur.execute("SELECT module_id, module_code FROM mentorship_modules")
+    modules_map = {row['module_code']: row['module_id'] for row in cur.fetchall()}
+    
+    # Link Finance Level 1 scenarios to the Accounting Equation module
+    if 'FINANCE_L1_ACCOUNTING_EQ' in modules_map:
+        cur.execute("""
+            SELECT scenario_id FROM scenario_master 
+            WHERE discipline = 'Finance' AND required_level = 1 
+            AND scenario_title LIKE 'L1:%'
+            LIMIT 3
+        """)
+        finance_scenarios = cur.fetchall()
+        for row in finance_scenarios:
+            cur.execute("""
+                INSERT INTO scenario_mentorship (scenario_id, module_id, is_required)
+                VALUES (%s, %s, TRUE)
+                ON CONFLICT (scenario_id, module_id) DO NOTHING
+            """, (row['scenario_id'], modules_map['FINANCE_L1_ACCOUNTING_EQ']))
+    
+    # Link Marketing Level 1 scenarios to 4 Ps module
+    if 'MARKETING_L1_FOUR_PS' in modules_map:
+        cur.execute("""
+            SELECT scenario_id FROM scenario_master 
+            WHERE discipline = 'Marketing' AND required_level = 1
+            LIMIT 3
+        """)
+        marketing_scenarios = cur.fetchall()
+        for row in marketing_scenarios:
+            cur.execute("""
+                INSERT INTO scenario_mentorship (scenario_id, module_id, is_required)
+                VALUES (%s, %s, TRUE)
+                ON CONFLICT (scenario_id, module_id) DO NOTHING
+            """, (row['scenario_id'], modules_map['MARKETING_L1_FOUR_PS']))
+    
+    conn.commit()
+    cur.close()
+    return_connection(conn)
+    print("Mentorship modules seeded.")
+
+
 def seed_all():
     """Run all seed functions. Each function checks if data already exists."""
     seed_scenarios()
@@ -8340,6 +8604,7 @@ def seed_all():
     seed_phase5_social()
     seed_phase5_seasons()
     seed_phase5_content()
+    seed_mentorship_modules()
 
 
 if __name__ == "__main__":

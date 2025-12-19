@@ -5543,6 +5543,161 @@ def mark_onboarding_seen(player_id):
 
 
 # ============================================================================
+# MENTORSHIP SYSTEM - Learn before you play
+# ============================================================================
+
+def get_mentorship_module(module_id):
+    """Get a mentorship module by ID."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT * FROM mentorship_modules WHERE module_id = %s AND is_active = TRUE
+    """, (module_id,))
+    row = cur.fetchone()
+    
+    cur.close()
+    return_connection(conn)
+    
+    return dict(row) if row else None
+
+
+def get_mentorship_for_scenario(scenario_id):
+    """Get required mentorship module for a scenario."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT mm.* FROM mentorship_modules mm
+        JOIN scenario_mentorship sm ON mm.module_id = sm.module_id
+        WHERE sm.scenario_id = %s AND sm.is_required = TRUE AND mm.is_active = TRUE
+        LIMIT 1
+    """, (scenario_id,))
+    row = cur.fetchone()
+    
+    cur.close()
+    return_connection(conn)
+    
+    return dict(row) if row else None
+
+
+def check_mentorship_completed(player_id, module_id):
+    """Check if player has completed a mentorship module."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT is_completed FROM player_mentorship_progress 
+        WHERE player_id = %s AND module_id = %s
+    """, (player_id, module_id))
+    row = cur.fetchone()
+    
+    cur.close()
+    return_connection(conn)
+    
+    return row['is_completed'] if row else False
+
+
+def check_scenario_mentorship_ready(player_id, scenario_id):
+    """Check if player can play a scenario (has completed required mentorship)."""
+    module = get_mentorship_for_scenario(scenario_id)
+    if not module:
+        return {'ready': True, 'module': None}
+    
+    completed = check_mentorship_completed(player_id, module['module_id'])
+    return {
+        'ready': completed,
+        'module': module if not completed else None
+    }
+
+
+def start_mentorship(player_id, module_id):
+    """Start a mentorship module for a player."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        INSERT INTO player_mentorship_progress (player_id, module_id, started_at)
+        VALUES (%s, %s, CURRENT_TIMESTAMP)
+        ON CONFLICT (player_id, module_id) DO NOTHING
+    """, (player_id, module_id))
+    
+    conn.commit()
+    cur.close()
+    return_connection(conn)
+    
+    return {'success': True}
+
+
+def complete_mentorship(player_id, module_id, practice_score=100):
+    """Mark a mentorship module as complete."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        INSERT INTO player_mentorship_progress (player_id, module_id, is_completed, completed_at, practice_score)
+        VALUES (%s, %s, TRUE, CURRENT_TIMESTAMP, %s)
+        ON CONFLICT (player_id, module_id) 
+        DO UPDATE SET is_completed = TRUE, completed_at = CURRENT_TIMESTAMP, practice_score = %s
+    """, (player_id, module_id, practice_score, practice_score))
+    
+    conn.commit()
+    cur.close()
+    return_connection(conn)
+    
+    return {'success': True}
+
+
+def get_player_mentorship_progress(player_id):
+    """Get all mentorship progress for a player."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT mm.*, pmp.is_completed, pmp.practice_score, pmp.completed_at
+        FROM mentorship_modules mm
+        LEFT JOIN player_mentorship_progress pmp ON mm.module_id = pmp.module_id AND pmp.player_id = %s
+        WHERE mm.is_active = TRUE
+        ORDER BY mm.discipline, mm.required_level
+    """, (player_id,))
+    
+    modules = [dict(row) for row in cur.fetchall()]
+    
+    cur.close()
+    return_connection(conn)
+    
+    return modules
+
+
+def get_mentorship_by_discipline(discipline, player_id=None):
+    """Get all mentorship modules for a discipline."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    if player_id:
+        cur.execute("""
+            SELECT mm.*, pmp.is_completed, pmp.practice_score
+            FROM mentorship_modules mm
+            LEFT JOIN player_mentorship_progress pmp ON mm.module_id = pmp.module_id AND pmp.player_id = %s
+            WHERE mm.discipline = %s AND mm.is_active = TRUE
+            ORDER BY mm.required_level
+        """, (player_id, discipline))
+    else:
+        cur.execute("""
+            SELECT * FROM mentorship_modules 
+            WHERE discipline = %s AND is_active = TRUE
+            ORDER BY required_level
+        """, (discipline,))
+    
+    modules = [dict(row) for row in cur.fetchall()]
+    
+    cur.close()
+    return_connection(conn)
+    
+    return modules
+
+
+# ============================================================================
 # PHASE 4: STORYLINE QUEST SYSTEM
 # ============================================================================
 
