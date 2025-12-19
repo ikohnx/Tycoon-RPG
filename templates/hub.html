@@ -713,7 +713,8 @@
 </nav>
 
 {% if is_new_player %}
-<div class="modal fade show" id="welcomeModal" tabindex="-1" style="display: block; background: rgba(0,0,0,0.8);">
+<div class="modal-backdrop" id="welcomeBackdrop" style="background: rgba(0,0,0,0.8); position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1040;"></div>
+<div class="modal" id="welcomeModal" tabindex="-1" style="display: block; position: fixed; z-index: 1050;">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border: 2px solid #ffd700;">
             <div class="modal-header border-0">
@@ -742,7 +743,7 @@
                 <a href="{{ url_for('tutorial') }}" class="btn btn-lg" style="background: linear-gradient(135deg, #50c878, #3a9d5d); color: white; font-weight: bold;">
                     <i class="bi bi-mortarboard"></i> Start Tutorial
                 </a>
-                <button type="button" class="btn btn-lg btn-outline-light" onclick="document.getElementById('welcomeModal').style.display='none'">
+                <button type="button" class="btn btn-lg btn-outline-light" onclick="document.getElementById('welcomeModal').remove(); document.getElementById('welcomeBackdrop').remove();">
                     Explore Hub
                 </button>
             </div>
