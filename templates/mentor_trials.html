@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+
+{% block title %}Mentor Trials - Test Your Knowledge{% endblock %}
+
+{% block content %}
+<style>
+    .trials-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 1rem;
+    }
+    .trials-header {
+        background: linear-gradient(135deg, rgba(156, 39, 176, 0.2), rgba(0, 0, 0, 0.8));
+        border: 2px solid rgba(156, 39, 176, 0.4);
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    .trials-header h1 {
+        color: #ce93d8;
+        font-family: 'Cinzel', serif;
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+    .trials-header p {
+        color: #e0e0e0;
+        font-size: 1.1rem;
+    }
+    .trial-card {
+        background: rgba(0, 0, 0, 0.7);
+        border: 2px solid rgba(156, 39, 176, 0.3);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.25rem;
+        transition: all 0.3s ease;
+    }
+    .trial-card:hover {
+        border-color: rgba(156, 39, 176, 0.7);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(156, 39, 176, 0.2);
+    }
+    .trial-card.passed {
+        border-color: rgba(76, 175, 80, 0.5);
+    }
+    .mentor-info {
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+    .mentor-avatar {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #9c27b0, #7b1fa2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        flex-shrink: 0;
+    }
+    .mentor-details h3 {
+        color: #ce93d8;
+        font-family: 'Cinzel', serif;
+        margin-bottom: 0.25rem;
+    }
+    .mentor-title {
+        color: #b0b0b0;
+        font-size: 0.9rem;
+        font-style: italic;
+    }
+    .trial-meta {
+        display: flex;
+        gap: 1rem;
+        margin-top: 0.75rem;
+        flex-wrap: wrap;
+    }
+    .trial-meta span {
+        background: rgba(156, 39, 176, 0.2);
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        color: #ce93d8;
+    }
+    .trial-description {
+        color: #d0d0d0;
+        margin: 1rem 0;
+        line-height: 1.6;
+        font-size: 0.95rem;
+    }
+    .trial-rewards {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1rem;
+        flex-wrap: wrap;
+    }
+    .reward-item {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.9rem;
+    }
+    .reward-item.gold { color: #ffd700; }
+    .reward-item.exp { color: #64b5f6; }
+    .trial-status {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .status-badge {
+        padding: 0.35rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    .status-badge.passed {
+        background: rgba(76, 175, 80, 0.2);
+        color: #81c784;
+    }
+    .status-badge.attempted {
+        background: rgba(255, 193, 7, 0.2);
+        color: #ffd54f;
+    }
+    .status-badge.new {
+        background: rgba(33, 150, 243, 0.2);
+        color: #64b5f6;
+    }
+    .btn-trial {
+        background: linear-gradient(135deg, #9c27b0, #7b1fa2);
+        color: white;
+        border: none;
+        padding: 0.6rem 1.5rem;
+        border-radius: 25px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    .btn-trial:hover {
+        background: linear-gradient(135deg, #ab47bc, #8e24aa);
+        color: white;
+        transform: scale(1.05);
+    }
+    .discipline-filter {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    .filter-btn {
+        background: rgba(156, 39, 176, 0.2);
+        border: 1px solid rgba(156, 39, 176, 0.3);
+        color: #ce93d8;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .filter-btn:hover, .filter-btn.active {
+        background: rgba(156, 39, 176, 0.4);
+        border-color: rgba(156, 39, 176, 0.6);
+    }
+</style>
+
+<div class="trials-container">
+    <div class="trials-header">
+        <h1><i class="bi bi-mortarboard"></i> Mentor Trials</h1>
+        <p>Prove your business knowledge to the Guild Masters and earn their respect!</p>
+    </div>
+    
+    <div class="discipline-filter">
+        <button class="filter-btn active" onclick="filterTrials('all')">All Trials</button>
+        <button class="filter-btn" onclick="filterTrials('Finance')">Finance</button>
+        <button class="filter-btn" onclick="filterTrials('Marketing')">Marketing</button>
+        <button class="filter-btn" onclick="filterTrials('Operations')">Operations</button>
+    </div>
+    
+    {% if trials %}
+        {% for trial in trials %}
+        <div class="trial-card {% if trial.is_passed %}passed{% endif %}" data-discipline="{{ trial.discipline }}">
+            <div class="mentor-info">
+                <div class="mentor-avatar">
+                    {% if trial.discipline == 'Finance' %}
+                    <i class="bi bi-cash-coin"></i>
+                    {% elif trial.discipline == 'Marketing' %}
+                    <i class="bi bi-megaphone"></i>
+                    {% elif trial.discipline == 'Operations' %}
+                    <i class="bi bi-gear"></i>
+                    {% else %}
+                    <i class="bi bi-person-badge"></i>
+                    {% endif %}
+                </div>
+                <div class="mentor-details">
+                    <h3>{{ trial.trial_name }}</h3>
+                    <div class="mentor-title">{{ trial.mentor_name }} - {{ trial.mentor_title }}</div>
+                    <div class="trial-meta">
+                        <span><i class="bi bi-bookmark"></i> {{ trial.discipline }}</span>
+                        <span><i class="bi bi-speedometer2"></i> Level {{ trial.difficulty }}</span>
+                        <span><i class="bi bi-clock"></i> {{ (trial.time_limit_seconds / 60)|int }} min</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="trial-description">
+                {{ trial.story_intro[:200] }}{% if trial.story_intro|length > 200 %}...{% endif %}
+            </div>
+            
+            <div class="trial-rewards">
+                <div class="reward-item gold"><i class="bi bi-coin"></i> {{ trial.gold_reward }} Gold</div>
+                <div class="reward-item exp"><i class="bi bi-lightning-charge"></i> {{ trial.exp_reward }} XP</div>
+            </div>
+            
+            <div class="trial-status">
+                {% if trial.is_passed %}
+                    <span class="status-badge passed"><i class="bi bi-check-circle"></i> Passed (Best: {{ trial.best_score }}%)</span>
+                {% elif trial.attempts and trial.attempts > 0 %}
+                    <span class="status-badge attempted"><i class="bi bi-arrow-repeat"></i> Attempted {{ trial.attempts }}x</span>
+                {% else %}
+                    <span class="status-badge new"><i class="bi bi-star"></i> New Challenge</span>
+                {% endif %}
+                <a href="{{ url_for('mentor_trial', trial_id=trial.trial_id) }}" class="btn-trial">
+                    {% if trial.is_passed %}Retry Trial{% else %}Begin Trial{% endif %} <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="text-center p-5">
+            <i class="bi bi-hourglass" style="font-size: 3rem; color: #9c27b0;"></i>
+            <p class="mt-3" style="color: #b0b0b0;">No trials available yet. Check back soon!</p>
+        </div>
+    {% endif %}
+    
+    <div class="text-center mt-4">
+        <a href="{{ url_for('hub') }}" class="btn btn-outline-light">
+            <i class="bi bi-arrow-left"></i> Back to Hub
+        </a>
+    </div>
+</div>
+
+<script>
+function filterTrials(discipline) {
+    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    document.querySelectorAll('.trial-card').forEach(card => {
+        if (discipline === 'all' || card.dataset.discipline === discipline) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+</script>
+{% endblock %}

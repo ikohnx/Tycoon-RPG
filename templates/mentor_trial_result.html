@@ -1,0 +1,271 @@
+{% extends "base.html" %}
+
+{% block title %}Trial Results{% endblock %}
+
+{% block content %}
+<style>
+    .result-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 1rem;
+    }
+    .result-header {
+        text-align: center;
+        padding: 2rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+    }
+    .result-header.passed {
+        background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(0, 0, 0, 0.8));
+        border: 2px solid rgba(76, 175, 80, 0.4);
+    }
+    .result-header.failed {
+        background: linear-gradient(135deg, rgba(244, 67, 54, 0.2), rgba(0, 0, 0, 0.8));
+        border: 2px solid rgba(244, 67, 54, 0.4);
+    }
+    .result-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+    }
+    .result-icon.passed { color: #81c784; }
+    .result-icon.failed { color: #ef5350; }
+    .result-title {
+        font-family: 'Cinzel', serif;
+        font-size: 1.75rem;
+        margin-bottom: 0.5rem;
+    }
+    .result-title.passed { color: #81c784; }
+    .result-title.failed { color: #ef5350; }
+    .result-message {
+        color: #e0e0e0;
+        font-size: 1rem;
+        line-height: 1.6;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    .score-display {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        margin: 1.5rem 0;
+        flex-wrap: wrap;
+    }
+    .score-item {
+        text-align: center;
+    }
+    .score-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+    }
+    .score-value.passed { color: #81c784; }
+    .score-value.failed { color: #ef5350; }
+    .score-label {
+        color: #b0b0b0;
+        font-size: 0.9rem;
+    }
+    .rewards-section {
+        background: rgba(255, 215, 0, 0.1);
+        border: 1px solid rgba(255, 215, 0, 0.3);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    .rewards-title {
+        color: #ffd700;
+        font-size: 1.2rem;
+        margin-bottom: 1rem;
+    }
+    .rewards-items {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        flex-wrap: wrap;
+    }
+    .reward-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1.25rem;
+    }
+    .reward-item.gold { color: #ffd700; }
+    .reward-item.exp { color: #64b5f6; }
+    .reward-item.badge { color: #ce93d8; }
+    .question-review {
+        background: rgba(0, 0, 0, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+    }
+    .question-review.correct {
+        border-left: 4px solid #81c784;
+    }
+    .question-review.incorrect {
+        border-left: 4px solid #ef5350;
+    }
+    .review-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+    }
+    .review-status {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+    }
+    .review-status.correct { color: #81c784; }
+    .review-status.incorrect { color: #ef5350; }
+    .review-points {
+        color: #b0b0b0;
+        font-size: 0.9rem;
+    }
+    .review-question {
+        color: #e0e0e0;
+        margin-bottom: 0.75rem;
+    }
+    .review-answers {
+        font-size: 0.9rem;
+        color: #b0b0b0;
+    }
+    .your-answer { color: #ef5350; }
+    .correct-answer { color: #81c784; }
+    .review-explanation {
+        background: rgba(33, 150, 243, 0.1);
+        border-left: 3px solid #2196F3;
+        padding: 0.75rem;
+        margin-top: 0.75rem;
+        border-radius: 0 8px 8px 0;
+        color: #90caf9;
+        font-size: 0.9rem;
+    }
+    .action-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-top: 2rem;
+        flex-wrap: wrap;
+    }
+    .btn-action {
+        padding: 0.75rem 1.5rem;
+        border-radius: 25px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    .btn-primary-action {
+        background: linear-gradient(135deg, #9c27b0, #7b1fa2);
+        color: white;
+        border: none;
+    }
+    .btn-primary-action:hover {
+        background: linear-gradient(135deg, #ab47bc, #8e24aa);
+        color: white;
+        transform: scale(1.05);
+    }
+    .btn-secondary-action {
+        background: transparent;
+        border: 2px solid rgba(156, 39, 176, 0.5);
+        color: #ce93d8;
+    }
+    .btn-secondary-action:hover {
+        background: rgba(156, 39, 176, 0.2);
+        color: #ce93d8;
+    }
+</style>
+
+<div class="result-container">
+    <div class="result-header {% if is_passed %}passed{% else %}failed{% endif %}">
+        <div class="result-icon {% if is_passed %}passed{% else %}failed{% endif %}">
+            {% if is_passed %}
+            <i class="bi bi-trophy"></i>
+            {% else %}
+            <i class="bi bi-x-circle"></i>
+            {% endif %}
+        </div>
+        <h1 class="result-title {% if is_passed %}passed{% else %}failed{% endif %}">
+            {% if is_passed %}Trial Passed!{% else %}Trial Failed{% endif %}
+        </h1>
+        <div class="result-message">
+            {% if is_passed %}
+            {{ trial.story_success }}
+            {% else %}
+            {{ trial.story_fail }}
+            {% endif %}
+        </div>
+        
+        <div class="score-display">
+            <div class="score-item">
+                <div class="score-value {% if is_passed %}passed{% else %}failed{% endif %}">{{ percentage|int }}%</div>
+                <div class="score-label">Your Score</div>
+            </div>
+            <div class="score-item">
+                <div class="score-value" style="color: #b0b0b0;">{{ trial.passing_score }}%</div>
+                <div class="score-label">Required</div>
+            </div>
+            <div class="score-item">
+                <div class="score-value" style="color: #ce93d8;">{{ score }}/{{ max_score }}</div>
+                <div class="score-label">Points</div>
+            </div>
+        </div>
+    </div>
+    
+    {% if is_passed and (rewards.gold > 0 or rewards.exp > 0 or rewards.badge) %}
+    <div class="rewards-section">
+        <div class="rewards-title"><i class="bi bi-gift"></i> Rewards Earned</div>
+        <div class="rewards-items">
+            {% if rewards.gold > 0 %}
+            <div class="reward-item gold"><i class="bi bi-coin"></i> +{{ rewards.gold }} Gold</div>
+            {% endif %}
+            {% if rewards.exp > 0 %}
+            <div class="reward-item exp"><i class="bi bi-lightning-charge"></i> +{{ rewards.exp }} XP</div>
+            {% endif %}
+            {% if rewards.badge %}
+            <div class="reward-item badge"><i class="bi bi-award"></i> Badge Earned!</div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <h3 style="color: #ce93d8; margin-bottom: 1rem;"><i class="bi bi-clipboard-check"></i> Question Review</h3>
+    
+    {% for r in results %}
+    <div class="question-review {% if r.is_correct %}correct{% else %}incorrect{% endif %}">
+        <div class="review-header">
+            <div class="review-status {% if r.is_correct %}correct{% else %}incorrect{% endif %}">
+                {% if r.is_correct %}
+                <i class="bi bi-check-circle-fill"></i> Correct
+                {% else %}
+                <i class="bi bi-x-circle-fill"></i> Incorrect
+                {% endif %}
+            </div>
+            <div class="review-points">+{{ r.points }} pts</div>
+        </div>
+        <div class="review-question">{{ r.question }}</div>
+        <div class="review-answers">
+            {% if not r.is_correct %}
+            <div>Your answer: <span class="your-answer">{{ r.your_answer|upper if r.your_answer else 'No answer' }}</span></div>
+            {% endif %}
+            <div>Correct answer: <span class="correct-answer">{{ r.correct_answer|upper }}</span></div>
+        </div>
+        <div class="review-explanation">
+            <strong>Explanation:</strong> {{ r.explanation }}
+        </div>
+    </div>
+    {% endfor %}
+    
+    <div class="action-buttons">
+        <a href="{{ url_for('mentor_trial', trial_id=trial.trial_id) }}" class="btn-action btn-secondary-action">
+            <i class="bi bi-arrow-repeat"></i> Retry Trial
+        </a>
+        <a href="{{ url_for('mentor_trials_list') }}" class="btn-action btn-primary-action">
+            <i class="bi bi-list-check"></i> More Trials
+        </a>
+        <a href="{{ url_for('hub') }}" class="btn-action btn-secondary-action">
+            <i class="bi bi-house"></i> Back to Hub
+        </a>
+    </div>
+</div>
+{% endblock %}

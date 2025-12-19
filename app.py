@@ -2074,6 +2074,192 @@ def mentorship_required(scenario_id):
 
 
 # ============================================================================
+# MENTOR TRIALS - RPG-THEMED KNOWLEDGE QUIZZES
+# ============================================================================
+
+@app.route('/trials')
+@login_required
+def mentor_trials_list():
+    """Show all available mentor trials."""
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
+    
+    from src.game_engine import get_all_mentor_trials
+    trials = get_all_mentor_trials(player_id)
+    
+    return render_template('mentor_trials.html', stats=stats, trials=trials)
+
+
+@app.route('/trials/<int:trial_id>')
+@login_required
+def mentor_trial(trial_id):
+    """Start a mentor trial quiz."""
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
+    
+    from src.game_engine import get_mentor_trial, start_mentor_trial
+    trial = get_mentor_trial(trial_id)
+    
+    if not trial:
+        flash('Trial not found!')
+        return redirect(url_for('mentor_trials_list'))
+    
+    start_mentor_trial(player_id, trial_id)
+    
+    return render_template('mentor_trial_play.html', stats=stats, trial=trial)
+
+
+@app.route('/trials/<int:trial_id>/submit', methods=['POST'])
+@login_required
+def submit_mentor_trial(trial_id):
+    """Submit mentor trial answers and calculate results."""
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    from src.game_engine import get_mentor_trial, complete_mentor_trial
+    
+    trial = get_mentor_trial(trial_id)
+    if not trial:
+        flash('Trial not found!')
+        return redirect(url_for('mentor_trials_list'))
+    
+    # Calculate score
+    score = 0
+    max_score = 0
+    results = []
+    
+    for q in trial['questions']:
+        answer = request.form.get(f'q_{q["question_id"]}')
+        is_correct = answer and answer.upper() == q['correct_answer'].upper()
+        points = q['points'] if is_correct else 0
+        score += points
+        max_score += q['points']
+        results.append({
+            'question': q['question_text'],
+            'your_answer': answer,
+            'correct_answer': q['correct_answer'],
+            'is_correct': is_correct,
+            'explanation': q['explanation'],
+            'points': points
+        })
+    
+    percentage = (score / max_score * 100) if max_score > 0 else 0
+    is_passed = percentage >= trial['passing_score']
+    
+    rewards = complete_mentor_trial(player_id, trial_id, score, max_score, is_passed)
+    
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
+    
+    return render_template('mentor_trial_result.html', 
+                          stats=stats, 
+                          trial=trial, 
+                          results=results,
+                          score=score,
+                          max_score=max_score,
+                          percentage=percentage,
+                          is_passed=is_passed,
+                          rewards=rewards)
+
+
+# ============================================================================
+# MERCHANT PUZZLES - INTERACTIVE BUSINESS CALCULATORS
+# ============================================================================
+
+@app.route('/puzzles')
+@login_required
+def merchant_puzzles_list():
+    """Show all available merchant puzzles."""
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
+    
+    from src.game_engine import get_all_merchant_puzzles
+    puzzles = get_all_merchant_puzzles(player_id)
+    
+    return render_template('merchant_puzzles.html', stats=stats, puzzles=puzzles)
+
+
+@app.route('/puzzles/<int:puzzle_id>')
+@login_required
+def merchant_puzzle(puzzle_id):
+    """Play a merchant puzzle."""
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
+    
+    from src.game_engine import get_merchant_puzzle, start_merchant_puzzle
+    puzzle = get_merchant_puzzle(puzzle_id)
+    
+    if not puzzle:
+        flash('Puzzle not found!')
+        return redirect(url_for('merchant_puzzles_list'))
+    
+    start_merchant_puzzle(player_id, puzzle_id)
+    
+    return render_template('merchant_puzzle_play.html', stats=stats, puzzle=puzzle)
+
+
+@app.route('/puzzles/<int:puzzle_id>/submit', methods=['POST'])
+@login_required
+def submit_merchant_puzzle(puzzle_id):
+    """Submit merchant puzzle answer."""
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    from src.game_engine import get_merchant_puzzle, complete_merchant_puzzle
+    
+    puzzle = get_merchant_puzzle(puzzle_id)
+    if not puzzle:
+        flash('Puzzle not found!')
+        return redirect(url_for('merchant_puzzles_list'))
+    
+    answer = request.form.get('answer', '')
+    time_seconds = int(request.form.get('time_seconds', 0))
+    
+    try:
+        player_answer = float(answer)
+    except (ValueError, TypeError):
+        player_answer = None
+    
+    challenge = puzzle.get('challenge_data', {})
+    correct_answer = challenge.get('correct_margin') or challenge.get('correct_breakeven') or challenge.get('correct_roi') or challenge.get('correct_price') or challenge.get('correct_rate')
+    tolerance = challenge.get('tolerance', 0)
+    
+    is_correct = player_answer is not None and abs(player_answer - correct_answer) <= tolerance
+    
+    rewards = complete_merchant_puzzle(player_id, puzzle_id, time_seconds, is_correct)
+    
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
+    
+    return render_template('merchant_puzzle_result.html',
+                          stats=stats,
+                          puzzle=puzzle,
+                          player_answer=player_answer,
+                          correct_answer=correct_answer,
+                          is_correct=is_correct,
+                          time_seconds=time_seconds,
+                          rewards=rewards)
+
+
+# ============================================================================
 # PHASE 4: STORYLINE QUEST SYSTEM ROUTES
 # ============================================================================
 

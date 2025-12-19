@@ -1,0 +1,271 @@
+{% extends "base.html" %}
+
+{% block title %}Merchant Puzzles - Business Calculations{% endblock %}
+
+{% block content %}
+<style>
+    .puzzles-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 1rem;
+    }
+    .puzzles-header {
+        background: linear-gradient(135deg, rgba(255, 193, 7, 0.2), rgba(0, 0, 0, 0.8));
+        border: 2px solid rgba(255, 193, 7, 0.4);
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    .puzzles-header h1 {
+        color: #ffd54f;
+        font-family: 'Cinzel', serif;
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+    .puzzles-header p {
+        color: #e0e0e0;
+        font-size: 1.1rem;
+    }
+    .puzzle-card {
+        background: rgba(0, 0, 0, 0.7);
+        border: 2px solid rgba(255, 193, 7, 0.3);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.25rem;
+        transition: all 0.3s ease;
+    }
+    .puzzle-card:hover {
+        border-color: rgba(255, 193, 7, 0.7);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(255, 193, 7, 0.2);
+    }
+    .puzzle-card.solved {
+        border-color: rgba(76, 175, 80, 0.5);
+    }
+    .merchant-info {
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+    .merchant-avatar {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #ffc107, #ff9800);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        flex-shrink: 0;
+        color: #1a1a2e;
+    }
+    .merchant-details h3 {
+        color: #ffd54f;
+        font-family: 'Cinzel', serif;
+        margin-bottom: 0.25rem;
+    }
+    .merchant-title {
+        color: #b0b0b0;
+        font-size: 0.9rem;
+        font-style: italic;
+    }
+    .puzzle-meta {
+        display: flex;
+        gap: 1rem;
+        margin-top: 0.75rem;
+        flex-wrap: wrap;
+    }
+    .puzzle-meta span {
+        background: rgba(255, 193, 7, 0.2);
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        color: #ffd54f;
+    }
+    .puzzle-description {
+        color: #d0d0d0;
+        margin: 1rem 0;
+        line-height: 1.6;
+        font-size: 0.95rem;
+    }
+    .puzzle-type-badge {
+        display: inline-block;
+        background: rgba(255, 193, 7, 0.3);
+        color: #ffd54f;
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        margin-right: 0.5rem;
+    }
+    .puzzle-rewards {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1rem;
+        flex-wrap: wrap;
+    }
+    .reward-item {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.9rem;
+    }
+    .reward-item.gold { color: #ffd700; }
+    .reward-item.exp { color: #64b5f6; }
+    .puzzle-status {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .status-badge {
+        padding: 0.35rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    .status-badge.solved {
+        background: rgba(76, 175, 80, 0.2);
+        color: #81c784;
+    }
+    .status-badge.attempted {
+        background: rgba(255, 193, 7, 0.2);
+        color: #ffd54f;
+    }
+    .status-badge.new {
+        background: rgba(33, 150, 243, 0.2);
+        color: #64b5f6;
+    }
+    .btn-puzzle {
+        background: linear-gradient(135deg, #ffc107, #ff9800);
+        color: #1a1a2e;
+        border: none;
+        padding: 0.6rem 1.5rem;
+        border-radius: 25px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    .btn-puzzle:hover {
+        background: linear-gradient(135deg, #ffca28, #ffa726);
+        color: #1a1a2e;
+        transform: scale(1.05);
+    }
+    .discipline-filter {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    .filter-btn {
+        background: rgba(255, 193, 7, 0.2);
+        border: 1px solid rgba(255, 193, 7, 0.3);
+        color: #ffd54f;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .filter-btn:hover, .filter-btn.active {
+        background: rgba(255, 193, 7, 0.4);
+        border-color: rgba(255, 193, 7, 0.6);
+    }
+</style>
+
+<div class="puzzles-container">
+    <div class="puzzles-header">
+        <h1><i class="bi bi-calculator"></i> Merchant Puzzles</h1>
+        <p>Solve business calculations and earn rewards from grateful merchants!</p>
+    </div>
+    
+    <div class="discipline-filter">
+        <button class="filter-btn active" onclick="filterPuzzles('all')">All Puzzles</button>
+        <button class="filter-btn" onclick="filterPuzzles('Finance')">Finance</button>
+        <button class="filter-btn" onclick="filterPuzzles('Marketing')">Marketing</button>
+    </div>
+    
+    {% if puzzles %}
+        {% for puzzle in puzzles %}
+        <div class="puzzle-card {% if puzzle.is_solved %}solved{% endif %}" data-discipline="{{ puzzle.discipline }}">
+            <div class="merchant-info">
+                <div class="merchant-avatar">
+                    {% if puzzle.puzzle_type == 'profit_margin' %}
+                    <i class="bi bi-percent"></i>
+                    {% elif puzzle.puzzle_type == 'breakeven' %}
+                    <i class="bi bi-graph-up"></i>
+                    {% elif puzzle.puzzle_type == 'roi' %}
+                    <i class="bi bi-piggy-bank"></i>
+                    {% elif puzzle.puzzle_type == 'markup' %}
+                    <i class="bi bi-tags"></i>
+                    {% else %}
+                    <i class="bi bi-calculator"></i>
+                    {% endif %}
+                </div>
+                <div class="merchant-details">
+                    <h3>{{ puzzle.puzzle_name }}</h3>
+                    <div class="merchant-title">{{ puzzle.merchant_name }} - {{ puzzle.merchant_title }}</div>
+                    <div class="puzzle-meta">
+                        <span><i class="bi bi-bookmark"></i> {{ puzzle.discipline }}</span>
+                        <span><i class="bi bi-speedometer2"></i> Level {{ puzzle.difficulty }}</span>
+                        <span><i class="bi bi-clock"></i> {{ (puzzle.time_limit_seconds / 60)|int }} min</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="puzzle-description">
+                <span class="puzzle-type-badge">{{ puzzle.puzzle_type|replace('_', ' ')|title }}</span>
+                {{ puzzle.story_intro[:180] }}{% if puzzle.story_intro|length > 180 %}...{% endif %}
+            </div>
+            
+            <div class="puzzle-rewards">
+                <div class="reward-item gold"><i class="bi bi-coin"></i> {{ puzzle.gold_reward }} Gold</div>
+                <div class="reward-item exp"><i class="bi bi-lightning-charge"></i> {{ puzzle.exp_reward }} XP</div>
+            </div>
+            
+            <div class="puzzle-status">
+                {% if puzzle.is_solved %}
+                    <span class="status-badge solved"><i class="bi bi-check-circle"></i> Solved{% if puzzle.best_time_seconds %} ({{ puzzle.best_time_seconds }}s){% endif %}</span>
+                {% elif puzzle.attempts and puzzle.attempts > 0 %}
+                    <span class="status-badge attempted"><i class="bi bi-arrow-repeat"></i> Attempted {{ puzzle.attempts }}x</span>
+                {% else %}
+                    <span class="status-badge new"><i class="bi bi-star"></i> New Puzzle</span>
+                {% endif %}
+                <a href="{{ url_for('merchant_puzzle', puzzle_id=puzzle.puzzle_id) }}" class="btn-puzzle">
+                    {% if puzzle.is_solved %}Try Again{% else %}Solve Puzzle{% endif %} <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="text-center p-5">
+            <i class="bi bi-hourglass" style="font-size: 3rem; color: #ffc107;"></i>
+            <p class="mt-3" style="color: #b0b0b0;">No puzzles available yet. Check back soon!</p>
+        </div>
+    {% endif %}
+    
+    <div class="text-center mt-4">
+        <a href="{{ url_for('hub') }}" class="btn btn-outline-light">
+            <i class="bi bi-arrow-left"></i> Back to Hub
+        </a>
+    </div>
+</div>
+
+<script>
+function filterPuzzles(discipline) {
+    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    document.querySelectorAll('.puzzle-card').forEach(card => {
+        if (discipline === 'all' || card.dataset.discipline === discipline) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+</script>
+{% endblock %}

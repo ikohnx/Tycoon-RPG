@@ -1,0 +1,304 @@
+{% extends "base.html" %}
+
+{% block title %}{{ trial.trial_name }}{% endblock %}
+
+{% block content %}
+<style>
+    .trial-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 1rem;
+    }
+    .trial-intro {
+        background: linear-gradient(135deg, rgba(156, 39, 176, 0.15), rgba(0, 0, 0, 0.8));
+        border: 2px solid rgba(156, 39, 176, 0.4);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .mentor-speech {
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+    .mentor-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #9c27b0, #7b1fa2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        flex-shrink: 0;
+    }
+    .speech-bubble {
+        background: rgba(0, 0, 0, 0.5);
+        border-radius: 12px;
+        padding: 1rem;
+        position: relative;
+        color: #e0e0e0;
+        line-height: 1.6;
+    }
+    .speech-bubble::before {
+        content: '';
+        position: absolute;
+        left: -10px;
+        top: 20px;
+        border-width: 10px;
+        border-style: solid;
+        border-color: transparent rgba(0, 0, 0, 0.5) transparent transparent;
+    }
+    .mentor-name {
+        color: #ce93d8;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    .timer-bar {
+        background: rgba(0, 0, 0, 0.5);
+        border-radius: 20px;
+        padding: 0.75rem 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        border: 1px solid rgba(156, 39, 176, 0.3);
+    }
+    .timer {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #81c784;
+    }
+    .timer.warning { color: #ffd54f; }
+    .timer.danger { color: #ef5350; }
+    .question-card {
+        background: rgba(0, 0, 0, 0.7);
+        border: 2px solid rgba(156, 39, 176, 0.3);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.25rem;
+    }
+    .question-number {
+        color: #ce93d8;
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    .question-context {
+        color: #b0b0b0;
+        font-style: italic;
+        font-size: 0.9rem;
+        margin-bottom: 0.75rem;
+        padding-left: 1rem;
+        border-left: 3px solid rgba(156, 39, 176, 0.4);
+    }
+    .question-text {
+        color: #ffffff;
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+        line-height: 1.5;
+    }
+    .answer-options {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    .answer-option {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.85rem 1rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .answer-option:hover {
+        background: rgba(156, 39, 176, 0.15);
+        border-color: rgba(156, 39, 176, 0.4);
+    }
+    .answer-option input[type="radio"] {
+        display: none;
+    }
+    .answer-option input[type="radio"]:checked + .option-label {
+        background: rgba(156, 39, 176, 0.3);
+        border-color: #9c27b0;
+    }
+    .option-letter {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: rgba(156, 39, 176, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        color: #ce93d8;
+        flex-shrink: 0;
+    }
+    .option-text {
+        color: #e0e0e0;
+        flex: 1;
+    }
+    .answer-option.selected {
+        background: rgba(156, 39, 176, 0.25);
+        border-color: #9c27b0;
+    }
+    .answer-option.selected .option-letter {
+        background: #9c27b0;
+        color: white;
+    }
+    .submit-section {
+        text-align: center;
+        margin-top: 2rem;
+    }
+    .btn-submit {
+        background: linear-gradient(135deg, #9c27b0, #7b1fa2);
+        color: white;
+        border: none;
+        padding: 1rem 3rem;
+        border-radius: 30px;
+        font-size: 1.2rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .btn-submit:hover {
+        background: linear-gradient(135deg, #ab47bc, #8e24aa);
+        transform: scale(1.05);
+    }
+    .progress-dots {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    .progress-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: rgba(156, 39, 176, 0.3);
+        transition: all 0.3s ease;
+    }
+    .progress-dot.answered {
+        background: #9c27b0;
+    }
+</style>
+
+<div class="trial-container">
+    <div class="trial-intro">
+        <div class="mentor-speech">
+            <div class="mentor-avatar">
+                {% if trial.discipline == 'Finance' %}
+                <i class="bi bi-cash-coin"></i>
+                {% elif trial.discipline == 'Marketing' %}
+                <i class="bi bi-megaphone"></i>
+                {% elif trial.discipline == 'Operations' %}
+                <i class="bi bi-gear"></i>
+                {% else %}
+                <i class="bi bi-person-badge"></i>
+                {% endif %}
+            </div>
+            <div class="speech-bubble">
+                <div class="mentor-name">{{ trial.mentor_name }}</div>
+                {{ trial.story_intro }}
+            </div>
+        </div>
+    </div>
+    
+    <div class="timer-bar">
+        <div>
+            <span style="color: #b0b0b0;">Questions:</span> 
+            <span style="color: #ce93d8; font-weight: 600;">{{ trial.questions|length }}</span>
+        </div>
+        <div class="timer" id="timer">{{ (trial.time_limit_seconds / 60)|int }}:00</div>
+        <div>
+            <span style="color: #b0b0b0;">Pass:</span> 
+            <span style="color: #81c784; font-weight: 600;">{{ trial.passing_score }}%</span>
+        </div>
+    </div>
+    
+    <div class="progress-dots">
+        {% for q in trial.questions %}
+        <div class="progress-dot" id="dot-{{ loop.index }}"></div>
+        {% endfor %}
+    </div>
+    
+    <form action="{{ url_for('submit_mentor_trial', trial_id=trial.trial_id) }}" method="POST" id="trialForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {% for question in trial.questions %}
+        <div class="question-card">
+            <div class="question-number">Question {{ loop.index }} of {{ trial.questions|length }}</div>
+            {% if question.question_context %}
+            <div class="question-context">{{ question.question_context }}</div>
+            {% endif %}
+            <div class="question-text">{{ question.question_text }}</div>
+            
+            <div class="answer-options">
+                <label class="answer-option" onclick="selectAnswer(this, {{ loop.index }})">
+                    <input type="radio" name="q_{{ question.question_id }}" value="a">
+                    <div class="option-letter">A</div>
+                    <div class="option-text">{{ question.option_a }}</div>
+                </label>
+                <label class="answer-option" onclick="selectAnswer(this, {{ loop.index }})">
+                    <input type="radio" name="q_{{ question.question_id }}" value="b">
+                    <div class="option-letter">B</div>
+                    <div class="option-text">{{ question.option_b }}</div>
+                </label>
+                {% if question.option_c %}
+                <label class="answer-option" onclick="selectAnswer(this, {{ loop.index }})">
+                    <input type="radio" name="q_{{ question.question_id }}" value="c">
+                    <div class="option-letter">C</div>
+                    <div class="option-text">{{ question.option_c }}</div>
+                </label>
+                {% endif %}
+                {% if question.option_d %}
+                <label class="answer-option" onclick="selectAnswer(this, {{ loop.index }})">
+                    <input type="radio" name="q_{{ question.question_id }}" value="d">
+                    <div class="option-letter">D</div>
+                    <div class="option-text">{{ question.option_d }}</div>
+                </label>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+        
+        <div class="submit-section">
+            <button type="submit" class="btn-submit">
+                <i class="bi bi-send"></i> Submit Answers
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+let timeLeft = {{ trial.time_limit_seconds }};
+const timerEl = document.getElementById('timer');
+
+const countdown = setInterval(() => {
+    timeLeft--;
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+    timerEl.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    
+    if (timeLeft <= 60) {
+        timerEl.classList.add('danger');
+    } else if (timeLeft <= 120) {
+        timerEl.classList.add('warning');
+    }
+    
+    if (timeLeft <= 0) {
+        clearInterval(countdown);
+        document.getElementById('trialForm').submit();
+    }
+}, 1000);
+
+function selectAnswer(element, questionNum) {
+    const parent = element.closest('.answer-options');
+    parent.querySelectorAll('.answer-option').forEach(opt => opt.classList.remove('selected'));
+    element.classList.add('selected');
+    document.getElementById(`dot-${questionNum}`).classList.add('answered');
+}
+</script>
+{% endblock %}

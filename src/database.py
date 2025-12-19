@@ -262,6 +262,127 @@ def init_database():
         );
     """)
     
+    # Mentor Trials - RPG-themed knowledge quizzes
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS mentor_trials (
+            trial_id SERIAL PRIMARY KEY,
+            trial_code VARCHAR(50) UNIQUE NOT NULL,
+            trial_name VARCHAR(150) NOT NULL,
+            mentor_name VARCHAR(100) NOT NULL,
+            mentor_title VARCHAR(150),
+            mentor_avatar VARCHAR(100) DEFAULT 'mentor_sage',
+            discipline VARCHAR(100) NOT NULL,
+            difficulty INTEGER DEFAULT 1,
+            story_intro TEXT,
+            story_success TEXT,
+            story_fail TEXT,
+            time_limit_seconds INTEGER DEFAULT 300,
+            passing_score INTEGER DEFAULT 70,
+            exp_reward INTEGER DEFAULT 50,
+            gold_reward INTEGER DEFAULT 100,
+            badge_code VARCHAR(50),
+            is_active BOOLEAN DEFAULT TRUE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS trial_questions (
+            question_id SERIAL PRIMARY KEY,
+            trial_id INTEGER REFERENCES mentor_trials(trial_id) ON DELETE CASCADE,
+            question_text TEXT NOT NULL,
+            question_context TEXT,
+            option_a TEXT NOT NULL,
+            option_b TEXT NOT NULL,
+            option_c TEXT,
+            option_d TEXT,
+            correct_answer CHAR(1) NOT NULL,
+            explanation TEXT,
+            points INTEGER DEFAULT 10,
+            question_order INTEGER DEFAULT 1
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_trial_progress (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            trial_id INTEGER REFERENCES mentor_trials(trial_id) ON DELETE CASCADE,
+            started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            completed_at TIMESTAMP,
+            score INTEGER DEFAULT 0,
+            max_score INTEGER DEFAULT 0,
+            is_passed BOOLEAN DEFAULT FALSE,
+            attempts INTEGER DEFAULT 0,
+            best_score INTEGER DEFAULT 0,
+            UNIQUE(player_id, trial_id)
+        );
+    """)
+    
+    # Merchant Puzzles - Interactive business calculators as challenges
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS merchant_puzzles (
+            puzzle_id SERIAL PRIMARY KEY,
+            puzzle_code VARCHAR(50) UNIQUE NOT NULL,
+            puzzle_name VARCHAR(150) NOT NULL,
+            merchant_name VARCHAR(100) NOT NULL,
+            merchant_title VARCHAR(150),
+            merchant_avatar VARCHAR(100) DEFAULT 'merchant_trader',
+            discipline VARCHAR(100) NOT NULL,
+            puzzle_type VARCHAR(50) NOT NULL,
+            difficulty INTEGER DEFAULT 1,
+            story_intro TEXT,
+            story_success TEXT,
+            challenge_data JSONB,
+            formula_hint TEXT,
+            time_limit_seconds INTEGER DEFAULT 180,
+            exp_reward INTEGER DEFAULT 40,
+            gold_reward INTEGER DEFAULT 150,
+            is_active BOOLEAN DEFAULT TRUE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_puzzle_progress (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            puzzle_id INTEGER REFERENCES merchant_puzzles(puzzle_id) ON DELETE CASCADE,
+            started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            completed_at TIMESTAMP,
+            attempts INTEGER DEFAULT 0,
+            best_time_seconds INTEGER,
+            is_solved BOOLEAN DEFAULT FALSE,
+            UNIQUE(player_id, puzzle_id)
+        );
+    """)
+    
+    # Learning badges
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS learning_badges (
+            badge_id SERIAL PRIMARY KEY,
+            badge_code VARCHAR(50) UNIQUE NOT NULL,
+            badge_name VARCHAR(100) NOT NULL,
+            badge_description TEXT,
+            badge_icon VARCHAR(100) DEFAULT 'badge_star',
+            badge_tier VARCHAR(20) DEFAULT 'bronze',
+            discipline VARCHAR(100),
+            requirement_type VARCHAR(50),
+            requirement_count INTEGER DEFAULT 1,
+            exp_bonus INTEGER DEFAULT 0
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_learning_badges (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            badge_id INTEGER REFERENCES learning_badges(badge_id) ON DELETE CASCADE,
+            earned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(player_id, badge_id)
+        );
+    """)
+    
     cur.execute("""
         CREATE TABLE IF NOT EXISTS achievements (
             achievement_id SERIAL PRIMARY KEY,
@@ -8555,6 +8676,283 @@ Example: Use 10 units/day, 5-day lead time, 20 safety stock = Reorder at 70 unit
     print("Mentorship modules seeded.")
 
 
+def seed_mentor_trials():
+    """Seed RPG-themed knowledge quizzes with mentor characters."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM mentor_trials")
+    if cur.fetchone()['count'] > 0:
+        print("Mentor trials already seeded.")
+        cur.close()
+        return_connection(conn)
+        return
+    
+    trials = [
+        {
+            'trial_code': 'FINANCE_LEDGER_TRIAL',
+            'trial_name': 'The Ledger Master\'s Challenge',
+            'mentor_name': 'Eldric the Accountant',
+            'mentor_title': 'Keeper of the Golden Ledger',
+            'mentor_avatar': 'mentor_sage',
+            'discipline': 'Finance',
+            'difficulty': 1,
+            'story_intro': 'You enter the dusty halls of the Treasury Guild. An elderly man with spectacles peers at you from behind towering stacks of ledgers. "Ah, a young merchant seeking wisdom! Before I share the secrets of gold, you must prove your understanding of the sacred balance sheets..."',
+            'story_success': '"Magnificent!" Eldric stamps your merchant license with a golden seal. "You have mastered the fundamentals. The Guild recognizes you as a true keeper of accounts. May your ledgers always balance!"',
+            'story_fail': 'Eldric shakes his head slowly. "The numbers... they do not add up. Return when you have studied the ancient texts more carefully. The Treasury Guild demands precision!"',
+            'time_limit_seconds': 300,
+            'passing_score': 70,
+            'exp_reward': 75,
+            'gold_reward': 150,
+            'badge_code': 'BADGE_LEDGER_APPRENTICE'
+        },
+        {
+            'trial_code': 'MARKETING_BAZAAR_TRIAL',
+            'trial_name': 'The Bazaar Merchant\'s Test',
+            'mentor_name': 'Zara the Merchant Queen',
+            'mentor_title': 'Master of the Four Markets',
+            'mentor_avatar': 'mentor_merchant',
+            'discipline': 'Marketing',
+            'difficulty': 1,
+            'story_intro': 'The Grand Bazaar bustles with activity. A woman draped in silk and gold gestures you to her ornate tent. "I am Zara, and I have sold everything from dragon scales to enchanted bread. To earn your place in my trade network, prove you understand the Four Pillars of Commerce!"',
+            'story_success': 'Zara applauds and hands you a merchant\'s ring. "Brilliant! You understand Product, Price, Place, and Promotion. Welcome to the Merchant\'s Guild - may your sales be legendary!"',
+            'story_fail': '"Hmm, your understanding is incomplete," Zara says with a knowing smile. "Return to the market stalls and observe. Watch how the masters sell - then come back and try again."',
+            'time_limit_seconds': 300,
+            'passing_score': 70,
+            'exp_reward': 75,
+            'gold_reward': 150,
+            'badge_code': 'BADGE_BAZAAR_TRADER'
+        },
+        {
+            'trial_code': 'OPERATIONS_FORGE_TRIAL',
+            'trial_name': 'The Forge Master\'s Exam',
+            'mentor_name': 'Grimlock the Smith',
+            'mentor_title': 'Grand Master of the Iron Guild',
+            'mentor_avatar': 'mentor_craftsman',
+            'discipline': 'Operations',
+            'difficulty': 1,
+            'story_intro': 'Heat radiates from the massive forge. A mountain of a man, arms like tree trunks, sets down his hammer. "You want to run a business? First, you must understand HOW things are made. Efficiency is survival. Waste is death. Show me you grasp the ways of the forge!"',
+            'story_success': 'Grimlock grins beneath his soot-covered beard. "HAH! You think like a true craftsman! Take this badge - you\'ve earned the respect of the Iron Guild. Now go build something worthy!"',
+            'story_fail': 'Grimlock sighs and returns to his anvil. "Your thinking is sloppy, like cheap iron. Come back when you understand that every second wasted is gold lost."',
+            'time_limit_seconds': 300,
+            'passing_score': 70,
+            'exp_reward': 75,
+            'gold_reward': 150,
+            'badge_code': 'BADGE_FORGE_APPRENTICE'
+        }
+    ]
+    
+    for t in trials:
+        cur.execute("""
+            INSERT INTO mentor_trials (trial_code, trial_name, mentor_name, mentor_title, mentor_avatar,
+                discipline, difficulty, story_intro, story_success, story_fail, time_limit_seconds,
+                passing_score, exp_reward, gold_reward, badge_code)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (trial_code) DO NOTHING
+            RETURNING trial_id
+        """, (t['trial_code'], t['trial_name'], t['mentor_name'], t['mentor_title'], t['mentor_avatar'],
+              t['discipline'], t['difficulty'], t['story_intro'], t['story_success'], t['story_fail'],
+              t['time_limit_seconds'], t['passing_score'], t['exp_reward'], t['gold_reward'], t['badge_code']))
+    
+    conn.commit()
+    
+    # Add questions for each trial
+    questions_data = {
+        'FINANCE_LEDGER_TRIAL': [
+            {'text': 'In the ancient art of bookkeeping, what must always remain equal?', 'context': 'Eldric points to a massive balance scale on his desk.', 'a': 'Revenue and Expenses', 'b': 'Assets and Liabilities + Equity', 'c': 'Cash and Inventory', 'd': 'Profit and Loss', 'correct': 'b', 'explanation': 'The fundamental accounting equation: Assets = Liabilities + Owner\'s Equity. This sacred balance must always hold true!'},
+            {'text': 'A merchant buys goods for 100 gold and sells them for 150 gold. What is their gross profit?', 'context': 'Eldric slides an abacus towards you.', 'a': '100 gold', 'b': '150 gold', 'c': '50 gold', 'd': '250 gold', 'correct': 'c', 'explanation': 'Gross Profit = Revenue - Cost of Goods Sold = 150 - 100 = 50 gold'},
+            {'text': 'Which scroll records ALL transactions as they happen, in order of occurrence?', 'context': 'Eldric gestures to shelves of leather-bound books.', 'a': 'The General Ledger', 'b': 'The Trial Balance', 'c': 'The Journal', 'd': 'The Balance Sheet', 'correct': 'c', 'explanation': 'The Journal (or Book of Original Entry) records all transactions chronologically before posting to ledger accounts.'},
+            {'text': 'When a merchant receives payment from a customer, which account INCREASES?', 'context': 'Coins clink as they hit the counting table.', 'a': 'Accounts Payable', 'b': 'Cash', 'c': 'Expenses', 'd': 'Liabilities', 'correct': 'b', 'explanation': 'When receiving payment, Cash (an asset) increases. Accounts Receivable would decrease if the payment was for a previous sale on credit.'},
+            {'text': 'What document shows a business\'s financial position at a specific moment in time?', 'context': 'Eldric pulls out an official-looking parchment.', 'a': 'Income Statement', 'b': 'Cash Flow Statement', 'c': 'Balance Sheet', 'd': 'Budget Report', 'correct': 'c', 'explanation': 'The Balance Sheet (Statement of Financial Position) shows assets, liabilities, and equity at a specific date - a "snapshot" of the business.'}
+        ],
+        'MARKETING_BAZAAR_TRIAL': [
+            {'text': 'What are the Four Pillars of Commerce that every merchant must master?', 'context': 'Zara holds up four golden tokens.', 'a': 'People, Profit, Planet, Purpose', 'b': 'Product, Price, Place, Promotion', 'c': 'Quality, Speed, Cost, Service', 'd': 'Buy, Sell, Trade, Barter', 'correct': 'b', 'explanation': 'The 4 Ps of Marketing: Product (what you sell), Price (how much), Place (where), and Promotion (how you tell people).'},
+            {'text': 'A merchant lowers prices to attract more customers. What strategy is this?', 'context': 'A rival stall slashes their prices dramatically.', 'a': 'Premium pricing', 'b': 'Penetration pricing', 'c': 'Price skimming', 'd': 'Bundle pricing', 'correct': 'b', 'explanation': 'Penetration pricing sets low initial prices to rapidly gain market share and attract price-sensitive customers.'},
+            {'text': 'Understanding WHO will buy your goods is called identifying your...?', 'context': 'Zara gestures to different groups of shoppers in the bazaar.', 'a': 'Competition', 'b': 'Target market', 'c': 'Supply chain', 'd': 'Inventory', 'correct': 'b', 'explanation': 'Your target market is the specific group of customers you aim to serve with your products or services.'},
+            {'text': 'What makes your goods different and better than your competitors\'?', 'context': 'Two identical-looking stalls sit side by side, but one has a crowd.', 'a': 'Market share', 'b': 'Unique selling proposition', 'c': 'Break-even point', 'd': 'Operating costs', 'correct': 'b', 'explanation': 'Your USP (Unique Selling Proposition) is what sets you apart and gives customers a reason to choose you over competitors.'},
+            {'text': 'Word spreads about your excellent goods through satisfied customers. This is...?', 'context': 'You overhear shoppers recommending your stall to friends.', 'a': 'Paid advertising', 'b': 'Word-of-mouth marketing', 'c': 'Direct sales', 'd': 'Wholesale', 'correct': 'b', 'explanation': 'Word-of-mouth marketing happens when customers voluntarily share positive experiences, often the most trusted form of promotion.'}
+        ],
+        'OPERATIONS_FORGE_TRIAL': [
+            {'text': 'When a craftsman produces more items per hour, what has improved?', 'context': 'Grimlock forges three swords in the time it used to take for one.', 'a': 'Quality', 'b': 'Productivity', 'c': 'Inventory', 'd': 'Revenue', 'correct': 'b', 'explanation': 'Productivity measures output per unit of input (labor, time, resources). Higher productivity = more efficient operations.'},
+            {'text': 'Keeping extra materials "just in case" represents what type of inventory?', 'context': 'Grimlock points to a shelf of backup iron ingots.', 'a': 'Work-in-progress', 'b': 'Finished goods', 'c': 'Safety stock', 'd': 'Raw waste', 'correct': 'c', 'explanation': 'Safety stock is extra inventory kept as a buffer against unexpected demand or supply disruptions.'},
+            {'text': 'The path through production that takes the LONGEST time is called the...?', 'context': 'Grimlock draws a diagram showing interconnected forge stations.', 'a': 'Supply chain', 'b': 'Critical path', 'c': 'Assembly line', 'd': 'Quality control', 'correct': 'b', 'explanation': 'The critical path is the longest sequence of dependent tasks - it determines the minimum project completion time.'},
+            {'text': 'Reducing waste and continuously improving processes is known as...?', 'context': 'Grimlock shows you how he reuses metal scraps.', 'a': 'Mass production', 'b': 'Outsourcing', 'c': 'Lean manufacturing', 'd': 'Vertical integration', 'correct': 'c', 'explanation': 'Lean manufacturing focuses on eliminating waste, improving efficiency, and creating more value with fewer resources.'},
+            {'text': 'When demand exceeds what you can produce, you have a...?', 'context': 'Orders pile up faster than Grimlock can forge.', 'a': 'Surplus', 'b': 'Bottleneck', 'c': 'Profit margin', 'd': 'Market share', 'correct': 'b', 'explanation': 'A bottleneck is a constraint that limits output capacity, creating a backup in the production process.'}
+        ]
+    }
+    
+    for trial_code, questions in questions_data.items():
+        cur.execute("SELECT trial_id FROM mentor_trials WHERE trial_code = %s", (trial_code,))
+        result = cur.fetchone()
+        if result:
+            trial_id = result['trial_id']
+            for i, q in enumerate(questions):
+                cur.execute("""
+                    INSERT INTO trial_questions (trial_id, question_text, question_context, option_a, option_b,
+                        option_c, option_d, correct_answer, explanation, points, question_order)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 20, %s)
+                """, (trial_id, q['text'], q['context'], q['a'], q['b'], q['c'], q.get('d'), q['correct'], q['explanation'], i+1))
+    
+    conn.commit()
+    cur.close()
+    return_connection(conn)
+    print("Mentor trials seeded.")
+
+
+def seed_merchant_puzzles():
+    """Seed interactive business calculator challenges."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM merchant_puzzles")
+    if cur.fetchone()['count'] > 0:
+        print("Merchant puzzles already seeded.")
+        cur.close()
+        return_connection(conn)
+        return
+    
+    puzzles = [
+        {
+            'puzzle_code': 'PROFIT_MARGIN_POTION',
+            'puzzle_name': 'The Potion Seller\'s Profit',
+            'merchant_name': 'Alchemist Vera',
+            'merchant_title': 'Master of Potions & Profits',
+            'merchant_avatar': 'merchant_alchemist',
+            'discipline': 'Finance',
+            'puzzle_type': 'profit_margin',
+            'difficulty': 1,
+            'story_intro': 'Vera the Alchemist sighs over her bubbling cauldrons. "Young entrepreneur! I sell healing potions for 25 gold each, but ingredients cost me 15 gold per potion. The guild masters demand I know my profit margins before expanding. Can you calculate them for me?"',
+            'story_success': '"By the ancient formulae! You\'ve mastered the calculation!" Vera hands you a glowing vial. "Take this bonus gold - you\'ve earned it with your sharp mind!"',
+            'challenge_data': '{"cost": 15, "price": 25, "correct_margin": 40, "tolerance": 1, "hint": "Profit Margin = ((Price - Cost) / Price) x 100"}',
+            'formula_hint': 'Profit Margin (%) = ((Selling Price - Cost) / Selling Price) × 100',
+            'time_limit_seconds': 120,
+            'exp_reward': 50,
+            'gold_reward': 100
+        },
+        {
+            'puzzle_code': 'BREAKEVEN_BAKERY',
+            'puzzle_name': 'The Baker\'s Break-Even',
+            'merchant_name': 'Chef Magnus',
+            'merchant_title': 'Royal Baker of the Crown',
+            'merchant_avatar': 'merchant_chef',
+            'discipline': 'Finance',
+            'puzzle_type': 'breakeven',
+            'difficulty': 1,
+            'story_intro': 'Chef Magnus dusts flour from his apron. "I want to open a new pastry shop! Fixed costs are 500 gold per month, each pastry costs 2 gold to make, and I sell them for 7 gold each. How many pastries must I sell to break even?"',
+            'story_success': '"Excellent calculation!" Magnus beams. "Now I know exactly what I need to sell. Here\'s some gold for your trouble, young business advisor!"',
+            'challenge_data': '{"fixed_costs": 500, "variable_cost": 2, "selling_price": 7, "correct_breakeven": 100, "tolerance": 0, "hint": "Break-Even = Fixed Costs / (Price - Variable Cost)"}',
+            'formula_hint': 'Break-Even Units = Fixed Costs / (Selling Price - Variable Cost per Unit)',
+            'time_limit_seconds': 120,
+            'exp_reward': 50,
+            'gold_reward': 120
+        },
+        {
+            'puzzle_code': 'ROI_INVESTMENT',
+            'puzzle_name': 'The Investor\'s Return',
+            'merchant_name': 'Lord Westbrook',
+            'merchant_title': 'Master of the Merchant Bank',
+            'merchant_avatar': 'merchant_noble',
+            'discipline': 'Finance',
+            'puzzle_type': 'roi',
+            'difficulty': 2,
+            'story_intro': 'Lord Westbrook adjusts his monocle. "I invested 1,000 gold in a trading expedition. After expenses, the voyage returned 1,350 gold. Calculate my Return on Investment percentage, and I shall reward your financial acumen."',
+            'story_success': '"Precisely correct!" Westbrook nods approvingly. "You have a banker\'s mind. Take this reward - consider it your first commission."',
+            'challenge_data': '{"investment": 1000, "return_value": 1350, "correct_roi": 35, "tolerance": 1, "hint": "ROI = ((Return - Investment) / Investment) x 100"}',
+            'formula_hint': 'ROI (%) = ((Net Return - Investment) / Investment) × 100',
+            'time_limit_seconds': 120,
+            'exp_reward': 60,
+            'gold_reward': 150
+        },
+        {
+            'puzzle_code': 'MARKUP_MARKET',
+            'puzzle_name': 'The Market Markup Mystery',
+            'merchant_name': 'Trader Jameson',
+            'merchant_title': 'The Price Wizard',
+            'merchant_avatar': 'merchant_trader',
+            'discipline': 'Marketing',
+            'puzzle_type': 'markup',
+            'difficulty': 1,
+            'story_intro': 'Jameson rubs his hands together. "I buy silks from the East for 40 gold. I want to apply a 75% markup. What should my selling price be? Get it right and I\'ll share a bit of my profits!"',
+            'story_success': '"Sharp as a tack!" Jameson laughs. "You\'ll go far in this business, mark my words. Here\'s your cut!"',
+            'challenge_data': '{"cost": 40, "markup_percent": 75, "correct_price": 70, "tolerance": 0, "hint": "Selling Price = Cost x (1 + Markup%)"}',
+            'formula_hint': 'Selling Price = Cost × (1 + Markup Percentage / 100)',
+            'time_limit_seconds': 90,
+            'exp_reward': 45,
+            'gold_reward': 90
+        },
+        {
+            'puzzle_code': 'CONVERSION_CAMPAIGN',
+            'puzzle_name': 'The Campaign Conversion',
+            'merchant_name': 'Town Crier Helena',
+            'merchant_title': 'Voice of the Market Square',
+            'merchant_avatar': 'merchant_herald',
+            'discipline': 'Marketing',
+            'puzzle_type': 'conversion_rate',
+            'difficulty': 1,
+            'story_intro': 'Helena rings her bell. "I announced a special sale - 200 people visited the stall! But only 30 actually bought something. The guild wants to know the conversion rate. Can you help?"',
+            'story_success': '"Numbers don\'t lie!" Helena proclaims. "Now I can report to the guild. Take this reward for your quick thinking!"',
+            'challenge_data': '{"visitors": 200, "buyers": 30, "correct_rate": 15, "tolerance": 1, "hint": "Conversion Rate = (Buyers / Visitors) x 100"}',
+            'formula_hint': 'Conversion Rate (%) = (Number of Buyers / Total Visitors) × 100',
+            'time_limit_seconds': 90,
+            'exp_reward': 45,
+            'gold_reward': 85
+        }
+    ]
+    
+    for p in puzzles:
+        cur.execute("""
+            INSERT INTO merchant_puzzles (puzzle_code, puzzle_name, merchant_name, merchant_title, merchant_avatar,
+                discipline, puzzle_type, difficulty, story_intro, story_success, challenge_data, formula_hint,
+                time_limit_seconds, exp_reward, gold_reward)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (puzzle_code) DO NOTHING
+        """, (p['puzzle_code'], p['puzzle_name'], p['merchant_name'], p['merchant_title'], p['merchant_avatar'],
+              p['discipline'], p['puzzle_type'], p['difficulty'], p['story_intro'], p['story_success'],
+              p['challenge_data'], p['formula_hint'], p['time_limit_seconds'], p['exp_reward'], p['gold_reward']))
+    
+    conn.commit()
+    cur.close()
+    return_connection(conn)
+    print("Merchant puzzles seeded.")
+
+
+def seed_learning_badges():
+    """Seed learning achievement badges."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM learning_badges")
+    if cur.fetchone()['count'] > 0:
+        print("Learning badges already seeded.")
+        cur.close()
+        return_connection(conn)
+        return
+    
+    badges = [
+        {'code': 'BADGE_LEDGER_APPRENTICE', 'name': 'Ledger Apprentice', 'desc': 'Passed the Finance Mentor Trial', 'icon': 'badge_ledger', 'tier': 'bronze', 'discipline': 'Finance', 'type': 'trial_complete', 'count': 1, 'exp': 25},
+        {'code': 'BADGE_BAZAAR_TRADER', 'name': 'Bazaar Trader', 'desc': 'Passed the Marketing Mentor Trial', 'icon': 'badge_bazaar', 'tier': 'bronze', 'discipline': 'Marketing', 'type': 'trial_complete', 'count': 1, 'exp': 25},
+        {'code': 'BADGE_FORGE_APPRENTICE', 'name': 'Forge Apprentice', 'desc': 'Passed the Operations Mentor Trial', 'icon': 'badge_forge', 'tier': 'bronze', 'discipline': 'Operations', 'type': 'trial_complete', 'count': 1, 'exp': 25},
+        {'code': 'BADGE_PUZZLE_SOLVER', 'name': 'Puzzle Solver', 'desc': 'Completed your first Merchant Puzzle', 'icon': 'badge_puzzle', 'tier': 'bronze', 'discipline': None, 'type': 'puzzle_complete', 'count': 1, 'exp': 20},
+        {'code': 'BADGE_CALCULATION_MASTER', 'name': 'Calculation Master', 'desc': 'Completed 5 Merchant Puzzles', 'icon': 'badge_calculator', 'tier': 'silver', 'discipline': None, 'type': 'puzzle_complete', 'count': 5, 'exp': 75},
+        {'code': 'BADGE_TRIAL_CHAMPION', 'name': 'Trial Champion', 'desc': 'Passed 3 Mentor Trials', 'icon': 'badge_champion', 'tier': 'silver', 'discipline': None, 'type': 'trial_complete', 'count': 3, 'exp': 100},
+        {'code': 'BADGE_FINANCE_SCHOLAR', 'name': 'Finance Scholar', 'desc': 'Completed all Finance learning activities', 'icon': 'badge_finance', 'tier': 'gold', 'discipline': 'Finance', 'type': 'discipline_mastery', 'count': 1, 'exp': 150},
+        {'code': 'BADGE_MARKETING_MAVEN', 'name': 'Marketing Maven', 'desc': 'Completed all Marketing learning activities', 'icon': 'badge_marketing', 'tier': 'gold', 'discipline': 'Marketing', 'type': 'discipline_mastery', 'count': 1, 'exp': 150},
+    ]
+    
+    for b in badges:
+        cur.execute("""
+            INSERT INTO learning_badges (badge_code, badge_name, badge_description, badge_icon, badge_tier,
+                discipline, requirement_type, requirement_count, exp_bonus)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (badge_code) DO NOTHING
+        """, (b['code'], b['name'], b['desc'], b['icon'], b['tier'], b['discipline'], b['type'], b['count'], b['exp']))
+    
+    conn.commit()
+    cur.close()
+    return_connection(conn)
+    print("Learning badges seeded.")
+
+
 def seed_all():
     """Run all seed functions. Each function checks if data already exists."""
     seed_scenarios()
@@ -8605,6 +9003,9 @@ def seed_all():
     seed_phase5_seasons()
     seed_phase5_content()
     seed_mentorship_modules()
+    seed_mentor_trials()
+    seed_merchant_puzzles()
+    seed_learning_badges()
 
 
 if __name__ == "__main__":

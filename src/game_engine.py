@@ -5698,6 +5698,294 @@ def get_mentorship_by_discipline(discipline, player_id=None):
 
 
 # ============================================================================
+# MENTOR TRIALS - RPG-THEMED KNOWLEDGE QUIZZES
+# ============================================================================
+
+def get_all_mentor_trials(player_id=None):
+    """Get all mentor trials with player progress if provided."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    if player_id:
+        cur.execute("""
+            SELECT mt.*, ptp.is_passed, ptp.best_score, ptp.attempts
+            FROM mentor_trials mt
+            LEFT JOIN player_trial_progress ptp ON mt.trial_id = ptp.trial_id AND ptp.player_id = %s
+            WHERE mt.is_active = TRUE
+            ORDER BY mt.discipline, mt.difficulty
+        """, (player_id,))
+    else:
+        cur.execute("""
+            SELECT * FROM mentor_trials WHERE is_active = TRUE
+            ORDER BY discipline, difficulty
+        """)
+    
+    trials = [dict(row) for row in cur.fetchall()]
+    cur.close()
+    return_connection(conn)
+    return trials
+
+
+def get_mentor_trial(trial_id):
+    """Get a specific mentor trial with questions."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT * FROM mentor_trials WHERE trial_id = %s", (trial_id,))
+    trial = cur.fetchone()
+    
+    if trial:
+        trial = dict(trial)
+        cur.execute("""
+            SELECT * FROM trial_questions WHERE trial_id = %s ORDER BY question_order
+        """, (trial_id,))
+        trial['questions'] = [dict(row) for row in cur.fetchall()]
+    
+    cur.close()
+    return_connection(conn)
+    return trial
+
+
+def start_mentor_trial(player_id, trial_id):
+    """Start or restart a mentor trial."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        INSERT INTO player_trial_progress (player_id, trial_id, attempts)
+        VALUES (%s, %s, 1)
+        ON CONFLICT (player_id, trial_id)
+        DO UPDATE SET started_at = CURRENT_TIMESTAMP, attempts = player_trial_progress.attempts + 1
+    """, (player_id, trial_id))
+    
+    conn.commit()
+    cur.close()
+    return_connection(conn)
+    return {'success': True}
+
+
+def complete_mentor_trial(player_id, trial_id, score, max_score, is_passed):
+    """Complete a mentor trial and award rewards."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    # Update progress
+    cur.execute("""
+        UPDATE player_trial_progress 
+        SET completed_at = CURRENT_TIMESTAMP, score = %s, max_score = %s, is_passed = %s,
+            best_score = GREATEST(COALESCE(best_score, 0), %s)
+        WHERE player_id = %s AND trial_id = %s
+    """, (score, max_score, is_passed, score, player_id, trial_id))
+    
+    rewards = {'exp': 0, 'gold': 0, 'badge': None}
+    
+    if is_passed:
+        # Get trial rewards
+        cur.execute("SELECT exp_reward, gold_reward, badge_code FROM mentor_trials WHERE trial_id = %s", (trial_id,))
+        trial = cur.fetchone()
+        if trial:
+            rewards['exp'] = trial['exp_reward']
+            rewards['gold'] = trial['gold_reward']
+            
+            # Add gold reward
+            cur.execute("UPDATE player_profiles SET total_cash = total_cash + %s WHERE player_id = %s",
+                       (trial['gold_reward'], player_id))
+            
+            # Award badge if exists
+            if trial['badge_code']:
+                cur.execute("SELECT badge_id FROM learning_badges WHERE badge_code = %s", (trial['badge_code'],))
+                badge = cur.fetchone()
+                if badge:
+                    cur.execute("""
+                        INSERT INTO player_learning_badges (player_id, badge_id)
+                        VALUES (%s, %s)
+                        ON CONFLICT (player_id, badge_id) DO NOTHING
+                    """, (player_id, badge['badge_id']))
+                    rewards['badge'] = trial['badge_code']
+    
+    conn.commit()
+    cur.close()
+    return_connection(conn)
+    return rewards
+
+
+def get_player_trial_progress(player_id):
+    """Get all trial progress for a player."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT mt.*, ptp.is_passed, ptp.best_score, ptp.attempts, ptp.completed_at
+        FROM mentor_trials mt
+        LEFT JOIN player_trial_progress ptp ON mt.trial_id = ptp.trial_id AND ptp.player_id = %s
+        WHERE mt.is_active = TRUE
+        ORDER BY mt.discipline, mt.difficulty
+    """, (player_id,))
+    
+    progress = [dict(row) for row in cur.fetchall()]
+    cur.close()
+    return_connection(conn)
+    return progress
+
+
+# ============================================================================
+# MERCHANT PUZZLES - INTERACTIVE BUSINESS CALCULATORS
+# ============================================================================
+
+def get_all_merchant_puzzles(player_id=None):
+    """Get all merchant puzzles with player progress if provided."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    if player_id:
+        cur.execute("""
+            SELECT mp.*, ppp.is_solved, ppp.attempts, ppp.best_time_seconds
+            FROM merchant_puzzles mp
+            LEFT JOIN player_puzzle_progress ppp ON mp.puzzle_id = ppp.puzzle_id AND ppp.player_id = %s
+            WHERE mp.is_active = TRUE
+            ORDER BY mp.discipline, mp.difficulty
+        """, (player_id,))
+    else:
+        cur.execute("""
+            SELECT * FROM merchant_puzzles WHERE is_active = TRUE
+            ORDER BY discipline, difficulty
+        """)
+    
+    puzzles = [dict(row) for row in cur.fetchall()]
+    cur.close()
+    return_connection(conn)
+    return puzzles
+
+
+def get_merchant_puzzle(puzzle_id):
+    """Get a specific merchant puzzle."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT * FROM merchant_puzzles WHERE puzzle_id = %s", (puzzle_id,))
+    puzzle = cur.fetchone()
+    
+    if puzzle:
+        puzzle = dict(puzzle)
+        # Parse challenge_data JSON
+        import json
+        if puzzle.get('challenge_data'):
+            puzzle['challenge_data'] = json.loads(puzzle['challenge_data']) if isinstance(puzzle['challenge_data'], str) else puzzle['challenge_data']
+    
+    cur.close()
+    return_connection(conn)
+    return puzzle
+
+
+def start_merchant_puzzle(player_id, puzzle_id):
+    """Start or restart a merchant puzzle."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        INSERT INTO player_puzzle_progress (player_id, puzzle_id, attempts)
+        VALUES (%s, %s, 1)
+        ON CONFLICT (player_id, puzzle_id)
+        DO UPDATE SET started_at = CURRENT_TIMESTAMP, attempts = player_puzzle_progress.attempts + 1
+    """, (player_id, puzzle_id))
+    
+    conn.commit()
+    cur.close()
+    return_connection(conn)
+    return {'success': True}
+
+
+def complete_merchant_puzzle(player_id, puzzle_id, time_seconds, is_correct):
+    """Complete a merchant puzzle and award rewards."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    # Update progress
+    cur.execute("""
+        UPDATE player_puzzle_progress 
+        SET completed_at = CURRENT_TIMESTAMP, is_solved = %s,
+            best_time_seconds = CASE 
+                WHEN best_time_seconds IS NULL OR %s < best_time_seconds THEN %s 
+                ELSE best_time_seconds 
+            END
+        WHERE player_id = %s AND puzzle_id = %s
+    """, (is_correct, time_seconds, time_seconds, player_id, puzzle_id))
+    
+    rewards = {'exp': 0, 'gold': 0}
+    
+    if is_correct:
+        # Get puzzle rewards
+        cur.execute("SELECT exp_reward, gold_reward FROM merchant_puzzles WHERE puzzle_id = %s", (puzzle_id,))
+        puzzle = cur.fetchone()
+        if puzzle:
+            rewards['exp'] = puzzle['exp_reward']
+            rewards['gold'] = puzzle['gold_reward']
+            
+            # Add gold reward
+            cur.execute("UPDATE player_profiles SET total_cash = total_cash + %s WHERE player_id = %s",
+                       (puzzle['gold_reward'], player_id))
+    
+    conn.commit()
+    cur.close()
+    return_connection(conn)
+    return rewards
+
+
+def get_player_puzzle_progress(player_id):
+    """Get all puzzle progress for a player."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT mp.*, ppp.is_solved, ppp.attempts, ppp.best_time_seconds, ppp.completed_at
+        FROM merchant_puzzles mp
+        LEFT JOIN player_puzzle_progress ppp ON mp.puzzle_id = ppp.puzzle_id AND ppp.player_id = %s
+        WHERE mp.is_active = TRUE
+        ORDER BY mp.discipline, mp.difficulty
+    """, (player_id,))
+    
+    progress = [dict(row) for row in cur.fetchall()]
+    cur.close()
+    return_connection(conn)
+    return progress
+
+
+# ============================================================================
+# LEARNING BADGES
+# ============================================================================
+
+def get_player_learning_badges(player_id):
+    """Get all learning badges earned by a player."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT lb.*, plb.earned_at
+        FROM learning_badges lb
+        JOIN player_learning_badges plb ON lb.badge_id = plb.badge_id
+        WHERE plb.player_id = %s
+        ORDER BY plb.earned_at DESC
+    """, (player_id,))
+    
+    badges = [dict(row) for row in cur.fetchall()]
+    cur.close()
+    return_connection(conn)
+    return badges
+
+
+def get_all_learning_badges():
+    """Get all available learning badges."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT * FROM learning_badges ORDER BY badge_tier, discipline")
+    badges = [dict(row) for row in cur.fetchall()]
+    cur.close()
+    return_connection(conn)
+    return badges
+
+
+# ============================================================================
 # PHASE 4: STORYLINE QUEST SYSTEM
 # ============================================================================
 
