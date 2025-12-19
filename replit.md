@@ -45,7 +45,8 @@ The game is built as a Flask web application with a responsive, mobile-first UI.
 ## Security & Infrastructure (December 2024)
 -   **Password Security:** Bcrypt password hashing with automatic SHA256 migration for existing users
 -   **Route Protection:** @login_required decorator applied to 90+ gameplay routes
--   **Database Pooling:** ThreadedConnectionPool (2-20 connections) for efficient connection management
+-   **Database Pooling:** ThreadedConnectionPool (2-20 connections) with proper connection return via `return_connection(conn)` throughout codebase
+-   **Request-Scoped GameEngine:** Each HTTP request gets its own GameEngine instance via Flask's `g` context, preventing cross-user session data leakage
 -   **New Player Onboarding:** Welcome modal for first-time players directing to tutorial system
 
 ## External Dependencies
