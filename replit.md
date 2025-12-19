@@ -47,7 +47,8 @@ The game is built as a Flask web application with a responsive, mobile-first UI.
 -   **Route Protection:** @login_required decorator applied to 90+ gameplay routes
 -   **Database Pooling:** ThreadedConnectionPool (2-20 connections) with proper connection return via `return_connection(conn)` throughout codebase
 -   **Request-Scoped GameEngine:** Each HTTP request gets its own GameEngine instance via Flask's `g` context, preventing cross-user session data leakage
--   **New Player Onboarding:** Welcome modal for first-time players directing to tutorial system
+-   **Onboarding Persistence:** Welcome modal dismissal persists via `onboarding_seen` database flag - players only see it once
+-   **Consolidated Seeding:** All 47 seed functions consolidated into `seed_all()` for cleaner startup code
 
 ## External Dependencies
 -   **PostgreSQL:** Relational database for all game data persistence.
