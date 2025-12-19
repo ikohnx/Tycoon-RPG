@@ -5,6 +5,25 @@
 {% block body_class %}world-{{ stats.world|lower if stats else 'modern' }}{% endblock %}
 
 {% block content %}
+<style>
+    .quest-desc {
+        color: #d0d0d0;
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+    .quest-rewards {
+        color: #b8b8b8;
+    }
+    .quest-card .card-header strong {
+        color: #ffd700;
+    }
+    .quest-card .card-body p {
+        color: #d0d0d0;
+    }
+    .completed-quest-desc {
+        color: #b0b0b0 !important;
+    }
+</style>
 <div class="row justify-content-center fade-in">
     <div class="col-md-10">
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -32,8 +51,8 @@
                             </div>
                         </div>
                         <div class="card-body">
-                            <p>{{ quest.quest_description }}</p>
-                            <div class="d-flex justify-content-between text-muted small">
+                            <p class="quest-desc">{{ quest.quest_description }}</p>
+                            <div class="d-flex justify-content-between quest-rewards small">
                                 <span><i class="bi bi-star"></i> +{{ quest.exp_reward }} EXP</span>
                                 {% if quest.cash_reward > 0 %}
                                 <span><i class="bi bi-cash"></i> +${{ "{:,.0f}".format(quest.cash_reward) }}</span>
@@ -68,9 +87,9 @@
                             </div>
                         </div>
                         <div class="card-body">
-                            <p>{{ quest.quest_description }}</p>
+                            <p class="quest-desc">{{ quest.quest_description }}</p>
                             <div class="d-flex justify-content-between align-items-center">
-                                <div class="text-muted small">
+                                <div class="quest-rewards small">
                                     <span><i class="bi bi-star"></i> +{{ quest.exp_reward }} EXP</span>
                                     {% if quest.cash_reward > 0 %}
                                     <span class="ms-2"><i class="bi bi-cash"></i> +${{ "{:,.0f}".format(quest.cash_reward) }}</span>
@@ -102,7 +121,7 @@
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <strong>{{ quest.quest_name }}</strong>
-                                    <small class="text-muted d-block">{{ quest.quest_description }}</small>
+                                    <small class="completed-quest-desc d-block">{{ quest.quest_description }}</small>
                                 </div>
                                 <i class="bi bi-check-circle-fill text-success fs-4"></i>
                             </div>
