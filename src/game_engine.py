@@ -969,6 +969,181 @@ class GameEngine:
         
         return stats
     
+    def get_hub_data(self) -> dict:
+        """Get all hub data in a single efficient batch. Reduces database queries from 6+ to 1."""
+        if not self.current_player:
+            return {"error": "No player loaded"}
+        
+        import datetime
+        
+        conn = get_connection()
+        cur = conn.cursor()
+        player_id = self.current_player.player_id
+        
+        cur.execute("""
+            SELECT * FROM player_energy WHERE player_id = %s
+        """, (player_id,))
+        energy_row = cur.fetchone()
+        
+        if not energy_row:
+            cur.execute("""
+                INSERT INTO player_energy (player_id, current_energy, max_energy, last_recharge_at)
+                VALUES (%s, 100, 100, CURRENT_TIMESTAMP)
+                RETURNING *
+            """, (player_id,))
+            energy_row = cur.fetchone()
+            conn.commit()
+        
+        now = datetime.datetime.now(datetime.timezone.utc)
+        last_recharge = energy_row['last_recharge_at']
+        if last_recharge.tzinfo is None:
+            last_recharge = last_recharge.replace(tzinfo=datetime.timezone.utc)
+        
+        minutes_elapsed = (now - last_recharge).total_seconds() / 60
+        energy_to_add = int(minutes_elapsed / 5)
+        current_energy = energy_row['current_energy']
+        max_energy = energy_row['max_energy']
+        
+        if energy_to_add > 0 and current_energy < max_energy:
+            current_energy = min(max_energy, current_energy + energy_to_add)
+            cur.execute("""
+                UPDATE player_energy 
+                SET current_energy = %s, last_recharge_at = CURRENT_TIMESTAMP
+                WHERE player_id = %s
+            """, (current_energy, player_id))
+            conn.commit()
+        
+        next_recharge_seconds = (5 - (minutes_elapsed % 5)) * 60 if current_energy < max_energy else 0
+        energy = {
+            "current_energy": current_energy,
+            "max_energy": max_energy,
+            "next_recharge_in": int(next_recharge_seconds)
+        }
+        
+        cur.execute("""
+            SELECT * FROM player_daily_login WHERE player_id = %s
+        """, (player_id,))
+        login_row = cur.fetchone()
+        today = datetime.date.today()
+        
+        if not login_row:
+            cur.execute("""
+                INSERT INTO player_daily_login (player_id, current_streak, longest_streak, last_login_date, last_claim_date)
+                VALUES (%s, 0, 0, NULL, NULL)
+                RETURNING *
+            """, (player_id,))
+            login_row = cur.fetchone()
+            conn.commit()
+        
+        current_streak = login_row['current_streak']
+        longest_streak = login_row['longest_streak']
+        last_claim = login_row['last_claim_date']
+        
+        can_claim = False
+        streak_broken = False
+        
+        if last_claim is None:
+            can_claim = True
+        elif isinstance(last_claim, datetime.datetime):
+            last_claim = last_claim.date()
+        
+        if last_claim and last_claim < today:
+            can_claim = True
+            if last_claim < today - datetime.timedelta(days=1):
+                streak_broken = True
+        
+        reward_day = (current_streak % 7) + 1 if not streak_broken else 1
+        
+        cur.execute("""
+            SELECT * FROM daily_login_rewards WHERE day_number = %s
+        """, (reward_day,))
+        reward = cur.fetchone()
+        
+        login_status = {
+            "current_streak": current_streak,
+            "longest_streak": longest_streak,
+            "can_claim": can_claim,
+            "streak_broken": streak_broken,
+            "reward_day": reward_day,
+            "reward": dict(reward) if reward else None
+        }
+        
+        cur.execute("""
+            SELECT * FROM player_idle_income WHERE player_id = %s
+        """, (player_id,))
+        idle_row = cur.fetchone()
+        now_dt = datetime.datetime.now()
+        
+        if not idle_row:
+            cur.execute("""
+                INSERT INTO player_idle_income (player_id, gold_per_hour, last_collect_at)
+                VALUES (%s, 10, CURRENT_TIMESTAMP)
+                RETURNING *
+            """, (player_id,))
+            idle_row = cur.fetchone()
+            conn.commit()
+        
+        gold_per_hour = idle_row.get('gold_per_hour', 10) or 10
+        last_collect = idle_row['last_collect_at']
+        hours_elapsed = (now_dt - last_collect).total_seconds() / 3600
+        max_hours = 24
+        hours_counted = min(hours_elapsed, max_hours)
+        accumulated_gold = int(hours_counted * gold_per_hour)
+        
+        idle_income = {
+            "gold_per_hour": gold_per_hour,
+            "accumulated_gold": accumulated_gold,
+            "hours_elapsed": round(hours_counted, 1),
+            "max_hours": max_hours,
+            "can_collect": accumulated_gold > 0
+        }
+        
+        cur.execute("""
+            SELECT * FROM player_prestige WHERE player_id = %s
+        """, (player_id,))
+        prestige_row = cur.fetchone()
+        
+        if not prestige_row:
+            cur.execute("""
+                INSERT INTO player_prestige (player_id, prestige_level, exp_multiplier, gold_multiplier)
+                VALUES (%s, 0, 1.0, 1.0)
+                RETURNING *
+            """, (player_id,))
+            prestige_row = cur.fetchone()
+            conn.commit()
+        
+        avg_level = sum(d['level'] for d in self.current_player.discipline_progress.values()) / 6 if self.current_player.discipline_progress else 1
+        can_prestige = avg_level >= 5 and prestige_row['prestige_level'] < 10
+        
+        prestige_status = {
+            "prestige_level": prestige_row['prestige_level'],
+            "exp_multiplier": float(prestige_row['exp_multiplier']),
+            "gold_multiplier": float(prestige_row['gold_multiplier']),
+            "can_prestige": can_prestige,
+            "avg_level": round(avg_level, 1)
+        }
+        
+        cur.execute("""
+            SELECT pp.player_name, COALESCE(SUM(psc.stars_earned), 0) as total_stars
+            FROM player_profiles pp
+            LEFT JOIN player_scenario_completions psc ON pp.player_id = psc.player_id
+            GROUP BY pp.player_id, pp.player_name
+            ORDER BY total_stars DESC
+            LIMIT 5
+        """)
+        leaderboard = [{"name": r['player_name'], "stars": int(r['total_stars'])} for r in cur.fetchall()]
+        
+        cur.close()
+        return_connection(conn)
+        
+        return {
+            "energy": energy,
+            "login_status": login_status,
+            "idle_income": idle_income,
+            "prestige_status": prestige_status,
+            "leaderboard": leaderboard
+        }
+    
     def allocate_stat(self, stat_name: str) -> dict:
         """Allocate a stat point to a specific stat."""
         if not self.current_player:
@@ -5327,6 +5502,38 @@ def complete_tutorial_section(player_id, section_id):
         ON CONFLICT (player_id, tutorial_section) 
         DO UPDATE SET is_completed = TRUE, completed_at = CURRENT_TIMESTAMP
     """, (player_id, section_id))
+    
+    conn.commit()
+    cur.close()
+    return_connection(conn)
+    
+    return {'success': True}
+
+
+def get_onboarding_seen(player_id):
+    """Check if player has seen the onboarding modal."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT onboarding_seen FROM player_profiles WHERE player_id = %s
+    """, (player_id,))
+    row = cur.fetchone()
+    
+    cur.close()
+    return_connection(conn)
+    
+    return row.get('onboarding_seen', False) if row else False
+
+
+def mark_onboarding_seen(player_id):
+    """Mark player's onboarding as seen."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        UPDATE player_profiles SET onboarding_seen = TRUE WHERE player_id = %s
+    """, (player_id,))
     
     conn.commit()
     cur.close()

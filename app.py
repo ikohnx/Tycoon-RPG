@@ -13,23 +13,7 @@ def login_required(f):
             return redirect(url_for('index'))
         return f(*args, **kwargs)
     return decorated_function
-from src.database import (init_database, seed_scenarios, seed_achievements, seed_items, 
-                          seed_npcs, seed_quests, seed_random_events, seed_rivals, 
-                          seed_milestones, seed_weekly_challenges, seed_avatar_options,
-                          seed_fantasy_scenarios, seed_industrial_scenarios, 
-                          seed_industrial_events, seed_industrial_rivals, seed_modern_restaurant_full,
-                          seed_marketing_curriculum, seed_accounting_curriculum, seed_finance_curriculum,
-                          seed_legal_curriculum, seed_operations_curriculum, seed_hr_curriculum,
-                          seed_strategy_curriculum, seed_daily_login_rewards, seed_advisors,
-                          seed_equipment, seed_daily_missions, seed_interactive_challenges,
-                          seed_advanced_challenges, seed_scheduling_challenges,
-                          seed_cash_flow_challenges, seed_negotiation_scenarios, seed_risk_categories,
-                          seed_market_simulation, seed_hr_management, seed_investor_pitch,
-                          seed_learning_analytics, seed_educational_achievements,
-                          seed_competitions, seed_advanced_simulations,
-                          seed_story_arcs, seed_mentorship_system, seed_business_network,
-                          seed_industry_tracks, seed_market_events,
-                          seed_phase5_social, seed_phase5_seasons, seed_phase5_content)
+from src.database import init_database, seed_all
 from src.game_engine import GameEngine
 from src.leveling import get_level_title, get_progress_bar, get_exp_to_next_level
 
@@ -38,53 +22,7 @@ app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key")
 csrf = CSRFProtect(app)
 
 init_database()
-seed_scenarios()
-seed_achievements()
-seed_items()
-seed_npcs()
-seed_quests()
-seed_random_events()
-seed_rivals()
-seed_milestones()
-seed_weekly_challenges()
-seed_avatar_options()
-seed_fantasy_scenarios()
-seed_industrial_scenarios()
-seed_industrial_events()
-seed_industrial_rivals()
-seed_modern_restaurant_full()
-seed_marketing_curriculum()
-seed_accounting_curriculum()
-seed_finance_curriculum()
-seed_legal_curriculum()
-seed_operations_curriculum()
-seed_hr_curriculum()
-seed_strategy_curriculum()
-seed_daily_login_rewards()
-seed_advisors()
-seed_equipment()
-seed_daily_missions()
-seed_interactive_challenges()
-seed_advanced_challenges()
-seed_scheduling_challenges()
-seed_cash_flow_challenges()
-seed_negotiation_scenarios()
-seed_risk_categories()
-seed_market_simulation()
-seed_hr_management()
-seed_investor_pitch()
-seed_learning_analytics()
-seed_educational_achievements()
-seed_competitions()
-seed_advanced_simulations()
-seed_story_arcs()
-seed_mentorship_system()
-seed_business_network()
-seed_industry_tracks()
-seed_market_events()
-seed_phase5_social()
-seed_phase5_seasons()
-seed_phase5_content()
+seed_all()
 
 def get_engine():
     """Get a request-scoped GameEngine instance to prevent cross-user data leakage."""
@@ -158,14 +96,13 @@ def hub():
     if not player_id:
         return redirect(url_for('index'))
     
-    get_engine().load_player(player_id)
-    stats = get_engine().get_player_stats()
+    engine = get_engine()
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
     
-    # Check if player is brand new and redirect to tutorial
-    from src.game_engine import get_tutorial_progress
-    tutorial_progress = get_tutorial_progress(player_id)
-    completed_count = sum(1 for s in tutorial_progress if s.get('is_completed', False))
-    is_new_player = completed_count == 0 and stats.get('scenarios_completed', 0) == 0
+    # Check if player has seen onboarding (persisted in database)
+    from src.game_engine import get_onboarding_seen
+    is_new_player = not get_onboarding_seen(player_id)
     
     for disc, data in stats['disciplines'].items():
         data['title'] = get_level_title(data['level'])
@@ -174,15 +111,25 @@ def hub():
         data['exp_to_next'] = exp_needed
         data['next_level'] = next_level
     
-    energy = get_engine().get_player_energy()
-    login_status = get_engine().get_daily_login_status()
-    idle_income = get_engine().get_idle_income_status()
-    prestige_status = get_engine().get_prestige_status()
-    leaderboard = get_engine().get_leaderboard(5)
+    energy = engine.get_player_energy()
+    login_status = engine.get_daily_login_status()
+    idle_income = engine.get_idle_income_status()
+    prestige_status = engine.get_prestige_status()
+    leaderboard = engine.get_leaderboard(5)
     
     return render_template('hub.html', stats=stats, energy=energy, login_status=login_status, 
                           idle_income=idle_income, prestige_status=prestige_status, leaderboard=leaderboard,
                           is_new_player=is_new_player)
+
+
+@app.route('/dismiss_onboarding', methods=['POST'])
+@login_required
+def dismiss_onboarding():
+    player_id = session.get('player_id')
+    if player_id:
+        from src.game_engine import mark_onboarding_seen
+        mark_onboarding_seen(player_id)
+    return jsonify({'success': True})
 
 @app.route('/scenarios/<discipline>')
 @login_required

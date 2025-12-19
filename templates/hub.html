@@ -743,9 +743,20 @@
                 <a href="{{ url_for('tutorial') }}" class="btn btn-lg" style="background: linear-gradient(135deg, #50c878, #3a9d5d); color: white; font-weight: bold;">
                     <i class="bi bi-mortarboard"></i> Start Tutorial
                 </a>
-                <button type="button" class="btn btn-lg btn-outline-light" onclick="document.getElementById('welcomeModal').remove(); document.getElementById('welcomeBackdrop').remove();">
+                <button type="button" class="btn btn-lg btn-outline-light" onclick="dismissOnboarding()">
                     Explore Hub
                 </button>
+<script>
+function dismissOnboarding() {
+    fetch('{{ url_for("dismiss_onboarding") }}', {
+        method: 'POST',
+        headers: {'X-CSRFToken': '{{ csrf_token() }}'}
+    }).finally(() => {
+        document.getElementById('welcomeModal').remove();
+        document.getElementById('welcomeBackdrop').remove();
+    });
+}
+</script>
             </div>
         </div>
     </div>

@@ -97,6 +97,11 @@ def init_database():
     """)
     
     cur.execute("""
+        ALTER TABLE player_profiles 
+        ADD COLUMN IF NOT EXISTS onboarding_seen BOOLEAN DEFAULT FALSE;
+    """)
+    
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS player_discipline_progress (
             progress_id SERIAL PRIMARY KEY,
             player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
@@ -8284,6 +8289,57 @@ def seed_phase5_content():
     print("Phase 5 content seeded!")
     cur.close()
     return_connection(conn)
+
+
+def seed_all():
+    """Run all seed functions. Each function checks if data already exists."""
+    seed_scenarios()
+    seed_achievements()
+    seed_items()
+    seed_npcs()
+    seed_quests()
+    seed_random_events()
+    seed_rivals()
+    seed_milestones()
+    seed_weekly_challenges()
+    seed_avatar_options()
+    seed_fantasy_scenarios()
+    seed_industrial_scenarios()
+    seed_industrial_events()
+    seed_industrial_rivals()
+    seed_modern_restaurant_full()
+    seed_marketing_curriculum()
+    seed_accounting_curriculum()
+    seed_finance_curriculum()
+    seed_legal_curriculum()
+    seed_operations_curriculum()
+    seed_hr_curriculum()
+    seed_strategy_curriculum()
+    seed_daily_login_rewards()
+    seed_advisors()
+    seed_equipment()
+    seed_daily_missions()
+    seed_interactive_challenges()
+    seed_advanced_challenges()
+    seed_scheduling_challenges()
+    seed_cash_flow_challenges()
+    seed_negotiation_scenarios()
+    seed_risk_categories()
+    seed_market_simulation()
+    seed_hr_management()
+    seed_investor_pitch()
+    seed_learning_analytics()
+    seed_educational_achievements()
+    seed_competitions()
+    seed_advanced_simulations()
+    seed_story_arcs()
+    seed_mentorship_system()
+    seed_business_network()
+    seed_industry_tracks()
+    seed_market_events()
+    seed_phase5_social()
+    seed_phase5_seasons()
+    seed_phase5_content()
 
 
 if __name__ == "__main__":
