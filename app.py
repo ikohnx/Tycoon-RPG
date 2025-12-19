@@ -1,6 +1,18 @@
 import os
+from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from flask_wtf.csrf import CSRFProtect
+
+
+def login_required(f):
+    """Decorator to require authentication for routes."""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'player_id' not in session:
+            flash('Please select or create a character to continue.', 'warning')
+            return redirect(url_for('index'))
+        return f(*args, **kwargs)
+    return decorated_function
 from src.database import (init_database, seed_scenarios, seed_achievements, seed_items, 
                           seed_npcs, seed_quests, seed_random_events, seed_rivals, 
                           seed_milestones, seed_weekly_challenges, seed_avatar_options,
@@ -136,6 +148,7 @@ def load_game(player_id):
     return redirect(url_for('hub'))
 
 @app.route('/hub')
+@login_required
 def hub():
     player_id = session.get('player_id')
     if not player_id:
@@ -161,6 +174,7 @@ def hub():
                           idle_income=idle_income, prestige_status=prestige_status, leaderboard=leaderboard)
 
 @app.route('/scenarios/<discipline>')
+@login_required
 def scenarios(discipline):
     player_id = session.get('player_id')
     if not player_id:
@@ -176,6 +190,7 @@ def scenarios(discipline):
                          stats=stats)
 
 @app.route('/training/<int:scenario_id>')
+@login_required
 def training(scenario_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -199,6 +214,7 @@ def training(scenario_id):
     return render_template('training.html', scenario=scenario, training=training_data, stats=stats)
 
 @app.route('/play/<int:scenario_id>')
+@login_required
 def play_scenario(scenario_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -220,6 +236,7 @@ def play_scenario(scenario_id):
     return render_template('play.html', scenario=scenario, stats=stats)
 
 @app.route('/choose/<int:scenario_id>/<choice>')
+@login_required
 def make_choice(scenario_id, choice):
     player_id = session.get('player_id')
     if not player_id:
@@ -254,6 +271,7 @@ def make_choice(scenario_id, choice):
     return render_template('result.html', result=result, scenario=scenario, stats=stats)
 
 @app.route('/challenge/<int:scenario_id>')
+@login_required
 def play_challenge(scenario_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -275,6 +293,7 @@ def play_challenge(scenario_id):
     return render_template('challenge.html', challenge=challenge, stats=stats)
 
 @app.route('/submit_challenge/<int:scenario_id>', methods=['POST'])
+@login_required
 def submit_challenge(scenario_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -313,6 +332,7 @@ def submit_challenge(scenario_id):
     return render_template('result.html', result=result, scenario=scenario, stats=stats)
 
 @app.route('/progress')
+@login_required
 def progress():
     player_id = session.get('player_id')
     if not player_id:
@@ -331,6 +351,7 @@ def progress():
     return render_template('progress.html', stats=stats)
 
 @app.route('/character')
+@login_required
 def character():
     player_id = session.get('player_id')
     if not player_id:
@@ -343,6 +364,7 @@ def character():
     return render_template('character.html', stats=stats, achievements=achievements)
 
 @app.route('/allocate_stat/<stat_name>', methods=['POST'])
+@login_required
 def allocate_stat(stat_name):
     player_id = session.get('player_id')
     if not player_id:
@@ -359,6 +381,7 @@ def allocate_stat(stat_name):
     return redirect(url_for('character'))
 
 @app.route('/shop')
+@login_required
 def shop():
     player_id = session.get('player_id')
     if not player_id:
@@ -371,6 +394,7 @@ def shop():
     return render_template('shop.html', stats=stats, items=items)
 
 @app.route('/buy/<int:item_id>', methods=['POST'])
+@login_required
 def buy_item(item_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -387,6 +411,7 @@ def buy_item(item_id):
     return redirect(url_for('shop'))
 
 @app.route('/inventory')
+@login_required
 def inventory():
     player_id = session.get('player_id')
     if not player_id:
@@ -398,6 +423,7 @@ def inventory():
     return render_template('inventory.html', stats=stats)
 
 @app.route('/npcs')
+@login_required
 def npcs():
     player_id = session.get('player_id')
     if not player_id:
@@ -410,6 +436,7 @@ def npcs():
     return render_template('npcs.html', stats=stats, npcs=npc_list)
 
 @app.route('/talk/<int:npc_id>', methods=['POST'])
+@login_required
 def talk_to_npc(npc_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -426,6 +453,7 @@ def talk_to_npc(npc_id):
     return render_template('npc_dialogue.html', stats=stats, npc=result['npc'], relationship=result['relationship_level'])
 
 @app.route('/quests')
+@login_required
 def quests():
     player_id = session.get('player_id')
     if not player_id:
@@ -438,6 +466,7 @@ def quests():
     return render_template('quests.html', stats=stats, quests=quest_data)
 
 @app.route('/start_quest/<int:quest_id>', methods=['POST'])
+@login_required
 def start_quest(quest_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -459,6 +488,7 @@ def logout():
     return redirect(url_for('index'))
 
 @app.route('/dashboard')
+@login_required
 def dashboard():
     player_id = session.get('player_id')
     if not player_id:
@@ -474,6 +504,7 @@ def dashboard():
                           financial_history=financial_history, rivals=rivals)
 
 @app.route('/random_event')
+@login_required
 def random_event():
     player_id = session.get('player_id')
     if not player_id:
@@ -490,6 +521,7 @@ def random_event():
     return render_template('random_event.html', event=event, stats=stats)
 
 @app.route('/resolve_event/<int:event_id>/<choice>')
+@login_required
 def resolve_event(event_id, choice):
     player_id = session.get('player_id')
     if not player_id:
@@ -506,6 +538,7 @@ def resolve_event(event_id, choice):
     return render_template('event_result.html', result=result, stats=stats)
 
 @app.route('/rivals')
+@login_required
 def rivals():
     player_id = session.get('player_id')
     if not player_id:
@@ -518,6 +551,7 @@ def rivals():
     return render_template('rivals.html', stats=stats, rivals=rival_list)
 
 @app.route('/challenges')
+@login_required
 def challenges():
     player_id = session.get('player_id')
     if not player_id:
@@ -530,6 +564,7 @@ def challenges():
     return render_template('challenges.html', stats=stats, challenges=challenge_data)
 
 @app.route('/avatar')
+@login_required
 def avatar():
     player_id = session.get('player_id')
     if not player_id:
@@ -543,6 +578,7 @@ def avatar():
     return render_template('avatar.html', stats=stats, options=avatar_options, current=current_avatar)
 
 @app.route('/update_avatar', methods=['POST'])
+@login_required
 def update_avatar():
     player_id = session.get('player_id')
     if not player_id:
@@ -565,6 +601,7 @@ def update_avatar():
     return redirect(url_for('avatar'))
 
 @app.route('/daily_login')
+@login_required
 def daily_login():
     player_id = session.get('player_id')
     if not player_id:
@@ -577,6 +614,7 @@ def daily_login():
     return render_template('daily_login.html', stats=stats, login_status=login_status)
 
 @app.route('/claim_daily', methods=['POST'])
+@login_required
 def claim_daily():
     player_id = session.get('player_id')
     if not player_id:
@@ -594,6 +632,7 @@ def claim_daily():
     return redirect(url_for('hub'))
 
 @app.route('/collect_idle', methods=['POST'])
+@login_required
 def collect_idle():
     player_id = session.get('player_id')
     if not player_id:
@@ -610,6 +649,7 @@ def collect_idle():
     return redirect(url_for('hub'))
 
 @app.route('/advisors')
+@login_required
 def advisors():
     player_id = session.get('player_id')
     if not player_id:
@@ -622,6 +662,7 @@ def advisors():
     return render_template('advisors.html', stats=stats, advisor_data=advisor_data)
 
 @app.route('/recruit_advisor/<int:advisor_id>', methods=['POST'])
+@login_required
 def recruit_advisor(advisor_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -638,6 +679,7 @@ def recruit_advisor(advisor_id):
     return redirect(url_for('advisors'))
 
 @app.route('/equipment')
+@login_required
 def equipment():
     player_id = session.get('player_id')
     if not player_id:
@@ -650,6 +692,7 @@ def equipment():
     return render_template('equipment.html', stats=stats, equipment_data=equipment_data)
 
 @app.route('/purchase_equipment/<int:equipment_id>', methods=['POST'])
+@login_required
 def purchase_equipment(equipment_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -666,6 +709,7 @@ def purchase_equipment(equipment_id):
     return redirect(url_for('equipment'))
 
 @app.route('/equip_item/<int:equipment_id>', methods=['POST'])
+@login_required
 def equip_item(equipment_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -682,6 +726,7 @@ def equip_item(equipment_id):
     return redirect(url_for('equipment'))
 
 @app.route('/prestige')
+@login_required
 def prestige():
     player_id = session.get('player_id')
     if not player_id:
@@ -694,6 +739,7 @@ def prestige():
     return render_template('prestige.html', stats=stats, prestige_status=prestige_status)
 
 @app.route('/perform_prestige', methods=['POST'])
+@login_required
 def perform_prestige():
     player_id = session.get('player_id')
     if not player_id:
@@ -710,6 +756,7 @@ def perform_prestige():
     return redirect(url_for('hub'))
 
 @app.route('/daily_missions')
+@login_required
 def daily_missions():
     player_id = session.get('player_id')
     if not player_id:
@@ -722,6 +769,7 @@ def daily_missions():
     return render_template('daily_missions.html', stats=stats, missions_data=missions_data)
 
 @app.route('/claim_mission/<int:mission_id>', methods=['POST'])
+@login_required
 def claim_mission(mission_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -738,6 +786,7 @@ def claim_mission(mission_id):
     return redirect(url_for('daily_missions'))
 
 @app.route('/leaderboard')
+@login_required
 def leaderboard():
     player_id = session.get('player_id')
     if not player_id:
@@ -752,6 +801,7 @@ def leaderboard():
     return render_template('leaderboard.html', stats=stats, rankings=rankings, category=category)
 
 @app.route('/battle_arena')
+@login_required
 def battle_arena():
     player_id = session.get('player_id')
     if not player_id:
@@ -764,6 +814,7 @@ def battle_arena():
     return render_template('battle_arena.html', stats=stats, battle_data=battle_data)
 
 @app.route('/battle_rival/<int:rival_id>', methods=['POST'])
+@login_required
 def battle_rival(rival_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -780,6 +831,7 @@ def battle_rival(rival_id):
     return render_template('battle_result.html', stats=stats, result=result)
 
 @app.route('/campaign_map')
+@login_required
 def campaign_map():
     player_id = session.get('player_id')
     if not player_id:
@@ -792,6 +844,7 @@ def campaign_map():
     return render_template('campaign_map.html', stats=stats, campaign=campaign_data)
 
 @app.route('/boss_challenges')
+@login_required
 def boss_challenges():
     player_id = session.get('player_id')
     if not player_id:
@@ -805,6 +858,7 @@ def boss_challenges():
 
 
 @app.route('/accounting')
+@login_required
 def accounting():
     player_id = session.get('player_id')
     if not player_id:
@@ -836,6 +890,7 @@ def accounting():
 
 
 @app.route('/accounting/process', methods=['POST'])
+@login_required
 def accounting_process():
     player_id = session.get('player_id')
     if not player_id:
@@ -856,6 +911,7 @@ def accounting_process():
 
 
 @app.route('/accounting/entry', methods=['POST'])
+@login_required
 def accounting_entry():
     player_id = session.get('player_id')
     if not player_id:
@@ -905,6 +961,7 @@ def accounting_entry():
 
 
 @app.route('/projects')
+@login_required
 def projects():
     player_id = session.get('player_id')
     if not player_id:
@@ -938,6 +995,7 @@ def projects():
 
 
 @app.route('/projects/start', methods=['POST'])
+@login_required
 def start_project():
     player_id = session.get('player_id')
     if not player_id:
@@ -957,6 +1015,7 @@ def start_project():
 
 
 @app.route('/projects/advance', methods=['POST'])
+@login_required
 def advance_project():
     player_id = session.get('player_id')
     if not player_id:
@@ -986,6 +1045,7 @@ def advance_project():
 
 
 @app.route('/projects/challenge/<int:challenge_id>')
+@login_required
 def scheduling_challenge(challenge_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -1007,6 +1067,7 @@ def scheduling_challenge(challenge_id):
 
 
 @app.route('/projects/challenge/<int:challenge_id>/submit', methods=['POST'])
+@login_required
 def submit_scheduling_challenge(challenge_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -1048,6 +1109,7 @@ def submit_scheduling_challenge(challenge_id):
 # ============================================================================
 
 @app.route('/cashflow')
+@login_required
 def cashflow():
     player_id = session.get('player_id')
     if not player_id:
@@ -1068,6 +1130,7 @@ def cashflow():
 
 
 @app.route('/cashflow/challenge/<int:challenge_id>')
+@login_required
 def cashflow_challenge(challenge_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -1089,6 +1152,7 @@ def cashflow_challenge(challenge_id):
 
 
 @app.route('/cashflow/challenge/<int:challenge_id>/submit', methods=['POST'])
+@login_required
 def submit_cashflow_challenge(challenge_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -1129,6 +1193,7 @@ def submit_cashflow_challenge(challenge_id):
 # ============================================================================
 
 @app.route('/businessplan')
+@login_required
 def businessplan():
     player_id = session.get('player_id')
     if not player_id:
@@ -1148,6 +1213,7 @@ def businessplan():
 
 
 @app.route('/businessplan/create', methods=['POST'])
+@login_required
 def create_businessplan():
     player_id = session.get('player_id')
     if not player_id:
@@ -1168,6 +1234,7 @@ def create_businessplan():
 
 
 @app.route('/businessplan/<int:plan_id>')
+@login_required
 def edit_businessplan(plan_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -1189,6 +1256,7 @@ def edit_businessplan(plan_id):
 
 
 @app.route('/businessplan/section/<int:section_id>/save', methods=['POST'])
+@login_required
 def save_businessplan_section(section_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -1212,6 +1280,7 @@ def save_businessplan_section(section_id):
 # ============================================================================
 
 @app.route('/negotiation')
+@login_required
 def negotiation():
     player_id = session.get('player_id')
     if not player_id:
@@ -1230,6 +1299,7 @@ def negotiation():
 
 
 @app.route('/negotiation/<int:scenario_id>')
+@login_required
 def negotiation_scenario(scenario_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -1254,6 +1324,7 @@ def negotiation_scenario(scenario_id):
 
 
 @app.route('/negotiation/offer/<int:negotiation_id>', methods=['POST'])
+@login_required
 def submit_negotiation_offer(negotiation_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -1285,6 +1356,7 @@ def submit_negotiation_offer(negotiation_id):
 # ============================================================================
 
 @app.route('/risks')
+@login_required
 def risks():
     player_id = session.get('player_id')
     if not player_id:
@@ -1305,6 +1377,7 @@ def risks():
 
 
 @app.route('/risks/add', methods=['POST'])
+@login_required
 def add_risk():
     player_id = session.get('player_id')
     if not player_id:
@@ -1334,6 +1407,7 @@ def add_risk():
 # ============================================================================
 
 @app.route('/supplychain')
+@login_required
 def supplychain():
     player_id = session.get('player_id')
     if not player_id:
@@ -1356,6 +1430,7 @@ def supplychain():
 
 
 @app.route('/supplychain/order', methods=['POST'])
+@login_required
 def create_order():
     player_id = session.get('player_id')
     if not player_id:
@@ -1382,6 +1457,7 @@ def create_order():
 # ============================================================================
 
 @app.route('/market')
+@login_required
 def market():
     player_id = session.get('player_id')
     if not player_id:
@@ -1406,6 +1482,7 @@ def market():
 
 
 @app.route('/market/challenge/<int:challenge_id>')
+@login_required
 def market_challenge(challenge_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -1427,6 +1504,7 @@ def market_challenge(challenge_id):
 
 
 @app.route('/market/challenge/<int:challenge_id>/submit', methods=['POST'])
+@login_required
 def submit_market_challenge(challenge_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -1466,6 +1544,7 @@ def submit_market_challenge(challenge_id):
 # ============================================================================
 
 @app.route('/hrmanagement')
+@login_required
 def hrmanagement():
     player_id = session.get('player_id')
     if not player_id:
@@ -1488,6 +1567,7 @@ def hrmanagement():
 
 
 @app.route('/hrmanagement/challenge/<int:challenge_id>')
+@login_required
 def hr_challenge(challenge_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -1509,6 +1589,7 @@ def hr_challenge(challenge_id):
 
 
 @app.route('/hrmanagement/challenge/<int:challenge_id>/submit', methods=['POST'])
+@login_required
 def submit_hr_challenge(challenge_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -1545,6 +1626,7 @@ def submit_hr_challenge(challenge_id):
 
 
 @app.route('/hrmanagement/hire', methods=['POST'])
+@login_required
 def hire_employee():
     player_id = session.get('player_id')
     if not player_id:
@@ -1571,6 +1653,7 @@ def hire_employee():
 # ============================================================================
 
 @app.route('/pitch')
+@login_required
 def pitch():
     player_id = session.get('player_id')
     if not player_id:
@@ -1592,6 +1675,7 @@ def pitch():
 
 
 @app.route('/pitch/create', methods=['POST'])
+@login_required
 def create_pitch():
     player_id = session.get('player_id')
     if not player_id:
@@ -1613,6 +1697,7 @@ def create_pitch():
 
 
 @app.route('/pitch/<int:deck_id>')
+@login_required
 def edit_pitch(deck_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -1634,6 +1719,7 @@ def edit_pitch(deck_id):
 
 
 @app.route('/pitch/section/<int:section_id>/save', methods=['POST'])
+@login_required
 def save_pitch_section(section_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -1653,6 +1739,7 @@ def save_pitch_section(section_id):
 
 
 @app.route('/pitch/<int:deck_id>/present/<int:investor_id>')
+@login_required
 def present_pitch(deck_id, investor_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -1683,6 +1770,7 @@ def present_pitch(deck_id, investor_id):
 
 
 @app.route('/pitch/session/<int:session_id>/submit', methods=['POST'])
+@login_required
 def submit_pitch(session_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -1713,6 +1801,7 @@ def submit_pitch(session_id):
 # ============================================================================
 
 @app.route('/analytics')
+@login_required
 def analytics():
     player_id = session.get('player_id')
     if not player_id:
@@ -1737,6 +1826,7 @@ def analytics():
 # ============================================================================
 
 @app.route('/achievements')
+@login_required
 def achievements():
     player_id = session.get('player_id')
     if not player_id:
@@ -1765,6 +1855,7 @@ def achievements():
 # ============================================================================
 
 @app.route('/competitions')
+@login_required
 def competitions():
     player_id = session.get('player_id')
     if not player_id:
@@ -1785,6 +1876,7 @@ def competitions():
 
 
 @app.route('/competitions/join/<int:active_id>', methods=['POST'])
+@login_required
 def join_competition(active_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -1802,6 +1894,7 @@ def join_competition(active_id):
 
 
 @app.route('/competitions/<int:active_id>/leaderboard')
+@login_required
 def competition_leaderboard(active_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -1827,6 +1920,7 @@ def competition_leaderboard(active_id):
 # ============================================================================
 
 @app.route('/simulations')
+@login_required
 def simulations():
     player_id = session.get('player_id')
     if not player_id:
@@ -1852,6 +1946,7 @@ def simulations():
 
 
 @app.route('/simulations/<int:simulation_id>')
+@login_required
 def simulation_detail(simulation_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -1873,6 +1968,7 @@ def simulation_detail(simulation_id):
 
 
 @app.route('/simulations/<int:simulation_id>/start', methods=['POST'])
+@login_required
 def start_simulation(simulation_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -1890,6 +1986,7 @@ def start_simulation(simulation_id):
 
 
 @app.route('/simulations/play/<int:progress_id>')
+@login_required
 def simulation_play(progress_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -1908,6 +2005,7 @@ def simulation_play(progress_id):
 # ============================================================================
 
 @app.route('/tutorial')
+@login_required
 def tutorial():
     player_id = session.get('player_id')
     if not player_id:
@@ -1925,6 +2023,7 @@ def tutorial():
 
 
 @app.route('/tutorial/<section_id>/complete', methods=['POST'])
+@login_required
 def complete_tutorial(section_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -1942,6 +2041,7 @@ def complete_tutorial(section_id):
 # ============================================================================
 
 @app.route('/stories')
+@login_required
 def stories():
     player_id = session.get('player_id')
     if not player_id:
@@ -1958,6 +2058,7 @@ def stories():
 
 
 @app.route('/stories/<int:arc_id>')
+@login_required
 def story_arc(arc_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -1981,6 +2082,7 @@ def story_arc(arc_id):
 
 
 @app.route('/stories/<int:arc_id>/start', methods=['POST'])
+@login_required
 def start_story(arc_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -1993,6 +2095,7 @@ def start_story(arc_id):
 
 
 @app.route('/stories/<int:arc_id>/chapter/<int:chapter_num>/choice', methods=['POST'])
+@login_required
 def story_choice(arc_id, chapter_num):
     player_id = session.get('player_id')
     if not player_id:
@@ -2017,6 +2120,7 @@ def story_choice(arc_id, chapter_num):
 # ============================================================================
 
 @app.route('/mentorship')
+@login_required
 def mentorship():
     player_id = session.get('player_id')
     if not player_id:
@@ -2034,6 +2138,7 @@ def mentorship():
 
 
 @app.route('/mentorship/advisor/<int:advisor_id>')
+@login_required
 def advisor_detail(advisor_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -2057,6 +2162,7 @@ def advisor_detail(advisor_id):
 # ============================================================================
 
 @app.route('/network')
+@login_required
 def network():
     player_id = session.get('player_id')
     if not player_id:
@@ -2076,6 +2182,7 @@ def network():
 
 
 @app.route('/network/event/<int:event_id>/attend', methods=['POST'])
+@login_required
 def attend_event(event_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -2091,6 +2198,7 @@ def attend_event(event_id):
 
 
 @app.route('/network/ventures')
+@login_required
 def ventures():
     player_id = session.get('player_id')
     if not player_id:
@@ -2110,6 +2218,7 @@ def ventures():
 # ============================================================================
 
 @app.route('/industries')
+@login_required
 def industries():
     player_id = session.get('player_id')
     if not player_id:
@@ -2125,6 +2234,7 @@ def industries():
 
 
 @app.route('/industries/<int:track_id>')
+@login_required
 def industry_detail(track_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -2153,6 +2263,7 @@ def industry_detail(track_id):
 # ============================================================================
 
 @app.route('/market-events')
+@login_required
 def market_events():
     player_id = session.get('player_id')
     if not player_id:
@@ -2172,6 +2283,7 @@ def market_events():
 
 
 @app.route('/market-events/news/<int:news_id>/respond', methods=['POST'])
+@login_required
 def respond_news(news_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -2193,6 +2305,7 @@ def respond_news(news_id):
 # ============================================================================
 
 @app.route('/guilds')
+@login_required
 def guilds():
     player_id = session.get('player_id')
     if not player_id:
@@ -2210,6 +2323,7 @@ def guilds():
 
 
 @app.route('/guilds/create', methods=['POST'])
+@login_required
 def create_guild():
     player_id = session.get('player_id')
     if not player_id:
@@ -2236,6 +2350,7 @@ def create_guild():
 
 
 @app.route('/guilds/<int:guild_id>/join', methods=['POST'])
+@login_required
 def join_guild(guild_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -2254,6 +2369,7 @@ def join_guild(guild_id):
 
 
 @app.route('/guilds/leave', methods=['POST'])
+@login_required
 def leave_guild():
     player_id = session.get('player_id')
     if not player_id:
@@ -2272,6 +2388,7 @@ def leave_guild():
 
 
 @app.route('/coop')
+@login_required
 def coop():
     player_id = session.get('player_id')
     if not player_id:
@@ -2287,6 +2404,7 @@ def coop():
 
 
 @app.route('/coop/<int:challenge_id>/join', methods=['POST'])
+@login_required
 def join_coop_challenge(challenge_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -2305,6 +2423,7 @@ def join_coop_challenge(challenge_id):
 
 
 @app.route('/trading')
+@login_required
 def trading():
     player_id = session.get('player_id')
     if not player_id:
@@ -2321,6 +2440,7 @@ def trading():
 
 
 @app.route('/trading/create', methods=['POST'])
+@login_required
 def create_trade_listing():
     player_id = session.get('player_id')
     if not player_id:
@@ -2350,6 +2470,7 @@ def create_trade_listing():
 
 
 @app.route('/trading/<int:listing_id>/buy', methods=['POST'])
+@login_required
 def buy_trade_item(listing_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -2368,6 +2489,7 @@ def buy_trade_item(listing_id):
 
 
 @app.route('/trading/<int:listing_id>/cancel', methods=['POST'])
+@login_required
 def cancel_trade_listing(listing_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -2390,6 +2512,7 @@ def cancel_trade_listing(listing_id):
 # ============================================================================
 
 @app.route('/seasons')
+@login_required
 def seasons():
     player_id = session.get('player_id')
     if not player_id:
@@ -2409,6 +2532,7 @@ def seasons():
 
 
 @app.route('/seasons/battle-pass/claim/<int:tier>', methods=['POST'])
+@login_required
 def claim_battle_pass_reward(tier):
     player_id = session.get('player_id')
     if not player_id:
@@ -2427,6 +2551,7 @@ def claim_battle_pass_reward(tier):
 
 
 @app.route('/seasons/boss/<int:boss_id>/attack', methods=['POST'])
+@login_required
 def attack_limited_boss(boss_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -2451,6 +2576,7 @@ def attack_limited_boss(boss_id):
 # ============================================================================
 
 @app.route('/coach')
+@login_required
 def coach():
     player_id = session.get('player_id')
     if not player_id:
@@ -2472,6 +2598,7 @@ def coach():
 # ============================================================================
 
 @app.route('/worlds')
+@login_required
 def worlds():
     player_id = session.get('player_id')
     if not player_id:
@@ -2488,6 +2615,7 @@ def worlds():
 
 
 @app.route('/case-studies')
+@login_required
 def case_studies():
     player_id = session.get('player_id')
     if not player_id:
@@ -2509,6 +2637,7 @@ def case_studies():
 # ============================================================================
 
 @app.route('/settings')
+@login_required
 def settings():
     player_id = session.get('player_id')
     if not player_id:
@@ -2524,6 +2653,7 @@ def settings():
 
 
 @app.route('/settings/update', methods=['POST'])
+@login_required
 def update_settings():
     player_id = session.get('player_id')
     if not player_id:

@@ -213,13 +213,13 @@ class GameEngine:
     
     def create_new_player(self, name: str, world: str = "Modern", industry: str = "Restaurant", career_path: str = "entrepreneur", password: str = None) -> Player:
         """Create a new player and initialize their progress."""
-        import hashlib
+        import bcrypt
         conn = get_connection()
         cur = conn.cursor()
         
         password_hash = None
         if password:
-            password_hash = hashlib.sha256(password.encode()).hexdigest()
+            password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         
         if career_path == "employee":
             starting_cash = 500.0
@@ -295,7 +295,8 @@ class GameEngine:
         return players
     
     def authenticate_player(self, player_id: int, password: str = None) -> dict:
-        """Authenticate a player by ID and password."""
+        """Authenticate a player by ID and password using bcrypt."""
+        import bcrypt
         import hashlib
         conn = get_connection()
         cur = conn.cursor()
@@ -313,9 +314,28 @@ class GameEngine:
             if not password:
                 return {"success": False, "error": "Password required", "needs_password": True}
             
-            input_hash = hashlib.sha256(password.encode()).hexdigest()
-            if input_hash != player['password_hash']:
-                return {"success": False, "error": "Incorrect password"}
+            stored_hash = player['password_hash']
+            
+            # Check if it's a bcrypt hash (starts with $2) or legacy SHA256 (64 hex chars)
+            if stored_hash.startswith('$2'):
+                # Modern bcrypt hash
+                if not bcrypt.checkpw(password.encode('utf-8'), stored_hash.encode('utf-8')):
+                    return {"success": False, "error": "Incorrect password"}
+            else:
+                # Legacy SHA256 hash - verify and upgrade to bcrypt
+                legacy_hash = hashlib.sha256(password.encode()).hexdigest()
+                if legacy_hash != stored_hash:
+                    return {"success": False, "error": "Incorrect password"}
+                
+                # Upgrade to bcrypt on successful login
+                new_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+                upgrade_conn = get_connection()
+                upgrade_cur = upgrade_conn.cursor()
+                upgrade_cur.execute("UPDATE player_profiles SET password_hash = %s WHERE player_id = %s", 
+                                   (new_hash, player_id))
+                upgrade_conn.commit()
+                upgrade_cur.close()
+                upgrade_conn.close()
         
         return {"success": True, "player_id": player['player_id'], "player_name": player['player_name']}
     
