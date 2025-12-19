@@ -42,9 +42,16 @@ The game is built as a Flask web application with a responsive, mobile-first UI.
 -   **Phase 5D - Content Expansion:** New world themes (Pirate for maritime trade, Space for futuristic commerce), real-world business case studies, guest mentor NPCs from famous companies, and deeper industry specialization tracks.
 -   **Phase 5E - Accessibility & Polish:** PWA optimization, screen reader support, color blind modes (protanopia, deuteranopia, tritanopia), high contrast mode, reduced motion settings, and customizable font sizes.
 
+## Security & Infrastructure (December 2024)
+-   **Password Security:** Bcrypt password hashing with automatic SHA256 migration for existing users
+-   **Route Protection:** @login_required decorator applied to 90+ gameplay routes
+-   **Database Pooling:** ThreadedConnectionPool (2-20 connections) for efficient connection management
+-   **New Player Onboarding:** Welcome modal for first-time players directing to tutorial system
+
 ## External Dependencies
 -   **PostgreSQL:** Relational database for all game data persistence.
 -   **Flask-WTF:** Used for CSRF protection in web forms.
+-   **bcrypt:** Industry-standard password hashing library.
 
 ## Mobile & Cross-Platform Support (December 2024)
 The game now works seamlessly across mobile and desktop platforms:
