@@ -1,17 +1,56 @@
 import os
 import json
 import psycopg2
+from psycopg2 import pool
 from psycopg2.extras import RealDictCursor
 from dotenv import load_dotenv
 
 load_dotenv()
 
+_connection_pool = None
+
+def init_connection_pool():
+    """Initialize the connection pool."""
+    global _connection_pool
+    if _connection_pool is None:
+        database_url = os.environ.get("DATABASE_URL")
+        if not database_url:
+            raise ValueError("DATABASE_URL environment variable is not set")
+        _connection_pool = pool.ThreadedConnectionPool(
+            minconn=2,
+            maxconn=20,
+            dsn=database_url
+        )
+    return _connection_pool
+
+
 def get_connection():
-    """Get a database connection using DATABASE_URL environment variable."""
-    database_url = os.environ.get("DATABASE_URL")
-    if not database_url:
-        raise ValueError("DATABASE_URL environment variable is not set")
-    return psycopg2.connect(database_url, cursor_factory=RealDictCursor)
+    """Get a database connection from the pool."""
+    global _connection_pool
+    
+    if _connection_pool is None:
+        init_connection_pool()
+    
+    try:
+        conn = _connection_pool.getconn()
+        conn.cursor_factory = RealDictCursor
+        return conn
+    except pool.PoolError:
+        database_url = os.environ.get("DATABASE_URL")
+        return psycopg2.connect(database_url, cursor_factory=RealDictCursor)
+
+
+def return_connection(conn):
+    """Return a connection to the pool."""
+    global _connection_pool
+    if _connection_pool is not None and conn is not None:
+        try:
+            _connection_pool.putconn(conn)
+        except Exception:
+            try:
+                conn.close()
+            except Exception:
+                pass
 
 
 def init_database():
