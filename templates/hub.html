@@ -5,6 +5,162 @@
 {% block body_class %}world-{{ stats.world|lower }}{% endblock %}
 
 {% block content %}
+<div class="continue-journey-hero mb-4 fade-in">
+    <div class="journey-card">
+        <div class="journey-header">
+            <span class="journey-badge">
+                {% if next_step.type == 'lesson' %}<i class="bi bi-book-fill"></i> LESSON
+                {% elif next_step.type == 'trial' %}<i class="bi bi-question-circle-fill"></i> QUIZ
+                {% elif next_step.type == 'puzzle' %}<i class="bi bi-calculator-fill"></i> CHALLENGE
+                {% elif next_step.type == 'scenario' %}<i class="bi bi-flag-fill"></i> SCENARIO
+                {% elif next_step.type == 'complete' %}<i class="bi bi-gift-fill"></i> REWARDS
+                {% else %}<i class="bi bi-compass-fill"></i> EXPLORE
+                {% endif %}
+            </span>
+            {% if next_step.path_name %}
+            <span class="journey-path">{{ next_step.path_name }}</span>
+            {% endif %}
+        </div>
+        
+        <h2 class="journey-title">{{ next_step.message }}</h2>
+        
+        {% if next_step.stage_name %}
+        <p class="journey-subtitle">{{ next_step.stage_name }}</p>
+        {% endif %}
+        
+        {% if next_step.progress %}
+        <div class="journey-progress">
+            <div class="progress-step {% if next_step.progress.lesson %}done{% elif next_step.type == 'lesson' %}current{% endif %}">
+                <i class="bi bi-book"></i>
+                <span>Lesson</span>
+            </div>
+            <div class="progress-arrow"><i class="bi bi-chevron-right"></i></div>
+            <div class="progress-step {% if next_step.progress.trial %}done{% elif next_step.type == 'trial' %}current{% endif %}">
+                <i class="bi bi-question-circle"></i>
+                <span>Quiz</span>
+            </div>
+            <div class="progress-arrow"><i class="bi bi-chevron-right"></i></div>
+            <div class="progress-step {% if next_step.progress.puzzle %}done{% elif next_step.type == 'puzzle' %}current{% endif %}">
+                <i class="bi bi-calculator"></i>
+                <span>Challenge</span>
+            </div>
+            <div class="progress-arrow"><i class="bi bi-chevron-right"></i></div>
+            <div class="progress-step {% if next_step.progress.scenario %}done{% elif next_step.type == 'scenario' %}current{% endif %}">
+                <i class="bi bi-flag"></i>
+                <span>Scenario</span>
+            </div>
+        </div>
+        {% endif %}
+        
+        <a href="{{ next_step.action_url }}" class="journey-btn">
+            <i class="bi bi-play-fill"></i> {{ next_step.action_text }}
+        </a>
+    </div>
+</div>
+
+<style>
+.continue-journey-hero {
+    margin: -1rem -1rem 1rem -1rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(33, 150, 243, 0.15));
+    border-bottom: 3px solid rgba(76, 175, 80, 0.4);
+}
+.journey-card {
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: center;
+}
+.journey-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+.journey-badge {
+    background: linear-gradient(135deg, #4caf50, #388e3c);
+    color: white;
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.journey-path {
+    color: #aaa;
+    font-size: 0.9rem;
+}
+.journey-title {
+    color: #fff;
+    font-family: 'Cinzel', serif;
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+.journey-subtitle {
+    color: #81c784;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+}
+.journey-progress {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+.progress-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    color: #666;
+    font-size: 0.8rem;
+}
+.progress-step i {
+    font-size: 1.2rem;
+    margin-bottom: 0.25rem;
+}
+.progress-step.done {
+    background: rgba(76, 175, 80, 0.2);
+    color: #81c784;
+}
+.progress-step.current {
+    background: rgba(33, 150, 243, 0.2);
+    color: #64b5f6;
+    border: 1px solid rgba(33, 150, 243, 0.5);
+}
+.progress-arrow {
+    color: #555;
+}
+.journey-btn {
+    display: inline-block;
+    background: linear-gradient(135deg, #4caf50, #388e3c);
+    color: white;
+    padding: 1rem 3rem;
+    border-radius: 30px;
+    font-size: 1.25rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+}
+.journey-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 25px rgba(76, 175, 80, 0.6);
+    color: white;
+}
+@media (max-width: 500px) {
+    .journey-title { font-size: 1.2rem; }
+    .journey-btn { padding: 0.8rem 2rem; font-size: 1rem; }
+    .progress-step { padding: 0.4rem 0.5rem; }
+}
+</style>
+
 <div class="row fade-in">
     <div class="col-md-4">
         <div class="card mb-4">
@@ -314,18 +470,6 @@
                     </a>
                     <a href="{{ url_for('simulations') }}" class="btn btn-game btn-game-crimson">
                         <i class="bi bi-building"></i> Simulations
-                    </a>
-                    <a href="{{ url_for('tutorial') }}" class="btn btn-outline-secondary">
-                        <i class="bi bi-mortarboard"></i> Tutorial
-                    </a>
-                    <a href="{{ url_for('stories') }}" class="btn btn-game btn-game-purple">
-                        <i class="bi bi-book"></i> Stories
-                    </a>
-                    <a href="{{ url_for('mentorship') }}" class="btn btn-outline-info">
-                        <i class="bi bi-mortarboard-fill"></i> Mentorship
-                    </a>
-                    <a href="{{ url_for('learning_paths_list') }}" class="btn btn-game btn-game-emerald">
-                        <i class="bi bi-signpost-split"></i> Learning Paths
                     </a>
                     <a href="{{ url_for('network') }}" class="btn btn-outline-success">
                         <i class="bi bi-diagram-3"></i> Network

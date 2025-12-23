@@ -257,9 +257,9 @@
         </div>
         {% if path.trial_completed %}
         <span class="stage-status completed"><i class="bi bi-check-circle"></i> Score: {{ path.trial_score or 0 }}%</span>
-        <a href="{{ url_for('mentor_trial', trial_id=path.trial_id) }}" class="btn-stage review">Retry</a>
+        <a href="{{ url_for('mentor_trial', trial_id=path.trial_id, path_id=path.path_id) }}" class="btn-stage review">Retry</a>
         {% elif can_start_trial %}
-        <a href="{{ url_for('mentor_trial', trial_id=path.trial_id) }}" class="btn-stage start">Take Quiz</a>
+        <a href="{{ url_for('mentor_trial', trial_id=path.trial_id, path_id=path.path_id) }}" class="btn-stage start">Take Quiz</a>
         {% else %}
         <span class="stage-status locked"><i class="bi bi-lock"></i> Complete lesson first</span>
         {% endif %}
@@ -279,9 +279,9 @@
         </div>
         {% if path.puzzle_completed %}
         <span class="stage-status completed"><i class="bi bi-check-circle"></i> Solved in {{ path.puzzle_time_seconds or 0 }}s</span>
-        <a href="{{ url_for('merchant_puzzle', puzzle_id=path.puzzle_id) }}" class="btn-stage review">Retry</a>
+        <a href="{{ url_for('merchant_puzzle', puzzle_id=path.puzzle_id, path_id=path.path_id) }}" class="btn-stage review">Retry</a>
         {% elif can_start_puzzle %}
-        <a href="{{ url_for('merchant_puzzle', puzzle_id=path.puzzle_id) }}" class="btn-stage start">Solve Puzzle</a>
+        <a href="{{ url_for('merchant_puzzle', puzzle_id=path.puzzle_id, path_id=path.path_id) }}" class="btn-stage start">Solve Puzzle</a>
         {% else %}
         <span class="stage-status locked"><i class="bi bi-lock"></i> Complete quiz first</span>
         {% endif %}

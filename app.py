@@ -117,9 +117,12 @@ def hub():
     prestige_status = engine.get_prestige_status()
     leaderboard = engine.get_leaderboard(5)
     
+    from src.game_engine import get_player_next_step
+    next_step = get_player_next_step(player_id)
+    
     return render_template('hub.html', stats=stats, energy=energy, login_status=login_status, 
                           idle_income=idle_income, prestige_status=prestige_status, leaderboard=leaderboard,
-                          is_new_player=is_new_player)
+                          is_new_player=is_new_player, next_step=next_step)
 
 
 @app.route('/dismiss_onboarding', methods=['POST'])
@@ -815,7 +818,15 @@ def campaign_map():
     stats = get_engine().get_player_stats()
     campaign_data = get_engine().get_campaign_map()
     
-    return render_template('campaign_map.html', stats=stats, campaign=campaign_data)
+    from src.game_engine import get_learning_paths
+    learning_paths = get_learning_paths(player_id)
+    learning_by_discipline = {}
+    for path in learning_paths:
+        disc = path.get('discipline')
+        if disc and disc not in learning_by_discipline:
+            learning_by_discipline[disc] = path
+    
+    return render_template('campaign_map.html', stats=stats, campaign=campaign_data, learning_paths=learning_by_discipline)
 
 @app.route('/boss_challenges')
 @login_required
@@ -2112,6 +2123,8 @@ def mentor_trial(trial_id):
     get_engine().load_player(player_id)
     stats = get_engine().get_player_stats()
     
+    path_id = request.args.get('path_id', type=int)
+    
     from src.game_engine import get_mentor_trial, start_mentor_trial
     trial = get_mentor_trial(trial_id)
     
@@ -2121,7 +2134,7 @@ def mentor_trial(trial_id):
     
     start_mentor_trial(player_id, trial_id)
     
-    return render_template('mentor_trial_play.html', stats=stats, trial=trial)
+    return render_template('mentor_trial_play.html', stats=stats, trial=trial, path_id=path_id)
 
 
 @app.route('/trials/<int:trial_id>/submit', methods=['POST'])
@@ -2133,6 +2146,8 @@ def submit_mentor_trial(trial_id):
         return redirect(url_for('index'))
     
     from src.game_engine import get_mentor_trial, complete_mentor_trial
+    
+    path_id = request.form.get('path_id', type=int)
     
     trial = get_mentor_trial(trial_id)
     if not trial:
@@ -2175,7 +2190,8 @@ def submit_mentor_trial(trial_id):
                           max_score=max_score,
                           percentage=percentage,
                           is_passed=is_passed,
-                          rewards=rewards)
+                          rewards=rewards,
+                          path_id=path_id)
 
 
 # ============================================================================
@@ -2210,6 +2226,8 @@ def merchant_puzzle(puzzle_id):
     get_engine().load_player(player_id)
     stats = get_engine().get_player_stats()
     
+    path_id = request.args.get('path_id', type=int)
+    
     from src.game_engine import get_merchant_puzzle, start_merchant_puzzle
     puzzle = get_merchant_puzzle(puzzle_id)
     
@@ -2219,7 +2237,7 @@ def merchant_puzzle(puzzle_id):
     
     start_merchant_puzzle(player_id, puzzle_id)
     
-    return render_template('merchant_puzzle_play.html', stats=stats, puzzle=puzzle)
+    return render_template('merchant_puzzle_play.html', stats=stats, puzzle=puzzle, path_id=path_id)
 
 
 @app.route('/puzzles/<int:puzzle_id>/submit', methods=['POST'])
@@ -2231,6 +2249,8 @@ def submit_merchant_puzzle(puzzle_id):
         return redirect(url_for('index'))
     
     from src.game_engine import get_merchant_puzzle, complete_merchant_puzzle
+    
+    path_id = request.form.get('path_id', type=int)
     
     puzzle = get_merchant_puzzle(puzzle_id)
     if not puzzle:
@@ -2263,7 +2283,8 @@ def submit_merchant_puzzle(puzzle_id):
                           correct_answer=correct_answer,
                           is_correct=is_correct,
                           time_seconds=time_seconds,
-                          rewards=rewards)
+                          rewards=rewards,
+                          path_id=path_id)
 
 
 # ============================================================================

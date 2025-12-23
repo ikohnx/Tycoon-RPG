@@ -257,14 +257,16 @@
     {% endfor %}
     
     <div class="action-buttons">
+        {% if path_id %}
+        <a href="{{ url_for('learning_path_detail', path_id=path_id) }}" class="btn-action btn-primary-action">
+            <i class="bi bi-arrow-right"></i> Continue Learning
+        </a>
+        {% endif %}
         <a href="{{ url_for('mentor_trial', trial_id=trial.trial_id) }}" class="btn-action btn-secondary-action">
-            <i class="bi bi-arrow-repeat"></i> Retry Trial
+            <i class="bi bi-arrow-repeat"></i> Retry
         </a>
-        <a href="{{ url_for('mentor_trials_list') }}" class="btn-action btn-primary-action">
-            <i class="bi bi-list-check"></i> More Trials
-        </a>
-        <a href="{{ url_for('hub') }}" class="btn-action btn-secondary-action">
-            <i class="bi bi-house"></i> Back to Hub
+        <a href="{{ url_for('campaign_map') }}" class="btn-action btn-secondary-action">
+            <i class="bi bi-map"></i> Campaign
         </a>
     </div>
 </div>

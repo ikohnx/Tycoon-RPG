@@ -48,6 +48,39 @@
             <div class="map-overlay"></div>
         </div>
         
+        {% set lpath = learning_paths.get(discipline) %}
+        {% if lpath and not lpath.path_completed %}
+        <div class="learning-gate-banner">
+            <div class="gate-header">
+                <i class="bi bi-signpost-split"></i> {{ lpath.path_name }}
+            </div>
+            <div class="gate-steps">
+                <div class="gate-step {% if lpath.lesson_completed %}done{% else %}current{% endif %}">
+                    <i class="bi {% if lpath.lesson_completed %}bi-check-circle-fill{% else %}bi-book{% endif %}"></i>
+                    <span>Lesson</span>
+                </div>
+                <i class="bi bi-chevron-right gate-arrow"></i>
+                <div class="gate-step {% if lpath.trial_completed %}done{% elif lpath.lesson_completed %}current{% else %}locked{% endif %}">
+                    <i class="bi {% if lpath.trial_completed %}bi-check-circle-fill{% elif lpath.lesson_completed %}bi-question-circle{% else %}bi-lock{% endif %}"></i>
+                    <span>Quiz</span>
+                </div>
+                <i class="bi bi-chevron-right gate-arrow"></i>
+                <div class="gate-step {% if lpath.puzzle_completed %}done{% elif lpath.trial_completed %}current{% else %}locked{% endif %}">
+                    <i class="bi {% if lpath.puzzle_completed %}bi-check-circle-fill{% elif lpath.trial_completed %}bi-calculator{% else %}bi-lock{% endif %}"></i>
+                    <span>Challenge</span>
+                </div>
+                <i class="bi bi-chevron-right gate-arrow"></i>
+                <div class="gate-step {% if lpath.scenario_completed %}done{% elif lpath.puzzle_completed %}current{% else %}locked{% endif %}">
+                    <i class="bi {% if lpath.scenario_completed %}bi-check-circle-fill{% elif lpath.puzzle_completed %}bi-flag{% else %}bi-lock{% endif %}"></i>
+                    <span>Scenario</span>
+                </div>
+            </div>
+            <a href="{{ url_for('learning_path_detail', path_id=lpath.path_id) }}" class="gate-btn">
+                <i class="bi bi-play-fill"></i> Continue Learning
+            </a>
+        </div>
+        {% endif %}
+        
         <div class="map-stats">
             <div class="stat-pill">
                 <i class="bi bi-star-fill text-warning"></i>
@@ -326,6 +359,57 @@
     align-items: center;
     gap: 4px;
 }
+
+.learning-gate-banner {
+    position: relative;
+    z-index: 20;
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(33, 150, 243, 0.15));
+    border: 2px solid rgba(76, 175, 80, 0.4);
+    border-radius: 12px;
+    padding: 1rem;
+    margin: 0.5rem;
+    text-align: center;
+}
+.gate-header {
+    color: #81c784;
+    font-family: 'Cinzel', serif;
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+}
+.gate-steps {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.35rem;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+}
+.gate-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.35rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    background: rgba(255, 255, 255, 0.05);
+    color: #666;
+}
+.gate-step i { font-size: 1rem; }
+.gate-step.done { background: rgba(76, 175, 80, 0.2); color: #81c784; }
+.gate-step.current { background: rgba(33, 150, 243, 0.2); color: #64b5f6; border: 1px solid rgba(33, 150, 243, 0.5); }
+.gate-step.locked { color: #555; }
+.gate-arrow { color: #444; font-size: 0.8rem; }
+.gate-btn {
+    display: inline-block;
+    background: linear-gradient(135deg, #4caf50, #388e3c);
+    color: white;
+    padding: 0.5rem 1.5rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+.gate-btn:hover { color: white; transform: scale(1.02); }
 
 .path-svg {
     width: 100%;

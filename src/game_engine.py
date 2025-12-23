@@ -7821,3 +7821,113 @@ def check_learning_path_gate(player_id, scenario_id):
         'trial_id': path.get('trial_id'),
         'puzzle_id': path.get('puzzle_id')
     }
+
+
+def get_player_next_step(player_id):
+    """Get the player's next step in their learning journey.
+    
+    Returns what the player should do next: learning path, scenario, or exploration.
+    """
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT lp.*, 
+               plpp.lesson_completed, plpp.trial_completed, plpp.puzzle_completed, 
+               plpp.scenario_completed, plpp.path_completed,
+               mm.module_title as lesson_title,
+               mt.trial_name,
+               mp.puzzle_name,
+               sm.scenario_title
+        FROM learning_paths lp
+        LEFT JOIN player_learning_path_progress plpp ON lp.path_id = plpp.path_id AND plpp.player_id = %s
+        LEFT JOIN mentorship_modules mm ON lp.lesson_module_id = mm.module_id
+        LEFT JOIN mentor_trials mt ON lp.trial_id = mt.trial_id
+        LEFT JOIN merchant_puzzles mp ON lp.puzzle_id = mp.puzzle_id
+        LEFT JOIN scenario_master sm ON lp.scenario_id = sm.scenario_id
+        WHERE lp.is_active = TRUE 
+        AND (plpp.path_completed IS NULL OR plpp.path_completed = FALSE)
+        ORDER BY lp.difficulty, lp.sort_order
+        LIMIT 1
+    """, (player_id,))
+    
+    path = cur.fetchone()
+    cur.close()
+    return_connection(conn)
+    
+    if not path:
+        return {
+            'type': 'explore',
+            'message': 'All learning paths complete! Explore freely.',
+            'action_url': '/campaign',
+            'action_text': 'Explore Campaign'
+        }
+    
+    lesson_done = path.get('lesson_completed', False) or path.get('lesson_module_id') is None
+    trial_done = path.get('trial_completed', False) or path.get('trial_id') is None
+    puzzle_done = path.get('puzzle_completed', False) or path.get('puzzle_id') is None
+    scenario_done = path.get('scenario_completed', False) or path.get('scenario_id') is None
+    
+    if not lesson_done:
+        return {
+            'type': 'lesson',
+            'path_id': path['path_id'],
+            'path_name': path['path_name'],
+            'discipline': path['discipline'],
+            'stage': 'Lesson',
+            'stage_name': path.get('lesson_title', 'Learn the Basics'),
+            'message': f"Start your {path['discipline']} journey with a lesson",
+            'action_url': f"/mentorship/lesson/{path['lesson_module_id']}",
+            'action_text': 'Start Lesson',
+            'progress': {'lesson': False, 'trial': trial_done, 'puzzle': puzzle_done, 'scenario': scenario_done}
+        }
+    elif not trial_done:
+        return {
+            'type': 'trial',
+            'path_id': path['path_id'],
+            'path_name': path['path_name'],
+            'discipline': path['discipline'],
+            'stage': 'Quiz',
+            'stage_name': path.get('trial_name', 'Knowledge Check'),
+            'message': f"Test your {path['discipline']} knowledge",
+            'action_url': f"/trials/{path['trial_id']}?path_id={path['path_id']}",
+            'action_text': 'Take Quiz',
+            'progress': {'lesson': True, 'trial': False, 'puzzle': puzzle_done, 'scenario': scenario_done}
+        }
+    elif not puzzle_done:
+        return {
+            'type': 'puzzle',
+            'path_id': path['path_id'],
+            'path_name': path['path_name'],
+            'discipline': path['discipline'],
+            'stage': 'Challenge',
+            'stage_name': path.get('puzzle_name', 'Calculation Challenge'),
+            'message': f"Apply {path['discipline']} formulas",
+            'action_url': f"/puzzles/{path['puzzle_id']}?path_id={path['path_id']}",
+            'action_text': 'Solve Challenge',
+            'progress': {'lesson': True, 'trial': True, 'puzzle': False, 'scenario': scenario_done}
+        }
+    elif not scenario_done:
+        return {
+            'type': 'scenario',
+            'path_id': path['path_id'],
+            'path_name': path['path_name'],
+            'discipline': path['discipline'],
+            'stage': 'Scenario',
+            'stage_name': path.get('scenario_title', 'Business Decision'),
+            'message': f"Make a real {path['discipline']} decision",
+            'action_url': f"/play/{path['scenario_id']}",
+            'action_text': 'Play Scenario',
+            'progress': {'lesson': True, 'trial': True, 'puzzle': True, 'scenario': False}
+        }
+    else:
+        return {
+            'type': 'complete',
+            'path_id': path['path_id'],
+            'path_name': path['path_name'],
+            'discipline': path['discipline'],
+            'message': f"Claim your {path['path_name']} rewards!",
+            'action_url': f"/learning-paths/{path['path_id']}",
+            'action_text': 'Claim Rewards',
+            'progress': {'lesson': True, 'trial': True, 'puzzle': True, 'scenario': True}
+        }
