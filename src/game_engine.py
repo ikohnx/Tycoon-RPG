@@ -7641,7 +7641,7 @@ def get_learning_path_by_id(path_id, player_id):
     
     cur.execute("""
         SELECT lp.*, 
-               mm.module_id, mm.module_title as lesson_title, mm.module_description as lesson_description,
+               mm.module_id, mm.module_title as lesson_title, mm.theory_content as lesson_description,
                mt.trial_id, mt.trial_name, mt.mentor_name, mt.time_limit_seconds as trial_time,
                mp.puzzle_id, mp.puzzle_name, mp.merchant_name, mp.puzzle_type,
                sm.scenario_id, sm.scenario_title, sm.scenario_narrative,
