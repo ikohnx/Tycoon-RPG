@@ -7593,7 +7593,8 @@ def get_learning_paths(player_id, discipline=None):
                    mp.puzzle_name,
                    sm.scenario_title,
                    plpp.lesson_completed, plpp.trial_completed, 
-                   plpp.puzzle_completed, plpp.scenario_completed,
+                   plpp.puzzle_completed, 
+                   COALESCE(plpp.scenario_completed, cs.scenario_id IS NOT NULL) as scenario_completed,
                    plpp.path_completed, plpp.bonus_claimed
             FROM learning_paths lp
             LEFT JOIN mentorship_modules mm ON lp.lesson_module_id = mm.module_id
@@ -7601,9 +7602,10 @@ def get_learning_paths(player_id, discipline=None):
             LEFT JOIN merchant_puzzles mp ON lp.puzzle_id = mp.puzzle_id
             LEFT JOIN scenario_master sm ON lp.scenario_id = sm.scenario_id
             LEFT JOIN player_learning_path_progress plpp ON lp.path_id = plpp.path_id AND plpp.player_id = %s
+            LEFT JOIN completed_scenarios cs ON lp.scenario_id = cs.scenario_id AND cs.player_id = %s
             WHERE lp.discipline = %s AND lp.is_active = TRUE
             ORDER BY lp.sort_order, lp.difficulty
-        """, (player_id, discipline))
+        """, (player_id, player_id, discipline))
     else:
         cur.execute("""
             SELECT lp.*, 
@@ -7612,7 +7614,8 @@ def get_learning_paths(player_id, discipline=None):
                    mp.puzzle_name,
                    sm.scenario_title,
                    plpp.lesson_completed, plpp.trial_completed, 
-                   plpp.puzzle_completed, plpp.scenario_completed,
+                   plpp.puzzle_completed, 
+                   COALESCE(plpp.scenario_completed, cs.scenario_id IS NOT NULL) as scenario_completed,
                    plpp.path_completed, plpp.bonus_claimed
             FROM learning_paths lp
             LEFT JOIN mentorship_modules mm ON lp.lesson_module_id = mm.module_id
@@ -7620,9 +7623,10 @@ def get_learning_paths(player_id, discipline=None):
             LEFT JOIN merchant_puzzles mp ON lp.puzzle_id = mp.puzzle_id
             LEFT JOIN scenario_master sm ON lp.scenario_id = sm.scenario_id
             LEFT JOIN player_learning_path_progress plpp ON lp.path_id = plpp.path_id AND plpp.player_id = %s
+            LEFT JOIN completed_scenarios cs ON lp.scenario_id = cs.scenario_id AND cs.player_id = %s
             WHERE lp.is_active = TRUE
             ORDER BY lp.discipline, lp.sort_order, lp.difficulty
-        """, (player_id,))
+        """, (player_id, player_id))
     
     paths = cur.fetchall()
     cur.close()
@@ -7644,7 +7648,9 @@ def get_learning_path_by_id(path_id, player_id):
                plpp.lesson_completed, plpp.lesson_completed_at,
                plpp.trial_completed, plpp.trial_completed_at, plpp.trial_score,
                plpp.puzzle_completed, plpp.puzzle_completed_at, plpp.puzzle_time_seconds,
-               plpp.scenario_completed, plpp.scenario_completed_at, plpp.scenario_stars,
+               COALESCE(plpp.scenario_completed, cs.scenario_id IS NOT NULL) as scenario_completed,
+               COALESCE(plpp.scenario_completed_at, cs.completed_at) as scenario_completed_at,
+               COALESCE(plpp.scenario_stars, cs.stars_earned) as scenario_stars,
                plpp.path_completed, plpp.path_completed_at, plpp.bonus_claimed
         FROM learning_paths lp
         LEFT JOIN mentorship_modules mm ON lp.lesson_module_id = mm.module_id
@@ -7652,8 +7658,9 @@ def get_learning_path_by_id(path_id, player_id):
         LEFT JOIN merchant_puzzles mp ON lp.puzzle_id = mp.puzzle_id
         LEFT JOIN scenario_master sm ON lp.scenario_id = sm.scenario_id
         LEFT JOIN player_learning_path_progress plpp ON lp.path_id = plpp.path_id AND plpp.player_id = %s
+        LEFT JOIN completed_scenarios cs ON lp.scenario_id = cs.scenario_id AND cs.player_id = %s
         WHERE lp.path_id = %s
-    """, (player_id, path_id))
+    """, (player_id, player_id, path_id))
     
     path = cur.fetchone()
     cur.close()
