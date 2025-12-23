@@ -3,6 +3,30 @@
 {% block title %}Business Tycoon RPG - Welcome{% endblock %}
 
 {% block content %}
+<style>
+    .saved-game-btn {
+        background: rgba(30, 40, 60, 0.95) !important;
+        border: 2px solid rgba(74, 144, 217, 0.5) !important;
+        color: #ffffff !important;
+        transition: all 0.3s ease;
+    }
+    .saved-game-btn:hover {
+        background: rgba(40, 55, 80, 0.98) !important;
+        border-color: rgba(74, 144, 217, 0.8) !important;
+        transform: translateX(5px);
+    }
+    .saved-game-btn .player-name {
+        color: #ffd700 !important;
+        font-weight: 600;
+    }
+    .saved-game-btn .world-info {
+        color: #b0c4de !important;
+        font-size: 0.85rem;
+    }
+    .world-card-text {
+        color: #b0b0b0 !important;
+    }
+</style>
 <div class="row justify-content-center mt-4">
     <div class="col-md-10 text-center">
         <div class="mb-5">
@@ -39,16 +63,16 @@
                         <div class="d-grid gap-2">
                             {% for player in players[:5] %}
                             <a href="{{ url_for('load_game', player_id=player.player_id) }}" 
-                               class="btn btn-outline-primary text-start p-3">
+                               class="btn saved-game-btn text-start p-3">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
-                                        <strong class="gold-text">
+                                        <span class="player-name">
                                             {% if player.has_password %}<i class="bi bi-shield-lock-fill text-warning me-1"></i>{% endif %}
                                             {{ player.player_name }}
-                                        </strong>
-                                        <small class="d-block text-muted">
+                                        </span>
+                                        <span class="d-block world-info">
                                             <i class="bi bi-globe2"></i> {{ player.chosen_world }} / {{ player.chosen_industry }}
-                                        </small>
+                                        </span>
                                     </div>
                                     <span class="badge" style="background: linear-gradient(135deg, #50c878, #228b22);">
                                         <i class="bi bi-coin"></i> ${{ "%.0f"|format(player.total_cash|float) }}
@@ -120,28 +144,28 @@
                 <div class="stat-card text-center py-4">
                     <i class="bi bi-building display-4 text-primary"></i>
                     <h6 class="game-subtitle mt-3">Modern</h6>
-                    <small class="text-muted">Offices & Tech</small>
+                    <small class="world-card-text">Offices & Tech</small>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="stat-card text-center py-4">
                     <i class="bi bi-gear-wide-connected display-4" style="color: #cd853f;"></i>
                     <h6 class="game-subtitle mt-3">Industrial</h6>
-                    <small class="text-muted">1800s Factories</small>
+                    <small class="world-card-text">1800s Factories</small>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="stat-card text-center py-4">
                     <i class="bi bi-magic display-4" style="color: #9932cc;"></i>
                     <h6 class="game-subtitle mt-3">Fantasy</h6>
-                    <small class="text-muted">Coming Soon</small>
+                    <small class="world-card-text">Coming Soon</small>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="stat-card text-center py-4">
                     <i class="bi bi-rocket-takeoff display-4 text-info"></i>
                     <h6 class="game-subtitle mt-3">Sci-Fi</h6>
-                    <small class="text-muted">Coming Soon</small>
+                    <small class="world-card-text">Coming Soon</small>
                 </div>
             </div>
         </div>
