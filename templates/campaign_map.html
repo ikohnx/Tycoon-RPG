@@ -305,7 +305,8 @@
     display: none;
     position: relative;
     height: calc(100vh - 140px);
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .visual-map.active {
@@ -482,6 +483,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const tabs = document.querySelectorAll('.discipline-tab');
     const maps = document.querySelectorAll('.visual-map');
     
+    function scrollMapToBottom(mapElement) {
+        setTimeout(() => {
+            if (mapElement) {
+                mapElement.scrollTop = mapElement.scrollHeight;
+            }
+        }, 100);
+    }
+    
+    const activeMap = document.querySelector('.visual-map.active');
+    scrollMapToBottom(activeMap);
+    
     tabs.forEach(tab => {
         tab.addEventListener('click', function() {
             tabs.forEach(t => t.classList.remove('active'));
@@ -492,6 +504,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const mapElement = document.getElementById('map-' + discipline);
             if (mapElement) {
                 mapElement.classList.add('active');
+                scrollMapToBottom(mapElement);
             }
         });
     });
