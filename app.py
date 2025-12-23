@@ -2043,6 +2043,7 @@ def mentorship_lesson(module_id):
     start_mentorship(player_id, module_id)
     
     scenario_id = request.args.get('scenario_id')
+    path_id = request.args.get('path_id', type=int)
     
     get_engine().load_player(player_id)
     stats = get_engine().get_player_stats()
@@ -2050,7 +2051,8 @@ def mentorship_lesson(module_id):
     return render_template('mentorship_lesson.html', 
                           stats=stats, 
                           module=module,
-                          scenario_id=scenario_id)
+                          scenario_id=scenario_id,
+                          path_id=path_id)
 
 
 @app.route('/learn/<int:module_id>/complete', methods=['POST'])
@@ -2061,9 +2063,15 @@ def complete_mentorship_route(module_id):
     if not player_id:
         return redirect(url_for('index'))
     
-    from src.game_engine import complete_mentorship
+    from src.game_engine import complete_mentorship, update_learning_path_progress
     
     complete_mentorship(player_id, module_id)
+    
+    path_id = request.form.get('path_id', type=int)
+    if path_id:
+        update_learning_path_progress(player_id, path_id, 'lesson')
+        flash('Lesson complete! Continue to the next step.')
+        return redirect(url_for('learning_path_detail', path_id=path_id))
     
     scenario_id = request.form.get('scenario_id')
     if scenario_id:

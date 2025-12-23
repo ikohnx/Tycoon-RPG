@@ -237,9 +237,9 @@
         </div>
         {% if path.lesson_completed %}
         <span class="stage-status completed"><i class="bi bi-check-circle"></i> Complete</span>
-        <a href="{{ url_for('mentorship_lesson', module_id=path.lesson_module_id) }}" class="btn-stage review">Review</a>
+        <a href="{{ url_for('mentorship_lesson', module_id=path.lesson_module_id, path_id=path.path_id) }}" class="btn-stage review">Review</a>
         {% else %}
-        <a href="{{ url_for('mentorship_lesson', module_id=path.lesson_module_id) }}" class="btn-stage start">Start Lesson</a>
+        <a href="{{ url_for('mentorship_lesson', module_id=path.lesson_module_id, path_id=path.path_id) }}" class="btn-stage start">Start Lesson</a>
         {% endif %}
     </div>
     {% set stage_num = stage_num + 1 %}
