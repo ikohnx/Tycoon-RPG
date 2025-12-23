@@ -2025,6 +2025,16 @@ def complete_tutorial(section_id):
 # MENTORSHIP SYSTEM ROUTES - Learn before playing scenarios
 # ============================================================================
 
+@app.route('/mentorship/lesson/<int:module_id>')
+@login_required
+def mentorship_lesson_redirect(module_id):
+    """Redirect old URL to new URL."""
+    path_id = request.args.get('path_id')
+    if path_id:
+        return redirect(url_for('mentorship_lesson', module_id=module_id, path_id=path_id))
+    return redirect(url_for('mentorship_lesson', module_id=module_id))
+
+
 @app.route('/learn/<int:module_id>')
 @login_required
 def mentorship_lesson(module_id):
