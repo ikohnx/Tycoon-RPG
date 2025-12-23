@@ -7578,3 +7578,227 @@ def update_player_preferences(player_id, preferences):
     cur.close()
     return_connection(conn)
     return {'success': True}
+
+
+def get_learning_paths(player_id, discipline=None):
+    """Get all learning paths with player progress."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    if discipline:
+        cur.execute("""
+            SELECT lp.*, 
+                   mm.module_title as lesson_title,
+                   mt.trial_name,
+                   mp.puzzle_name,
+                   sm.scenario_title,
+                   plpp.lesson_completed, plpp.trial_completed, 
+                   plpp.puzzle_completed, plpp.scenario_completed,
+                   plpp.path_completed, plpp.bonus_claimed
+            FROM learning_paths lp
+            LEFT JOIN mentorship_modules mm ON lp.lesson_module_id = mm.module_id
+            LEFT JOIN mentor_trials mt ON lp.trial_id = mt.trial_id
+            LEFT JOIN merchant_puzzles mp ON lp.puzzle_id = mp.puzzle_id
+            LEFT JOIN scenario_master sm ON lp.scenario_id = sm.scenario_id
+            LEFT JOIN player_learning_path_progress plpp ON lp.path_id = plpp.path_id AND plpp.player_id = %s
+            WHERE lp.discipline = %s AND lp.is_active = TRUE
+            ORDER BY lp.sort_order, lp.difficulty
+        """, (player_id, discipline))
+    else:
+        cur.execute("""
+            SELECT lp.*, 
+                   mm.module_title as lesson_title,
+                   mt.trial_name,
+                   mp.puzzle_name,
+                   sm.scenario_title,
+                   plpp.lesson_completed, plpp.trial_completed, 
+                   plpp.puzzle_completed, plpp.scenario_completed,
+                   plpp.path_completed, plpp.bonus_claimed
+            FROM learning_paths lp
+            LEFT JOIN mentorship_modules mm ON lp.lesson_module_id = mm.module_id
+            LEFT JOIN mentor_trials mt ON lp.trial_id = mt.trial_id
+            LEFT JOIN merchant_puzzles mp ON lp.puzzle_id = mp.puzzle_id
+            LEFT JOIN scenario_master sm ON lp.scenario_id = sm.scenario_id
+            LEFT JOIN player_learning_path_progress plpp ON lp.path_id = plpp.path_id AND plpp.player_id = %s
+            WHERE lp.is_active = TRUE
+            ORDER BY lp.discipline, lp.sort_order, lp.difficulty
+        """, (player_id,))
+    
+    paths = cur.fetchall()
+    cur.close()
+    return_connection(conn)
+    return paths
+
+
+def get_learning_path_by_id(path_id, player_id):
+    """Get a single learning path with full details and player progress."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT lp.*, 
+               mm.module_id, mm.module_title as lesson_title, mm.module_description as lesson_description,
+               mt.trial_id, mt.trial_name, mt.mentor_name, mt.time_limit_seconds as trial_time,
+               mp.puzzle_id, mp.puzzle_name, mp.merchant_name, mp.puzzle_type,
+               sm.scenario_id, sm.scenario_title, sm.scenario_narrative,
+               plpp.lesson_completed, plpp.lesson_completed_at,
+               plpp.trial_completed, plpp.trial_completed_at, plpp.trial_score,
+               plpp.puzzle_completed, plpp.puzzle_completed_at, plpp.puzzle_time_seconds,
+               plpp.scenario_completed, plpp.scenario_completed_at, plpp.scenario_stars,
+               plpp.path_completed, plpp.path_completed_at, plpp.bonus_claimed
+        FROM learning_paths lp
+        LEFT JOIN mentorship_modules mm ON lp.lesson_module_id = mm.module_id
+        LEFT JOIN mentor_trials mt ON lp.trial_id = mt.trial_id
+        LEFT JOIN merchant_puzzles mp ON lp.puzzle_id = mp.puzzle_id
+        LEFT JOIN scenario_master sm ON lp.scenario_id = sm.scenario_id
+        LEFT JOIN player_learning_path_progress plpp ON lp.path_id = plpp.path_id AND plpp.player_id = %s
+        WHERE lp.path_id = %s
+    """, (player_id, path_id))
+    
+    path = cur.fetchone()
+    cur.close()
+    return_connection(conn)
+    return path
+
+
+def update_learning_path_progress(player_id, path_id, stage, score=None, time_seconds=None, stars=None):
+    """Update player progress on a learning path stage."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        INSERT INTO player_learning_path_progress (player_id, path_id)
+        VALUES (%s, %s)
+        ON CONFLICT (player_id, path_id) DO NOTHING
+    """, (player_id, path_id))
+    
+    if stage == 'lesson':
+        cur.execute("""
+            UPDATE player_learning_path_progress 
+            SET lesson_completed = TRUE, lesson_completed_at = CURRENT_TIMESTAMP
+            WHERE player_id = %s AND path_id = %s
+        """, (player_id, path_id))
+    elif stage == 'trial':
+        cur.execute("""
+            UPDATE player_learning_path_progress 
+            SET trial_completed = TRUE, trial_completed_at = CURRENT_TIMESTAMP, trial_score = %s
+            WHERE player_id = %s AND path_id = %s
+        """, (score, player_id, path_id))
+    elif stage == 'puzzle':
+        cur.execute("""
+            UPDATE player_learning_path_progress 
+            SET puzzle_completed = TRUE, puzzle_completed_at = CURRENT_TIMESTAMP, puzzle_time_seconds = %s
+            WHERE player_id = %s AND path_id = %s
+        """, (time_seconds, player_id, path_id))
+    elif stage == 'scenario':
+        cur.execute("""
+            UPDATE player_learning_path_progress 
+            SET scenario_completed = TRUE, scenario_completed_at = CURRENT_TIMESTAMP, scenario_stars = %s
+            WHERE player_id = %s AND path_id = %s
+        """, (stars, player_id, path_id))
+    
+    cur.execute("""
+        UPDATE player_learning_path_progress 
+        SET path_completed = TRUE, path_completed_at = CURRENT_TIMESTAMP
+        WHERE player_id = %s AND path_id = %s
+        AND lesson_completed = TRUE AND trial_completed = TRUE 
+        AND puzzle_completed = TRUE AND scenario_completed = TRUE
+    """, (player_id, path_id))
+    
+    conn.commit()
+    cur.close()
+    return_connection(conn)
+    return {'success': True}
+
+
+def claim_learning_path_bonus(player_id, path_id):
+    """Claim the completion bonus for a learning path."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT plpp.*, lp.exp_bonus, lp.gold_bonus, lp.badge_code, lp.discipline
+        FROM player_learning_path_progress plpp
+        JOIN learning_paths lp ON plpp.path_id = lp.path_id
+        WHERE plpp.player_id = %s AND plpp.path_id = %s AND plpp.path_completed = TRUE
+    """, (player_id, path_id))
+    
+    progress = cur.fetchone()
+    
+    if not progress:
+        cur.close()
+        return_connection(conn)
+        return {'error': 'Path not completed or not found'}
+    
+    if progress.get('bonus_claimed'):
+        cur.close()
+        return_connection(conn)
+        return {'error': 'Bonus already claimed'}
+    
+    exp_bonus = progress.get('exp_bonus', 100)
+    gold_bonus = progress.get('gold_bonus', 200)
+    
+    cur.execute("""
+        UPDATE player_profiles SET total_cash = total_cash + %s WHERE player_id = %s
+    """, (gold_bonus, player_id))
+    
+    discipline = progress.get('discipline', 'Marketing')
+    cur.execute("""
+        UPDATE player_discipline_progress 
+        SET current_exp = current_exp + %s, total_exp_earned = total_exp_earned + %s
+        WHERE player_id = %s AND discipline_name = %s
+    """, (exp_bonus, exp_bonus, player_id, discipline))
+    
+    cur.execute("""
+        UPDATE player_learning_path_progress SET bonus_claimed = TRUE WHERE player_id = %s AND path_id = %s
+    """, (player_id, path_id))
+    
+    conn.commit()
+    cur.close()
+    return_connection(conn)
+    
+    return {
+        'success': True,
+        'exp_earned': exp_bonus,
+        'gold_earned': gold_bonus,
+        'discipline': discipline
+    }
+
+
+def check_learning_path_gate(player_id, scenario_id):
+    """Check if a scenario is gated behind a learning path and if prerequisites are met."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT lp.*, plpp.lesson_completed, plpp.trial_completed, plpp.puzzle_completed
+        FROM learning_paths lp
+        LEFT JOIN player_learning_path_progress plpp ON lp.path_id = plpp.path_id AND plpp.player_id = %s
+        WHERE lp.scenario_id = %s AND lp.is_active = TRUE
+    """, (player_id, scenario_id))
+    
+    path = cur.fetchone()
+    cur.close()
+    return_connection(conn)
+    
+    if not path:
+        return {'gated': False, 'ready': True}
+    
+    lesson_done = path.get('lesson_completed', False) or path.get('lesson_module_id') is None
+    trial_done = path.get('trial_completed', False) or path.get('trial_id') is None
+    puzzle_done = path.get('puzzle_completed', False) or path.get('puzzle_id') is None
+    
+    ready = lesson_done and trial_done and puzzle_done
+    
+    return {
+        'gated': True,
+        'ready': ready,
+        'path_id': path['path_id'],
+        'path_name': path['path_name'],
+        'lesson_completed': lesson_done,
+        'trial_completed': trial_done,
+        'puzzle_completed': puzzle_done,
+        'lesson_module_id': path.get('lesson_module_id'),
+        'trial_id': path.get('trial_id'),
+        'puzzle_id': path.get('puzzle_id')
+    }

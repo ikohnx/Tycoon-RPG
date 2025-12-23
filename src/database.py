@@ -384,6 +384,84 @@ def init_database():
     """)
     
     cur.execute("""
+        CREATE TABLE IF NOT EXISTS learning_paths (
+            path_id SERIAL PRIMARY KEY,
+            path_code VARCHAR(50) UNIQUE NOT NULL,
+            path_name VARCHAR(150) NOT NULL,
+            path_description TEXT,
+            discipline VARCHAR(100) NOT NULL,
+            difficulty INTEGER DEFAULT 1,
+            lesson_module_id INTEGER,
+            trial_id INTEGER,
+            puzzle_id INTEGER,
+            scenario_id INTEGER,
+            exp_bonus INTEGER DEFAULT 100,
+            gold_bonus INTEGER DEFAULT 200,
+            badge_code VARCHAR(50),
+            is_active BOOLEAN DEFAULT TRUE,
+            sort_order INTEGER DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_learning_path_progress (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            path_id INTEGER REFERENCES learning_paths(path_id) ON DELETE CASCADE,
+            lesson_completed BOOLEAN DEFAULT FALSE,
+            lesson_completed_at TIMESTAMP,
+            trial_completed BOOLEAN DEFAULT FALSE,
+            trial_completed_at TIMESTAMP,
+            trial_score INTEGER,
+            puzzle_completed BOOLEAN DEFAULT FALSE,
+            puzzle_completed_at TIMESTAMP,
+            puzzle_time_seconds INTEGER,
+            scenario_completed BOOLEAN DEFAULT FALSE,
+            scenario_completed_at TIMESTAMP,
+            scenario_stars INTEGER,
+            path_completed BOOLEAN DEFAULT FALSE,
+            path_completed_at TIMESTAMP,
+            bonus_claimed BOOLEAN DEFAULT FALSE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(player_id, path_id)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS ai_tutor_interactions (
+            interaction_id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            path_id INTEGER,
+            interaction_type VARCHAR(50) NOT NULL,
+            question_context TEXT,
+            player_answer TEXT,
+            correct_answer TEXT,
+            is_correct BOOLEAN,
+            knowledge_gap TEXT,
+            ai_feedback TEXT,
+            remediation_content TEXT,
+            model_used VARCHAR(50),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_knowledge_gaps (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            discipline VARCHAR(100) NOT NULL,
+            concept VARCHAR(150) NOT NULL,
+            gap_description TEXT,
+            times_struggled INTEGER DEFAULT 1,
+            last_struggled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            remediated BOOLEAN DEFAULT FALSE,
+            remediated_at TIMESTAMP,
+            UNIQUE(player_id, discipline, concept)
+        );
+    """)
+    
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS achievements (
             achievement_id SERIAL PRIMARY KEY,
             achievement_code VARCHAR(50) UNIQUE NOT NULL,
@@ -8953,6 +9031,130 @@ def seed_learning_badges():
     print("Learning badges seeded.")
 
 
+def seed_learning_paths():
+    """Seed learning paths that link lessons, trials, puzzles, and scenarios."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) as count FROM learning_paths")
+    if cur.fetchone()['count'] > 0:
+        print("Learning paths already seeded.")
+        cur.close()
+        return_connection(conn)
+        return
+    
+    cur.execute("SELECT module_id FROM mentorship_modules WHERE module_code = 'MKTG_L1_INTRO' LIMIT 1")
+    mktg_module = cur.fetchone()
+    mktg_module_id = mktg_module['module_id'] if mktg_module else None
+    
+    cur.execute("SELECT trial_id FROM mentor_trials WHERE trial_code = 'TRIAL_MARKETING_L1' LIMIT 1")
+    mktg_trial = cur.fetchone()
+    mktg_trial_id = mktg_trial['trial_id'] if mktg_trial else None
+    
+    cur.execute("SELECT puzzle_id FROM merchant_puzzles WHERE puzzle_code = 'PUZZLE_CONVERSION_RATE' LIMIT 1")
+    mktg_puzzle = cur.fetchone()
+    mktg_puzzle_id = mktg_puzzle['puzzle_id'] if mktg_puzzle else None
+    
+    cur.execute("SELECT scenario_id FROM scenario_master WHERE discipline = 'Marketing' AND required_level = 1 LIMIT 1")
+    mktg_scenario = cur.fetchone()
+    mktg_scenario_id = mktg_scenario['scenario_id'] if mktg_scenario else None
+    
+    cur.execute("SELECT module_id FROM mentorship_modules WHERE module_code = 'FIN_L1_INTRO' LIMIT 1")
+    fin_module = cur.fetchone()
+    fin_module_id = fin_module['module_id'] if fin_module else None
+    
+    cur.execute("SELECT trial_id FROM mentor_trials WHERE trial_code = 'TRIAL_FINANCE_L1' LIMIT 1")
+    fin_trial = cur.fetchone()
+    fin_trial_id = fin_trial['trial_id'] if fin_trial else None
+    
+    cur.execute("SELECT puzzle_id FROM merchant_puzzles WHERE puzzle_code = 'PUZZLE_PROFIT_MARGIN' LIMIT 1")
+    fin_puzzle = cur.fetchone()
+    fin_puzzle_id = fin_puzzle['puzzle_id'] if fin_puzzle else None
+    
+    cur.execute("SELECT scenario_id FROM scenario_master WHERE discipline = 'Finance' AND required_level = 1 LIMIT 1")
+    fin_scenario = cur.fetchone()
+    fin_scenario_id = fin_scenario['scenario_id'] if fin_scenario else None
+    
+    cur.execute("SELECT module_id FROM mentorship_modules WHERE module_code = 'OPS_L1_INTRO' LIMIT 1")
+    ops_module = cur.fetchone()
+    ops_module_id = ops_module['module_id'] if ops_module else None
+    
+    cur.execute("SELECT trial_id FROM mentor_trials WHERE trial_code = 'TRIAL_OPERATIONS_L1' LIMIT 1")
+    ops_trial = cur.fetchone()
+    ops_trial_id = ops_trial['trial_id'] if ops_trial else None
+    
+    cur.execute("SELECT puzzle_id FROM merchant_puzzles WHERE puzzle_code = 'PUZZLE_BREAKEVEN' LIMIT 1")
+    ops_puzzle = cur.fetchone()
+    ops_puzzle_id = ops_puzzle['puzzle_id'] if ops_puzzle else None
+    
+    cur.execute("SELECT scenario_id FROM scenario_master WHERE discipline = 'Operations' AND required_level = 1 LIMIT 1")
+    ops_scenario = cur.fetchone()
+    ops_scenario_id = ops_scenario['scenario_id'] if ops_scenario else None
+    
+    paths = [
+        {
+            'code': 'PATH_MKTG_INTRO',
+            'name': 'Marketing Foundations',
+            'description': 'Learn the basics of marketing: understanding customers, creating value, and building brand awareness.',
+            'discipline': 'Marketing',
+            'difficulty': 1,
+            'lesson_id': mktg_module_id,
+            'trial_id': mktg_trial_id,
+            'puzzle_id': mktg_puzzle_id,
+            'scenario_id': mktg_scenario_id,
+            'exp_bonus': 150,
+            'gold_bonus': 300,
+            'badge_code': 'BADGE_MARKETING_MAVEN',
+            'sort_order': 1
+        },
+        {
+            'code': 'PATH_FIN_INTRO',
+            'name': 'Finance Fundamentals',
+            'description': 'Master essential finance concepts: profit margins, break-even analysis, and financial decision-making.',
+            'discipline': 'Finance',
+            'difficulty': 1,
+            'lesson_id': fin_module_id,
+            'trial_id': fin_trial_id,
+            'puzzle_id': fin_puzzle_id,
+            'scenario_id': fin_scenario_id,
+            'exp_bonus': 150,
+            'gold_bonus': 300,
+            'badge_code': 'BADGE_FINANCE_SCHOLAR',
+            'sort_order': 1
+        },
+        {
+            'code': 'PATH_OPS_INTRO',
+            'name': 'Operations Excellence',
+            'description': 'Learn operational efficiency: process optimization, resource management, and quality control.',
+            'discipline': 'Operations',
+            'difficulty': 1,
+            'lesson_id': ops_module_id,
+            'trial_id': ops_trial_id,
+            'puzzle_id': ops_puzzle_id,
+            'scenario_id': ops_scenario_id,
+            'exp_bonus': 150,
+            'gold_bonus': 300,
+            'badge_code': 'BADGE_FORGE_APPRENTICE',
+            'sort_order': 1
+        }
+    ]
+    
+    for p in paths:
+        cur.execute("""
+            INSERT INTO learning_paths (path_code, path_name, path_description, discipline, difficulty,
+                lesson_module_id, trial_id, puzzle_id, scenario_id, exp_bonus, gold_bonus, badge_code, sort_order)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (path_code) DO NOTHING
+        """, (p['code'], p['name'], p['description'], p['discipline'], p['difficulty'],
+              p['lesson_id'], p['trial_id'], p['puzzle_id'], p['scenario_id'],
+              p['exp_bonus'], p['gold_bonus'], p['badge_code'], p['sort_order']))
+    
+    conn.commit()
+    cur.close()
+    return_connection(conn)
+    print("Learning paths seeded.")
+
+
 def seed_all():
     """Run all seed functions. Each function checks if data already exists."""
     seed_scenarios()
@@ -9006,6 +9208,7 @@ def seed_all():
     seed_mentor_trials()
     seed_merchant_puzzles()
     seed_learning_badges()
+    seed_learning_paths()
 
 
 if __name__ == "__main__":

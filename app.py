@@ -2260,6 +2260,69 @@ def submit_merchant_puzzle(puzzle_id):
 
 
 # ============================================================================
+# LEARNING PATHS SYSTEM ROUTES
+# ============================================================================
+
+@app.route('/learning-paths')
+@login_required
+def learning_paths_list():
+    """Show all learning paths with player progress."""
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
+    
+    discipline = request.args.get('discipline')
+    
+    from src.game_engine import get_learning_paths
+    paths = get_learning_paths(player_id, discipline)
+    
+    return render_template('learning_paths.html', stats=stats, paths=paths, filter_discipline=discipline)
+
+
+@app.route('/learning-paths/<int:path_id>')
+@login_required
+def learning_path_detail(path_id):
+    """View a single learning path with detailed progress."""
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    get_engine().load_player(player_id)
+    stats = get_engine().get_player_stats()
+    
+    from src.game_engine import get_learning_path_by_id
+    path = get_learning_path_by_id(path_id, player_id)
+    
+    if not path:
+        flash('Learning path not found!')
+        return redirect(url_for('learning_paths_list'))
+    
+    return render_template('learning_path_detail.html', stats=stats, path=path)
+
+
+@app.route('/learning-paths/<int:path_id>/claim-bonus', methods=['POST'])
+@login_required
+def claim_path_bonus(path_id):
+    """Claim the completion bonus for a learning path."""
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    from src.game_engine import claim_learning_path_bonus
+    result = claim_learning_path_bonus(player_id, path_id)
+    
+    if result.get('error'):
+        flash(result['error'])
+    else:
+        flash(f"Claimed +{result['gold_earned']} gold and +{result['exp_earned']} XP!")
+    
+    return redirect(url_for('learning_path_detail', path_id=path_id))
+
+
+# ============================================================================
 # PHASE 4: STORYLINE QUEST SYSTEM ROUTES
 # ============================================================================
 
