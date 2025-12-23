@@ -2477,7 +2477,7 @@ class GameEngine:
         cur.execute("""
             SELECT * FROM rivals 
             WHERE world_type = %s
-            ORDER BY rival_level
+            ORDER BY difficulty_level
         """, (self.current_player.world,))
         rivals = cur.fetchall()
         
