@@ -7766,22 +7766,40 @@ def claim_learning_path_bonus(player_id, path_id):
 
 
 def check_learning_path_gate(player_id, scenario_id):
-    """Check if a scenario is gated behind a learning path and if prerequisites are met."""
+    """Check if a scenario is gated behind a learning path and if prerequisites are met.
+    
+    Gates ALL scenarios in a discipline until the foundational learning path is complete.
+    """
     conn = get_connection()
     cur = conn.cursor()
     
+    cur.execute("SELECT discipline FROM scenario_master WHERE scenario_id = %s", (scenario_id,))
+    scenario = cur.fetchone()
+    
+    if not scenario:
+        cur.close()
+        return_connection(conn)
+        return {'gated': False, 'ready': True}
+    
+    discipline = scenario['discipline']
+    
     cur.execute("""
-        SELECT lp.*, plpp.lesson_completed, plpp.trial_completed, plpp.puzzle_completed
+        SELECT lp.*, plpp.lesson_completed, plpp.trial_completed, plpp.puzzle_completed, plpp.path_completed
         FROM learning_paths lp
         LEFT JOIN player_learning_path_progress plpp ON lp.path_id = plpp.path_id AND plpp.player_id = %s
-        WHERE lp.scenario_id = %s AND lp.is_active = TRUE
-    """, (player_id, scenario_id))
+        WHERE lp.discipline = %s AND lp.is_active = TRUE AND lp.difficulty = 1
+        ORDER BY lp.sort_order
+        LIMIT 1
+    """, (player_id, discipline))
     
     path = cur.fetchone()
     cur.close()
     return_connection(conn)
     
     if not path:
+        return {'gated': False, 'ready': True}
+    
+    if path.get('path_completed'):
         return {'gated': False, 'ready': True}
     
     lesson_done = path.get('lesson_completed', False) or path.get('lesson_module_id') is None
@@ -7795,6 +7813,7 @@ def check_learning_path_gate(player_id, scenario_id):
         'ready': ready,
         'path_id': path['path_id'],
         'path_name': path['path_name'],
+        'discipline': discipline,
         'lesson_completed': lesson_done,
         'trial_completed': trial_done,
         'puzzle_completed': puzzle_done,

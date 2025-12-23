@@ -181,6 +181,13 @@ def play_scenario(scenario_id):
     get_engine().load_player(player_id)
     stats = get_engine().get_player_stats()
     
+    # Check if learning path is required before playing
+    from src.game_engine import check_learning_path_gate
+    path_gate = check_learning_path_gate(player_id, scenario_id)
+    if path_gate.get('gated') and not path_gate.get('ready'):
+        flash("Complete the learning path first to unlock this scenario!")
+        return redirect(url_for('learning_path_detail', path_id=path_gate['path_id']))
+    
     # Check if mentorship is required before playing
     from src.game_engine import check_scenario_mentorship_ready
     mentorship_check = check_scenario_mentorship_ready(player_id, scenario_id)
