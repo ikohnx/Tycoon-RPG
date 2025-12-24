@@ -1232,8 +1232,37 @@
             <a class="hud-brand" href="{{ url_for('hub') }}">
                 <i class="bi bi-gem"></i> Tycoon RPG
             </a>
+            
+            {% if company_resources %}
+            <div class="d-none d-md-flex align-items-center gap-3 mx-3">
+                <div class="resource-bar-mini" title="Capital">
+                    <i class="bi bi-coin text-warning"></i>
+                    <span class="text-warning fw-bold">${{ "{:,.0f}".format(company_resources.capital) }}</span>
+                </div>
+                <div class="resource-bar-mini" title="Team Morale">
+                    <i class="bi bi-emoji-smile text-info"></i>
+                    <div class="mini-bar bg-dark" style="width: 60px; height: 8px; border-radius: 4px; overflow: hidden;">
+                        <div class="bg-info" style="width: {{ company_resources.team_morale }}%; height: 100%;"></div>
+                    </div>
+                    <span class="text-info small">{{ company_resources.team_morale }}%</span>
+                </div>
+                <div class="resource-bar-mini" title="Brand Equity (HP)">
+                    <i class="bi bi-heart-fill text-danger"></i>
+                    <div class="mini-bar bg-dark" style="width: 60px; height: 8px; border-radius: 4px; overflow: hidden;">
+                        <div class="bg-danger" style="width: {{ company_resources.brand_equity }}%; height: 100%;"></div>
+                    </div>
+                    <span class="text-danger small">{{ company_resources.brand_equity }}%</span>
+                </div>
+                <div class="resource-bar-mini" title="Fiscal Quarter">
+                    <i class="bi bi-calendar3 text-success"></i>
+                    <span class="text-success small">Q{{ company_resources.fiscal_quarter }}</span>
+                </div>
+            </div>
+            {% endif %}
+            
             <div class="navbar-nav ms-auto d-flex flex-row gap-1">
                 <a class="hud-link" href="{{ url_for('hub') }}"><i class="bi bi-house-door-fill"></i> Hub</a>
+                <a class="hud-link" href="{{ url_for('dashboard') }}"><i class="bi bi-speedometer2"></i> Dashboard</a>
                 <a class="hud-link" href="{{ url_for('progress') }}"><i class="bi bi-bar-chart-fill"></i> Stats</a>
                 <a class="hud-link" href="{{ url_for('logout') }}"><i class="bi bi-door-open-fill"></i> Exit</a>
             </div>

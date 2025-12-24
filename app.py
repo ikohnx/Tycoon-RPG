@@ -37,6 +37,18 @@ def initialize_database():
 
 db_initialized = initialize_database()
 
+@app.context_processor
+def inject_company_resources():
+    """Inject company resources into all templates for the HUD display."""
+    if 'player_id' in session:
+        try:
+            from src.company_resources import get_company_resources
+            resources = get_company_resources(session['player_id'])
+            return {'company_resources': resources}
+        except Exception:
+            pass
+    return {'company_resources': None}
+
 def get_engine():
     """Get a request-scoped GameEngine instance to prevent cross-user data leakage."""
     if 'engine' not in g:

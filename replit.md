@@ -42,6 +42,21 @@ The game is built as a Flask web application with a responsive, mobile-first UI.
 -   **Phase 5D - Content Expansion:** New world themes (Pirate for maritime trade, Space for futuristic commerce), real-world business case studies, guest mentor NPCs from famous companies, and deeper industry specialization tracks.
 -   **Phase 5E - Accessibility & Polish:** PWA optimization, screen reader support, color blind modes (protanopia, deuteranopia, tritanopia), high contrast mode, reduced motion settings, and customizable font sizes.
 
+## Business Mastery Simulation (December 2024)
+-   **Company Resources System:** Tracks Capital ($), Team Morale (0-100 stamina), and Brand Equity (0-100 HP). Game over when Brand Equity reaches zero.
+-   **Fiscal Quarter Timeline:** Every 3 decisions advances the quarter (Q1 → Q2 → Q3 → Q4). Quarterly events can trigger at quarter boundaries.
+-   **Skill Tree Abilities:** 6 discipline-specific abilities unlock at subskill level 3:
+    - Viral Campaign (Marketing): 1.5x revenue multiplier
+    - Burn Rate Optimization (Finance): 30% cost reduction
+    - Automation Initiative (Operations): 2x EXP multiplier
+    - Headhunter Network (HR): +20 morale boost
+    - Liability Shield (Legal): Prevents lawsuit quarterly events
+    - Blue Ocean Strategy (Strategy): 2x EXP multiplier
+-   **Command Center Dashboard:** Features radar chart for 6 pillars, resource ledger with progress bars, news ticker for recent events, skill tree grid, and active buffs display.
+-   **HUD Resources Bar:** Navbar now displays Capital, Team Morale, Brand Equity, and Fiscal Quarter across all gameplay pages.
+-   **Quarterly Events:** Probability-based events include Market Boom (+$5000), Competitor Crisis (+10 brand), Regulatory Changes (-$2000), Lawsuits (-15 brand, preventable with Liability Shield), and Talent Shortage (-15 morale).
+-   **Modular Scenario Content:** Crisis and opportunity scenarios stored in content/scenarios.json with morale/brand impact trade-offs.
+
 ## Security & Infrastructure (December 2024)
 -   **Password Security:** Bcrypt password hashing with automatic SHA256 migration for existing users
 -   **Route Protection:** @login_required decorator applied to 90+ gameplay routes
