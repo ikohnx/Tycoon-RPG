@@ -5,6 +5,58 @@
 {% block body_class %}world-{{ stats.world|lower }}{% endblock %}
 
 {% block content %}
+{% if resources %}
+<div class="command-hud-hub">
+    <div class="hud-resources-hub">
+        <div class="resource-item-hub capital">
+            <i class="bi bi-coin"></i>
+            <div class="resource-info-hub">
+                <span class="resource-label-hub">Capital</span>
+                <span class="resource-value-hub">${{ "{:,.0f}".format(resources.capital) }}</span>
+            </div>
+        </div>
+        <div class="resource-item-hub morale">
+            <i class="bi bi-emoji-smile"></i>
+            <div class="resource-info-hub">
+                <span class="resource-label-hub">Morale</span>
+                <div class="resource-bar-wrap-hub">
+                    <div class="resource-bar-hub bg-info" style="width: {{ resources.team_morale }}%;"></div>
+                </div>
+                <span class="resource-pct-hub">{{ resources.team_morale }}%</span>
+            </div>
+        </div>
+        <div class="resource-item-hub brand">
+            <i class="bi bi-heart-fill"></i>
+            <div class="resource-info-hub">
+                <span class="resource-label-hub">Brand HP</span>
+                <div class="resource-bar-wrap-hub">
+                    <div class="resource-bar-hub bg-danger" style="width: {{ resources.brand_equity }}%;"></div>
+                </div>
+                <span class="resource-pct-hub">{{ resources.brand_equity }}%</span>
+            </div>
+        </div>
+        <div class="resource-item-hub quarter">
+            <i class="bi bi-calendar3"></i>
+            <div class="resource-info-hub">
+                <span class="resource-label-hub">Quarter</span>
+                <span class="resource-value-hub quarter-badge-hub">Q{{ resources.fiscal_quarter }}</span>
+                <span class="decision-count-hub">{{ resources.decisions_this_quarter }}/3</span>
+            </div>
+        </div>
+    </div>
+    {% if active_abilities %}
+    <div class="active-buffs-hub">
+        <span class="buff-label-hub"><i class="bi bi-stars"></i> Active:</span>
+        {% for ability in active_abilities %}
+        <span class="buff-chip-hub" title="{{ ability.description }}">
+            <i class="bi bi-{{ ability.icon }}"></i> {{ ability.ability_name }}
+        </span>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
 <div class="continue-journey-hero mb-4 fade-in">
     <div class="journey-card">
         <div class="journey-header">
@@ -59,6 +111,138 @@
 </div>
 
 <style>
+.command-hud-hub {
+    background: linear-gradient(180deg, rgba(20,20,40,0.98) 0%, rgba(10,10,30,0.95) 100%);
+    border-bottom: 3px solid;
+    border-image: linear-gradient(90deg, transparent, #ffd700, transparent) 1;
+    padding: 15px;
+    margin: -1rem -1rem 1rem -1rem;
+}
+
+.hud-resources-hub {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.resource-item-hub {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(0,0,0,0.4);
+    padding: 10px 18px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.resource-item-hub i {
+    font-size: 1.6rem;
+}
+
+.resource-item-hub.capital i { color: #ffd700; }
+.resource-item-hub.morale i { color: #17a2b8; }
+.resource-item-hub.brand i { color: #dc3545; }
+.resource-item-hub.quarter i { color: #28a745; }
+
+.resource-info-hub {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.resource-label-hub {
+    font-size: 0.7rem;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.resource-value-hub {
+    font-family: 'Staatliches', cursive;
+    font-size: 1.3rem;
+    color: #fff;
+}
+
+.resource-bar-wrap-hub {
+    width: 90px;
+    height: 12px;
+    background: rgba(0,0,0,0.5);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.resource-bar-hub {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.5s ease;
+}
+
+.resource-pct-hub {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #fff;
+}
+
+.quarter-badge-hub {
+    background: linear-gradient(135deg, #28a745, #218838);
+    padding: 3px 12px;
+    border-radius: 5px;
+}
+
+.decision-count-hub {
+    font-size: 0.8rem;
+    color: #888;
+}
+
+.active-buffs-hub {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    flex-wrap: wrap;
+}
+
+.buff-label-hub {
+    color: #ffd700;
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+
+.buff-chip-hub {
+    background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(184,134,11,0.2));
+    border: 1px solid rgba(255,215,0,0.5);
+    color: #ffd700;
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+@media (max-width: 576px) {
+    .hud-resources-hub {
+        gap: 10px;
+    }
+    .resource-item-hub {
+        padding: 8px 12px;
+    }
+    .resource-item-hub i {
+        font-size: 1.3rem;
+    }
+    .resource-bar-wrap-hub {
+        width: 60px;
+    }
+    .resource-value-hub {
+        font-size: 1.1rem;
+    }
+}
+
 .continue-journey-hero {
     margin: -1rem -1rem 1rem -1rem;
     padding: 1.5rem;

@@ -6,6 +6,58 @@
 
 {% block content %}
 <div class="campaign-container">
+    {% if resources %}
+    <div class="command-hud">
+        <div class="hud-resources">
+            <div class="resource-item capital">
+                <i class="bi bi-coin"></i>
+                <div class="resource-info">
+                    <span class="resource-label">Capital</span>
+                    <span class="resource-value">${{ "{:,.0f}".format(resources.capital) }}</span>
+                </div>
+            </div>
+            <div class="resource-item morale">
+                <i class="bi bi-emoji-smile"></i>
+                <div class="resource-info">
+                    <span class="resource-label">Morale</span>
+                    <div class="resource-bar-wrap">
+                        <div class="resource-bar bg-info" style="width: {{ resources.team_morale }}%;"></div>
+                    </div>
+                    <span class="resource-pct">{{ resources.team_morale }}%</span>
+                </div>
+            </div>
+            <div class="resource-item brand">
+                <i class="bi bi-heart-fill"></i>
+                <div class="resource-info">
+                    <span class="resource-label">Brand HP</span>
+                    <div class="resource-bar-wrap">
+                        <div class="resource-bar bg-danger" style="width: {{ resources.brand_equity }}%;"></div>
+                    </div>
+                    <span class="resource-pct">{{ resources.brand_equity }}%</span>
+                </div>
+            </div>
+            <div class="resource-item quarter">
+                <i class="bi bi-calendar3"></i>
+                <div class="resource-info">
+                    <span class="resource-label">Quarter</span>
+                    <span class="resource-value quarter-badge">Q{{ resources.fiscal_quarter }}</span>
+                    <span class="decision-count">{{ resources.decisions_this_quarter }}/3</span>
+                </div>
+            </div>
+        </div>
+        {% if active_abilities %}
+        <div class="active-buffs">
+            <span class="buff-label"><i class="bi bi-stars"></i> Active:</span>
+            {% for ability in active_abilities %}
+            <span class="buff-chip" title="{{ ability.description }}">
+                <i class="bi bi-{{ ability.icon }}"></i> {{ ability.ability_name }}
+            </span>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+    
     <div class="map-header">
         <h1 class="map-title">
             <i class="bi bi-map-fill"></i> CAMPAIGN
@@ -193,6 +245,146 @@
     padding: 0;
     margin: -1rem;
     overflow: hidden;
+}
+
+.command-hud {
+    background: linear-gradient(180deg, rgba(20,20,40,0.98) 0%, rgba(10,10,30,0.95) 100%);
+    border-bottom: 3px solid;
+    border-image: linear-gradient(90deg, transparent, #ffd700, transparent) 1;
+    padding: 12px 15px;
+    position: sticky;
+    top: 0;
+    z-index: 110;
+}
+
+.hud-resources {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.resource-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(0,0,0,0.4);
+    padding: 8px 15px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.1);
+    min-width: 120px;
+}
+
+.resource-item i {
+    font-size: 1.5rem;
+}
+
+.resource-item.capital i { color: #ffd700; }
+.resource-item.morale i { color: #17a2b8; }
+.resource-item.brand i { color: #dc3545; }
+.resource-item.quarter i { color: #28a745; }
+
+.resource-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.resource-label {
+    font-size: 0.7rem;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.resource-value {
+    font-family: 'Staatliches', cursive;
+    font-size: 1.2rem;
+    color: #fff;
+}
+
+.resource-bar-wrap {
+    width: 80px;
+    height: 10px;
+    background: rgba(0,0,0,0.5);
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.resource-bar {
+    height: 100%;
+    border-radius: 5px;
+    transition: width 0.5s ease;
+}
+
+.resource-pct {
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: #fff;
+}
+
+.quarter-badge {
+    background: linear-gradient(135deg, #28a745, #218838);
+    padding: 2px 10px;
+    border-radius: 4px;
+    font-size: 1.1rem;
+}
+
+.decision-count {
+    font-size: 0.75rem;
+    color: #888;
+}
+
+.active-buffs {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    flex-wrap: wrap;
+}
+
+.buff-label {
+    color: #ffd700;
+    font-size: 0.85rem;
+    font-weight: bold;
+}
+
+.buff-chip {
+    background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(184,134,11,0.2));
+    border: 1px solid rgba(255,215,0,0.5);
+    color: #ffd700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.buff-chip i {
+    font-size: 0.9rem;
+}
+
+@media (max-width: 576px) {
+    .hud-resources {
+        gap: 8px;
+    }
+    .resource-item {
+        padding: 6px 10px;
+        min-width: 80px;
+    }
+    .resource-item i {
+        font-size: 1.2rem;
+    }
+    .resource-bar-wrap {
+        width: 50px;
+    }
+    .resource-value {
+        font-size: 1rem;
+    }
 }
 
 .map-header {
