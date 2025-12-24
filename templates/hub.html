@@ -628,8 +628,11 @@
                         {% endif %}
                         <small class="ms-2">({{ login_status.current_streak }} day streak)</small>
                     </a>
-                    <a href="{{ url_for('random_event') }}" class="btn btn-game btn-game-gold">
+                    {% set re = feature_access.get('random_event', {}) %}
+                    <a href="{{ url_for('random_event') }}" class="btn btn-game btn-game-gold {% if not re.get('can_access', True) %}disabled{% endif %}" {% if not re.get('can_access', True) %}title="{{ re.get('locked_reason', 'Locked') }}"{% endif %}>
                         <i class="bi bi-dice-5-fill"></i> Random Event
+                        {% if re.get('cost_display') %}<span class="badge bg-warning text-dark ms-1">{{ re.cost_display }}</span>{% endif %}
+                        {% if not re.get('can_access', True) %}<i class="bi bi-lock-fill ms-1"></i>{% endif %}
                     </a>
                     <a href="{{ url_for('challenges') }}" class="btn btn-outline-info">
                         <i class="bi bi-calendar-week-fill"></i> Weekly Challenges
@@ -637,26 +640,37 @@
                     <a href="{{ url_for('dashboard') }}" class="btn btn-outline-success">
                         <i class="bi bi-speedometer2"></i> Dashboard
                     </a>
-                    <a href="{{ url_for('rivals') }}" class="btn btn-outline-danger">
+                    {% set rv = feature_access.get('rivals', {}) %}
+                    <a href="{{ url_for('rivals') }}" class="btn btn-outline-danger {% if not rv.get('can_access', True) %}disabled{% endif %}" {% if not rv.get('can_access', True) %}title="{{ rv.get('locked_reason', 'Locked') }}"{% endif %}>
                         <i class="bi bi-person-x-fill"></i> Rivals
+                        {% if rv.get('cost_display') %}<span class="badge bg-dark ms-1">{{ rv.cost_display }}</span>{% endif %}
+                        {% if not rv.get('can_access', True) %}<i class="bi bi-lock-fill ms-1"></i>{% endif %}
                     </a>
                     <a href="{{ url_for('daily_missions') }}" class="btn btn-outline-warning">
                         <i class="bi bi-list-check"></i> Daily Missions
                     </a>
-                    <a href="{{ url_for('battle_arena') }}" class="btn btn-game btn-game-crimson">
+                    {% set ba = feature_access.get('battle_arena', {}) %}
+                    <a href="{{ url_for('battle_arena') }}" class="btn btn-game btn-game-crimson {% if not ba.get('can_access', True) %}disabled{% endif %}" {% if not ba.get('can_access', True) %}title="{{ ba.get('locked_reason', 'Locked') }}"{% endif %}>
                         <i class="bi bi-trophy-fill"></i> Battle Arena
+                        {% if ba.get('cost_display') %}<span class="badge bg-dark ms-1">{{ ba.cost_display }}</span>{% endif %}
+                        {% if not ba.get('can_access', True) %}<i class="bi bi-lock-fill ms-1"></i>{% endif %}
                     </a>
                     <a href="{{ url_for('leaderboard') }}" class="btn btn-outline-light">
                         <i class="bi bi-bar-chart-fill"></i> Leaderboard
                     </a>
-                    <a href="{{ url_for('prestige') }}" class="btn btn-game btn-game-purple">
+                    {% set pr = feature_access.get('prestige', {}) %}
+                    <a href="{{ url_for('prestige') }}" class="btn btn-game btn-game-purple {% if not pr.get('can_access', True) %}disabled{% endif %}" {% if not pr.get('can_access', True) %}title="{{ pr.get('locked_reason', 'Locked') }}"{% endif %}>
                         <i class="bi bi-gem"></i> Prestige
+                        {% if not pr.get('can_access', True) %}<i class="bi bi-lock-fill ms-1"></i>{% endif %}
                     </a>
                     <a href="{{ url_for('campaign_map') }}" class="btn btn-game btn-game-gold">
                         <i class="bi bi-map-fill"></i> Campaign Map
                     </a>
-                    <a href="{{ url_for('boss_challenges') }}" class="btn btn-game btn-game-crimson">
+                    {% set bc = feature_access.get('boss_challenges', {}) %}
+                    <a href="{{ url_for('boss_challenges') }}" class="btn btn-game btn-game-crimson {% if not bc.get('can_access', True) %}disabled{% endif %}" {% if not bc.get('can_access', True) %}title="{{ bc.get('locked_reason', 'Locked') }}"{% endif %}>
                         <i class="bi bi-skull"></i> Boss Challenges
+                        {% if bc.get('cost_display') %}<span class="badge bg-dark ms-1">{{ bc.cost_display }}</span>{% endif %}
+                        {% if not bc.get('can_access', True) %}<i class="bi bi-lock-fill ms-1"></i>{% endif %}
                     </a>
                     <a href="{{ url_for('accounting') }}" class="btn btn-game btn-game-emerald">
                         <i class="bi bi-journal-bookmark-fill"></i> Accounting HQ
@@ -670,23 +684,40 @@
                     <a href="{{ url_for('businessplan') }}" class="btn btn-outline-info">
                         <i class="bi bi-file-earmark-text"></i> Business Plans
                     </a>
-                    <a href="{{ url_for('negotiation') }}" class="btn btn-outline-warning">
+                    {% set ng = feature_access.get('negotiation', {}) %}
+                    <a href="{{ url_for('negotiation') }}" class="btn btn-outline-warning {% if not ng.get('can_access', True) %}disabled{% endif %}" {% if not ng.get('can_access', True) %}title="{{ ng.get('locked_reason', 'Locked') }}"{% endif %}>
                         <i class="bi bi-people-fill"></i> Negotiation
+                        {% if ng.get('cost_display') %}<span class="badge bg-dark ms-1">{{ ng.cost_display }}</span>{% endif %}
+                        {% if not ng.get('can_access', True) %}<i class="bi bi-lock-fill ms-1"></i>{% endif %}
                     </a>
-                    <a href="{{ url_for('risks') }}" class="btn btn-outline-danger">
+                    {% set rm = feature_access.get('risks', {}) %}
+                    <a href="{{ url_for('risks') }}" class="btn btn-outline-danger {% if not rm.get('can_access', True) %}disabled{% endif %}" {% if not rm.get('can_access', True) %}title="{{ rm.get('locked_reason', 'Locked') }}"{% endif %}>
                         <i class="bi bi-shield-exclamation"></i> Risk Manager
+                        {% if not rm.get('can_access', True) %}<i class="bi bi-lock-fill ms-1"></i>{% endif %}
                     </a>
-                    <a href="{{ url_for('supplychain') }}" class="btn btn-outline-success">
+                    {% set sc = feature_access.get('supplychain', {}) %}
+                    <a href="{{ url_for('supplychain') }}" class="btn btn-outline-success {% if not sc.get('can_access', True) %}disabled{% endif %}" {% if not sc.get('can_access', True) %}title="{{ sc.get('locked_reason', 'Locked') }}"{% endif %}>
                         <i class="bi bi-truck"></i> Supply Chain
+                        {% if sc.get('cost_display') %}<span class="badge bg-dark ms-1">{{ sc.cost_display }}</span>{% endif %}
+                        {% if not sc.get('can_access', True) %}<i class="bi bi-lock-fill ms-1"></i>{% endif %}
                     </a>
-                    <a href="{{ url_for('market') }}" class="btn btn-game btn-game-purple">
+                    {% set mk = feature_access.get('market', {}) %}
+                    <a href="{{ url_for('market') }}" class="btn btn-game btn-game-purple {% if not mk.get('can_access', True) %}disabled{% endif %}" {% if not mk.get('can_access', True) %}title="{{ mk.get('locked_reason', 'Locked') }}"{% endif %}>
                         <i class="bi bi-graph-up-arrow"></i> Market Sim
+                        {% if mk.get('cost_display') %}<span class="badge bg-warning text-dark ms-1">{{ mk.cost_display }}</span>{% endif %}
+                        {% if not mk.get('can_access', True) %}<i class="bi bi-lock-fill ms-1"></i>{% endif %}
                     </a>
-                    <a href="{{ url_for('hrmanagement') }}" class="btn btn-outline-info">
+                    {% set hr = feature_access.get('hrmanagement', {}) %}
+                    <a href="{{ url_for('hrmanagement') }}" class="btn btn-outline-info {% if not hr.get('can_access', True) %}disabled{% endif %}" {% if not hr.get('can_access', True) %}title="{{ hr.get('locked_reason', 'Locked') }}"{% endif %}>
                         <i class="bi bi-people-fill"></i> HR Manager
+                        {% if hr.get('cost_display') %}<span class="badge bg-dark ms-1">{{ hr.cost_display }}</span>{% endif %}
+                        {% if not hr.get('can_access', True) %}<i class="bi bi-lock-fill ms-1"></i>{% endif %}
                     </a>
-                    <a href="{{ url_for('pitch') }}" class="btn btn-game btn-game-gold">
+                    {% set pt = feature_access.get('pitch', {}) %}
+                    <a href="{{ url_for('pitch') }}" class="btn btn-game btn-game-gold {% if not pt.get('can_access', True) %}disabled{% endif %}" {% if not pt.get('can_access', True) %}title="{{ pt.get('locked_reason', 'Locked') }}"{% endif %}>
                         <i class="bi bi-presentation"></i> Pitch Deck
+                        {% if pt.get('cost_display') %}<span class="badge bg-warning text-dark ms-1">{{ pt.cost_display }}</span>{% endif %}
+                        {% if not pt.get('can_access', True) %}<i class="bi bi-lock-fill ms-1"></i>{% endif %}
                     </a>
                     <a href="{{ url_for('analytics') }}" class="btn btn-game btn-game-emerald">
                         <i class="bi bi-bar-chart-line"></i> Analytics
@@ -697,8 +728,11 @@
                     <a href="{{ url_for('competitions') }}" class="btn btn-outline-info">
                         <i class="bi bi-award"></i> Compete
                     </a>
-                    <a href="{{ url_for('simulations') }}" class="btn btn-game btn-game-crimson">
+                    {% set sm = feature_access.get('simulations', {}) %}
+                    <a href="{{ url_for('simulations') }}" class="btn btn-game btn-game-crimson {% if not sm.get('can_access', True) %}disabled{% endif %}" {% if not sm.get('can_access', True) %}title="{{ sm.get('locked_reason', 'Locked') }}"{% endif %}>
                         <i class="bi bi-building"></i> Simulations
+                        {% if sm.get('cost_display') %}<span class="badge bg-dark ms-1">{{ sm.cost_display }}</span>{% endif %}
+                        {% if not sm.get('can_access', True) %}<i class="bi bi-lock-fill ms-1"></i>{% endif %}
                     </a>
                     <a href="{{ url_for('network') }}" class="btn btn-outline-success">
                         <i class="bi bi-diagram-3"></i> Network

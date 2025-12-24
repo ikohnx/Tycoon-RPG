@@ -11,10 +11,73 @@ Also handles:
 - Quarterly events
 - Skill Tree abilities
 - News ticker system
+- Feature gating based on resource levels
 """
 
 from src.database import get_connection, return_connection
 import random
+
+FEATURE_REQUIREMENTS = {
+    'battle_arena': {'min_morale': 30, 'morale_cost': 10, 'label': 'Battle Arena', 'discipline': None},
+    'boss_challenges': {'min_brand': 50, 'min_morale': 40, 'morale_cost': 15, 'label': 'Boss Challenges', 'discipline': None},
+    'random_event': {'capital_cost': 100, 'label': 'Random Event', 'discipline': None},
+    'rivals': {'min_brand': 30, 'morale_cost': 5, 'label': 'Rivals', 'discipline': None},
+    'market': {'capital_cost': 200, 'label': 'Market Sim', 'discipline': 'Marketing'},
+    'negotiation': {'min_morale': 25, 'morale_cost': 5, 'label': 'Negotiation', 'discipline': 'Strategy'},
+    'supplychain': {'capital_cost': 150, 'label': 'Supply Chain', 'discipline': 'Operations'},
+    'hrmanagement': {'min_morale': 20, 'morale_cost': 5, 'label': 'HR Manager', 'discipline': 'Human Resources'},
+    'risks': {'min_brand': 25, 'label': 'Risk Manager', 'discipline': 'Legal'},
+    'pitch': {'min_brand': 40, 'capital_cost': 100, 'label': 'Pitch Deck', 'discipline': 'Finance'},
+    'simulations': {'min_brand': 50, 'capital_cost': 500, 'morale_cost': 10, 'label': 'Simulations', 'discipline': 'Strategy'},
+    'prestige': {'min_brand': 80, 'label': 'Prestige', 'discipline': None},
+}
+
+def get_feature_access(player_id: int) -> dict:
+    """Check which features the player can access based on their resources."""
+    resources = get_company_resources(player_id)
+    if not resources:
+        return {}
+    
+    capital = resources.get('capital', 0)
+    morale = resources.get('morale', 100)
+    brand = resources.get('brand_equity', 100)
+    
+    access = {}
+    for feature, reqs in FEATURE_REQUIREMENTS.items():
+        can_access = True
+        reasons = []
+        costs = []
+        
+        if 'min_capital' in reqs and capital < reqs['min_capital']:
+            can_access = False
+            reasons.append(f"Need ${reqs['min_capital']:,} Capital")
+        if 'min_morale' in reqs and morale < reqs['min_morale']:
+            can_access = False
+            reasons.append(f"Need {reqs['min_morale']}% Morale")
+        if 'min_brand' in reqs and brand < reqs['min_brand']:
+            can_access = False
+            reasons.append(f"Need {reqs['min_brand']}% Brand HP")
+        
+        if 'capital_cost' in reqs:
+            if capital < reqs['capital_cost']:
+                can_access = False
+                reasons.append(f"Need ${reqs['capital_cost']:,}")
+            costs.append(f"-${reqs['capital_cost']:,}")
+        if 'morale_cost' in reqs:
+            if morale < reqs['morale_cost']:
+                can_access = False
+                reasons.append(f"Need {reqs['morale_cost']}% Morale")
+            costs.append(f"-{reqs['morale_cost']} Morale")
+        
+        access[feature] = {
+            'can_access': can_access,
+            'locked_reason': ' | '.join(reasons) if reasons else None,
+            'cost_display': ' '.join(costs) if costs else None,
+            'label': reqs.get('label', feature),
+            'discipline': reqs.get('discipline')
+        }
+    
+    return access
 
 SKILL_TREE_ABILITIES = {
     'Marketing': {

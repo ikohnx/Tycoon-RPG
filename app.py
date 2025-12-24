@@ -147,18 +147,19 @@ def hub():
     advisor_quote = get_random_advisor_quote()
     
     from src.company_resources import (
-        get_company_resources, get_skill_tree, get_active_abilities, get_news_ticker
+        get_company_resources, get_skill_tree, get_active_abilities, get_news_ticker, get_feature_access
     )
     resources = get_company_resources(player_id)
     skill_tree = get_skill_tree(player_id)
     active_abilities = get_active_abilities(player_id)
     news_ticker = get_news_ticker(player_id, limit=5)
+    feature_access = get_feature_access(player_id)
     
     return render_template('hub.html', stats=stats, energy=energy, login_status=login_status, 
                           idle_income=idle_income, prestige_status=prestige_status, leaderboard=leaderboard,
                           is_new_player=is_new_player, next_step=next_step, advisor_quote=advisor_quote,
                           resources=resources, skill_tree=skill_tree, active_abilities=active_abilities,
-                          news_ticker=news_ticker)
+                          news_ticker=news_ticker, feature_access=feature_access)
 
 
 @app.route('/dismiss_onboarding', methods=['POST'])
