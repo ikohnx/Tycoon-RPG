@@ -261,6 +261,7 @@
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="scenario_id" value="{{ scenario_id or '' }}">
             <input type="hidden" name="path_id" value="{{ path_id or '' }}">
+            <input type="hidden" name="practice_answer" id="practice-answer-submit" value="">
             <button type="submit" class="complete-btn" id="complete-btn" {% if module.practice_question %}disabled{% endif %}>
                 <i class="bi bi-check-circle"></i> Complete Lesson & Continue
             </button>
@@ -292,6 +293,8 @@ function checkAnswer() {
     const isCorrect = userAnswer === correct || 
                       userAnswer.includes(correct) || 
                       correct.includes(userAnswer);
+    
+    document.getElementById('practice-answer-submit').value = userAnswer;
     
     if (isCorrect) {
         feedbackArea.innerHTML = `

@@ -2078,17 +2078,37 @@ def mentorship_lesson(module_id):
                           path_id=path_id)
 
 
+@app.route('/learn/<int:module_id>/validate', methods=['POST'])
+@login_required
+def validate_practice_route(module_id):
+    """Server-side validation for practice question answers."""
+    from src.game_engine import validate_practice_answer
+    
+    user_answer = request.form.get('answer', '') or request.json.get('answer', '') if request.is_json else request.form.get('answer', '')
+    result = validate_practice_answer(module_id, user_answer)
+    
+    return jsonify(result)
+
+
 @app.route('/learn/<int:module_id>/complete', methods=['POST'])
 @login_required
 def complete_mentorship_route(module_id):
-    """Mark a mentorship lesson as complete."""
+    """Mark a mentorship lesson as complete with server-side validation."""
     player_id = session.get('player_id')
     if not player_id:
         return redirect(url_for('index'))
     
-    from src.game_engine import complete_mentorship, update_learning_path_progress
+    from src.game_engine import complete_mentorship, update_learning_path_progress, validate_practice_answer, get_mentorship_module
     
-    complete_mentorship(player_id, module_id)
+    module = get_mentorship_module(module_id)
+    practice_score = 100
+    
+    if module and module.get('practice_question'):
+        user_answer = request.form.get('practice_answer', '')
+        validation = validate_practice_answer(module_id, user_answer)
+        practice_score = validation.get('score', 50)
+    
+    complete_mentorship(player_id, module_id, practice_score)
     
     path_id = request.form.get('path_id', type=int)
     if path_id:

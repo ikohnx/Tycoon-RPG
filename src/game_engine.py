@@ -591,6 +591,11 @@ class GameEngine:
         progress['exp'] = new_exp
         progress['level'] = new_level
         
+        if leveled_up:
+            levels_gained = new_level - old_level
+            stat_points_earned = levels_gained * 2
+            self.current_player.stats['stat_points'] += stat_points_earned
+        
         boosted_cash = cash_change * (1 + gold_bonus_pct)
         boosted_rep = reputation_change + rep_bonus
         
@@ -887,6 +892,12 @@ class GameEngine:
         progress['exp'] = new_exp
         progress['level'] = new_level
         
+        stat_points_earned = 0
+        if leveled_up:
+            levels_gained = new_level - old_level
+            stat_points_earned = levels_gained * 2
+            self.current_player.stats['stat_points'] += stat_points_earned
+        
         cash_change = float(scenario['choice_a_cash_change'] or 0) * exp_multiplier[stars] * (1 + gold_bonus_pct)
         reputation_change = int((scenario['choice_a_reputation_change'] or 0) * exp_multiplier[stars]) + rep_bonus
         
@@ -910,6 +921,13 @@ class GameEngine:
             SET total_cash = %s, business_reputation = %s, last_played = CURRENT_TIMESTAMP
             WHERE player_id = %s
         """, (self.current_player.cash, self.current_player.reputation, self.current_player.player_id))
+        
+        if stat_points_earned > 0:
+            cur.execute("""
+                UPDATE player_stats
+                SET stat_points_available = stat_points_available + %s
+                WHERE player_id = %s
+            """, (stat_points_earned, self.current_player.player_id))
         
         conn.commit()
         cur.close()
@@ -5629,6 +5647,33 @@ def start_mentorship(player_id, module_id):
     return_connection(conn)
     
     return {'success': True}
+
+
+def validate_practice_answer(module_id, user_answer):
+    """Server-side validation of practice question answer.
+    Returns dict with 'correct' boolean and 'feedback' message.
+    """
+    module = get_mentorship_module(module_id)
+    if not module:
+        return {'correct': False, 'feedback': 'Module not found', 'score': 0}
+    
+    practice_answer = module.get('practice_answer', '')
+    if not practice_answer:
+        return {'correct': True, 'feedback': 'No practice question for this lesson', 'score': 100}
+    
+    user_answer = (user_answer or '').strip().lower()
+    correct_answer = practice_answer.strip().lower()
+    
+    is_correct = (user_answer == correct_answer or 
+                  user_answer in correct_answer or 
+                  correct_answer in user_answer)
+    
+    return {
+        'correct': is_correct,
+        'feedback': module.get('practice_explanation', ''),
+        'expected': practice_answer,
+        'score': 100 if is_correct else 50
+    }
 
 
 def complete_mentorship(player_id, module_id, practice_score=100):

@@ -57,6 +57,34 @@ def return_connection(conn):
                 pass
 
 
+from contextlib import contextmanager
+
+@contextmanager
+def db_cursor(commit_on_success=False):
+    """Context manager for safe database access with automatic cleanup.
+    
+    Usage:
+        with db_cursor() as (conn, cur):
+            cur.execute("SELECT * FROM table")
+            result = cur.fetchall()
+        
+        with db_cursor(commit_on_success=True) as (conn, cur):
+            cur.execute("INSERT INTO table VALUES (%s)", (value,))
+    """
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        yield conn, cur
+        if commit_on_success:
+            conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        cur.close()
+        return_connection(conn)
+
+
 def init_database():
     """Initialize all database tables for the Business Tycoon RPG."""
     conn = get_connection()
