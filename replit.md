@@ -57,6 +57,17 @@ The game is built as a Flask web application with a responsive, mobile-first UI.
 -   **Quarterly Events:** Probability-based events include Market Boom (+$5000), Competitor Crisis (+10 brand), Regulatory Changes (-$2000), Lawsuits (-15 brand, preventable with Liability Shield), and Talent Shortage (-15 morale).
 -   **Modular Scenario Content:** Crisis and opportunity scenarios stored in content/scenarios.json with morale/brand impact trade-offs.
 
+## Resource Integration & Feature Gating (December 2024)
+-   **Server-Side Feature Gating:** `check_feature_requirements()` and `deduct_feature_cost()` enforce resource costs before allowing feature access
+-   **Enforcement Decorators:** Three decorators control gameplay access:
+    - `@feature_gated()`: Checks capital/morale requirements for specific features
+    - `@game_over_check`: Prevents gameplay when brand_equity = 0 (bankruptcy)
+    - `@energy_required(amount)`: Checks and consumes energy before actions
+-   **Protected Routes:** 12+ gameplay routes protected with decorators (battle_arena, random_event, rivals, negotiation, supplychain, hrmanagement, risks, pitch, simulations, prestige, boss_challenges, market)
+-   **Energy Consumption:** 10 energy consumed per scenario completion via `engine.consume_energy(10)` in make_choice route
+-   **Quarterly Event Display:** result.html template shows quarterly events with color-coded styling (green=positive, red=negative, blue=neutral)
+-   **Disabled Button Prevention:** JavaScript prevents clicks on disabled feature buttons in hub.html
+
 ## Security & Infrastructure (December 2024)
 -   **Password Security:** Bcrypt password hashing with automatic SHA256 migration for existing users
 -   **Route Protection:** @login_required decorator applied to 90+ gameplay routes

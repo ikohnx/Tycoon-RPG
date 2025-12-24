@@ -79,6 +79,87 @@ def get_feature_access(player_id: int) -> dict:
     
     return access
 
+
+def check_feature_requirements(player_id: int, feature_name: str) -> dict:
+    """Check if player meets requirements for a feature without deducting costs.
+    
+    Returns:
+        dict with 'allowed' (bool), 'reason' (str if denied), 'costs' (dict of costs to deduct)
+    """
+    if feature_name not in FEATURE_REQUIREMENTS:
+        return {'allowed': True, 'reason': None, 'costs': {}}
+    
+    reqs = FEATURE_REQUIREMENTS[feature_name]
+    resources = get_company_resources(player_id)
+    
+    if not resources:
+        return {'allowed': False, 'reason': 'Could not load player resources', 'costs': {}}
+    
+    capital = resources.get('capital', 0)
+    morale = resources.get('morale', 100)
+    brand = resources.get('brand_equity', 100)
+    
+    if 'min_capital' in reqs and capital < reqs['min_capital']:
+        return {'allowed': False, 'reason': f"Need ${reqs['min_capital']:,} Capital", 'costs': {}}
+    if 'min_morale' in reqs and morale < reqs['min_morale']:
+        return {'allowed': False, 'reason': f"Need {reqs['min_morale']}% Morale", 'costs': {}}
+    if 'min_brand' in reqs and brand < reqs['min_brand']:
+        return {'allowed': False, 'reason': f"Need {reqs['min_brand']}% Brand HP", 'costs': {}}
+    
+    costs = {}
+    if 'capital_cost' in reqs:
+        if capital < reqs['capital_cost']:
+            return {'allowed': False, 'reason': f"Need ${reqs['capital_cost']:,} to proceed", 'costs': {}}
+        costs['capital'] = -reqs['capital_cost']
+    if 'morale_cost' in reqs:
+        if morale < reqs['morale_cost']:
+            return {'allowed': False, 'reason': f"Need {reqs['morale_cost']}% Morale to proceed", 'costs': {}}
+        costs['morale'] = -reqs['morale_cost']
+    
+    return {'allowed': True, 'reason': None, 'costs': costs}
+
+
+def deduct_feature_cost(player_id: int, feature_name: str) -> dict:
+    """Deduct the cost of accessing a feature from player resources.
+    
+    Returns:
+        dict with 'success' (bool), 'message' (str), 'new_resources' (dict)
+    """
+    check = check_feature_requirements(player_id, feature_name)
+    
+    if not check['allowed']:
+        return {'success': False, 'message': check['reason'], 'new_resources': None}
+    
+    costs = check['costs']
+    if not costs:
+        return {'success': True, 'message': 'No cost required', 'new_resources': get_company_resources(player_id)}
+    
+    capital_change = costs.get('capital', 0)
+    morale_change = costs.get('morale', 0)
+    
+    result = update_company_resources(player_id, capital_change=capital_change, morale_change=morale_change)
+    
+    if result.get('game_over'):
+        return {
+            'success': True, 
+            'message': 'Cost deducted but company is now bankrupt!',
+            'new_resources': result,
+            'game_over': True
+        }
+    
+    label = FEATURE_REQUIREMENTS.get(feature_name, {}).get('label', feature_name)
+    cost_parts = []
+    if capital_change:
+        cost_parts.append(f"${abs(capital_change):,}")
+    if morale_change:
+        cost_parts.append(f"{abs(morale_change)} Morale")
+    
+    return {
+        'success': True,
+        'message': f"Spent {' and '.join(cost_parts)} to access {label}",
+        'new_resources': result
+    }
+
 SKILL_TREE_ABILITIES = {
     'Marketing': {
         'subskill': 'Brand Identity',

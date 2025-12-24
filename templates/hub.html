@@ -1166,6 +1166,16 @@ function dismissOnboarding() {
         document.getElementById('welcomeBackdrop').remove();
     });
 }
+document.querySelectorAll('a.disabled').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+    });
+    btn.style.pointerEvents = 'auto';
+    btn.style.cursor = 'not-allowed';
+    btn.style.opacity = '0.6';
+});
 </script>
             </div>
         </div>

@@ -13,6 +13,87 @@ def login_required(f):
             return redirect(url_for('index'))
         return f(*args, **kwargs)
     return decorated_function
+
+
+def feature_gated(feature_name):
+    """Decorator to check feature requirements and deduct costs before allowing access."""
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if 'player_id' not in session:
+                flash('Please select or create a character to continue.', 'warning')
+                return redirect(url_for('index'))
+            
+            from src.company_resources import check_feature_requirements, deduct_feature_cost
+            
+            check = check_feature_requirements(session['player_id'], feature_name)
+            if not check['allowed']:
+                flash(f"Access denied: {check['reason']}", 'error')
+                return redirect(url_for('hub'))
+            
+            result = deduct_feature_cost(session['player_id'], feature_name)
+            if not result['success']:
+                flash(f"Cannot access: {result['message']}", 'error')
+                return redirect(url_for('hub'))
+            
+            if result.get('game_over'):
+                flash('Your company has gone bankrupt! Game Over.', 'error')
+                return redirect(url_for('hub'))
+            
+            if result['message'] != 'No cost required':
+                flash(result['message'], 'info')
+            
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
+
+def game_over_check(f):
+    """Decorator to check if the game is over (brand equity = 0) before allowing gameplay."""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'player_id' not in session:
+            flash('Please select or create a character to continue.', 'warning')
+            return redirect(url_for('index'))
+        
+        from src.company_resources import check_game_over
+        game_status = check_game_over(session['player_id'])
+        
+        if game_status.get('game_over'):
+            flash('Your company has gone bankrupt! You cannot continue playing.', 'error')
+            return redirect(url_for('hub'))
+        
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+def energy_required(amount=10):
+    """Decorator to check and consume energy before allowing gameplay actions."""
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if 'player_id' not in session:
+                flash('Please select or create a character to continue.', 'warning')
+                return redirect(url_for('index'))
+            
+            engine = get_engine()
+            engine.load_player(session['player_id'])
+            energy = engine.get_player_energy()
+            
+            if energy.get('current_energy', 0) < amount:
+                flash(f'Not enough energy! Need {amount}, have {energy.get("current_energy", 0)}. Wait for recharge.', 'error')
+                return redirect(url_for('hub'))
+            
+            result = engine.consume_energy(amount)
+            if result.get('error'):
+                flash(result['error'], 'error')
+                return redirect(url_for('hub'))
+            
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
+
 from src.database import init_database, seed_all
 from src.game_engine import GameEngine
 from src.leveling import get_level_title, get_progress_bar, get_exp_to_next_level
@@ -173,6 +254,7 @@ def dismiss_onboarding():
 
 @app.route('/scenarios/<discipline>')
 @login_required
+@game_over_check
 def scenarios(discipline):
     player_id = session.get('player_id')
     if not player_id:
@@ -213,6 +295,7 @@ def training(scenario_id):
 
 @app.route('/play/<int:scenario_id>')
 @login_required
+@game_over_check
 def play_scenario(scenario_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -251,6 +334,7 @@ def play_scenario(scenario_id):
 
 @app.route('/choose/<int:scenario_id>/<choice>')
 @login_required
+@game_over_check
 def make_choice(scenario_id, choice):
     player_id = session.get('player_id')
     if not player_id:
@@ -286,6 +370,7 @@ def make_choice(scenario_id, choice):
 
 @app.route('/challenge/<int:scenario_id>')
 @login_required
+@game_over_check
 def play_challenge(scenario_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -308,6 +393,7 @@ def play_challenge(scenario_id):
 
 @app.route('/submit_challenge/<int:scenario_id>', methods=['POST'])
 @login_required
+@game_over_check
 def submit_challenge(scenario_id):
     player_id = session.get('player_id')
     if not player_id:
@@ -542,6 +628,7 @@ def activate_ability_route(ability_code):
 
 @app.route('/random_event')
 @login_required
+@feature_gated('random_event')
 def random_event():
     player_id = session.get('player_id')
     if not player_id:
@@ -576,6 +663,7 @@ def resolve_event(event_id, choice):
 
 @app.route('/rivals')
 @login_required
+@feature_gated('rivals')
 def rivals():
     player_id = session.get('player_id')
     if not player_id:
@@ -764,6 +852,7 @@ def equip_item(equipment_id):
 
 @app.route('/prestige')
 @login_required
+@feature_gated('prestige')
 def prestige():
     player_id = session.get('player_id')
     if not player_id:
@@ -839,6 +928,7 @@ def leaderboard():
 
 @app.route('/battle_arena')
 @login_required
+@feature_gated('battle_arena')
 def battle_arena():
     player_id = session.get('player_id')
     if not player_id:
@@ -905,6 +995,7 @@ def campaign_map():
 
 @app.route('/boss_challenges')
 @login_required
+@feature_gated('boss_challenges')
 def boss_challenges():
     player_id = session.get('player_id')
     if not player_id:
@@ -1341,6 +1432,7 @@ def save_businessplan_section(section_id):
 
 @app.route('/negotiation')
 @login_required
+@feature_gated('negotiation')
 def negotiation():
     player_id = session.get('player_id')
     if not player_id:
@@ -1417,6 +1509,7 @@ def submit_negotiation_offer(negotiation_id):
 
 @app.route('/risks')
 @login_required
+@feature_gated('risks')
 def risks():
     player_id = session.get('player_id')
     if not player_id:
@@ -1468,6 +1561,7 @@ def add_risk():
 
 @app.route('/supplychain')
 @login_required
+@feature_gated('supplychain')
 def supplychain():
     player_id = session.get('player_id')
     if not player_id:
@@ -1518,6 +1612,7 @@ def create_order():
 
 @app.route('/market')
 @login_required
+@feature_gated('market')
 def market():
     player_id = session.get('player_id')
     if not player_id:
@@ -1605,6 +1700,7 @@ def submit_market_challenge(challenge_id):
 
 @app.route('/hrmanagement')
 @login_required
+@feature_gated('hrmanagement')
 def hrmanagement():
     player_id = session.get('player_id')
     if not player_id:
@@ -1714,6 +1810,7 @@ def hire_employee():
 
 @app.route('/pitch')
 @login_required
+@feature_gated('pitch')
 def pitch():
     player_id = session.get('player_id')
     if not player_id:
@@ -1981,6 +2078,7 @@ def competition_leaderboard(active_id):
 
 @app.route('/simulations')
 @login_required
+@feature_gated('simulations')
 def simulations():
     player_id = session.get('player_id')
     if not player_id:

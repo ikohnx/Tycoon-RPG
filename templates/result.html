@@ -45,6 +45,59 @@
                 </div>
                 {% endif %}
                 
+                {% if result.quarter_info and result.quarter_info.quarterly_event %}
+                <div class="alert mb-4 text-center" style="animation: slideIn 0.5s ease-out; 
+                    {% if result.quarter_info.quarterly_event.type == 'positive' %}
+                    background: linear-gradient(135deg, #155724 0%, #1e7e34 100%); border: 2px solid #28a745;
+                    {% elif result.quarter_info.quarterly_event.type == 'negative' %}
+                    background: linear-gradient(135deg, #721c24 0%, #a71d2a 100%); border: 2px solid #dc3545;
+                    {% else %}
+                    background: linear-gradient(135deg, #0c5460 0%, #117a8b 100%); border: 2px solid #17a2b8;
+                    {% endif %}
+                    border-radius: 10px; padding: 20px;">
+                    <h4 class="mb-2">
+                        <i class="bi bi-calendar-event-fill"></i> QUARTERLY EVENT - Q{{ result.quarter_info.new_quarter }}
+                    </h4>
+                    <h3 class="mb-2" style="color: #ffc107;">{{ result.quarter_info.quarterly_event.name }}</h3>
+                    <p class="mb-3">{{ result.quarter_info.quarterly_event.description }}</p>
+                    <div class="d-flex justify-content-center gap-4 flex-wrap">
+                        {% if result.quarter_info.quarterly_event.capital_effect %}
+                        <span class="badge bg-dark px-3 py-2" style="font-size: 1rem;">
+                            <i class="bi bi-cash"></i> Capital: 
+                            <span class="{% if result.quarter_info.quarterly_event.capital_effect > 0 %}text-success{% else %}text-danger{% endif %}">
+                                {{ '+' if result.quarter_info.quarterly_event.capital_effect > 0 else '' }}${{ result.quarter_info.quarterly_event.capital_effect | int }}
+                            </span>
+                        </span>
+                        {% endif %}
+                        {% if result.quarter_info.quarterly_event.morale_effect %}
+                        <span class="badge bg-dark px-3 py-2" style="font-size: 1rem;">
+                            <i class="bi bi-emoji-smile"></i> Morale: 
+                            <span class="{% if result.quarter_info.quarterly_event.morale_effect > 0 %}text-success{% else %}text-danger{% endif %}">
+                                {{ '+' if result.quarter_info.quarterly_event.morale_effect > 0 else '' }}{{ result.quarter_info.quarterly_event.morale_effect }}
+                            </span>
+                        </span>
+                        {% endif %}
+                        {% if result.quarter_info.quarterly_event.brand_effect %}
+                        <span class="badge bg-dark px-3 py-2" style="font-size: 1rem;">
+                            <i class="bi bi-heart"></i> Brand: 
+                            <span class="{% if result.quarter_info.quarterly_event.brand_effect > 0 %}text-success{% else %}text-danger{% endif %}">
+                                {{ '+' if result.quarter_info.quarterly_event.brand_effect > 0 else '' }}{{ result.quarter_info.quarterly_event.brand_effect }}
+                            </span>
+                        </span>
+                        {% endif %}
+                    </div>
+                    {% if result.quarter_info.quarterly_event.blocked_by %}
+                    <p class="mt-2 mb-0 text-muted"><small><i class="bi bi-shield-check"></i> This event can be blocked by: {{ result.quarter_info.quarterly_event.blocked_by }}</small></p>
+                    {% endif %}
+                </div>
+                {% elif result.quarter_info and result.quarter_info.quarter_complete %}
+                <div class="alert alert-secondary text-center mb-4" style="border-radius: 10px;">
+                    <h5 class="mb-0">
+                        <i class="bi bi-calendar-check"></i> Quarter Complete! Now in Q{{ result.quarter_info.new_quarter }}
+                    </h5>
+                </div>
+                {% endif %}
+                
                 <div class="text-center mb-4">
                     <h4 class="text-muted mb-2">Performance Rating</h4>
                     <div class="star-rating-large">
