@@ -10,17 +10,21 @@ load_dotenv()
 _connection_pool = None
 
 def init_connection_pool():
-    """Initialize the connection pool."""
+    """Initialize the connection pool with error handling."""
     global _connection_pool
     if _connection_pool is None:
         database_url = os.environ.get("DATABASE_URL")
         if not database_url:
             raise ValueError("DATABASE_URL environment variable is not set")
-        _connection_pool = pool.ThreadedConnectionPool(
-            minconn=2,
-            maxconn=20,
-            dsn=database_url
-        )
+        try:
+            _connection_pool = pool.ThreadedConnectionPool(
+                minconn=2,
+                maxconn=20,
+                dsn=database_url
+            )
+        except Exception as e:
+            print(f"Failed to create connection pool: {e}")
+            raise
     return _connection_pool
 
 

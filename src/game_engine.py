@@ -330,12 +330,14 @@ class GameEngine:
                 # Upgrade to bcrypt on successful login
                 new_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
                 upgrade_conn = get_connection()
-                upgrade_cur = upgrade_conn.cursor()
-                upgrade_cur.execute("UPDATE player_profiles SET password_hash = %s WHERE player_id = %s", 
-                                   (new_hash, player_id))
-                upgrade_conn.commit()
-                upgrade_cur.close()
-                upgrade_return_connection(conn)
+                try:
+                    upgrade_cur = upgrade_conn.cursor()
+                    upgrade_cur.execute("UPDATE player_profiles SET password_hash = %s WHERE player_id = %s", 
+                                       (new_hash, player_id))
+                    upgrade_conn.commit()
+                    upgrade_cur.close()
+                finally:
+                    return_connection(upgrade_conn)
         
         return {"success": True, "player_id": player['player_id'], "player_name": player['player_name']}
     

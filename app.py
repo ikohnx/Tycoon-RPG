@@ -21,8 +21,21 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key")
 csrf = CSRFProtect(app)
 
-init_database()
-seed_all()
+def initialize_database():
+    """Safely initialize database with error handling."""
+    try:
+        database_url = os.environ.get("DATABASE_URL")
+        if not database_url:
+            print("WARNING: DATABASE_URL not set. Database features will be unavailable.")
+            return False
+        init_database()
+        seed_all()
+        return True
+    except Exception as e:
+        print(f"WARNING: Database initialization failed: {e}")
+        return False
+
+db_initialized = initialize_database()
 
 def get_engine():
     """Get a request-scoped GameEngine instance to prevent cross-user data leakage."""
