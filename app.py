@@ -491,8 +491,31 @@ def dashboard():
     financial_history = get_engine().get_financial_history()
     rivals = get_engine().get_rivals()
     
+    from src.company_resources import get_dashboard_data
+    dashboard_data = get_dashboard_data(player_id)
+    
     return render_template('dashboard.html', stats=stats, milestones=milestones, 
-                          financial_history=financial_history, rivals=rivals)
+                          financial_history=financial_history, rivals=rivals,
+                          dashboard=dashboard_data)
+
+
+@app.route('/activate_ability/<ability_code>', methods=['POST'])
+@login_required
+def activate_ability_route(ability_code):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    from src.company_resources import activate_ability
+    result = activate_ability(player_id, ability_code)
+    
+    if result.get('success'):
+        flash(f"Activated {result['ability_name']}! Effect: {result['effect_type'].replace('_', ' ').title()}", 'success')
+    else:
+        flash(result.get('error', 'Could not activate ability'), 'warning')
+    
+    return redirect(url_for('dashboard'))
+
 
 @app.route('/random_event')
 @login_required

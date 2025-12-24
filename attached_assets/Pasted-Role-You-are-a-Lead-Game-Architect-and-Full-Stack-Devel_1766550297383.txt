@@ -1,0 +1,70 @@
+Role: You are a Lead Game Architect and Full-Stack Developer specializing in EdTech and Simulation RPGs.
+
+The Objective: Transform this rudimentary Q&A app into a sophisticated "Business Mastery Simulation." The goal is to move from a "Quiz" format to a "Consequence-Based RPG" where players manage a company across 6 core skill areas.
+
+1. The Core Framework (The "Engine")
+Rebuild the game state to track the following:
+
+The Six Pillars: Marketing, Finance, Operations, HR, Legal, and Strategy. (Each starts at Level 1).
+
+The Resource Pool: * Capital ($): Used for actions and growth.
+
+Team Morale: Acts as "Stamina." If it hits zero, actions fail.
+
+Brand Equity: Acts as "Health (HP)." If it hits zero, the game ends (Bankruptcy/Liquidation).
+
+The Timeline: The game progresses by "Fiscal Quarters." Every 3 "turns" or "decisions" = 1 Quarter.
+
+2. The Skill Tree Implementation
+Implement a sub-skill system. When a player gains XP in a Major Area, they can unlock "Special Abilities":
+
+Marketing: Brand Identity -> (Unlock: Viral Campaign - Buffs next Revenue gain)
+
+Finance: Unit Economics -> (Unlock: Burn Rate Optimization - Reduces Capital loss)
+
+Operations: Process Mapping -> (Unlock: Automation - Increases Morale)
+
+HR: Talent Acquisition -> (Unlock: Headhunter - Reduces cost of new hires)
+
+Legal: Compliance -> (Unlock: Liability Shield - Prevents random lawsuit events)
+
+Strategy: Pivot Logic -> (Unlock: Blue Ocean - Multiplies all XP for 1 Quarter)
+
+3. The Encounter Engine (Gameplay Loop)
+Replace static questions with "Crisis & Opportunity Scenarios."
+
+Each scenario must present a business problem.
+
+Instead of "Right/Wrong," offer 3 choices with different Trade-offs.
+
+Example Scenario: "A key supplier just went bankrupt."
+
+Choice A (Operations): Pay extra for air-freight (Costs $$, Saves Morale).
+
+Choice B (Strategy): Pivot to a local supplier (Gain Strategy XP, Long-term gain).
+
+Choice C (Legal): Sue for breach of contract (Uses Legal skill, high risk/high reward).
+
+4. Technical Audit & UI Overhaul
+Fix Logic Holes: Identify and fix all broken links, non-functional buttons, and state-persistence issues (ensure the game saves progress).
+
+Dashboard UI: Create a clean, modern dashboard. I want to see:
+
+A Radar Chart or visual bars for the 6 Skill Pillars.
+
+A Ticker Tape showing recent financial news/consequences.
+
+A Ledger showing Capital, Morale, and Brand Equity.
+
+Modular Code: Move the scenarios into a separate scenarios.json or content.py file to make it easy for me to add more content later.
+
+5. Execution Plan
+Step 1: Analyze current code and provide a summary of technical bugs.
+
+Step 2: Propose the data structure for the "Player" and "Company" objects.
+
+Step 3: Implement the core "Decision -> Consequence" loop.
+
+Step 4: Build the UI Dashboard.
+
+Do not just fix the bugs; evolve the entire game logic into this simulation model. Start by reviewing the code and telling me the critical issues you find.

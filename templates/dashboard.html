@@ -1,169 +1,697 @@
 {% extends "base.html" %}
 
-{% block title %}Command Center - Tycoon RPG{% endblock %}
+{% block title %}Business Dashboard - Command Center{% endblock %}
 
-{% block body_class %}world-{{ stats.world|lower }}{% endblock %}
+{% block body_class %}world-{{ stats.world|lower if stats else 'modern' }}{% endblock %}
 
 {% block content %}
-<div class="row fade-in">
-    <div class="col-12 mb-4">
-        <div class="d-flex justify-content-between align-items-center">
-            <h2 class="game-title">
-                <i class="bi bi-speedometer2" style="-webkit-text-fill-color: #ffd700;"></i> Command Center
-            </h2>
-            <a href="{{ url_for('hub') }}" class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-left"></i> Back to Hub
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1 class="dashboard-title">
+            <i class="bi bi-speedometer2"></i> Command Center
+        </h1>
+        <div class="header-right">
+            <div class="quarter-badge">
+                <span class="quarter-label">Fiscal Quarter</span>
+                <span class="quarter-number">Q{{ dashboard.resources.fiscal_quarter if dashboard else 1 }}</span>
+                <small class="decisions-counter">{{ dashboard.resources.decisions_this_quarter if dashboard else 0 }}/3 Decisions</small>
+            </div>
+            <a href="{{ url_for('hub') }}" class="btn btn-outline-secondary ms-3">
+                <i class="bi bi-arrow-left"></i> Hub
             </a>
         </div>
     </div>
-    
-    <div class="col-md-4">
-        <div class="card mb-4" style="border-color: rgba(80, 200, 120, 0.5);">
-            <div class="card-header" style="background: linear-gradient(180deg, rgba(80,200,120,0.2) 0%, rgba(0,0,0,0.3) 100%); border-color: rgba(80,200,120,0.3);">
-                <h5 class="mb-0" style="color: #50c878;">
-                    <i class="bi bi-coin"></i> Treasury
-                </h5>
-            </div>
-            <div class="card-body text-center">
-                <div class="mb-3">
-                    <i class="bi bi-cash-stack display-3" style="color: #50c878; filter: drop-shadow(0 0 15px rgba(80,200,120,0.5));"></i>
-                </div>
-                <h2 style="color: #50c878; font-family: 'Cinzel', serif; text-shadow: 0 0 20px rgba(80,200,120,0.5);">
-                    ${{ "{:,.0f}".format(stats.cash) }}
-                </h2>
-                <p class="game-subtitle mb-3">Gold in Vault</p>
-                
-                <div class="section-divider"></div>
-                
-                <div class="stat-card mt-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="game-subtitle">
-                            <i class="bi bi-star-fill text-warning"></i> Reputation
-                        </span>
-                        <span class="gold-text">{{ stats.reputation }}/100</span>
-                    </div>
-                    <div class="progress mt-2">
-                        <div class="progress-bar" style="width: {{ stats.reputation }}%"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="card mb-4" style="border-color: rgba(255, 215, 0, 0.5);">
-            <div class="card-header" style="background: linear-gradient(180deg, rgba(255,215,0,0.15) 0%, rgba(0,0,0,0.3) 100%);">
-                <h5 class="mb-0 gold-text">
-                    <i class="bi bi-trophy-fill"></i> Achievements Unlocked
-                </h5>
-            </div>
-            <div class="card-body">
-                {% if milestones.earned %}
-                    {% for m in milestones.earned %}
-                    <div class="stat-card d-flex align-items-center" style="border-color: rgba(255,215,0,0.3);">
-                        <i class="bi bi-{{ m.badge_icon }} display-6 me-3" style="color: #ffd700; filter: drop-shadow(0 0 10px rgba(255,215,0,0.5));"></i>
-                        <div>
-                            <strong class="gold-text">{{ m.milestone_name }}</strong>
-                            <small class="d-block text-muted">{{ m.milestone_description[:50] }}...</small>
-                        </div>
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="text-center py-4">
-                        <i class="bi bi-lock-fill display-4 text-muted"></i>
-                        <p class="game-subtitle mt-2 mb-0">No achievements yet</p>
-                        <small class="text-muted">Complete quests to earn rewards!</small>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
+
+    {% if dashboard and dashboard.game_status and dashboard.game_status.game_over %}
+    <div class="game-over-banner">
+        <i class="bi bi-exclamation-octagon-fill"></i>
+        <h2>GAME OVER</h2>
+        <p>{{ dashboard.game_status.message }}</p>
+        <a href="{{ url_for('new_game') }}" class="btn btn-warning">Start New Game</a>
     </div>
-    
-    <div class="col-md-8">
-        <div class="card mb-4" style="border-color: rgba(153, 50, 204, 0.5);">
-            <div class="card-header" style="background: linear-gradient(180deg, rgba(153,50,204,0.2) 0%, rgba(0,0,0,0.3) 100%); border-color: rgba(153,50,204,0.3);">
-                <h5 class="mb-0" style="color: #ba55d3;">
-                    <i class="bi bi-flag-fill"></i> Available Achievements
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="row g-3">
-                    {% for m in milestones.available[:6] %}
-                    <div class="col-md-6">
-                        <div class="stat-card h-100" style="border-color: rgba(153,50,204,0.3); background: linear-gradient(135deg, rgba(153,50,204,0.1) 0%, rgba(0,0,0,0.3) 100%);">
-                            <div class="d-flex align-items-start mb-2">
-                                <i class="bi bi-{{ m.badge_icon }} display-5 me-3" style="color: #666; opacity: 0.5;"></i>
-                                <div>
-                                    <h6 class="mb-1" style="color: #ba55d3;">{{ m.milestone_name }}</h6>
-                                    <small class="text-muted">{{ m.milestone_description }}</small>
-                                </div>
-                            </div>
-                            <div class="mt-3">
-                                <span class="badge" style="background: linear-gradient(135deg, #50c878, #228b22);">
-                                    <i class="bi bi-lightning-fill"></i> +{{ m.exp_reward }} EXP
-                                </span>
-                                {% if m.cash_reward > 0 %}
-                                <span class="badge" style="background: linear-gradient(135deg, #ffd700, #b8860b); color: #1a1a2e;">
-                                    <i class="bi bi-coin"></i> +${{ m.cash_reward }}
-                                </span>
-                                {% endif %}
-                            </div>
-                        </div>
+    {% endif %}
+
+    {% if dashboard and dashboard.game_status and dashboard.game_status.warning %}
+    <div class="warning-banner">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <p>{{ dashboard.game_status.message }}</p>
+    </div>
+    {% endif %}
+
+    <div class="dashboard-grid">
+        <div class="resource-ledger panel">
+            <h3 class="panel-title"><i class="bi bi-wallet2"></i> Resource Ledger</h3>
+            <div class="resource-bars">
+                <div class="resource-item">
+                    <div class="resource-header">
+                        <span class="resource-label"><i class="bi bi-currency-dollar"></i> Capital</span>
+                        <span class="resource-value capital-value">${{ "{:,.0f}".format(dashboard.resources.capital if dashboard else stats.cash) }}</span>
                     </div>
-                    {% else %}
-                    <div class="col-12 text-center py-4">
-                        <i class="bi bi-emoji-smile display-4 gold-text"></i>
-                        <p class="game-subtitle mt-2">All achievements unlocked!</p>
+                    <div class="resource-bar-bg">
+                        <div class="resource-bar capital-bar" style="width: {{ [100, ((dashboard.resources.capital if dashboard else stats.cash) / 50000 * 100)]|min }}%"></div>
                     </div>
-                    {% endfor %}
+                </div>
+                
+                <div class="resource-item">
+                    <div class="resource-header">
+                        <span class="resource-label"><i class="bi bi-emoji-smile"></i> Team Morale</span>
+                        <span class="resource-value morale-value">{{ dashboard.resources.morale if dashboard else 100 }}%</span>
+                    </div>
+                    <div class="resource-bar-bg">
+                        {% set morale = dashboard.resources.morale if dashboard else 100 %}
+                        <div class="resource-bar morale-bar {% if morale < 25 %}critical{% elif morale < 50 %}warning{% endif %}" 
+                             style="width: {{ morale }}%"></div>
+                    </div>
+                    {% if dashboard and dashboard.resources.morale < 25 %}
+                    <small class="resource-warning">Low morale - actions may fail!</small>
+                    {% endif %}
+                </div>
+                
+                <div class="resource-item">
+                    <div class="resource-header">
+                        <span class="resource-label"><i class="bi bi-heart-fill"></i> Brand Equity</span>
+                        <span class="resource-value brand-value">{{ dashboard.resources.brand_equity if dashboard else 100 }}%</span>
+                    </div>
+                    <div class="resource-bar-bg">
+                        {% set brand = dashboard.resources.brand_equity if dashboard else 100 %}
+                        <div class="resource-bar brand-bar {% if brand < 25 %}critical{% elif brand < 50 %}warning{% endif %}" 
+                             style="width: {{ brand }}%"></div>
+                    </div>
+                    {% if dashboard and dashboard.resources.brand_equity < 25 %}
+                    <small class="resource-warning">Critical! Bankruptcy imminent!</small>
+                    {% endif %}
                 </div>
             </div>
         </div>
-        
-        <div class="card mb-4" style="border-color: rgba(220, 20, 60, 0.5);">
-            <div class="card-header" style="background: linear-gradient(180deg, rgba(220,20,60,0.2) 0%, rgba(0,0,0,0.3) 100%); border-color: rgba(220,20,60,0.3);">
-                <h5 class="mb-0" style="color: #ff6b6b;">
-                    <i class="bi bi-shield-fill-exclamation"></i> Rival Businesses
-                </h5>
+
+        <div class="radar-chart-panel panel">
+            <h3 class="panel-title"><i class="bi bi-hexagon"></i> Six Pillars of Business</h3>
+            <div class="radar-container">
+                <canvas id="skillRadar" width="280" height="280"></canvas>
             </div>
-            <div class="card-body">
-                {% if rivals %}
-                <div class="row g-3">
-                    {% for r in rivals %}
-                    <div class="col-md-6">
-                        <div class="stat-card" style="border-color: rgba(220,20,60,0.3); background: linear-gradient(135deg, rgba(220,20,60,0.1) 0%, rgba(0,0,0,0.3) 100%);">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <div>
-                                    <h6 class="mb-0" style="color: #ff6b6b;">
-                                        <i class="bi bi-person-fill-x"></i> {{ r.rival_name }}
-                                    </h6>
-                                    <small class="text-muted">{{ r.rival_business }}</small>
-                                </div>
-                                <div>
-                                    {% for i in range(r.difficulty_level) %}
-                                    <i class="bi bi-star-fill" style="color: #ffd700; font-size: 0.7rem;"></i>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-between mt-3">
-                                <span class="badge" style="background: linear-gradient(135deg, #50c878, #228b22);">
-                                    <i class="bi bi-trophy"></i> {{ r.wins }} Wins
-                                </span>
-                                <span class="badge" style="background: linear-gradient(135deg, #dc143c, #8b0000);">
-                                    <i class="bi bi-x-circle"></i> {{ r.losses }} Losses
-                                </span>
-                            </div>
-                        </div>
+            <div class="pillar-legend">
+                {% if dashboard and dashboard.disciplines %}
+                    {% for discipline, data in dashboard.disciplines.items() %}
+                    <div class="legend-item">
+                        <span class="legend-dot"></span>
+                        {{ discipline }}: Lv.{{ data.level }}
                     </div>
                     {% endfor %}
-                </div>
                 {% else %}
-                <div class="text-center py-4">
-                    <i class="bi bi-shield-slash display-4 text-muted"></i>
-                    <p class="game-subtitle mt-2 mb-0">No rivals discovered</p>
-                    <small class="text-muted">Complete more quests to encounter rivals!</small>
+                    {% for disc in ['Marketing', 'Finance', 'Operations', 'Human Resources', 'Legal', 'Strategy'] %}
+                    <div class="legend-item">
+                        <span class="legend-dot"></span>
+                        {{ disc }}: Lv.1
+                    </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="news-ticker-panel panel">
+            <h3 class="panel-title"><i class="bi bi-newspaper"></i> Market News</h3>
+            <div class="ticker-tape">
+                {% if dashboard and dashboard.news_ticker %}
+                    {% for news in dashboard.news_ticker %}
+                    <div class="ticker-item ticker-{{ news.news_type }}">
+                        <span class="ticker-time">{{ news.created_at.strftime('%H:%M') if news.created_at else 'Now' }}</span>
+                        <span class="ticker-text">{{ news.news_text }}</span>
+                        {% if news.capital_change and news.capital_change != 0 %}
+                        <span class="ticker-impact {% if news.capital_change > 0 %}positive{% else %}negative{% endif %}">
+                            {{ '+' if news.capital_change > 0 else '' }}${{ "{:,.0f}".format(news.capital_change) }}
+                        </span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                <div class="ticker-item ticker-info">
+                    <span class="ticker-text">Welcome to your business journey! Make decisions to see market updates here.</span>
                 </div>
                 {% endif %}
             </div>
+        </div>
+
+        <div class="skill-tree-panel panel">
+            <h3 class="panel-title"><i class="bi bi-diagram-3"></i> Skill Tree Abilities</h3>
+            <div class="abilities-grid">
+                {% if dashboard and dashboard.skill_tree %}
+                    {% for discipline, ability in dashboard.skill_tree.items() %}
+                    <div class="ability-card {% if ability.is_unlocked %}unlocked{% elif ability.can_unlock %}available{% else %}locked{% endif %}">
+                        <div class="ability-icon">
+                            <i class="bi bi-{{ ability.icon }}"></i>
+                        </div>
+                        <div class="ability-info">
+                            <h4>{{ ability.ability_name }}</h4>
+                            <small>{{ discipline }}</small>
+                            {% if not ability.is_unlocked %}
+                            <div class="unlock-progress">
+                                <span>{{ ability.prerequisite }}: {{ ability.current_subskill_level }}/{{ ability.unlock_level }}</span>
+                            </div>
+                            {% elif ability.is_active %}
+                            <span class="active-badge">ACTIVE</span>
+                            {% else %}
+                            <form action="{{ url_for('activate_ability_route', ability_code=ability.ability_code) }}" method="post" class="mt-1">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-warning">Activate</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-4 w-100">
+                        <i class="bi bi-lock display-4 text-muted"></i>
+                        <p class="text-muted mt-2">Level up your sub-skills to unlock abilities!</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="actions-panel panel">
+            <h3 class="panel-title"><i class="bi bi-lightning-charge"></i> Quick Actions</h3>
+            <div class="action-buttons">
+                <a href="{{ url_for('scenario_select') }}" class="action-btn scenario-btn">
+                    <i class="bi bi-signpost-split"></i>
+                    <span>Face a Scenario</span>
+                </a>
+                <a href="{{ url_for('training_select') }}" class="action-btn training-btn">
+                    <i class="bi bi-book"></i>
+                    <span>Training Center</span>
+                </a>
+                <a href="{{ url_for('leaderboard') }}" class="action-btn leaderboard-btn">
+                    <i class="bi bi-trophy"></i>
+                    <span>Leaderboards</span>
+                </a>
+                <a href="{{ url_for('hub') }}" class="action-btn hub-btn">
+                    <i class="bi bi-house"></i>
+                    <span>Return to Hub</span>
+                </a>
+            </div>
+        </div>
+
+        {% if dashboard and dashboard.active_abilities %}
+        <div class="active-abilities-panel panel">
+            <h3 class="panel-title"><i class="bi bi-stars"></i> Active Buffs This Quarter</h3>
+            <div class="buffs-list">
+                {% for ability in dashboard.active_abilities %}
+                <div class="buff-item">
+                    <i class="bi bi-{{ ability.icon }}"></i>
+                    <span>{{ ability.ability_name }}</span>
+                    <small>{{ ability.effect_type|replace('_', ' ')|title }}: {{ ability.effect_value }}x</small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="achievements-panel panel">
+            <h3 class="panel-title"><i class="bi bi-trophy-fill"></i> Achievements</h3>
+            {% if milestones and milestones.earned %}
+                <div class="achievements-list">
+                    {% for m in milestones.earned[:4] %}
+                    <div class="achievement-item">
+                        <i class="bi bi-{{ m.badge_icon }}"></i>
+                        <span>{{ m.milestone_name }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-3">
+                    <i class="bi bi-lock-fill display-5 text-muted"></i>
+                    <p class="text-muted mt-2 mb-0">Complete scenarios to earn achievements!</p>
+                </div>
+            {% endif %}
         </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const radarData = {{ (dashboard.radar_data if dashboard else {'Marketing': 1, 'Finance': 1, 'Operations': 1, 'Human Resources': 1, 'Legal': 1, 'Strategy': 1})|tojson }};
+
+const ctx = document.getElementById('skillRadar').getContext('2d');
+new Chart(ctx, {
+    type: 'radar',
+    data: {
+        labels: Object.keys(radarData),
+        datasets: [{
+            label: 'Skill Level',
+            data: Object.values(radarData),
+            fill: true,
+            backgroundColor: 'rgba(255, 193, 7, 0.2)',
+            borderColor: 'rgba(255, 193, 7, 1)',
+            pointBackgroundColor: 'rgba(255, 193, 7, 1)',
+            pointBorderColor: '#fff',
+            pointHoverBackgroundColor: '#fff',
+            pointHoverBorderColor: 'rgba(255, 193, 7, 1)'
+        }]
+    },
+    options: {
+        elements: {
+            line: {
+                borderWidth: 3
+            }
+        },
+        scales: {
+            r: {
+                angleLines: {
+                    color: 'rgba(255, 255, 255, 0.2)'
+                },
+                grid: {
+                    color: 'rgba(255, 255, 255, 0.2)'
+                },
+                pointLabels: {
+                    color: '#e0e0e0',
+                    font: {
+                        size: 10,
+                        family: "'Cinzel', serif"
+                    }
+                },
+                ticks: {
+                    color: '#aaa',
+                    backdropColor: 'transparent',
+                    stepSize: 2
+                },
+                suggestedMin: 0,
+                suggestedMax: 10
+            }
+        },
+        plugins: {
+            legend: {
+                display: false
+            }
+        }
+    }
+});
+</script>
+
+<style>
+.dashboard-container {
+    padding: 1rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+}
+
+.dashboard-title {
+    color: #ffc107;
+    font-family: 'Cinzel', serif;
+    font-size: 1.8rem;
+    margin: 0;
+}
+
+.quarter-badge {
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    border: 2px solid #ffc107;
+    border-radius: 12px;
+    padding: 0.5rem 1.5rem;
+    text-align: center;
+}
+
+.quarter-label {
+    display: block;
+    font-size: 0.7rem;
+    color: #aaa;
+    text-transform: uppercase;
+}
+
+.quarter-number {
+    display: block;
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #ffc107;
+    font-family: 'Staatliches', cursive;
+}
+
+.decisions-counter {
+    color: #81c784;
+    font-size: 0.75rem;
+}
+
+.game-over-banner {
+    background: linear-gradient(135deg, #8b0000, #4a0000);
+    border: 3px solid #ff4444;
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    animation: pulse 2s infinite;
+}
+
+.game-over-banner h2 {
+    color: #ff4444;
+    font-size: 2rem;
+    margin: 0.5rem 0;
+}
+
+.warning-banner {
+    background: linear-gradient(135deg, #664d00, #332600);
+    border: 2px solid #ffc107;
+    border-radius: 12px;
+    padding: 1rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.warning-banner i {
+    font-size: 1.5rem;
+    color: #ffc107;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
+.panel {
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    border: 2px solid #333;
+    border-radius: 12px;
+    padding: 1.25rem;
+}
+
+.panel-title {
+    color: #ffc107;
+    font-family: 'Cinzel', serif;
+    font-size: 1rem;
+    margin: 0 0 1rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #333;
+}
+
+.resource-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.resource-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.resource-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.resource-label {
+    color: #e0e0e0;
+    font-size: 0.9rem;
+}
+
+.resource-value {
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.capital-value { color: #81c784; }
+.morale-value { color: #64b5f6; }
+.brand-value { color: #ff8a65; }
+
+.resource-bar-bg {
+    background: #333;
+    border-radius: 8px;
+    height: 12px;
+    overflow: hidden;
+}
+
+.resource-bar {
+    height: 100%;
+    border-radius: 8px;
+    transition: width 0.5s ease;
+}
+
+.capital-bar { background: linear-gradient(90deg, #4caf50, #81c784); }
+.morale-bar { background: linear-gradient(90deg, #2196f3, #64b5f6); }
+.brand-bar { background: linear-gradient(90deg, #ff5722, #ff8a65); }
+
+.resource-bar.warning { background: linear-gradient(90deg, #ff9800, #ffb74d); }
+.resource-bar.critical { background: linear-gradient(90deg, #f44336, #e57373); }
+
+.resource-warning {
+    color: #f44336;
+    font-size: 0.75rem;
+}
+
+.radar-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+.pillar-legend {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.4rem;
+    font-size: 0.75rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: #ccc;
+}
+
+.legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ffc107;
+}
+
+.ticker-tape {
+    max-height: 200px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.ticker-item {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.5rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+}
+
+.ticker-info { background: rgba(100, 181, 246, 0.1); border-left: 3px solid #64b5f6; }
+.ticker-success { background: rgba(129, 199, 132, 0.1); border-left: 3px solid #81c784; }
+.ticker-warning { background: rgba(255, 183, 77, 0.1); border-left: 3px solid #ffb74d; }
+.ticker-crisis { background: rgba(244, 67, 54, 0.1); border-left: 3px solid #f44336; }
+.ticker-opportunity { background: rgba(129, 199, 132, 0.1); border-left: 3px solid #81c784; }
+
+.ticker-time {
+    color: #888;
+    font-size: 0.7rem;
+    white-space: nowrap;
+}
+
+.ticker-text {
+    color: #e0e0e0;
+    flex: 1;
+}
+
+.ticker-impact {
+    font-weight: bold;
+    font-size: 0.8rem;
+}
+
+.ticker-impact.positive { color: #81c784; }
+.ticker-impact.negative { color: #f44336; }
+
+.abilities-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 0.75rem;
+}
+
+.ability-card {
+    background: rgba(0, 0, 0, 0.3);
+    border: 2px solid #333;
+    border-radius: 8px;
+    padding: 0.75rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.ability-card.locked { opacity: 0.5; }
+.ability-card.available { border-color: #64b5f6; }
+.ability-card.unlocked { border-color: #81c784; background: rgba(129, 199, 132, 0.1); }
+
+.ability-icon {
+    font-size: 1.4rem;
+    color: #ffc107;
+    margin-bottom: 0.4rem;
+}
+
+.ability-card.locked .ability-icon { color: #666; }
+
+.ability-info h4 {
+    color: #e0e0e0;
+    font-size: 0.8rem;
+    margin: 0 0 0.2rem 0;
+}
+
+.ability-info small {
+    color: #888;
+    font-size: 0.65rem;
+}
+
+.unlock-progress {
+    font-size: 0.65rem;
+    color: #64b5f6;
+    margin-top: 0.25rem;
+}
+
+.active-badge {
+    display: inline-block;
+    background: #81c784;
+    color: #1a1a1a;
+    font-size: 0.6rem;
+    font-weight: bold;
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    margin-top: 0.2rem;
+}
+
+.action-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+}
+
+.action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #e0e0e0;
+    transition: all 0.3s ease;
+    border: 2px solid #333;
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+    border-color: #ffc107;
+    color: #fff;
+}
+
+.action-btn i {
+    font-size: 1.4rem;
+    margin-bottom: 0.4rem;
+}
+
+.hub-btn { background: linear-gradient(135deg, #1565c0, #0d47a1); }
+.scenario-btn { background: linear-gradient(135deg, #7b1fa2, #4a148c); }
+.training-btn { background: linear-gradient(135deg, #388e3c, #1b5e20); }
+.leaderboard-btn { background: linear-gradient(135deg, #f57c00, #e65100); }
+
+.buffs-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.buff-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    background: rgba(129, 199, 132, 0.15);
+    border-radius: 6px;
+    border-left: 3px solid #81c784;
+}
+
+.buff-item i {
+    color: #81c784;
+    font-size: 1.2rem;
+}
+
+.buff-item span {
+    color: #e0e0e0;
+    font-size: 0.9rem;
+}
+
+.buff-item small {
+    color: #888;
+    margin-left: auto;
+    font-size: 0.75rem;
+}
+
+.achievements-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.achievement-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    background: rgba(255, 193, 7, 0.1);
+    border-radius: 6px;
+    border-left: 3px solid #ffc107;
+}
+
+.achievement-item i {
+    color: #ffc107;
+    font-size: 1.2rem;
+}
+
+.achievement-item span {
+    color: #e0e0e0;
+    font-size: 0.85rem;
+}
+
+@media (max-width: 768px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .action-buttons {
+        grid-template-columns: 1fr;
+    }
+    
+    .abilities-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .dashboard-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .header-right {
+        justify-content: space-between;
+    }
+}
+</style>
 {% endblock %}

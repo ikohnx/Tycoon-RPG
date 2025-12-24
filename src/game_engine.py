@@ -744,12 +744,56 @@ class GameEngine:
                     scenario['scenario_id']
                 )
         
+        from src.company_resources import (
+            update_company_resources, record_decision, apply_ability_modifiers, 
+            check_game_over, add_news_ticker
+        )
+        
+        morale_change = scenario.get(f'{choice_prefix}_morale_change', 0) or 0
+        brand_change = scenario.get(f'{choice_prefix}_brand_change', 0) or 0
+        
+        modifiers = apply_ability_modifiers(
+            self.current_player.player_id, 
+            base_exp=weighted_exp, 
+            base_cash=boosted_cash if boosted_cash > 0 else 0,
+            base_cost=abs(boosted_cash) if boosted_cash < 0 else 0
+        )
+        
+        if boosted_cash > 0:
+            modified_cash = modifiers.get('final_cash', boosted_cash)
+        elif boosted_cash < 0:
+            modified_cash = -modifiers.get('final_cost', abs(boosted_cash))
+        else:
+            modified_cash = 0
+        
+        resource_update = update_company_resources(
+            self.current_player.player_id,
+            capital_change=modified_cash,
+            morale_change=morale_change,
+            brand_change=brand_change
+        )
+        
+        decision_result = record_decision(self.current_player.player_id)
+        
+        game_status = check_game_over(self.current_player.player_id)
+        
+        add_news_ticker(
+            self.current_player.player_id,
+            capital_change=modified_cash,
+            morale_change=morale_change,
+            brand_change=brand_change,
+            headline=f"Decision made: {scenario['scenario_title']}",
+            news_type='success' if modified_cash >= 0 else 'warning'
+        )
+        
         return {
             "success": True,
             "exp_gained": weighted_exp,
             "base_exp": base_exp,
             "cash_change": boosted_cash,
             "reputation_change": boosted_rep,
+            "morale_change": morale_change,
+            "brand_change": brand_change,
             "feedback": feedback,
             "leveled_up": leveled_up,
             "old_level": old_level,
@@ -758,7 +802,11 @@ class GameEngine:
             "new_total_exp": new_exp,
             "promotion": promotion,
             "stars_earned": stars,
-            "advisor_bonuses": advisor_bonuses
+            "advisor_bonuses": advisor_bonuses,
+            "quarter_info": decision_result,
+            "resource_update": resource_update,
+            "game_status": game_status,
+            "ability_modifiers": modifiers
         }
     
     def _calculate_stars(self, scenario: dict, choice: str) -> int:

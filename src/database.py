@@ -134,6 +134,26 @@ def init_database():
     """)
     
     cur.execute("""
+        ALTER TABLE player_profiles 
+        ADD COLUMN IF NOT EXISTS team_morale INTEGER DEFAULT 100;
+    """)
+    
+    cur.execute("""
+        ALTER TABLE player_profiles 
+        ADD COLUMN IF NOT EXISTS brand_equity INTEGER DEFAULT 100;
+    """)
+    
+    cur.execute("""
+        ALTER TABLE player_profiles 
+        ADD COLUMN IF NOT EXISTS fiscal_quarter INTEGER DEFAULT 1;
+    """)
+    
+    cur.execute("""
+        ALTER TABLE player_profiles 
+        ADD COLUMN IF NOT EXISTS decisions_this_quarter INTEGER DEFAULT 0;
+    """)
+    
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS player_discipline_progress (
             progress_id SERIAL PRIMARY KEY,
             player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
@@ -154,6 +174,83 @@ def init_database():
             current_level INTEGER DEFAULT 1,
             current_exp INTEGER DEFAULT 0,
             UNIQUE(player_id, subskill_name)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS skill_tree_abilities (
+            ability_id SERIAL PRIMARY KEY,
+            discipline VARCHAR(100) NOT NULL,
+            prerequisite_subskill VARCHAR(100) NOT NULL,
+            ability_name VARCHAR(100) NOT NULL,
+            ability_code VARCHAR(50) UNIQUE NOT NULL,
+            description TEXT NOT NULL,
+            effect_type VARCHAR(50) NOT NULL,
+            effect_value DECIMAL(10, 2) DEFAULT 1.0,
+            unlock_level INTEGER DEFAULT 3,
+            icon VARCHAR(50) DEFAULT 'star'
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_unlocked_abilities (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            ability_id INTEGER REFERENCES skill_tree_abilities(ability_id) ON DELETE CASCADE,
+            unlocked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            times_used INTEGER DEFAULT 0,
+            last_used_quarter INTEGER,
+            is_active BOOLEAN DEFAULT FALSE,
+            UNIQUE(player_id, ability_id)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS quarterly_events (
+            event_id SERIAL PRIMARY KEY,
+            event_type VARCHAR(50) NOT NULL,
+            event_title VARCHAR(200) NOT NULL,
+            event_description TEXT NOT NULL,
+            capital_impact DECIMAL(10, 2) DEFAULT 0,
+            morale_impact INTEGER DEFAULT 0,
+            brand_impact INTEGER DEFAULT 0,
+            exp_multiplier DECIMAL(5, 2) DEFAULT 1.0,
+            target_discipline VARCHAR(100),
+            is_crisis BOOLEAN DEFAULT FALSE,
+            probability DECIMAL(3, 2) DEFAULT 0.5
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS player_quarterly_history (
+            id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            quarter_number INTEGER NOT NULL,
+            capital_start DECIMAL(15, 2),
+            capital_end DECIMAL(15, 2),
+            morale_start INTEGER,
+            morale_end INTEGER,
+            brand_start INTEGER,
+            brand_end INTEGER,
+            decisions_made INTEGER DEFAULT 0,
+            events_triggered JSONB DEFAULT '[]',
+            abilities_used JSONB DEFAULT '[]',
+            completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(player_id, quarter_number)
+        );
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS news_ticker (
+            news_id SERIAL PRIMARY KEY,
+            player_id INTEGER REFERENCES player_profiles(player_id) ON DELETE CASCADE,
+            news_text TEXT NOT NULL,
+            news_type VARCHAR(50) DEFAULT 'info',
+            related_discipline VARCHAR(100),
+            capital_change DECIMAL(10, 2),
+            morale_change INTEGER,
+            brand_change INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     """)
     
@@ -185,6 +282,28 @@ def init_database():
             storyline_arc VARCHAR(100),
             is_active BOOLEAN DEFAULT TRUE
         );
+    """)
+    
+    cur.execute("""
+        ALTER TABLE scenario_master ADD COLUMN IF NOT EXISTS choice_a_morale_change INTEGER DEFAULT 0;
+    """)
+    cur.execute("""
+        ALTER TABLE scenario_master ADD COLUMN IF NOT EXISTS choice_a_brand_change INTEGER DEFAULT 0;
+    """)
+    cur.execute("""
+        ALTER TABLE scenario_master ADD COLUMN IF NOT EXISTS choice_b_morale_change INTEGER DEFAULT 0;
+    """)
+    cur.execute("""
+        ALTER TABLE scenario_master ADD COLUMN IF NOT EXISTS choice_b_brand_change INTEGER DEFAULT 0;
+    """)
+    cur.execute("""
+        ALTER TABLE scenario_master ADD COLUMN IF NOT EXISTS choice_c_morale_change INTEGER DEFAULT 0;
+    """)
+    cur.execute("""
+        ALTER TABLE scenario_master ADD COLUMN IF NOT EXISTS choice_c_brand_change INTEGER DEFAULT 0;
+    """)
+    cur.execute("""
+        ALTER TABLE scenario_master ADD COLUMN IF NOT EXISTS scenario_type VARCHAR(50) DEFAULT 'opportunity';
     """)
     
     cur.execute("""
@@ -9241,6 +9360,15 @@ def seed_all():
     seed_merchant_puzzles()
     seed_learning_badges()
     seed_learning_paths()
+    seed_company_resources()
+
+
+def seed_company_resources():
+    """Seed skill tree abilities and quarterly events."""
+    from src.company_resources import seed_skill_tree_abilities, seed_quarterly_events
+    seed_skill_tree_abilities()
+    seed_quarterly_events()
+    print("Company resources seeded.")
 
 
 if __name__ == "__main__":

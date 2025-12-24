@@ -1,0 +1,386 @@
+{
+  "crisis_scenarios": [
+    {
+      "scenario_id": "crisis_001",
+      "scenario_type": "crisis",
+      "discipline": "Operations",
+      "title": "Supply Chain Disruption",
+      "narrative": "Your key supplier has just declared bankruptcy. Production is at risk of grinding to a halt within days. Your operations team is anxious, and customers are already asking about delivery delays.",
+      "choices": [
+        {
+          "choice_id": "A",
+          "text": "Pay premium for emergency air-freight from an overseas supplier",
+          "discipline_focus": "Operations",
+          "exp_reward": 30,
+          "cash_change": -3000,
+          "morale_change": 10,
+          "brand_change": 5,
+          "reputation_change": 5,
+          "feedback": "Expensive but effective. Your team appreciates the decisive action, and customers remain satisfied with on-time deliveries."
+        },
+        {
+          "choice_id": "B",
+          "text": "Pivot to a local supplier with slightly higher costs",
+          "discipline_focus": "Strategy",
+          "exp_reward": 50,
+          "cash_change": -1500,
+          "morale_change": 5,
+          "brand_change": 0,
+          "reputation_change": 10,
+          "feedback": "Smart long-term thinking. The new partnership reduces future supply risk and builds local business relationships."
+        },
+        {
+          "choice_id": "C",
+          "text": "Sue the bankrupt supplier for breach of contract",
+          "discipline_focus": "Legal",
+          "exp_reward": 40,
+          "cash_change": -2000,
+          "morale_change": -5,
+          "brand_change": -5,
+          "reputation_change": 0,
+          "feedback": "Legal action initiated, but recovery from a bankrupt company is uncertain. Production still needs an immediate solution."
+        }
+      ]
+    },
+    {
+      "scenario_id": "crisis_002",
+      "scenario_type": "crisis",
+      "discipline": "Human Resources",
+      "title": "Key Employee Resignation",
+      "narrative": "Your star performer just handed in their resignation. They've received a competing offer with 40% higher salary. Other team members are watching closely to see how you respond.",
+      "choices": [
+        {
+          "choice_id": "A",
+          "text": "Match the competitor's offer to retain them",
+          "discipline_focus": "Human Resources",
+          "exp_reward": 25,
+          "cash_change": -5000,
+          "morale_change": 15,
+          "brand_change": 0,
+          "reputation_change": 5,
+          "feedback": "They stay, but this sets a precedent. Other employees may try similar tactics. However, team morale improves seeing you value top performers."
+        },
+        {
+          "choice_id": "B",
+          "text": "Let them go and promote an internal candidate",
+          "discipline_focus": "Strategy",
+          "exp_reward": 35,
+          "cash_change": 0,
+          "morale_change": -5,
+          "brand_change": 0,
+          "reputation_change": 0,
+          "feedback": "The promoted employee is grateful for the opportunity. Some knowledge is lost, but you've shown there's a path for advancement."
+        },
+        {
+          "choice_id": "C",
+          "text": "Negotiate a phased transition with training program",
+          "discipline_focus": "Operations",
+          "exp_reward": 45,
+          "cash_change": -1500,
+          "morale_change": 5,
+          "brand_change": 5,
+          "reputation_change": 10,
+          "feedback": "Professional handling impresses everyone. Knowledge transfer is completed, and you part on good terms. They might even refer future candidates."
+        }
+      ]
+    },
+    {
+      "scenario_id": "crisis_003",
+      "scenario_type": "crisis",
+      "discipline": "Legal",
+      "title": "Customer Data Breach",
+      "narrative": "Your IT team has discovered a security breach. Customer data may have been exposed. Regulators require notification within 72 hours, and the media is already sniffing around.",
+      "choices": [
+        {
+          "choice_id": "A",
+          "text": "Immediately disclose to all stakeholders and offer free credit monitoring",
+          "discipline_focus": "Legal",
+          "exp_reward": 50,
+          "cash_change": -4000,
+          "morale_change": 10,
+          "brand_change": -10,
+          "reputation_change": 15,
+          "feedback": "Transparency is costly but builds long-term trust. Customers appreciate the proactive approach, and regulators note your compliance."
+        },
+        {
+          "choice_id": "B",
+          "text": "Investigate fully before making any public statement",
+          "discipline_focus": "Operations",
+          "exp_reward": 30,
+          "cash_change": -1000,
+          "morale_change": -10,
+          "brand_change": -20,
+          "reputation_change": -10,
+          "feedback": "The delay allows rumors to spread. When you finally announce, people question why it took so long. Regulators are not pleased."
+        },
+        {
+          "choice_id": "C",
+          "text": "Hire a crisis PR firm to manage the narrative",
+          "discipline_focus": "Marketing",
+          "exp_reward": 35,
+          "cash_change": -3000,
+          "morale_change": 0,
+          "brand_change": -5,
+          "reputation_change": 5,
+          "feedback": "Professional crisis management limits damage. The story fades quickly, but some customers remain wary."
+        }
+      ]
+    },
+    {
+      "scenario_id": "crisis_004",
+      "scenario_type": "crisis",
+      "discipline": "Finance",
+      "title": "Cash Flow Crunch",
+      "narrative": "A major client has delayed payment for 90 days, and payroll is due next week. Your bank is reluctant to extend more credit. The team doesn't know yet.",
+      "choices": [
+        {
+          "choice_id": "A",
+          "text": "Negotiate emergency factoring on your receivables",
+          "discipline_focus": "Finance",
+          "exp_reward": 45,
+          "cash_change": -800,
+          "morale_change": 0,
+          "brand_change": 0,
+          "reputation_change": 0,
+          "feedback": "You lose some margin to the factor, but payroll is made. Crisis averted, and the team never knew how close it was."
+        },
+        {
+          "choice_id": "B",
+          "text": "Be transparent with employees and ask for delayed payments",
+          "discipline_focus": "Human Resources",
+          "exp_reward": 30,
+          "cash_change": 0,
+          "morale_change": -25,
+          "brand_change": 0,
+          "reputation_change": 0,
+          "feedback": "Some employees understand, but many are worried. A few start looking for other jobs. Trust is damaged."
+        },
+        {
+          "choice_id": "C",
+          "text": "Pursue aggressive collection with the late client",
+          "discipline_focus": "Legal",
+          "exp_reward": 35,
+          "cash_change": 2000,
+          "morale_change": 5,
+          "brand_change": -5,
+          "reputation_change": -5,
+          "feedback": "You get partial payment, but the relationship is strained. They may not renew their contract next year."
+        }
+      ]
+    }
+  ],
+  "opportunity_scenarios": [
+    {
+      "scenario_id": "opp_001",
+      "scenario_type": "opportunity",
+      "discipline": "Marketing",
+      "title": "Viral Social Media Moment",
+      "narrative": "A customer's positive review has gone viral. You have a 24-hour window to capitalize on this unexpected publicity. Your marketing budget for the month is already allocated.",
+      "choices": [
+        {
+          "choice_id": "A",
+          "text": "Boost the viral post with paid advertising",
+          "discipline_focus": "Marketing",
+          "exp_reward": 40,
+          "cash_change": -1500,
+          "morale_change": 10,
+          "brand_change": 20,
+          "reputation_change": 15,
+          "feedback": "The investment pays off! Your brand reaches millions of potential customers. Sales inquiries spike for weeks."
+        },
+        {
+          "choice_id": "B",
+          "text": "Respond personally and offer the customer a brand ambassador role",
+          "discipline_focus": "Human Resources",
+          "exp_reward": 35,
+          "cash_change": -500,
+          "morale_change": 15,
+          "brand_change": 15,
+          "reputation_change": 20,
+          "feedback": "Authentic engagement resonates with audiences. The customer becomes a loyal advocate, creating ongoing organic promotion."
+        },
+        {
+          "choice_id": "C",
+          "text": "Launch an impromptu flash sale to capture the attention",
+          "discipline_focus": "Strategy",
+          "exp_reward": 30,
+          "cash_change": 3000,
+          "morale_change": 5,
+          "brand_change": 5,
+          "reputation_change": 10,
+          "feedback": "Quick revenue boost! However, some existing customers feel left out of the deal. Mixed long-term impact."
+        }
+      ]
+    },
+    {
+      "scenario_id": "opp_002",
+      "scenario_type": "opportunity",
+      "discipline": "Strategy",
+      "title": "Acquisition Offer",
+      "narrative": "A larger competitor has approached you about acquiring your company. They're offering a premium valuation, but your team has mixed feelings about losing independence.",
+      "choices": [
+        {
+          "choice_id": "A",
+          "text": "Decline and double down on independent growth",
+          "discipline_focus": "Strategy",
+          "exp_reward": 50,
+          "cash_change": 0,
+          "morale_change": 20,
+          "brand_change": 10,
+          "reputation_change": 15,
+          "feedback": "Your team is energized by your commitment to the vision. You've sent a signal to the market about your confidence."
+        },
+        {
+          "choice_id": "B",
+          "text": "Negotiate a strategic partnership instead of acquisition",
+          "discipline_focus": "Legal",
+          "exp_reward": 45,
+          "cash_change": 5000,
+          "morale_change": 5,
+          "brand_change": 5,
+          "reputation_change": 10,
+          "feedback": "Best of both worlds. You maintain control while gaining access to their resources and distribution channels."
+        },
+        {
+          "choice_id": "C",
+          "text": "Use the offer as leverage to seek other investors",
+          "discipline_focus": "Finance",
+          "exp_reward": 40,
+          "cash_change": 3000,
+          "morale_change": 0,
+          "brand_change": 0,
+          "reputation_change": 5,
+          "feedback": "The competitive interest drives up your valuation. New investors are impressed by the acquisition offer."
+        }
+      ]
+    },
+    {
+      "scenario_id": "opp_003",
+      "scenario_type": "opportunity",
+      "discipline": "Operations",
+      "title": "Automation Technology",
+      "narrative": "A new AI-powered system could automate 30% of your operational tasks. Implementation would take 3 months and require retraining staff. The ROI projections look promising.",
+      "choices": [
+        {
+          "choice_id": "A",
+          "text": "Full implementation with comprehensive training program",
+          "discipline_focus": "Operations",
+          "exp_reward": 50,
+          "cash_change": -8000,
+          "morale_change": -10,
+          "brand_change": 10,
+          "reputation_change": 15,
+          "feedback": "Disruption during implementation, but long-term efficiency gains are significant. Staff appreciate the investment in their skills."
+        },
+        {
+          "choice_id": "B",
+          "text": "Pilot in one department before company-wide rollout",
+          "discipline_focus": "Strategy",
+          "exp_reward": 40,
+          "cash_change": -3000,
+          "morale_change": 5,
+          "brand_change": 5,
+          "reputation_change": 10,
+          "feedback": "Lower risk approach yields valuable learnings. The pilot team becomes internal champions for the technology."
+        },
+        {
+          "choice_id": "C",
+          "text": "Wait for the technology to mature and prices to drop",
+          "discipline_focus": "Finance",
+          "exp_reward": 20,
+          "cash_change": 0,
+          "morale_change": 0,
+          "brand_change": -5,
+          "reputation_change": -5,
+          "feedback": "Prudent financially, but competitors who adopt early may gain an advantage. Innovation reputation takes a small hit."
+        }
+      ]
+    },
+    {
+      "scenario_id": "opp_004",
+      "scenario_type": "opportunity",
+      "discipline": "Finance",
+      "title": "Investment Opportunity",
+      "narrative": "You have excess capital and two investment options: expand into a new market or acquire a smaller competitor. Both have potential but carry different risk profiles.",
+      "choices": [
+        {
+          "choice_id": "A",
+          "text": "Expand into the new market organically",
+          "discipline_focus": "Marketing",
+          "exp_reward": 40,
+          "cash_change": -6000,
+          "morale_change": 10,
+          "brand_change": 15,
+          "reputation_change": 10,
+          "feedback": "Organic growth builds a strong foundation. Your team learns the new market deeply, creating sustainable competitive advantage."
+        },
+        {
+          "choice_id": "B",
+          "text": "Acquire the competitor for immediate market share",
+          "discipline_focus": "Finance",
+          "exp_reward": 45,
+          "cash_change": -10000,
+          "morale_change": -5,
+          "brand_change": 10,
+          "reputation_change": 15,
+          "feedback": "Instant scale, but integration challenges arise. Cultures clash initially before finding common ground."
+        },
+        {
+          "choice_id": "C",
+          "text": "Keep cash reserves for future opportunities",
+          "discipline_focus": "Strategy",
+          "exp_reward": 25,
+          "cash_change": 0,
+          "morale_change": 0,
+          "brand_change": 0,
+          "reputation_change": 0,
+          "feedback": "Conservative but safe. You maintain optionality for unexpected opportunities or challenges ahead."
+        }
+      ]
+    }
+  ],
+  "tutorial_scenarios": [
+    {
+      "scenario_id": "tutorial_001",
+      "scenario_type": "tutorial",
+      "discipline": "Marketing",
+      "title": "Your First Campaign",
+      "narrative": "Welcome to your new role! Your first task is to plan a marketing campaign for the upcoming product launch. Your budget is limited, and expectations are high.",
+      "choices": [
+        {
+          "choice_id": "A",
+          "text": "Focus on social media for broad reach",
+          "discipline_focus": "Marketing",
+          "exp_reward": 30,
+          "cash_change": -500,
+          "morale_change": 5,
+          "brand_change": 10,
+          "reputation_change": 5,
+          "feedback": "Great choice for a limited budget! Social media provides excellent reach and engagement opportunities."
+        },
+        {
+          "choice_id": "B",
+          "text": "Invest in targeted email marketing",
+          "discipline_focus": "Marketing",
+          "exp_reward": 25,
+          "cash_change": -300,
+          "morale_change": 5,
+          "brand_change": 5,
+          "reputation_change": 10,
+          "feedback": "Email marketing has excellent ROI and allows direct customer communication. Smart use of your budget."
+        },
+        {
+          "choice_id": "C",
+          "text": "Plan a launch event with local press",
+          "discipline_focus": "Marketing",
+          "exp_reward": 35,
+          "cash_change": -800,
+          "morale_change": 10,
+          "brand_change": 15,
+          "reputation_change": 15,
+          "feedback": "Events create memorable experiences! The personal touch generates buzz and media coverage."
+        }
+      ]
+    }
+  ]
+}
