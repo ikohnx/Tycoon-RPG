@@ -306,6 +306,10 @@ function checkAnswer() {
         completeBtn.disabled = false;
         completeHint.innerHTML = '<small style="color: #81c784;">Great job! You can now continue.</small>';
         document.getElementById('dot-practice').classList.add('completed');
+        
+        if (typeof GameEffects !== 'undefined') {
+            GameEffects.incrementStreak();
+        }
     } else {
         feedbackArea.innerHTML = `
             <div class="feedback-incorrect mt-3">
@@ -316,6 +320,11 @@ function checkAnswer() {
         `;
         completeBtn.disabled = false;
         completeHint.innerHTML = '<small>Review the explanation and continue when ready.</small>';
+        
+        if (typeof GameEffects !== 'undefined') {
+            GameEffects.resetStreak();
+            GameEffects.shakeElement(document.getElementById('practice-answer'));
+        }
     }
 }
 

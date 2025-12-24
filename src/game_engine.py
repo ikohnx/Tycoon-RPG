@@ -8,7 +8,97 @@ Handles:
 - Game state management
 """
 
+import random
 from src.database import get_connection, return_connection
+
+ADVISOR_QUOTES = {
+    'Marketing': [
+        "A customer told is nice. A customer who SHOWS others? That's gold.",
+        "Your brand isn't what you say it is. It's what they say it is.",
+        "Marketing is telling the story. Sales is asking for the ending.",
+        "The best marketing doesn't feel like marketing.",
+        "Half the money I spend on advertising is wasted. The trouble is I don't know which half.",
+        "People don't buy products. They buy better versions of themselves.",
+        "Content is fire. Social media is gasoline.",
+        "Make the customer the hero of your story.",
+        "Good marketing makes the company look smart. Great marketing makes the customer feel smart.",
+        "The aim of marketing is to know the customer so well the product sells itself."
+    ],
+    'Finance': [
+        "Revenue is vanity, profit is sanity, but cash is king.",
+        "Profit isn't real until it's in the bank.",
+        "Never confuse a healthy income statement with a healthy bank account.",
+        "In business, the rear-view mirror is always clearer than the windshield.",
+        "The first rule of compounding: Never interrupt it unnecessarily.",
+        "Risk comes from not knowing what you're doing.",
+        "Price is what you pay. Value is what you get.",
+        "It's not about timing the market. It's about time IN the market.",
+        "A budget tells your money where to go instead of wondering where it went.",
+        "Beware of little expenses. A small leak will sink a great ship."
+    ],
+    'Operations': [
+        "You can't manage what you can't measure.",
+        "Efficiency is doing things right. Effectiveness is doing the right things.",
+        "The bottleneck is the ceiling of your output.",
+        "Inventory is money sitting around in another form.",
+        "Quality is not an act, it's a habit.",
+        "Simplify, then add lightness.",
+        "The best process is the one that gets used.",
+        "Speed without direction is just chaos.",
+        "Every system is perfectly designed to get the results it gets.",
+        "Fix the process, not the blame."
+    ],
+    'Human Resources': [
+        "Train people well enough so they can leave. Treat them well enough so they don't want to.",
+        "Culture eats strategy for breakfast.",
+        "Hire character. Train skill.",
+        "Your first hire sets your culture. Choose wisely.",
+        "The strength of the team is each individual member. The strength of each member is the team.",
+        "Great vision without great people is irrelevant.",
+        "People don't leave bad jobs. They leave bad managers.",
+        "Feedback is a gift. Even when it's wrapped poorly.",
+        "Diversity is being invited to the party. Inclusion is being asked to dance.",
+        "An employee's motivation is a direct result of the sum of interactions with their manager."
+    ],
+    'Legal': [
+        "The best contract is the one you never have to enforce.",
+        "An ounce of prevention is worth a pound of litigation.",
+        "In law, nothing is certain except the expense.",
+        "A verbal agreement isn't worth the paper it's written on.",
+        "The devil is in the details. So is the lawyer.",
+        "Assume everything you write will be read aloud in court.",
+        "Compliance isn't a burden. It's a shield.",
+        "Document everything. Memory fades, but paper doesn't.",
+        "The law is a profession of words. Choose them carefully.",
+        "Better to ask permission than to beg forgiveness. Legally speaking."
+    ],
+    'Strategy': [
+        "Strategy without tactics is the slowest route to victory. Tactics without strategy is the noise before defeat.",
+        "The essence of strategy is choosing what NOT to do.",
+        "Culture is strategy's breakfast, lunch, and dinner.",
+        "In the middle of difficulty lies opportunity.",
+        "If you don't know where you're going, any road will get you there.",
+        "The competitor to be feared is one who never bothers about you at all.",
+        "Good strategy means saying no to a lot of good ideas.",
+        "The only sustainable competitive advantage is the ability to learn faster than your competition.",
+        "Vision without execution is hallucination.",
+        "A goal without a plan is just a wish."
+    ]
+}
+
+
+def get_random_advisor_quote(discipline=None):
+    """Get a random advisor quote, optionally filtered by discipline."""
+    if discipline and discipline in ADVISOR_QUOTES:
+        quotes = ADVISOR_QUOTES[discipline]
+    else:
+        all_quotes = []
+        for disc_quotes in ADVISOR_QUOTES.values():
+            all_quotes.extend(disc_quotes)
+        quotes = all_quotes
+    return random.choice(quotes) if quotes else ""
+
+
 from src.leveling import (
     calculate_weighted_exp, 
     check_level_up, 

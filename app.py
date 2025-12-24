@@ -130,12 +130,13 @@ def hub():
     prestige_status = engine.get_prestige_status()
     leaderboard = engine.get_leaderboard(5)
     
-    from src.game_engine import get_player_next_step
+    from src.game_engine import get_player_next_step, get_random_advisor_quote
     next_step = get_player_next_step(player_id)
+    advisor_quote = get_random_advisor_quote()
     
     return render_template('hub.html', stats=stats, energy=energy, login_status=login_status, 
                           idle_income=idle_income, prestige_status=prestige_status, leaderboard=leaderboard,
-                          is_new_player=is_new_player, next_step=next_step)
+                          is_new_player=is_new_player, next_step=next_step, advisor_quote=advisor_quote)
 
 
 @app.route('/dismiss_onboarding', methods=['POST'])

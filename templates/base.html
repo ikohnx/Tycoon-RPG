@@ -636,6 +636,226 @@
             100% { transform: scale(1); text-shadow: 0 0 10px #50c878; color: #50c878; }
         }
         
+        @keyframes confettiFall {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+        
+        @keyframes floatUp {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-80px); opacity: 0; }
+        }
+        
+        @keyframes popIn {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+            50% { transform: translate(-50%, -50%) scale(1.1); }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+        
+        @keyframes popOut {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+        }
+        
+        @keyframes slideDown {
+            0% { transform: translateX(-50%) translateY(-100px); opacity: 0; }
+            100% { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            0% { transform: translateX(-50%) translateY(0); opacity: 1; }
+            100% { transform: translateX(-50%) translateY(-100px); opacity: 0; }
+        }
+        
+        @keyframes starPop {
+            0% { transform: scale(0) rotate(-180deg); }
+            50% { transform: scale(1.3) rotate(10deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-10px); }
+            40% { transform: translateX(10px); }
+            60% { transform: translateX(-10px); }
+            80% { transform: translateX(10px); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); box-shadow: 0 0 20px currentColor; }
+        }
+        
+        .levelup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10001;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .levelup-overlay.active {
+            opacity: 1;
+        }
+        
+        .levelup-content {
+            text-align: center;
+            animation: popIn 0.5s ease-out;
+        }
+        
+        .levelup-flash {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 300px;
+            height: 300px;
+            transform: translate(-50%, -50%);
+            background: radial-gradient(circle, rgba(255, 215, 0, 0.4), transparent 70%);
+            animation: pulse 1s infinite;
+            pointer-events: none;
+        }
+        
+        .levelup-badge {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, #ffd700, #ff8c00);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 3.5rem;
+            color: #1a1a2e;
+            box-shadow: 0 0 40px rgba(255, 215, 0, 0.6);
+            animation: pulse 1.5s infinite;
+        }
+        
+        .levelup-title {
+            font-family: 'Cinzel', serif;
+            font-size: 3rem;
+            color: #ffd700;
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+            margin-bottom: 0.5rem;
+            letter-spacing: 5px;
+        }
+        
+        .levelup-discipline {
+            font-size: 1.2rem;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 1.5rem;
+        }
+        
+        .levelup-levels {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .levelup-levels .old-level {
+            font-size: 2.5rem;
+            color: #666;
+        }
+        
+        .levelup-levels .new-level {
+            font-size: 3.5rem;
+            color: #4ecdc4;
+            font-weight: bold;
+            text-shadow: 0 0 20px rgba(78, 205, 196, 0.6);
+        }
+        
+        .levelup-arrow {
+            font-size: 2rem;
+            color: #ffd700;
+            animation: pulse 0.8s infinite;
+        }
+        
+        .levelup-new-title {
+            font-size: 1.5rem;
+            color: #81c784;
+            margin-bottom: 1.5rem;
+            font-style: italic;
+        }
+        
+        .levelup-rewards {
+            margin-bottom: 2rem;
+        }
+        
+        .reward-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #9c27b0, #673ab7);
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border-radius: 25px;
+            font-weight: bold;
+        }
+        
+        .levelup-continue {
+            background: linear-gradient(135deg, #4caf50, #388e3c);
+            color: white;
+            border: none;
+            padding: 1rem 3rem;
+            font-size: 1.2rem;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+        
+        .levelup-continue:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 25px rgba(76, 175, 80, 0.5);
+        }
+        
+        .streak-banner .streak-icon {
+            font-size: 2rem;
+        }
+        
+        .streak-banner .streak-title {
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        
+        .streak-banner .streak-subtitle {
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+        
+        .streak-banner .streak-count {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+        
+        .reward-popup-content h3 {
+            color: #ffd700;
+            margin-bottom: 1rem;
+        }
+        
+        .reward-items {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        .reward-item {
+            font-size: 1.3rem;
+            font-weight: bold;
+        }
+        
+        .reward-item.exp { color: #64b5f6; }
+        .reward-item.cash { color: #ffd700; }
+        .reward-item.rep { color: #81c784; }
+        
         .gold-text {
             color: #ffd700;
             text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
@@ -1037,6 +1257,7 @@
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/game-effects.js"></script>
     
     <div id="pwa-install-banner" style="display: none; position: fixed; bottom: 0; left: 0; right: 0; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-top: 2px solid #ffd700; padding: 16px; z-index: 9999; box-shadow: 0 -4px 20px rgba(0,0,0,0.5);">
         <div class="container d-flex align-items-center justify-content-between">

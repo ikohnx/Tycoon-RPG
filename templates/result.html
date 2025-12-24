@@ -25,16 +25,11 @@
                 </div>
                 
                 {% if result.leveled_up %}
-                <div class="alert alert-warning text-center mb-4 level-up-animation">
-                    <h3 class="mb-2">
-                        <i class="bi bi-trophy-fill"></i> LEVEL UP!
-                    </h3>
-                    <p class="mb-0">
-                        {{ result.discipline }}: Level {{ result.old_level }} 
-                        <i class="bi bi-arrow-right"></i> 
-                        Level {{ result.new_level }}
-                    </p>
-                    <small>New Title: {{ result.level_title }}</small>
+                <div id="levelup-trigger" 
+                     data-old-level="{{ result.old_level }}"
+                     data-new-level="{{ result.new_level }}"
+                     data-discipline="{{ result.discipline }}"
+                     data-title="{{ result.level_title }}">
                 </div>
                 {% endif %}
                 
@@ -197,4 +192,38 @@
     }
 }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+        if (typeof GameEffects !== 'undefined') {
+            GameEffects.playCoinSound();
+            
+            const stars = document.querySelectorAll('.star-rating-large .bi-star-fill');
+            stars.forEach((star, index) => {
+                setTimeout(() => {
+                    star.style.transform = 'scale(0)';
+                    star.style.transition = 'transform 0.4s ease-out';
+                    setTimeout(() => {
+                        star.style.transform = 'scale(1)';
+                        GameEffects.playStarSound(index + 1);
+                    }, 50);
+                }, index * 400);
+            });
+            
+            const levelupTrigger = document.getElementById('levelup-trigger');
+            if (levelupTrigger) {
+                setTimeout(function() {
+                    GameEffects.showLevelUpCelebration(
+                        levelupTrigger.dataset.oldLevel,
+                        levelupTrigger.dataset.newLevel,
+                        levelupTrigger.dataset.discipline,
+                        levelupTrigger.dataset.title
+                    );
+                }, 1500);
+            }
+        }
+    }, 500);
+});
+</script>
 {% endblock %}
