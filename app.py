@@ -243,6 +243,27 @@ def hub():
                           news_ticker=news_ticker, feature_access=feature_access)
 
 
+@app.route('/explore')
+@app.route('/explore/<map_id>')
+@login_required
+def explore(map_id='hub'):
+    player_id = session.get('player_id')
+    if not player_id:
+        return redirect(url_for('index'))
+    
+    engine = get_engine()
+    engine.load_player(player_id)
+    energy = engine.get_player_energy()
+    
+    from src.company_resources import get_company_resources
+    resources = get_company_resources(player_id)
+    
+    return render_template('explore.html', 
+                          current_map=map_id,
+                          resources=resources,
+                          energy=energy)
+
+
 @app.route('/dismiss_onboarding', methods=['POST'])
 @login_required
 def dismiss_onboarding():

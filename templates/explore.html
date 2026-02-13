@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+
+{% block title %}Explore - Business Tycoon RPG{% endblock %}
+
+{% block extra_head %}
+<style>
+    body {
+        overflow: hidden;
+        margin: 0;
+        padding: 0;
+        background: #000;
+    }
+    .navbar, footer, .hud-resources-bar {
+        display: none !important;
+    }
+    #explore-container {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: #000;
+    }
+    #game-canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+    }
+    #dpad {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        width: 140px;
+        height: 140px;
+        z-index: 100;
+        display: none;
+    }
+    .dpad-btn {
+        position: absolute;
+        width: 46px;
+        height: 46px;
+        background: rgba(255,255,255,0.15);
+        border: 2px solid rgba(255,255,255,0.3);
+        border-radius: 8px;
+        color: #fff;
+        font-size: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: none;
+    }
+    .dpad-btn:active {
+        background: rgba(255,255,255,0.35);
+    }
+    #dpad-up { top: 0; left: 47px; }
+    #dpad-down { bottom: 0; left: 47px; }
+    #dpad-left { top: 47px; left: 0; }
+    #dpad-right { top: 47px; right: 0; }
+    #action-buttons {
+        position: fixed;
+        bottom: 30px;
+        right: 20px;
+        z-index: 100;
+        display: none;
+    }
+    #btn-action {
+        width: 60px;
+        height: 60px;
+        background: rgba(68, 136, 255, 0.3);
+        border: 2px solid rgba(68, 136, 255, 0.6);
+        border-radius: 50%;
+        color: #fff;
+        font-size: 14px;
+        font-weight: bold;
+        cursor: pointer;
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: none;
+    }
+    #btn-action:active {
+        background: rgba(68, 136, 255, 0.6);
+    }
+    #btn-menu {
+        position: fixed;
+        top: 50px;
+        right: 10px;
+        width: 40px;
+        height: 40px;
+        background: rgba(0,0,51,0.8);
+        border: 2px solid #4444aa;
+        border-radius: 6px;
+        color: #fff;
+        font-size: 18px;
+        cursor: pointer;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    #menu-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0;
+        width: 100vw; height: 100vh;
+        background: rgba(0,0,30,0.9);
+        z-index: 200;
+    }
+    #menu-panel {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: #000033;
+        border: 3px solid #4444aa;
+        border-radius: 8px;
+        padding: 30px;
+        min-width: 300px;
+        text-align: center;
+    }
+    #menu-panel h2 {
+        color: #ffcc00;
+        font-family: monospace;
+        margin-bottom: 20px;
+    }
+    .menu-item {
+        display: block;
+        width: 100%;
+        padding: 12px 20px;
+        margin: 8px 0;
+        background: transparent;
+        border: 2px solid #4444aa;
+        border-radius: 4px;
+        color: #fff;
+        font-family: monospace;
+        font-size: 16px;
+        cursor: pointer;
+        text-decoration: none;
+        text-align: center;
+    }
+    .menu-item:hover {
+        background: rgba(68,68,170,0.3);
+        color: #ffcc00;
+    }
+    #loading-screen {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100vw; height: 100vh;
+        background: #000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 500;
+        color: #fff;
+        font-family: monospace;
+    }
+    #loading-screen h2 {
+        color: #ffcc00;
+        margin-bottom: 20px;
+    }
+    .loading-bar {
+        width: 300px;
+        height: 20px;
+        border: 2px solid #4444aa;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    .loading-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #4444aa, #6666cc);
+        width: 0%;
+        animation: loadAnim 1.5s ease-out forwards;
+    }
+    @keyframes loadAnim {
+        0% { width: 0%; }
+        100% { width: 100%; }
+    }
+    @media (pointer: coarse), (max-width: 768px) {
+        #dpad, #action-buttons { display: block; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="loading-screen">
+    <h2>BUSINESS TYCOON RPG</h2>
+    <p>Loading Business Town...</p>
+    <div class="loading-bar">
+        <div class="loading-fill"></div>
+    </div>
+</div>
+
+<div id="explore-container">
+    <canvas id="game-canvas"></canvas>
+</div>
+
+<div id="dpad">
+    <div class="dpad-btn" id="dpad-up">&#9650;</div>
+    <div class="dpad-btn" id="dpad-down">&#9660;</div>
+    <div class="dpad-btn" id="dpad-left">&#9664;</div>
+    <div class="dpad-btn" id="dpad-right">&#9654;</div>
+</div>
+<div id="action-buttons">
+    <button id="btn-action">ACT</button>
+</div>
+
+<button id="btn-menu" onclick="toggleMenu()">&#9776;</button>
+
+<div id="menu-overlay">
+    <div id="menu-panel">
+        <h2>MENU</h2>
+        <a href="{{ url_for('hub') }}" class="menu-item">Hub Dashboard</a>
+        <a href="{{ url_for('command_center') }}" class="menu-item">Command Center</a>
+        <a href="{{ url_for('inventory') }}" class="menu-item">Inventory</a>
+        <a href="{{ url_for('progress') }}" class="menu-item">Progress</a>
+        <a href="{{ url_for('settings') }}" class="menu-item">Settings</a>
+        <button class="menu-item" onclick="toggleMenu()">Resume Game</button>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/rpg/engine.js') }}"></script>
+<script src="{{ url_for('static', filename='js/rpg/maps.js') }}"></script>
+<script>
+const gameData = {
+    capital: {{ resources.capital | default(10000) }},
+    morale: {{ resources.morale | default(80) }},
+    brand: {{ resources.brand_equity | default(100) }},
+    quarter: {{ resources.fiscal_quarter | default(1) }},
+    energy: {{ energy.current_energy | default(100) }}
+};
+
+let menuOpen = false;
+function toggleMenu() {
+    menuOpen = !menuOpen;
+    document.getElementById('menu-overlay').style.display = menuOpen ? 'block' : 'none';
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        toggleMenu();
+        e.preventDefault();
+    }
+});
+
+function handleNPCInteract(npc) {
+    if (npc.route) {
+        if (confirm('Go to ' + npc.name + '?')) {
+            window.location.href = npc.route;
+        }
+    }
+}
+
+function handleTransition(target, spawnX, spawnY) {
+    if (target === 'world_map') {
+        window.location.href = '{{ url_for("hub") }}';
+        return;
+    }
+    const map = RPGMaps.getMap(target);
+    if (map) {
+        if (spawnX !== undefined) map.spawnX = spawnX;
+        if (spawnY !== undefined) map.spawnY = spawnY;
+        RPGEngine.loadMap(map);
+    }
+}
+
+setTimeout(function() {
+    document.getElementById('loading-screen').style.display = 'none';
+
+    RPGEngine.init('game-canvas', {
+        onInteract: handleNPCInteract,
+        onTransition: handleTransition,
+        hudData: gameData
+    });
+
+    const startMap = RPGMaps.getMap('{{ current_map | default("hub") }}');
+    RPGEngine.loadMap(startMap);
+    RPGEngine.start();
+}, 1600);
+</script>
+{% endblock %}

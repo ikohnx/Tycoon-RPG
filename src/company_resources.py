@@ -397,19 +397,23 @@ def get_company_resources(player_id: int) -> dict:
     return_connection(conn)
     
     if result:
+        morale_val = result['team_morale'] or 100
+        brand_val = result['brand_equity'] or 100
         return {
             'capital': float(result['total_cash'] or 10000),
-            'morale': result['team_morale'] or 100,
-            'brand_equity': result['brand_equity'] or 100,
+            'morale': morale_val,
+            'team_morale': morale_val,
+            'brand_equity': brand_val,
             'fiscal_quarter': result['fiscal_quarter'] or 1,
             'decisions_this_quarter': result['decisions_this_quarter'] or 0,
-            'is_bankrupt': (result['brand_equity'] or 100) <= 0,
-            'is_demoralized': (result['team_morale'] or 100) <= 0
+            'is_bankrupt': brand_val <= 0,
+            'is_demoralized': morale_val <= 0
         }
     
     return {
         'capital': 10000,
         'morale': 100,
+        'team_morale': 100,
         'brand_equity': 100,
         'fiscal_quarter': 1,
         'decisions_this_quarter': 0,
