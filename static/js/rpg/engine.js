@@ -175,6 +175,7 @@ const RPGEngine = (function() {
     }
 
     function update(dt) {
+        if (overlayActive) return;
         if (choiceActive) return;
         if (dialogueActive) { updateDialogue(dt); return; }
         updatePlayer(dt);
@@ -1301,5 +1302,9 @@ const RPGEngine = (function() {
     }
     function isDialogueActive() { return dialogueActive; }
 
-    return { init, loadMap, start, stop, updateHUD, setPlayerPosition, showDialogue, isDialogueActive, PAL: C, SCALED_TILE: TS };
+    let overlayActive = false;
+    function setOverlayActive(v) { overlayActive = v; }
+    function isOverlayActive() { return overlayActive; }
+
+    return { init, loadMap, start, stop, updateHUD, setPlayerPosition, showDialogue, showChoice, isDialogueActive, isOverlayActive, setOverlayActive, PAL: C, SCALED_TILE: TS };
 })();

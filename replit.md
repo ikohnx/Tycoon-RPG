@@ -45,10 +45,18 @@ The game is built as a Flask web application with a responsive, mobile-first UI,
 
 **Technical Implementations:**
 -   **Business Mastery Simulation:** Implements Capital, Team Morale, and Brand Equity tracking. Fiscal quarters advance with decisions, triggering quarterly events. Features a skill tree with 6 discipline-specific abilities.
--   **Explorable 2D RPG Map System:** HTML5 Canvas-based 2D tile engine with camera scrolling, player movement (arrow keys/WASD, mobile D-pad), collision detection, and sprite rendering. Includes a dialogue system, NPC interactions, and map transitions.
--   **Resource Integration & Feature Gating:** Server-side `check_feature_requirements()` and `deduct_feature_cost()` enforce resource costs. Uses `@feature_gated`, `@game_over_check`, and `@energy_required` decorators for route protection.
--   **Security & Infrastructure:** Bcrypt for password hashing, `@login_required` for route protection, PostgreSQL connection pooling, and request-scoped `GameEngine` instances.
+-   **Explorable 2D RPG Map System:** HTML5 Canvas-based 2D tile engine with FF-style grid-based stepping movement (180ms per tile, input locked during steps). Camera scrolling, collision detection, sprite rendering with walk cycle animations. Includes dialogue system, NPC interactions, and map transitions. Characters use tileX/tileY for grid position and px/py for interpolated pixel rendering.
+-   **In-Game Overlay System:** All gameplay happens inside the 2D map view. NPC interactions open FF-styled overlay panels for scenarios, shop, and status instead of redirecting to external pages. JSON API endpoints (`/api/stats`, `/api/scenarios/<discipline>`, `/api/shop`, `/api/buy/<item_id>`, `/api/play/<scenario_id>`, `/api/choose/<scenario_id>/<choice>`) serve data to overlays. FF-style pause menu (Escape key) shows Status, Skills, and Items panels. Toast notifications for purchase feedback. Engine pauses when overlays are active.
+-   **Resource Integration & Feature Gating:** Server-side `check_feature_requirements()` and `deduct_feature_cost()` enforce resource costs. Uses `@feature_gated`, `@game_over_check`, and `@energy_required` decorators for route protection. API endpoints include energy and completion checks.
+-   **Security & Infrastructure:** Bcrypt for password hashing, `@login_required` for route protection, CSRF token validation via X-CSRFToken header for API calls, PostgreSQL connection pooling, and request-scoped `GameEngine` instances.
 -   **Mobile & Cross-Platform Support:** Full Progressive Web App (PWA) implementation for offline caching and "Add to Home Screen" functionality. Capacitor configuration for native iOS and Android builds. Responsive design enhancements for touch interactions, safe areas, and accessibility modes.
+
+## Recent Changes (Feb 2026)
+-   Converted all in-game interactions from external page redirects to in-game FF-styled overlay panels
+-   Added JSON API endpoints for scenarios, shop, inventory, and player stats
+-   Implemented FF-style pause menu replacing hamburger menu links
+-   HUD auto-updates after in-game actions (gold, energy, morale, brand)
+-   Engine supports overlay pause state to prevent movement during panel interaction
 
 ## External Dependencies
 -   **PostgreSQL:** Relational database for all game data persistence.
