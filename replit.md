@@ -54,11 +54,11 @@ The game is built as a Flask web application with a responsive, mobile-first UI,
 ## Recent Changes (Feb 2026)
 -   FF6-quality graphics overhaul: SNES-authentic dithering patterns, material-specific textures (metal specular, wood grain, stone roughness, fabric folds), proper edge beveling with consistent top-left lighting
 -   Dither helper function for checkerboard color blending (FF6's signature SNES look)
--   All 26 tile types rewritten with FF6-level detail: dithered grass gradients with tufts/wildflowers, cobblestones with individual mortar/highlights/wear, animated water with caustic patterns/foam/depth layers, bricks with surface texture/cracks/ambient occlusion, wood with visible grain/knots/nail heads, curved roof tiles with overlap shadows
--   Character sprites upgraded to FF6 chibi quality: rounded head shapes, 4-layer hair shading with spiky details, expressive eyes (sclera/iris/pupil/highlight), clothing wrinkle lines, metallic belt buckles, boot lacing, ear detail on side views
--   Expanded color palette from 141 to 188 colors: metallic series (mtl1-mtl4), grass intermediates (g6-g10), wood grain shades (wd4-wd7, wdm1-wdm3), stone textures (st1-st7, stm1-stm3), brick detail (bk1-bk8), roof tile shades (rf1-rf6), water depth layers (w1-w9)
+-   Chrono Trigger-quality tile rendering: true SNES checkerboard dithering (pixel-by-pixel alternating pattern), 6-layer dithered grass gradients with blade clusters/pebbles/mushrooms, multi-layer tree canopies with bark detail/knot holes/root bumps/overflow branches, cobblestones with rounded shapes and grass tufts, 5-layer deep water with animated caustics/ripples/foam
+-   Character sprites upgraded to CT chibi quality: rounded head shapes with hair spikes, 4-layer hair shading, expressive eyes (sclera/iris/pupil/highlight), nose/ear detail on side views, clothing wrinkle lines, metallic belt buckles, boot soles with lacing
+-   Expanded color palette to 198 colors: deep shadow greens (gsh1-3), bark detail (tkh/tkg), canopy intermediates (trc/trd), metallic series (mtl1-4), material-specific intermediates for all tile types
 -   Enhanced shadows with 4-layer graduated ellipses and interaction bubbles with shimmer sparkle effects
--   D=1 rendering system maintained: 48x48 addressable pixels per tile, 60-150 fillRect calls per tile
+-   D=1 rendering system maintained: 48x48 addressable pixels per tile, 80-300 fillRect calls per tile (trees highest)
 -   Dashboard converted to in-game overlay accessible via pause menu (Command Center)
 -   Converted all in-game interactions from external page redirects to in-game FF-styled overlay panels
 -   Added JSON API endpoints for scenarios, shop, inventory, and player stats
