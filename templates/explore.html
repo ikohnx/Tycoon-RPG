@@ -328,9 +328,7 @@ function handleTransition(target, spawnX, spawnY) {
     }
     const map = RPGMaps.getMap(target);
     if (map) {
-        if (spawnX !== undefined) map.spawnX = spawnX;
-        if (spawnY !== undefined) map.spawnY = spawnY;
-        RPGEngine.loadMap(map);
+        RPGEngine.loadMap(map, spawnX, spawnY);
     }
 }
 
