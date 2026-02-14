@@ -52,10 +52,13 @@ The game is built as a Flask web application with a responsive, mobile-first UI,
 -   **Mobile & Cross-Platform Support:** Full Progressive Web App (PWA) implementation for offline caching and "Add to Home Screen" functionality. Capacitor configuration for native iOS and Android builds. Responsive design enhancements for touch interactions, safe areas, and accessibility modes.
 
 ## Recent Changes (Feb 2026)
--   Upgraded graphics fidelity 6x with D=1 rendering system: 48x48 addressable pixels per tile (up from 16x16 logical grid)
--   All 26 tile types rewritten with layered pixel art: individual grass blades, rounded cobblestones, animated water ripples, detailed brick mortar, wood grain textures, proper shading
--   Character sprites upgraded to SNES quality: detailed facial features with visible eye whites/iris/pupils/highlights, layered hair with shine, clothing with fold lines and shading, proper chibi proportions, smooth 4-frame walk animations
--   Expanded color palette from 134 to 141 colors for richer detail and shading
+-   FF6-quality graphics overhaul: SNES-authentic dithering patterns, material-specific textures (metal specular, wood grain, stone roughness, fabric folds), proper edge beveling with consistent top-left lighting
+-   Dither helper function for checkerboard color blending (FF6's signature SNES look)
+-   All 26 tile types rewritten with FF6-level detail: dithered grass gradients with tufts/wildflowers, cobblestones with individual mortar/highlights/wear, animated water with caustic patterns/foam/depth layers, bricks with surface texture/cracks/ambient occlusion, wood with visible grain/knots/nail heads, curved roof tiles with overlap shadows
+-   Character sprites upgraded to FF6 chibi quality: rounded head shapes, 4-layer hair shading with spiky details, expressive eyes (sclera/iris/pupil/highlight), clothing wrinkle lines, metallic belt buckles, boot lacing, ear detail on side views
+-   Expanded color palette from 141 to 188 colors: metallic series (mtl1-mtl4), grass intermediates (g6-g10), wood grain shades (wd4-wd7, wdm1-wdm3), stone textures (st1-st7, stm1-stm3), brick detail (bk1-bk8), roof tile shades (rf1-rf6), water depth layers (w1-w9)
+-   Enhanced shadows with 4-layer graduated ellipses and interaction bubbles with shimmer sparkle effects
+-   D=1 rendering system maintained: 48x48 addressable pixels per tile, 60-150 fillRect calls per tile
 -   Dashboard converted to in-game overlay accessible via pause menu (Command Center)
 -   Converted all in-game interactions from external page redirects to in-game FF-styled overlay panels
 -   Added JSON API endpoints for scenarios, shop, inventory, and player stats
