@@ -302,12 +302,26 @@
     </div>
 </div>
 
+<div id="overlay-dashboard" class="ff-overlay">
+    <div class="ff-panel" style="width: 700px; max-width: 95vw;">
+        <div class="ff-panel-header">
+            <h3 class="ff-panel-title">Command Center</h3>
+            <button class="ff-panel-close" onclick="closeOverlay('dashboard')">&#10005; Close</button>
+        </div>
+        <div class="ff-panel-body" id="dashboard-body" style="max-height: 75vh;">
+            <p style="color:#8080c0; font-size:10px;">Loading...</p>
+        </div>
+    </div>
+</div>
+
 <div id="ff-menu" class="ff-menu-overlay">
     <div class="ff-menu-left">
         <div class="ff-menu-header"><h2>MENU</h2></div>
         <button class="ff-menu-item" onclick="showMenuPanel('status')">Status</button>
         <button class="ff-menu-item" onclick="showMenuPanel('skills')">Skills</button>
         <button class="ff-menu-item" onclick="showMenuPanel('items')">Items</button>
+        <hr class="ff-menu-sep">
+        <button class="ff-menu-item" onclick="closeMenu(); openDashboard();">Command Center</button>
         <hr class="ff-menu-sep">
         <button class="ff-menu-item" onclick="closeMenu()">Resume</button>
     </div>
@@ -366,10 +380,12 @@ function closeMenu() {
 
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
+        const dashO = document.getElementById('overlay-dashboard');
         const scenO = document.getElementById('overlay-scenarios');
         const shopO = document.getElementById('overlay-shop');
         const playO = document.getElementById('overlay-scenario-play');
         if (playO.classList.contains('active')) { closeOverlay('scenario-play'); e.preventDefault(); return; }
+        if (dashO.classList.contains('active')) { closeOverlay('dashboard'); e.preventDefault(); return; }
         if (scenO.classList.contains('active')) { closeOverlay('scenarios'); e.preventDefault(); return; }
         if (shopO.classList.contains('active')) { closeOverlay('shop'); e.preventDefault(); return; }
         if (menuOpen) { closeMenu(); } else { openMenu(); }
@@ -563,6 +579,159 @@ function closeAllOverlays() {
     closeOverlay('scenario-play');
     closeOverlay('scenarios');
     closeOverlay('shop');
+    closeOverlay('dashboard');
+}
+
+async function openDashboard() {
+    const body = document.getElementById('dashboard-body');
+    body.innerHTML = '<p style="color:#8080c0; font-size:10px;">Loading Command Center...</p>';
+    openOverlay('dashboard');
+    try {
+        const res = await fetch('/api/dashboard');
+        const data = await res.json();
+        const d = data.dashboard || {};
+        const r = d.resources || {};
+        const radar = d.radar_data || {};
+        const news = d.news_ticker || [];
+        const skills = d.skill_tree || [];
+        const abilities = d.active_abilities || [];
+        const s = data.stats || {};
+        const e = data.energy || {};
+        const milestones = data.milestones || {};
+        const rivals = data.rivals || [];
+
+        const maxLevel = 10;
+        const radarLabels = Object.keys(radar);
+        const radarValues = Object.values(radar);
+
+        let radarHTML = '<div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;">';
+        radarLabels.forEach((label, i) => {
+            const pct = Math.round((radarValues[i] / maxLevel) * 100);
+            radarHTML += `
+                <div style="flex:1; min-width:120px;">
+                    <div class="ff-label">${label}</div>
+                    <div class="ff-bar-bg" style="width:100%; margin-top:4px;">
+                        <div class="ff-bar-fill" style="width:${pct}%; background: ${getSkillColor(i)};"></div>
+                    </div>
+                    <div style="color:#c0c0e0; font-size:9px; margin-top:2px;">Lv.${radarValues[i]}</div>
+                </div>
+            `;
+        });
+        radarHTML += '</div>';
+
+        let newsHTML = '';
+        if (news.length > 0) {
+            newsHTML = news.map(n => `
+                <div style="padding:6px 0; border-bottom:1px solid #282860;">
+                    <span style="color:#f0d850; font-size:9px;">&#9670;</span>
+                    <span style="color:#c0c0e0; font-size:9px; margin-left:6px;">${n.message || n}</span>
+                </div>
+            `).join('');
+        } else {
+            newsHTML = '<p style="color:#8080c0; font-size:9px;">Welcome to your business journey! Make decisions to see market updates here.</p>';
+        }
+
+        let abilitiesHTML = '';
+        if (abilities.length > 0) {
+            abilitiesHTML = `
+                <div style="margin-top:16px; padding-top:12px; border-top:2px solid #484888;">
+                    <h4 style="color:#f0d850; font-size:10px; margin:0 0 8px;">Active Abilities</h4>
+                    ${abilities.map(a => `
+                        <div class="ff-stat-row">
+                            <span class="ff-value" style="font-size:9px;">${a.name || a.ability_name || 'Ability'}</span>
+                            <span class="ff-label">${a.remaining || ''}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        let rivalsHTML = '';
+        if (rivals.length > 0) {
+            rivalsHTML = `
+                <div style="margin-top:16px; padding-top:12px; border-top:2px solid #484888;">
+                    <h4 style="color:#f0d850; font-size:10px; margin:0 0 8px;">Rivals</h4>
+                    ${rivals.slice(0, 3).map(rv => `
+                        <div class="ff-stat-row">
+                            <span class="ff-value" style="font-size:9px;">${rv.rival_name || rv.name || 'Rival'}</span>
+                            <span class="ff-label">${rv.difficulty || ''}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        body.innerHTML = `
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                <div>
+                    <h4 style="color:#f0d850; font-size:10px; margin:0 0 12px;">&#128188; Resource Ledger</h4>
+                    <div class="ff-stat-row">
+                        <span class="ff-label">$ Capital</span>
+                        <span class="ff-value ff-gold">$${Number(r.capital || s.cash || 0).toLocaleString()}</span>
+                    </div>
+                    <div class="ff-stat-row">
+                        <span class="ff-label">Team Morale</span>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <div class="ff-bar-bg">
+                                <div class="ff-bar-fill" style="width:${r.morale || 0}%; background:#50a0f0;"></div>
+                            </div>
+                            <span class="ff-value" style="font-size:9px;">${r.morale || 0}%</span>
+                        </div>
+                    </div>
+                    <div class="ff-stat-row">
+                        <span class="ff-label">Brand Equity</span>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <div class="ff-bar-bg">
+                                <div class="ff-bar-fill" style="width:${Math.min(r.brand_equity || 0, 100)}%; background:#e84040;"></div>
+                            </div>
+                            <span class="ff-value" style="font-size:9px;">${r.brand_equity || 0}%</span>
+                        </div>
+                    </div>
+                    <div class="ff-stat-row">
+                        <span class="ff-label">Energy</span>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <div class="ff-bar-bg">
+                                <div class="ff-bar-fill" style="width:${e.current_energy ? Math.round((e.current_energy / (e.max_energy || 100)) * 100) : 0}%; background:#40d840;"></div>
+                            </div>
+                            <span class="ff-value" style="font-size:9px;">${e.current_energy || 0}/${e.max_energy || 100}</span>
+                        </div>
+                    </div>
+                    <div class="ff-stat-row">
+                        <span class="ff-label">Fiscal Quarter</span>
+                        <span class="ff-value">Q${r.fiscal_quarter || 1}</span>
+                    </div>
+                    <div class="ff-stat-row">
+                        <span class="ff-label">Decisions</span>
+                        <span class="ff-value">${r.decisions_this_quarter || 0}/3</span>
+                    </div>
+                    ${abilitiesHTML}
+                    ${rivalsHTML}
+                </div>
+                <div>
+                    <h4 style="color:#f0d850; font-size:10px; margin:0 0 12px;">&#127919; Six Pillars of Business</h4>
+                    ${radarHTML}
+                    <div style="margin-top:20px; padding-top:12px; border-top:2px solid #484888;">
+                        <h4 style="color:#f0d850; font-size:10px; margin:0 0 8px;">&#128240; Market News</h4>
+                        ${newsHTML}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        gameData.capital = r.capital || s.cash || gameData.capital;
+        gameData.morale = r.morale || gameData.morale;
+        gameData.brand = r.brand_equity || gameData.brand;
+        gameData.quarter = r.fiscal_quarter || gameData.quarter;
+        gameData.energy = e.current_energy || gameData.energy;
+        RPGEngine.updateHUD(gameData);
+    } catch(err) {
+        body.innerHTML = '<p style="color:#e84040; font-size:10px;">Failed to load Command Center data.</p>';
+    }
+}
+
+function getSkillColor(index) {
+    const colors = ['#e84040', '#f0a030', '#50a0f0', '#40d840', '#c050e0', '#f0d850'];
+    return colors[index % colors.length];
 }
 
 async function openShop() {
@@ -633,6 +802,8 @@ function handleNPCInteract(npc) {
         openScenarios(disciplineMap[action]);
     } else if (action === 'tutorial') {
         openScenarios('Marketing');
+    } else if (action === 'dashboard' || action === 'command') {
+        openDashboard();
     } else if (action === 'guild' || action === 'hub') {
         openMenu();
         showMenuPanel('status');

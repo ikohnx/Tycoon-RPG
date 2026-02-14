@@ -198,49 +198,7 @@ def load_game(player_id):
 @app.route('/hub')
 @login_required
 def hub():
-    player_id = session.get('player_id')
-    if not player_id:
-        return redirect(url_for('index'))
-    
-    engine = get_engine()
-    engine.load_player(player_id)
-    stats = engine.get_player_stats()
-    
-    # Check if player has seen onboarding (persisted in database)
-    from src.game_engine import get_onboarding_seen
-    is_new_player = not get_onboarding_seen(player_id)
-    
-    for disc, data in stats['disciplines'].items():
-        data['title'] = get_level_title(data['level'])
-        data['progress_bar'] = get_progress_bar(data['total_exp'], data['level'])
-        exp_needed, next_level = get_exp_to_next_level(data['total_exp'])
-        data['exp_to_next'] = exp_needed
-        data['next_level'] = next_level
-    
-    energy = engine.get_player_energy()
-    login_status = engine.get_daily_login_status()
-    idle_income = engine.get_idle_income_status()
-    prestige_status = engine.get_prestige_status()
-    leaderboard = engine.get_leaderboard(5)
-    
-    from src.game_engine import get_player_next_step, get_random_advisor_quote
-    next_step = get_player_next_step(player_id)
-    advisor_quote = get_random_advisor_quote()
-    
-    from src.company_resources import (
-        get_company_resources, get_skill_tree, get_active_abilities, get_news_ticker, get_feature_access
-    )
-    resources = get_company_resources(player_id)
-    skill_tree = get_skill_tree(player_id)
-    active_abilities = get_active_abilities(player_id)
-    news_ticker = get_news_ticker(player_id, limit=5)
-    feature_access = get_feature_access(player_id)
-    
-    return render_template('hub.html', stats=stats, energy=energy, login_status=login_status, 
-                          idle_income=idle_income, prestige_status=prestige_status, leaderboard=leaderboard,
-                          is_new_player=is_new_player, next_step=next_step, advisor_quote=advisor_quote,
-                          resources=resources, skill_tree=skill_tree, active_abilities=active_abilities,
-                          news_ticker=news_ticker, feature_access=feature_access)
+    return redirect(url_for('explore'))
 
 
 @app.route('/explore')
@@ -263,6 +221,28 @@ def explore(map_id='hub'):
                           resources=resources,
                           energy=energy)
 
+
+@app.route('/api/dashboard')
+@login_required
+def api_dashboard():
+    player_id = session.get('player_id')
+    if not player_id:
+        return jsonify({'error': 'Not logged in'}), 401
+    engine = get_engine()
+    engine.load_player(player_id)
+    stats = engine.get_player_stats()
+    energy = engine.get_player_energy()
+    from src.company_resources import get_dashboard_data
+    dashboard_data = get_dashboard_data(player_id)
+    milestones = engine.get_milestones()
+    rivals = engine.get_rivals()
+    return jsonify({
+        'stats': stats,
+        'energy': energy,
+        'dashboard': dashboard_data,
+        'milestones': milestones,
+        'rivals': rivals
+    })
 
 @app.route('/api/stats')
 @login_required
@@ -698,22 +678,7 @@ def logout():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    player_id = session.get('player_id')
-    if not player_id:
-        return redirect(url_for('index'))
-    
-    get_engine().load_player(player_id)
-    stats = get_engine().get_player_stats()
-    milestones = get_engine().get_milestones()
-    financial_history = get_engine().get_financial_history()
-    rivals = get_engine().get_rivals()
-    
-    from src.company_resources import get_dashboard_data
-    dashboard_data = get_dashboard_data(player_id)
-    
-    return render_template('dashboard.html', stats=stats, milestones=milestones, 
-                          financial_history=financial_history, rivals=rivals,
-                          dashboard=dashboard_data)
+    return redirect(url_for('explore'))
 
 
 @app.route('/activate_ability/<ability_code>', methods=['POST'])
@@ -731,7 +696,7 @@ def activate_ability_route(ability_code):
     else:
         flash(result.get('error', 'Could not activate ability'), 'warning')
     
-    return redirect(url_for('dashboard'))
+    return redirect(url_for('explore'))
 
 
 @app.route('/random_event')
