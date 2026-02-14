@@ -69,7 +69,27 @@ window.RPGSprites = (function() {
         };
     }
 
-    function drawSprite(ctx, gt, type, x, y, facing, frame, moving, color, spriteId, TS, SPRITE_YOFF) {
+    const _spriteCache = {};
+
+    function drawSpriteCached(ctx, gt, type, x, y, facing, frame, moving, color, spriteId, TS, SPRITE_YOFF) {
+        const key = type + '_' + (spriteId || 0) + '_' + (color || '') + '_' + facing + '_' + (frame || 0) + '_' + (moving ? 1 : 0);
+        let cached = _spriteCache[key];
+        if (!cached) {
+            const W = TS;
+            const H = TS + (SPRITE_YOFF || 0) + 16;
+            const off = document.createElement('canvas');
+            off.width = W;
+            off.height = H;
+            const oc = off.getContext('2d');
+            oc.imageSmoothingEnabled = false;
+            _drawSpriteRaw(oc, gt, type, 0, SPRITE_YOFF || 0, facing, frame, moving, color, spriteId, TS, SPRITE_YOFF);
+            _spriteCache[key] = off;
+            cached = off;
+        }
+        ctx.drawImage(cached, x, y - (SPRITE_YOFF || 0));
+    }
+
+    function _drawSpriteRaw(ctx, gt, type, x, y, facing, frame, moving, color, spriteId, TS, SPRITE_YOFF) {
         const D = 1;
         const cx = x + 24;
         const isHero = type === 'hero';
@@ -685,5 +705,5 @@ window.RPGSprites = (function() {
         drawLegs(cx, legY);
     }
 
-    return { drawSprite, buildNPCPal, getArchetype, SKIN_TONES, EYE_COLORS, HAIR_PRESETS, ARCHETYPES };
+    return { drawSprite: drawSpriteCached, buildNPCPal, getArchetype, SKIN_TONES, EYE_COLORS, HAIR_PRESETS, ARCHETYPES };
 })();

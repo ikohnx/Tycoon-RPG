@@ -1,5 +1,8 @@
 window.RPGTiles = (function() {
     let _ctx;
+    const _cache = {};
+    const ANIMATED_TILES = {3: true};
+    const ANIM_BUCKET_MS = 120;
 
     function dither(x, y, w, h, c1, c2) {
         _ctx.fillStyle = c1;
@@ -24,7 +27,36 @@ window.RPGTiles = (function() {
         }
     }
 
-    function drawTile(ctx, C, id, x, y, row, col, gt, TS) {
+    function drawTileCached(ctx, C, id, x, y, row, col, gt, TS) {
+        if (id === 0) return;
+        const sd = (row * 131 + col * 97) & 0xFF;
+        let key;
+        if (ANIMATED_TILES[id]) {
+            const tb = Math.floor(gt / ANIM_BUCKET_MS);
+            key = id + '_' + sd + '_' + col + '_' + tb;
+        } else {
+            key = id + '_' + sd;
+        }
+        let cached = _cache[key];
+        if (!cached) {
+            const off = document.createElement('canvas');
+            off.width = TS;
+            off.height = TS;
+            const oc = off.getContext('2d');
+            oc.imageSmoothingEnabled = false;
+            _ctx = oc;
+            _drawTileRaw(oc, C, id, 0, 0, row, col, gt, TS);
+            _cache[key] = off;
+            cached = off;
+            if (ANIMATED_TILES[id]) {
+                const oldKey = id + '_' + sd + '_' + col + '_' + (Math.floor(gt / ANIM_BUCKET_MS) - 2);
+                delete _cache[oldKey];
+            }
+        }
+        ctx.drawImage(cached, x, y);
+    }
+
+    function _drawTileRaw(ctx, C, id, x, y, row, col, gt, TS) {
         _ctx = ctx;
         const s = TS;
         const D = 1;
@@ -1466,7 +1498,7 @@ window.RPGTiles = (function() {
     }
 
     return {
-        drawTile,
+        drawTile: drawTileCached,
         dither: function(ctx, x, y, w, h, c1, c2) { _ctx = ctx; dither(x, y, w, h, c1, c2); },
         ditherFast: function(ctx, x, y, w, h, c1, c2) { _ctx = ctx; ditherFast(x, y, w, h, c1, c2); }
     };
