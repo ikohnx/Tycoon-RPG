@@ -79,7 +79,12 @@ const RPGEngine = (function() {
         wdm1: '#7a5030', wdm2: '#946840', wdm3: '#5e4020',
         bkm1: '#707888', bkm2: '#808898', bkm3: '#606070',
         rfm1: '#c04030', rfm2: '#b03828', rfm3: '#d85040',
-        stm1: '#6a7880', stm2: '#7a8890', stm3: '#5a6870'
+        stm1: '#6a7880', stm2: '#7a8890', stm3: '#5a6870',
+        gsh1: '#0a3010', gsh2: '#0e3818', gsh3: '#124020',
+        tkh: '#886040', tkg: '#604020',
+        trc: '#0c4810', trd: '#165818',
+        pe2: '#7a6040', pe3: '#9a8050',
+        wdp: '#081838'
     };
 
     function init(canvasId, options = {}) {
@@ -592,11 +597,23 @@ const RPGEngine = (function() {
         ctx.fillStyle = c1;
         ctx.fillRect(x, y, w, h);
         ctx.fillStyle = c2;
-        ctx.globalAlpha = 0.5;
-        for (let py = 0; py < h; py += 2) {
-            ctx.fillRect(x, y + py, w, 1);
+        for (let py = 0; py < h; py++) {
+            for (let px = (py & 1); px < w; px += 2) {
+                ctx.fillRect(x + px, y + py, 1, 1);
+            }
         }
-        ctx.globalAlpha = 1;
+    }
+
+    function ditherFast(x, y, w, h, c1, c2) {
+        ctx.fillStyle = c1;
+        ctx.fillRect(x, y, w, h);
+        ctx.fillStyle = c2;
+        for (let py = 0; py < h; py += 2) {
+            for (let px = 0; px < w; px += 2) {
+                ctx.fillRect(x + px, y + py, 1, 1);
+                ctx.fillRect(x + px + 1, y + py + 1, 1, 1);
+            }
+        }
     }
 
     function drawTile(id, x, y, row, col) {
@@ -609,195 +626,174 @@ const RPGEngine = (function() {
             case 0: break;
 
             case 1: {
-                ctx.fillStyle = C.g2;
-                ctx.fillRect(x, y, s, s);
-                ctx.fillStyle = C.g1;
-                ctx.fillRect(x, y, s, 24);
-                ctx.fillStyle = C.g8;
+                ditherFast(x, y + 32, s, 16, C.gsh2, C.gsh3);
+                ditherFast(x, y + 20, s, 16, C.gsh3, C.gd);
+                ditherFast(x, y + 10, s, 16, C.gd, C.g2);
+                ditherFast(x, y, s, 16, C.g2, C.g1);
+                ditherFast(x + 8, y + 4, 32, 14, C.g1, C.g3);
+                ditherFast(x + 14, y + 2, 20, 10, C.g3, C.g4);
+                dither(x + 18, y + 4, 12, 6, C.g4, C.g5);
+                ctx.fillStyle = C.gsh1;
                 ctx.globalAlpha = 0.4;
-                for (let py = 0; py < 48; py += 2) {
-                    const shift = ((py + sd) & 3) < 2 ? 0 : 1;
-                    if (shift) ctx.fillRect(x, y + py, s, 1);
+                for (let i = 0; i < 3; i++) {
+                    const sx2 = (sd * 7 + i * 53) % 30 + 4;
+                    const sy2 = (sd * 11 + i * 41) % 20 + 20;
+                    dither(x + sx2, y + sy2, 8, 6, C.gsh1, C.gsh2);
                 }
                 ctx.globalAlpha = 1;
-                ctx.fillStyle = C.g9;
-                ctx.globalAlpha = 0.25;
-                ctx.fillRect(x + ((sd * 3) & 31), y + ((sd * 7) & 15), 20, 16);
-                ctx.globalAlpha = 1;
-                ctx.fillStyle = C.g4;
-                ctx.globalAlpha = 0.2;
-                ctx.fillRect(x + ((sd * 7) & 31), y + ((sd * 11) & 31), 14, 12);
-                ctx.globalAlpha = 1;
-                for (let i = 0; i < 18; i++) {
-                    const gx = (sd * 7 + i * 31) % 46;
-                    const gy = (sd * 11 + i * 23) % 44;
-                    ctx.fillStyle = [C.g3, C.g4, C.gd, C.g5, C.g10][i % 5];
-                    ctx.fillRect(x + gx, y + gy, D, 2 + (i & 1));
-                    if (i < 12) {
-                        ctx.fillRect(x + gx - 1, y + gy + 1, D, D);
-                        ctx.fillRect(x + gx + 1, y + gy + 1, D, D);
+                for (let i = 0; i < 14; i++) {
+                    const gx = (sd * 7 + i * 31) % 44 + 2;
+                    const gy = (sd * 11 + i * 23) % 40 + 4;
+                    const gc = [C.g3, C.g4, C.gd, C.g5, C.g10, C.g8, C.g9][i % 7];
+                    ctx.fillStyle = gc;
+                    const bh = 3 + (i & 1);
+                    ctx.fillRect(x + gx, y + gy, D, bh);
+                    ctx.fillRect(x + gx - 1, y + gy + 1, D, bh - 1);
+                    ctx.fillRect(x + gx + 1, y + gy + 1, D, bh - 1);
+                    if (i < 8) {
+                        ctx.fillRect(x + gx - 2, y + gy + 2, D, D);
+                        ctx.fillRect(x + gx + 2, y + gy + 2, D, D);
                     }
                 }
-                ctx.fillStyle = C.gd;
-                for (let i = 0; i < 10; i++) {
-                    const gx = (sd * 3 + i * 17) % 45;
-                    const gy = (sd * 13 + i * 29) % 42;
-                    ctx.fillRect(x + gx, y + gy, D, 3);
-                    ctx.fillRect(x + gx + 1, y + gy + 1, D, D);
-                }
                 ctx.fillStyle = C.gdd;
-                for (let i = 0; i < 6; i++) {
-                    ctx.fillRect(x + ((sd * 3 + i * 47) % 45), y + ((sd * 5 + i * 53) % 45), D, D);
+                for (let i = 0; i < 8; i++) {
+                    ctx.fillRect(x + ((sd * 3 + i * 47) % 44) + 2, y + ((sd * 5 + i * 53) % 44) + 2, D, D);
                 }
-                ctx.fillStyle = 'rgba(0,0,0,0.06)';
-                ctx.fillRect(x + ((sd * 3) % 20), y + ((sd * 7) % 20), 18, 12);
-                if ((sd & 15) < 3) {
-                    const fcs = [C.fr, C.fy, C.fw];
-                    ctx.fillStyle = fcs[sd % 3];
-                    const fx = (sd * 9) % 38 + 5;
-                    const fy2 = (sd * 13) % 34 + 7;
-                    ctx.fillRect(x + fx, y + fy2, 2, 2);
-                    ctx.fillRect(x + fx - 1, y + fy2 + 1, D, D);
-                    ctx.fillRect(x + fx + 2, y + fy2 + 1, D, D);
-                    ctx.fillRect(x + fx + 1, y + fy2 - 1, D, D);
-                    ctx.fillRect(x + fx + 1, y + fy2 + 2, D, D);
-                    ctx.fillStyle = C.fy;
-                    ctx.fillRect(x + fx, y + fy2, D, D);
+                if ((sd & 7) < 3) {
+                    ctx.fillStyle = '#808078';
+                    const rx = ((sd * 11) % 30) + 8;
+                    const ry = ((sd * 7) % 30) + 10;
+                    ctx.fillRect(x + rx, y + ry, 3, 2);
+                    ctx.fillStyle = '#989890';
+                    ctx.fillRect(x + rx, y + ry, 2, D);
+                    ctx.fillStyle = '#606058';
+                    ctx.fillRect(x + rx + 1, y + ry + 1, 2, D);
                 }
-                if ((sd & 7) < 2) {
-                    ctx.fillStyle = C.gb;
-                    const rx = ((sd * 11) % 28) + 2;
-                    const ry = ((sd * 7) % 28) + 2;
-                    ctx.fillRect(x + rx, y + ry, 4, 3);
-                    ctx.fillRect(x + rx + 1, y + ry + 3, 2, D);
-                    ctx.fillStyle = '#707060';
-                    ctx.fillRect(x + rx, y + ry, 4, D);
-                    ctx.fillStyle = 'rgba(0,0,0,0.1)';
-                    ctx.fillRect(x + rx, y + ry + 2, 4, D);
+                if ((sd & 15) < 2) {
+                    const mx = (sd * 9) % 34 + 7;
+                    const my = (sd * 13) % 28 + 12;
+                    ctx.fillStyle = '#c83020';
+                    ctx.fillRect(x + mx, y + my, 3, 2);
+                    ctx.fillStyle = '#e84838';
+                    ctx.fillRect(x + mx, y + my, 2, D);
+                    ctx.fillStyle = '#a87848';
+                    ctx.fillRect(x + mx + 1, y + my + 2, D, 2);
+                }
+                if ((sd & 15) > 12) {
+                    const lx = (sd * 3) % 30 + 8;
+                    const ly = (sd * 7) % 30 + 10;
+                    ctx.fillStyle = '#a07020';
+                    ctx.fillRect(x + lx, y + ly, 3, 2);
+                    ctx.fillStyle = '#c09030';
+                    ctx.fillRect(x + lx, y + ly, D, D);
                 }
                 break;
             }
 
             case 2: {
-                ctx.fillStyle = C.pm;
-                ctx.fillRect(x, y, s, s);
-                ctx.fillStyle = C.p5;
-                ctx.globalAlpha = 0.3;
-                for (let py = 0; py < 48; py += 2) {
-                    ctx.fillRect(x, y + py, s, 1);
-                }
+                ditherFast(x, y, s, s, C.pe2, C.pm);
+                ditherFast(x + 4, y + 4, 40, 40, C.pm, C.p2);
+                ditherFast(x + 10, y + 10, 28, 28, C.p2, C.pe3);
+                ditherFast(x + 16, y + 16, 16, 16, C.pe3, C.p4);
+                ctx.fillStyle = C.gd;
+                ctx.globalAlpha = 0.15;
+                ctx.fillRect(x, y, s, 4);
+                ctx.fillRect(x, y + 44, s, 4);
                 ctx.globalAlpha = 1;
-                const stW = [8, 10, 7, 9, 6, 11, 8, 7];
-                for (let br = 0; br < 4; br++) {
-                    let cx2 = (br % 2) * 5;
-                    const by2 = br * 12;
-                    let si2 = (sd + br * 3) & 7;
-                    while (cx2 < 47) {
-                        const sw2 = stW[si2 & 7];
-                        const cw2 = Math.min(sw2, 47 - cx2);
-                        if (cw2 < 3) { cx2 += cw2 + 1; si2++; continue; }
-                        const sh2 = ((si2 + br + sd) & 3);
-                        ctx.fillStyle = sh2 === 0 ? C.p1 : sh2 === 1 ? C.p2 : sh2 === 2 ? C.p4 : C.p3;
-                        ctx.fillRect(x + cx2, y + by2, cw2, 11);
-                        ctx.fillStyle = 'rgba(255,255,255,0.16)';
-                        ctx.fillRect(x + cx2, y + by2, cw2, D);
-                        ctx.fillRect(x + cx2, y + by2, D, 11);
-                        ctx.fillStyle = 'rgba(255,255,255,0.08)';
-                        ctx.fillRect(x + cx2 + 1, y + by2 + 1, cw2 - 2, D);
-                        ctx.fillStyle = 'rgba(0,0,0,0.14)';
-                        ctx.fillRect(x + cx2, y + by2 + 10, cw2, D);
-                        ctx.fillRect(x + cx2 + cw2 - 1, y + by2, D, 11);
-                        ctx.fillStyle = C.pe;
-                        ctx.fillRect(x + cx2 + cw2, y + by2, D, 11);
-                        if ((si2 & 3) === 0 && cw2 > 5) {
-                            ctx.fillStyle = 'rgba(0,0,0,0.10)';
-                            ctx.fillRect(x + cx2 + 3, y + by2 + 3, D, 4);
-                            ctx.fillRect(x + cx2 + 4, y + by2 + 5, D, 3);
-                        }
-                        if (sh2 === 1 && cw2 > 4) {
-                            ctx.fillStyle = 'rgba(0,0,0,0.05)';
-                            ctx.fillRect(x + cx2 + 2, y + by2 + 3, cw2 - 4, 4);
-                        }
-                        if (((si2 + br) & 7) === 0) {
-                            ctx.fillStyle = C.moss;
-                            ctx.globalAlpha = 0.12;
-                            ctx.fillRect(x + cx2 + 1, y + by2 + 10, cw2 - 2, D);
-                            ctx.globalAlpha = 1;
-                        }
-                        cx2 += cw2 + 1;
-                        si2++;
-                    }
+                const stones = [
+                    {sx:2,sy:2,sw:10,sh:8},{sx:14,sy:1,sw:12,sh:9},{sx:28,sy:3,sw:9,sh:7},{sx:38,sy:1,sw:8,sh:8},
+                    {sx:5,sy:14,sw:11,sh:8},{sx:18,sy:13,sw:10,sh:9},{sx:30,sy:15,sw:12,sh:7},
+                    {sx:1,sy:26,sw:9,sh:8},{sx:12,sy:25,sw:12,sh:9},{sx:26,sy:27,sw:10,sh:7},{sx:38,sy:25,sw:8,sh:9},
+                    {sx:4,sy:37,sw:10,sh:8},{sx:16,sy:38,sw:11,sh:7},{sx:29,sy:36,sw:9,sh:9},{sx:40,sy:38,sw:7,sh:7}
+                ];
+                stones.forEach((st, i) => {
+                    const si2 = (sd + i * 37) & 0xFF;
+                    const sh2 = si2 & 3;
+                    const mc = sh2 === 0 ? C.p1 : sh2 === 1 ? C.p2 : sh2 === 2 ? C.p4 : C.p7;
+                    ctx.fillStyle = mc;
+                    ctx.fillRect(x + st.sx + 1, y + st.sy, st.sw - 2, st.sh);
+                    ctx.fillRect(x + st.sx, y + st.sy + 1, st.sw, st.sh - 2);
+                    ctx.fillStyle = C.p6;
+                    ctx.fillRect(x + st.sx + 1, y + st.sy, st.sw - 2, D);
+                    ctx.fillRect(x + st.sx, y + st.sy + 1, D, st.sh - 3);
+                    ctx.fillStyle = 'rgba(255,255,255,0.12)';
+                    ctx.fillRect(x + st.sx + 2, y + st.sy + 1, st.sw - 4, D);
+                    ctx.fillStyle = C.pe;
+                    ctx.fillRect(x + st.sx + 1, y + st.sy + st.sh - 1, st.sw - 2, D);
+                    ctx.fillRect(x + st.sx + st.sw - 1, y + st.sy + 1, D, st.sh - 3);
+                    ctx.fillStyle = 'rgba(0,0,0,0.12)';
+                    ctx.fillRect(x + st.sx + 2, y + st.sy + st.sh - 2, st.sw - 4, D);
+                });
+                ctx.fillStyle = C.pe2;
+                for (let i = 0; i < 5; i++) {
+                    ctx.fillRect(x + ((sd * 3 + i * 31) % 42) + 3, y + ((sd * 7 + i * 37) % 42) + 3, 2, D);
                 }
-                ctx.fillStyle = 'rgba(0,0,0,0.06)';
-                for (let i = 0; i < 5; i++) ctx.fillRect(x + ((sd * 3 + i * 13) % 42), y + ((sd * 7 + i * 19) % 42), 2, D);
+                if ((sd & 3) === 0) {
+                    ctx.fillStyle = C.gd;
+                    const gx = (sd * 7) % 36 + 4;
+                    ctx.fillRect(x + gx, y + 1, D, 3);
+                    ctx.fillRect(x + gx - 1, y + 2, D, 2);
+                    ctx.fillRect(x + gx + 1, y + 2, D, 2);
+                }
                 break;
             }
 
             case 3: {
                 const wt = t / 600;
-                ctx.fillStyle = C.w6;
+                ctx.fillStyle = C.wdp;
                 ctx.fillRect(x, y, s, s);
-                ctx.fillStyle = C.w3;
-                ctx.fillRect(x, y, s, 38);
-                ctx.fillStyle = C.w1;
-                ctx.fillRect(x, y + 2, s, 30);
-                ctx.fillStyle = C.w7;
-                ctx.globalAlpha = 0.3;
-                for (let py = 0; py < 48; py += 2) {
-                    const a = ((py + sd) & 3);
-                    if (a < 2) ctx.fillRect(x, y + py, s, 1);
-                }
-                ctx.globalAlpha = 1;
-                ctx.fillStyle = C.w5;
-                ctx.globalAlpha = 0.25;
-                ctx.fillRect(x, y + 6, s, 20);
-                ctx.globalAlpha = 1;
-                for (let i = 0; i < 10; i++) {
-                    const wx = Math.sin(wt + i * 0.8 + col * 0.7) * 7 + 14;
-                    const wy = i * 5 + 1;
+                ditherFast(x, y + 36, s, 12, C.wdp, C.w6);
+                ditherFast(x, y + 24, s, 16, C.w6, C.wd);
+                ditherFast(x, y + 12, s, 16, C.wd, C.w3);
+                ditherFast(x, y, s, 16, C.w3, C.w1);
+                ditherFast(x + 6, y + 2, 36, 10, C.w1, C.w2);
+                for (let i = 0; i < 8; i++) {
+                    const wx = Math.sin(wt + i * 0.9 + col * 0.7) * 8 + 12;
+                    const wy = i * 6 + 1;
                     ctx.fillStyle = C.w2;
-                    ctx.fillRect(x + wx, y + wy, 18, D);
+                    ctx.fillRect(x + wx, y + wy, 20, D);
                     ctx.fillStyle = C.w4;
-                    ctx.fillRect(x + wx + 2, y + wy - 1, 12, D);
+                    ctx.fillRect(x + wx + 3, y + wy - 1, 14, D);
                     ctx.fillStyle = C.w8;
-                    ctx.fillRect(x + wx + 4, y + wy + 1, 8, D);
+                    ctx.fillRect(x + wx + 5, y + wy + 1, 10, D);
                     ctx.fillStyle = C.ws;
-                    ctx.fillRect(x + wx + 6, y + wy + 2, 4, D);
+                    ctx.fillRect(x + wx + 7, y + wy + 2, 6, D);
                 }
-                for (let i = 0; i < 4; i++) {
-                    const cx2 = Math.sin(wt * 1.3 + i * 1.7 + sd * 0.3) * 8 + 20;
-                    const cy2 = Math.sin(wt * 0.9 + i * 2.3 + sd * 0.5) * 6 + 20;
+                for (let i = 0; i < 5; i++) {
+                    const dx2 = Math.sin(wt * 1.2 + i * 1.5 + sd * 0.4) * 10 + 18;
+                    const dy2 = Math.sin(wt * 0.8 + i * 2.1 + sd * 0.6) * 8 + 18;
                     ctx.fillStyle = C.w4;
                     ctx.globalAlpha = 0.3;
-                    ctx.fillRect(x + cx2, y + cy2, 3, D);
-                    ctx.fillRect(x + cx2 + 1, y + cy2 + 1, D, D);
+                    ctx.fillRect(x + dx2, y + dy2, 4, D);
+                    ctx.fillRect(x + dx2 + 1, y + dy2 + 1, 2, D);
+                    ctx.fillRect(x + dx2 + 2, y + dy2 - 1, 2, D);
+                    ctx.fillRect(x + dx2 - 1, y + dy2 + 1, D, 2);
+                    ctx.fillRect(x + dx2 + 4, y + dy2 - 1, D, 2);
                     ctx.globalAlpha = 1;
                 }
                 ctx.fillStyle = C.wsp;
-                ctx.globalAlpha = 0.5 + Math.sin(wt * 3 + sd) * 0.4;
-                ctx.fillRect(x + ((sd * 11) % 40) + 4, y + ((sd * 5) % 36) + 4, 2, D);
-                ctx.globalAlpha = 0.4 + Math.sin(wt * 2.5 + sd * 2) * 0.35;
-                ctx.fillRect(x + ((sd * 7 + 15) % 38) + 5, y + ((sd * 3 + 21) % 34) + 5, D, D);
-                ctx.globalAlpha = 0.3 + Math.sin(wt * 2 + sd * 3) * 0.3;
-                ctx.fillRect(x + ((sd * 13 + 7) % 36) + 6, y + ((sd * 9 + 13) % 36) + 6, 2, D);
+                for (let i = 0; i < 4; i++) {
+                    const spx = ((sd * (11 + i * 7)) % 36) + 6;
+                    const spy = ((sd * (5 + i * 3)) % 32) + 8;
+                    const spA = 0.4 + Math.sin(wt * (2.5 + i * 0.5) + sd * (i + 1)) * 0.4;
+                    ctx.globalAlpha = spA;
+                    ctx.fillRect(x + spx, y + spy, 2, D);
+                    ctx.fillRect(x + spx + 1, y + spy - 1, D, D);
+                }
                 ctx.globalAlpha = 1;
-                ctx.fillStyle = C.wf;
-                ctx.globalAlpha = 0.2 + Math.sin(wt * 1.5 + col + row) * 0.1;
-                ctx.fillRect(x + ((sd * 3) % 30), y + ((sd * 7) % 30), 4, D);
-                ctx.fillRect(x + ((sd * 11) % 28) + 8, y + ((sd * 5) % 28) + 8, 3, D);
+                ctx.fillStyle = '#fff';
+                ctx.globalAlpha = 0.12 + Math.sin(wt * 1.5 + col + row) * 0.08;
+                for (let i = 0; i < 6; i++) {
+                    ctx.fillRect(x + ((sd * 3 + i * 29) % 40) + 4, y + ((sd * 7 + i * 31) % 40) + 4, D, D);
+                }
+                ctx.globalAlpha = 0.25 + Math.sin(wt * 4 + sd * 2) * 0.2;
+                ctx.fillRect(x + ((sd * 13) % 30) + 10, y + ((sd * 9) % 20) + 8, 3, D);
                 ctx.globalAlpha = 1;
                 break;
             }
 
             case 4: {
-                ctx.fillStyle = C.bkd;
-                ctx.fillRect(x, y, s, s);
-                ctx.fillStyle = C.bk5;
-                ctx.globalAlpha = 0.3;
-                for (let py = 0; py < 48; py += 2) {
-                    ctx.fillRect(x, y + py, s, 1);
-                }
-                ctx.globalAlpha = 1;
+                ditherFast(x, y, s, s, C.bkd, C.bk5);
                 const bw2 = [10, 8, 11, 9, 7, 10, 8, 12];
                 for (let br = 0; br < 4; br++) {
                     let cx2 = (br % 2) * 5;
@@ -807,28 +803,34 @@ const RPGEngine = (function() {
                         const bw3 = Math.min(bw2[si2 & 7], 47 - cx2);
                         if (bw3 < 3) { cx2 += bw3 + 1; si2++; continue; }
                         const sh2 = ((si2 + br + sd) & 3);
-                        ctx.fillStyle = sh2 === 0 ? C.bk1 : sh2 === 1 ? C.bk2 : sh2 === 2 ? C.bk3 : C.bk4;
+                        const bc = sh2 === 0 ? C.bk1 : sh2 === 1 ? C.bk2 : sh2 === 2 ? C.bk3 : C.bk4;
+                        ctx.fillStyle = bc;
                         ctx.fillRect(x + cx2, y + by2, bw3, 11);
+                        if (bw3 > 5) {
+                            dither(x + cx2 + 1, y + by2 + 1, bw3 - 2, 4, bc, C.bk6);
+                        }
                         ctx.fillStyle = C.bkh;
-                        ctx.globalAlpha = 0.22;
+                        ctx.globalAlpha = 0.25;
                         ctx.fillRect(x + cx2, y + by2, bw3, D);
                         ctx.fillRect(x + cx2, y + by2, D, 11);
                         ctx.globalAlpha = 1;
                         ctx.fillStyle = C.bkl;
                         ctx.fillRect(x + cx2, y + by2 + 11, bw3, D);
                         ctx.fillRect(x + cx2 + bw3, y + by2, D, 11);
+                        ctx.fillStyle = C.bk5;
+                        ctx.fillRect(x + cx2 + bw3 - 1, y + by2 + 9, D, 2);
                         if ((si2 & 3) === 0 && bw3 > 4) {
                             ctx.fillStyle = C.bkm3;
                             ctx.fillRect(x + cx2 + 2, y + by2 + 3, 3, D);
                             ctx.fillRect(x + cx2 + 3, y + by2 + 4, 2, D);
                         }
                         if (sh2 === 2 && bw3 > 5) {
-                            ctx.fillStyle = 'rgba(0,0,0,0.06)';
+                            ctx.fillStyle = 'rgba(0,0,0,0.08)';
                             ctx.fillRect(x + cx2 + 2, y + by2 + 5, bw3 - 4, 3);
                         }
                         if (((si2 + br) & 7) === 0) {
                             ctx.fillStyle = C.moss;
-                            ctx.globalAlpha = 0.15;
+                            ctx.globalAlpha = 0.18;
                             ctx.fillRect(x + cx2 + 1, y + by2 + 8, bw3 - 2, 2);
                             ctx.globalAlpha = 1;
                         }
@@ -836,9 +838,9 @@ const RPGEngine = (function() {
                         si2++;
                     }
                 }
-                ctx.fillStyle = 'rgba(0,0,0,0.12)';
+                ctx.fillStyle = 'rgba(0,0,0,0.15)';
                 ctx.fillRect(x, y + 40, s, 8);
-                ctx.fillStyle = 'rgba(255,255,255,0.06)';
+                ctx.fillStyle = 'rgba(255,255,255,0.08)';
                 ctx.fillRect(x, y, s, 4);
                 break;
             }
@@ -1066,115 +1068,155 @@ const RPGEngine = (function() {
             }
 
             case 9: {
-                ctx.fillStyle = ((sd + row) & 1) ? C.g1 : C.g2;
-                ctx.fillRect(x, y, s, s);
+                ditherFast(x, y + 32, s, 16, C.gsh2, C.gsh3);
+                ditherFast(x, y + 20, s, 16, C.gsh3, C.gd);
+                ditherFast(x, y + 10, s, 16, C.gd, C.g2);
+                ditherFast(x, y, s, 14, C.g2, C.g1);
                 ctx.fillStyle = C.g3;
                 for (let i = 0; i < 6; i++) {
                     ctx.fillRect(x + ((sd * 3 + i * 41) % 44), y + 38 + ((sd * 7 + i * 19) % 8), D, 3);
                 }
-                ctx.fillStyle = 'rgba(0,0,0,0.12)';
+                ctx.fillStyle = 'rgba(0,0,0,0.15)';
                 ctx.beginPath();
-                ctx.ellipse(x + 24, y + 44, 18, 4, 0, 0, Math.PI * 2);
+                ctx.ellipse(x + 24, y + 44, 20, 5, 0, 0, Math.PI * 2);
                 ctx.fill();
                 const sway = Math.sin(t / 2000 + sd * 0.5) * 1.5;
                 ctx.fillStyle = C.tk3;
-                ctx.fillRect(x + 19, y + 28, 10, 18);
+                ctx.fillRect(x + 18, y + 26, 12, 22);
                 ctx.fillStyle = C.tk1;
-                ctx.fillRect(x + 17, y + 26, 14, 20);
+                ctx.fillRect(x + 16, y + 24, 16, 24);
                 ctx.fillStyle = C.tk2;
-                ctx.fillRect(x + 19, y + 26, 10, 20);
+                ctx.fillRect(x + 18, y + 24, 12, 24);
+                ctx.fillStyle = C.tkh;
+                ctx.fillRect(x + 17, y + 24, 3, 22);
                 ctx.fillStyle = C.tk3;
-                for (let i = 0; i < 7; i++) ctx.fillRect(x + 18 + (i & 1) * 2, y + 28 + i * 3, D, 3);
-                ctx.fillStyle = C.tk4;
-                ctx.fillRect(x + 22, y + 34, 3, 2);
+                ctx.fillRect(x + 29, y + 24, 3, 22);
+                ctx.fillStyle = C.tkg;
+                for (let i = 0; i < 8; i++) {
+                    ctx.fillRect(x + 18 + ((i * 3 + sd) % 10), y + 26 + i * 3, D, 3);
+                }
+                ctx.fillStyle = C.tk3;
+                ctx.fillRect(x + 22, y + 32, 4, 3);
                 ctx.fillStyle = C.tk1;
-                ctx.fillRect(x + 14, y + 40, 6, 4);
-                ctx.fillRect(x + 28, y + 39, 6, 4);
+                ctx.fillRect(x + 23, y + 33, 2, D);
+                ctx.fillStyle = C.tkh;
+                ctx.fillRect(x + 22, y + 32, D, D);
+                ctx.fillStyle = C.tk1;
+                ctx.fillRect(x + 12, y + 40, 7, 5);
+                ctx.fillRect(x + 29, y + 39, 7, 5);
+                ctx.fillRect(x + 9, y + 42, 4, 4);
                 ctx.fillStyle = C.tk3;
-                ctx.fillRect(x + 14, y + 43, 3, D);
-                ctx.fillRect(x + 31, y + 42, 3, D);
+                ctx.fillRect(x + 12, y + 44, 4, D);
+                ctx.fillRect(x + 33, y + 43, 3, D);
+                ctx.fillRect(x + 9, y + 45, 3, D);
+                const cx2 = 24 + sway;
+                const cy2 = 14;
                 ctx.fillStyle = C.trs;
                 ctx.beginPath();
-                ctx.ellipse(x + 24 + sway, y + 18, 21, 17, 0, 0, Math.PI * 2);
+                ctx.ellipse(x + cx2, y + cy2, 24, 18, 0, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.fillStyle = C.tr3;
+                const bumps = [
+                    {a:-0.5,r:22},{a:-0.2,r:24},{a:0.3,r:23},{a:0.8,r:22},{a:1.2,r:24},
+                    {a:1.6,r:21},{a:2.0,r:23},{a:2.5,r:22},{a:2.9,r:24},{a:3.3,r:21},
+                    {a:-1.0,r:20},{a:3.8,r:20}
+                ];
+                ctx.fillStyle = C.trs;
+                bumps.forEach(b => {
+                    const bx = cx2 + Math.cos(b.a) * b.r;
+                    const by2 = cy2 + Math.sin(b.a) * (b.r * 0.75);
+                    ctx.beginPath();
+                    ctx.ellipse(x + bx, y + by2, 4, 3, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                ctx.fillStyle = C.trc;
                 ctx.beginPath();
-                ctx.ellipse(x + 24 + sway, y + 17, 18, 14, 0, 0, Math.PI * 2);
+                ctx.ellipse(x + cx2, y + cy2, 20, 15, 0, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.fillStyle = C.tr5;
+                dither(x + cx2 - 18, y + cy2 - 13, 36, 26, C.trc, C.tr3);
+                ctx.fillStyle = C.trd;
                 ctx.beginPath();
-                ctx.ellipse(x + 24 + sway, y + 16, 15, 12, 0, 0, Math.PI * 2);
+                ctx.ellipse(x + cx2, y + cy2 - 1, 16, 12, 0, 0, Math.PI * 2);
                 ctx.fill();
+                dither(x + cx2 - 14, y + cy2 - 10, 28, 20, C.trd, C.tr5);
                 ctx.fillStyle = C.tr1;
                 ctx.beginPath();
-                ctx.ellipse(x + 24 + sway, y + 15, 13, 11, 0, 0, Math.PI * 2);
+                ctx.ellipse(x + cx2 - 1, y + cy2 - 2, 12, 9, 0, 0, Math.PI * 2);
                 ctx.fill();
+                dither(x + cx2 - 10, y + cy2 - 8, 18, 14, C.tr1, C.tr2);
                 ctx.fillStyle = C.tr2;
                 ctx.beginPath();
-                ctx.ellipse(x + 22 + sway, y + 13, 9, 8, 0, 0, Math.PI * 2);
+                ctx.ellipse(x + cx2 - 3, y + cy2 - 4, 8, 6, 0, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.fillStyle = C.tr4;
-                ctx.beginPath();
-                ctx.ellipse(x + 20 + sway, y + 11, 6, 5, 0, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = C.tr6;
-                ctx.beginPath();
-                ctx.ellipse(x + 18 + sway, y + 10, 3, 3, 0, 0, Math.PI * 2);
-                ctx.fill();
+                dither(x + cx2 - 8, y + cy2 - 7, 10, 6, C.tr2, C.tr4);
                 ctx.fillStyle = C.trh;
-                ctx.globalAlpha = 0.5;
-                ctx.fillRect(x + 17 + sway, y + 8, 4, 3);
-                ctx.fillRect(x + 19 + sway, y + 6, 3, 2);
+                ctx.globalAlpha = 0.6;
+                ctx.fillRect(x + cx2 - 6, y + cy2 - 8, 5, 4);
+                ctx.fillRect(x + cx2 - 4, y + cy2 - 10, 3, 3);
+                ctx.globalAlpha = 0.4;
+                ctx.fillRect(x + cx2 + 4, y + cy2 - 3, 4, 3);
                 ctx.globalAlpha = 1;
                 ctx.fillStyle = C.trs;
-                ctx.fillRect(x + 5 + sway, y + 20, 5, 4);
-                ctx.fillRect(x + 38 + sway, y + 18, 5, 5);
-                ctx.fillRect(x + 7 + sway, y + 14, 4, 4);
-                ctx.fillRect(x + 36 + sway, y + 12, 5, 3);
-                ctx.fillStyle = C.tr3;
-                for (let i = 0; i < 8; i++) {
-                    ctx.fillRect(x + ((sd * 7 + i * 31) % 22 + 8) + sway, y + ((sd * 3 + i * 17) % 18 + 4), 2, 2);
+                ctx.globalAlpha = 0.6;
+                ctx.fillRect(x + cx2 + 6, y + cy2 + 6, 6, 4);
+                ctx.fillRect(x + cx2 - 10, y + cy2 + 4, 5, 3);
+                ctx.globalAlpha = 1;
+                ctx.fillStyle = C.trs;
+                ctx.fillRect(x + 3 + sway, y + 18, 6, 5);
+                ctx.fillRect(x + 40 + sway, y + 16, 6, 6);
+                ctx.fillRect(x + 6 + sway, y + 12, 5, 5);
+                ctx.fillRect(x + 38 + sway, y + 10, 5, 4);
+                ctx.fillStyle = C.trc;
+                ctx.fillRect(x + 4 + sway, y + 19, 4, 3);
+                ctx.fillRect(x + 41 + sway, y + 17, 4, 4);
+                ctx.fillStyle = C.tr5;
+                for (let i = 0; i < 10; i++) {
+                    const lx = ((sd * 7 + i * 31) % 24 + 6);
+                    const ly = ((sd * 3 + i * 17) % 20 + 2);
+                    ctx.fillRect(x + lx + sway, y + ly, 2, 2);
                 }
                 break;
             }
 
             case 10: {
-                ctx.fillStyle = ((sd + row) & 1) ? C.g1 : C.g2;
-                ctx.fillRect(x, y, s, s);
-                ctx.fillStyle = C.g8;
-                ctx.globalAlpha = 0.3;
-                for (let py = 0; py < 48; py += 2) {
-                    ctx.fillRect(x, y + py, s, 1);
-                }
-                ctx.globalAlpha = 1;
-                ctx.fillStyle = C.g3;
-                for (let i = 0; i < 6; i++) {
-                    ctx.fillRect(x + ((sd * 3 + i * 31) % 44), y + ((sd * 11 + i * 23) % 44), D, 3);
+                ditherFast(x, y + 32, s, 16, C.gsh2, C.gsh3);
+                ditherFast(x, y + 20, s, 16, C.gsh3, C.gd);
+                ditherFast(x, y + 10, s, 16, C.gd, C.g2);
+                ditherFast(x, y, s, 16, C.g2, C.g1);
+                for (let i = 0; i < 8; i++) {
+                    const gx = (sd * 7 + i * 29) % 44 + 2;
+                    const gy = (sd * 11 + i * 23) % 40 + 4;
+                    ctx.fillStyle = [C.g3, C.gd, C.g5, C.g10][i & 3];
+                    ctx.fillRect(x + gx, y + gy, D, 3);
+                    ctx.fillRect(x + gx - 1, y + gy + 1, D, 2);
+                    ctx.fillRect(x + gx + 1, y + gy + 1, D, 2);
                 }
                 const fs = Math.sin(t / 700 + sd) * 1.5;
                 const flowers = [
                     {cx:6,cy:10,c:C.fr,sz:4},{cx:24,cy:6,c:C.fy,sz:4},{cx:16,cy:26,c:C.fp,sz:4},
                     {cx:34,cy:18,c:C.fw,sz:4},{cx:20,cy:36,c:C.fo,sz:3},{cx:40,cy:28,c:C.fb,sz:3},
-                    {cx:4,cy:32,c:C.fr,sz:3},{cx:32,cy:4,c:C.fp,sz:3}
+                    {cx:4,cy:32,c:C.fr,sz:3}
                 ];
                 flowers.forEach((f, i) => {
-                    const sw = (i & 1 ? fs : -fs) * 0.5;
+                    const sw = Math.round((i & 1 ? fs : -fs) * 0.5);
+                    const stemH = 4 + (i & 1) * 3;
                     ctx.fillStyle = C.gd;
-                    ctx.fillRect(x + f.cx + f.sz / 2, y + f.cy + f.sz, D, 5);
+                    ctx.fillRect(x + f.cx + Math.floor(f.sz / 2), y + f.cy + f.sz, D, stemH);
                     ctx.fillStyle = C.g3;
-                    ctx.fillRect(x + f.cx + f.sz / 2 - 2, y + f.cy + f.sz + 2, 2, D);
-                    ctx.fillRect(x + f.cx + f.sz / 2 + 1, y + f.cy + f.sz + 3, 2, D);
+                    ctx.fillRect(x + f.cx + Math.floor(f.sz / 2) - 2, y + f.cy + f.sz + 2, 2, D);
+                    ctx.fillRect(x + f.cx + Math.floor(f.sz / 2) + 1, y + f.cy + f.sz + 3, 2, D);
+                    const fx = x + f.cx + sw;
+                    const fy2 = y + f.cy;
                     ctx.fillStyle = f.c;
-                    ctx.fillRect(x + f.cx + sw, y + f.cy + 1, f.sz, f.sz - 1);
-                    ctx.fillRect(x + f.cx + 1 + sw, y + f.cy, f.sz - 2, D);
-                    ctx.fillRect(x + f.cx + 1 + sw, y + f.cy + f.sz, f.sz - 2, D);
-                    ctx.fillRect(x + f.cx - 1 + sw, y + f.cy + 1, D, f.sz - 2);
-                    ctx.fillRect(x + f.cx + f.sz + sw, y + f.cy + 1, D, f.sz - 2);
+                    ctx.fillRect(fx + 1, fy2, f.sz - 2, D);
+                    ctx.fillRect(fx, fy2 + 1, D, f.sz - 2);
+                    ctx.fillRect(fx + f.sz - 1, fy2 + 1, D, f.sz - 2);
+                    ctx.fillRect(fx + 1, fy2 + f.sz - 1, f.sz - 2, D);
+                    ctx.fillRect(fx + 1, fy2 + 1, f.sz - 2, f.sz - 2);
                     ctx.fillStyle = C.fy;
-                    ctx.fillRect(x + f.cx + 1 + sw, y + f.cy + 1, f.sz - 2, f.sz - 2);
+                    ctx.fillRect(fx + Math.floor(f.sz / 2) - 1, fy2 + Math.floor(f.sz / 2) - 1, 2, 2);
                     ctx.fillStyle = '#fff';
                     ctx.globalAlpha = 0.35;
-                    ctx.fillRect(x + f.cx + 1 + sw, y + f.cy + 1, D, D);
+                    ctx.fillRect(fx + 1, fy2 + 1, D, D);
                     ctx.globalAlpha = 1;
                 });
                 break;
@@ -1183,56 +1225,50 @@ const RPGEngine = (function() {
             case 11: {
                 ctx.fillStyle = C.wd3;
                 ctx.fillRect(x, y, s, s);
-                const plkW = [12, 10, 14, 12];
-                let px2 = 0;
-                for (let i = 0; i < 4 && px2 < 48; i++) {
-                    const pw = plkW[(i + (sd & 3)) & 3];
-                    const cw = Math.min(pw, 48 - px2);
-                    ctx.fillStyle = ((i + sd) & 1) ? C.wd1 : C.wd2;
-                    ctx.fillRect(x + px2, y, cw, s);
-                    ctx.fillStyle = C.wd5;
-                    ctx.globalAlpha = 0.15;
-                    for (let py = 0; py < 48; py += 2) {
-                        ctx.fillRect(x + px2, y + py, cw, 1);
-                    }
-                    ctx.globalAlpha = 1;
-                    ctx.fillStyle = C.wd4;
+                const plkH = [12, 10, 14, 12];
+                let py2 = 0;
+                for (let i = 0; i < 4 && py2 < 48; i++) {
+                    const ph = plkH[(i + (sd & 3)) & 3];
+                    const ch = Math.min(ph, 48 - py2);
+                    const warm = ((i + sd) & 1);
+                    const plkC = warm ? C.wd1 : C.wd2;
+                    ctx.fillStyle = plkC;
+                    ctx.fillRect(x, y + py2, s, ch);
+                    ctx.fillStyle = C.wd7;
                     ctx.globalAlpha = 0.12;
-                    for (let gy = 1; gy < 48; gy += 3) {
-                        if (((sd + i * 7 + gy * 3) & 3) === 0) ctx.fillRect(x + px2 + 2, y + gy, cw - 4, D);
+                    ctx.fillRect(x, y + py2, s, 2);
+                    ctx.globalAlpha = 1;
+                    ctx.fillStyle = C.wd5;
+                    ctx.globalAlpha = 0.10;
+                    for (let gx = 2; gx < 46; gx += 3) {
+                        const wave = Math.sin(gx * 0.15 + sd * 0.3 + i) > 0.3 ? 1 : 0;
+                        if (wave) ctx.fillRect(x + gx, y + py2 + 3 + (i & 1), ch - 5, D);
                     }
                     ctx.globalAlpha = 1;
                     ctx.fillStyle = C.wdk;
-                    ctx.fillRect(x + px2 + cw - 1, y, D, s);
-                    ctx.fillStyle = C.wd7;
-                    ctx.globalAlpha = 0.08;
-                    ctx.fillRect(x + px2, y, cw, 2);
-                    ctx.globalAlpha = 1;
-                    if ((sd + i * 37) % 11 < 2 && cw > 5) {
+                    ctx.fillRect(x, y + py2 + ch - 1, s, D);
+                    ctx.fillStyle = 'rgba(0,0,0,0.08)';
+                    ctx.fillRect(x, y + py2 + ch - 3, s, 2);
+                    if ((sd + i * 37) % 9 < 2 && ch > 6) {
                         ctx.fillStyle = C.wdg;
-                        const ky = ((sd * 7 + i * 41) % 30 + 9);
+                        const kx = ((sd * 7 + i * 41) % 30 + 9);
+                        const ky2 = py2 + Math.floor(ch / 2);
                         ctx.beginPath();
-                        ctx.ellipse(x + px2 + cw / 2, y + ky, 3, 2, 0, 0, Math.PI * 2);
+                        ctx.ellipse(x + kx, y + ky2, 3, 2, 0, 0, Math.PI * 2);
                         ctx.fill();
                         ctx.fillStyle = C.wd6;
-                        ctx.fillRect(x + px2 + cw / 2 - 1, y + ky, 3, D);
-                        ctx.fillRect(x + px2 + cw / 2, y + ky - 1, D, 3);
+                        ctx.fillRect(x + kx - 2, y + ky2 - 1, D, 3);
+                        ctx.fillRect(x + kx + 2, y + ky2 - 1, D, 3);
                     }
-                    ctx.fillStyle = '#505050';
-                    ctx.fillRect(x + px2 + 2, y + 2, D, D);
-                    ctx.fillRect(x + px2 + 2, y + 44, D, D);
-                    ctx.fillStyle = C.mtl3;
-                    ctx.fillRect(x + px2 + cw - 3, y + 2, D, D);
-                    ctx.fillRect(x + px2 + cw - 3, y + 44, D, D);
-                    px2 += cw;
+                    ctx.fillStyle = '#404038';
+                    ctx.fillRect(x + 2, y + py2 + 2, D, D);
+                    ctx.fillRect(x + 44, y + py2 + 2, D, D);
+                    ctx.fillRect(x + 2, y + py2 + ch - 3, D, D);
+                    ctx.fillRect(x + 44, y + py2 + ch - 3, D, D);
+                    ctx.fillStyle = 'rgba(255,255,255,0.05)';
+                    ctx.fillRect(x + 12, y + py2 + 3, 24, ch - 6);
+                    py2 += ch;
                 }
-                ctx.fillStyle = C.wd3;
-                for (let i = 0; i <= 3; i++) {
-                    const ny = ((sd * 3 + i * 61) & 3) * 12 + 6;
-                    ctx.fillRect(x, y + ny, s, D);
-                }
-                ctx.fillStyle = 'rgba(255,255,255,0.04)';
-                ctx.fillRect(x + 10, y + 16, 28, 16);
                 break;
             }
 
@@ -1279,72 +1315,61 @@ const RPGEngine = (function() {
             }
 
             case 13: {
-                ctx.fillStyle = C.sa2;
-                ctx.fillRect(x, y, s, s);
-                ctx.fillStyle = C.sa5;
-                ctx.globalAlpha = 0.3;
-                for (let py = 0; py < 48; py += 2) ctx.fillRect(x, y + py, s, 1);
-                ctx.globalAlpha = 1;
-                ctx.fillStyle = C.sa1;
-                for (let i = 0; i < 14; i++) {
-                    ctx.fillRect(x + ((sd * 7 + i * 31) % 42), y + ((sd * 11 + i * 23) % 42), 4, 2);
-                }
+                ditherFast(x, y, s, s, C.sa3, C.sa2);
+                ditherFast(x + 6, y + 6, 36, 36, C.sa2, C.sa1);
+                ditherFast(x + 14, y + 14, 20, 20, C.sa1, C.sa4);
                 ctx.fillStyle = C.sa4;
                 ctx.globalAlpha = 0.2;
                 for (let i = 0; i < 5; i++) {
                     const rx = ((sd * 3 + i * 47) % 20);
-                    ctx.fillRect(x + rx, y + 8 + i * 9, 22, D);
-                    ctx.fillRect(x + rx + 2, y + 9 + i * 9, 18, D);
+                    const wave = Math.sin(rx * 0.2 + i * 0.5) * 2;
+                    ctx.fillRect(x + rx, y + 8 + i * 9 + wave, 22, D);
+                    ctx.fillRect(x + rx + 2, y + 9 + i * 9 + wave, 18, D);
                 }
                 ctx.globalAlpha = 1;
+                ctx.fillStyle = C.sa1;
+                for (let i = 0; i < 14; i++) {
+                    ctx.fillRect(x + ((sd * 7 + i * 31) % 42) + 3, y + ((sd * 11 + i * 23) % 42) + 3, 3, D);
+                }
                 ctx.fillStyle = C.sa3;
                 for (let i = 0; i < 10; i++) {
-                    ctx.fillRect(x + ((sd * 5 + i * 37) % 44), y + ((sd * 9 + i * 41) % 44), D, D);
+                    ctx.fillRect(x + ((sd * 5 + i * 37) % 44) + 2, y + ((sd * 9 + i * 41) % 44) + 2, D, D);
                 }
                 ctx.fillStyle = C.sap;
                 for (let i = 0; i < 4; i++) {
-                    ctx.fillRect(x + ((sd * 13 + i * 53) % 40), y + ((sd * 3 + i * 47) % 40), 2, D);
+                    ctx.fillRect(x + ((sd * 13 + i * 53) % 40) + 4, y + ((sd * 3 + i * 47) % 40) + 4, 2, D);
                 }
                 if ((sd & 15) < 3) {
                     ctx.fillStyle = '#e8d8c8';
                     const sx2 = (sd * 7) % 36 + 6;
                     const sy2 = (sd * 11) % 36 + 6;
-                    ctx.fillRect(x + sx2, y + sy2, 4, 2);
+                    ctx.fillRect(x + sx2, y + sy2, 5, 3);
                     ctx.fillStyle = '#f0e8e0';
-                    ctx.fillRect(x + sx2, y + sy2, 2, D);
-                    ctx.fillStyle = C.sa6;
-                    ctx.globalAlpha = 0.2;
-                    ctx.fillRect(x + sx2, y + sy2 + 1, 3, D);
-                    ctx.globalAlpha = 1;
+                    ctx.fillRect(x + sx2, y + sy2, 3, D);
+                    ctx.fillStyle = 'rgba(0,0,0,0.1)';
+                    ctx.fillRect(x + sx2 + 1, y + sy2 + 2, 4, D);
                 }
                 break;
             }
 
             case 14: {
-                ctx.fillStyle = C.stm;
-                ctx.fillRect(x, y, s, s);
-                ctx.fillStyle = C.stm1;
-                ctx.globalAlpha = 0.3;
-                for (let py = 0; py < 48; py += 2) ctx.fillRect(x, y + py, s, 1);
-                ctx.globalAlpha = 1;
+                ditherFast(x, y, s, s, C.stm, C.st3);
                 for (let r2 = 0; r2 < 2; r2++) {
                     for (let c2 = 0; c2 < 2; c2++) {
                         const off = (r2 & 1) * 6;
                         const sh2 = ((r2 + c2 + sd) & 3);
-                        ctx.fillStyle = sh2 === 0 ? C.st1 : sh2 === 1 ? C.st2 : sh2 === 2 ? C.st4 : C.st5;
+                        const sc = sh2 === 0 ? C.st1 : sh2 === 1 ? C.st2 : sh2 === 2 ? C.st4 : C.st5;
+                        ctx.fillStyle = sc;
                         ctx.fillRect(x + c2 * 24 + off + 2, y + r2 * 24 + 2, 20, 20);
-                        ctx.fillStyle = 'rgba(255,255,255,0.12)';
+                        dither(x + c2 * 24 + off + 4, y + r2 * 24 + 4, 8, 8, sc, C.st7);
+                        ctx.fillStyle = 'rgba(255,255,255,0.15)';
                         ctx.fillRect(x + c2 * 24 + off + 2, y + r2 * 24 + 2, 20, 2);
                         ctx.fillRect(x + c2 * 24 + off + 2, y + r2 * 24 + 2, D, 20);
-                        ctx.fillStyle = 'rgba(0,0,0,0.10)';
+                        ctx.fillStyle = 'rgba(0,0,0,0.12)';
                         ctx.fillRect(x + c2 * 24 + off + 2, y + r2 * 24 + 20, 20, 2);
                         ctx.fillRect(x + c2 * 24 + off + 21, y + r2 * 24 + 2, D, 20);
-                        if (sh2 === 2) {
-                            ctx.fillStyle = 'rgba(255,255,255,0.06)';
-                            ctx.fillRect(x + c2 * 24 + off + 5, y + r2 * 24 + 6, 10, 6);
-                        }
                         if ((sh2 + sd) % 7 === 0) {
-                            ctx.fillStyle = 'rgba(0,0,0,0.10)';
+                            ctx.fillStyle = 'rgba(0,0,0,0.12)';
                             ctx.fillRect(x + c2 * 24 + off + 8, y + r2 * 24 + 8, D, 6);
                         }
                     }
@@ -1358,8 +1383,9 @@ const RPGEngine = (function() {
             }
 
             case 15: {
-                ctx.fillStyle = ((sd + row) & 1) ? C.g1 : C.g2;
-                ctx.fillRect(x, y, s, s);
+                ditherFast(x, y + 36, s, 12, C.gsh3, C.gd);
+                ditherFast(x, y + 24, s, 16, C.gd, C.g2);
+                ditherFast(x, y, s, 28, C.g2, C.g1);
                 ctx.fillStyle = C.g3;
                 for (let i = 0; i < 4; i++) ctx.fillRect(x + ((sd * 7 + i * 31) % 44), y + 40 + (i & 3), D, 3);
                 ctx.fillStyle = C.hgs;
@@ -1370,21 +1396,20 @@ const RPGEngine = (function() {
                 ctx.fillRect(x + 5, y + 8, 38, 2);
                 ctx.fillRect(x + 8, y + 6, 32, 2);
                 ctx.fillRect(x + 12, y + 4, 24, 2);
+                dither(x + 4, y + 12, 40, 22, C.hg4, C.hg1);
                 ctx.fillStyle = C.hg1;
-                ctx.fillRect(x + 4, y + 12, 40, 22);
                 ctx.fillRect(x + 8, y + 10, 32, 2);
                 ctx.fillRect(x + 12, y + 8, 24, 2);
                 ctx.fillRect(x + 16, y + 6, 16, 2);
-                ctx.fillStyle = C.hg2;
-                ctx.fillRect(x + 8, y + 12, 16, 12);
-                ctx.fillRect(x + 28, y + 14, 12, 10);
+                dither(x + 8, y + 12, 16, 12, C.hg1, C.hg2);
+                dither(x + 28, y + 14, 12, 10, C.hg1, C.hg2);
                 ctx.fillStyle = C.hg3;
                 ctx.fillRect(x + 10, y + 12, 8, 6);
                 ctx.fillRect(x + 30, y + 14, 6, 6);
                 ctx.fillStyle = C.trh;
-                ctx.globalAlpha = 0.3;
-                ctx.fillRect(x + 11, y + 13, 4, 3);
-                ctx.fillRect(x + 31, y + 15, 3, 3);
+                ctx.globalAlpha = 0.4;
+                ctx.fillRect(x + 11, y + 13, 5, 3);
+                ctx.fillRect(x + 31, y + 15, 4, 3);
                 ctx.globalAlpha = 1;
                 ctx.fillStyle = C.hg4;
                 for (let i = 0; i < 10; i++) {
@@ -1393,6 +1418,14 @@ const RPGEngine = (function() {
                 ctx.fillStyle = C.trs;
                 for (let i = 0; i < 5; i++) {
                     ctx.fillRect(x + ((sd * 3 + i * 37) % 36 + 4), y + ((sd * 7 + i * 19) % 20 + 8), D, D);
+                }
+                for (let i = 0; i < 8; i++) {
+                    const bx = ((sd * 3 + i * 23) % 36) + 5;
+                    const by2 = ((sd * 7 + i * 17) % 6) + 5;
+                    ctx.fillStyle = C.hgs;
+                    ctx.beginPath();
+                    ctx.ellipse(x + bx, y + by2, 3, 2, 0, 0, Math.PI * 2);
+                    ctx.fill();
                 }
                 break;
             }
@@ -1900,8 +1933,9 @@ const RPGEngine = (function() {
                     ctx.fillStyle = pal.hairDk || pal.hair;
                     ctx.fillRect(x + 8, y + by - 1, 3, 3);
                     ctx.fillRect(x + 37, y + by - 1, 3, 3);
-                    ctx.fillRect(x + 14, y + by - 3, 3, 2);
-                    ctx.fillRect(x + 31, y + by - 3, 3, 2);
+                    ctx.fillRect(x + 14, y + by - 5, 2, 3);
+                    ctx.fillRect(x + 32, y + by - 4, 2, 2);
+                    ctx.fillRect(x + 22, y + by - 6, 2, 4);
                 }
                 ctx.fillStyle = pal.skin;
                 ctx.fillRect(x + 12, y + by + 10, 24, 11);
@@ -1911,6 +1945,8 @@ const RPGEngine = (function() {
                 ctx.fillRect(x + 12, y + by + 18, 24, 3);
                 ctx.fillStyle = pal.skinDk || pal.skinSh;
                 ctx.fillRect(x + 18, y + by + 19, 12, 2);
+                ctx.fillStyle = pal.outline;
+                ctx.fillRect(x + 20, y + by + 20, 8, D);
                 ctx.fillStyle = pal.eyeW || '#f0f0ff';
                 ctx.fillRect(x + 14, y + by + 13, 7, 4);
                 ctx.fillStyle = pal.eye;
@@ -1921,6 +1957,8 @@ const RPGEngine = (function() {
                 ctx.fillRect(x + 17, y + by + 15, 2, 2);
                 ctx.fillStyle = '#fff';
                 ctx.fillRect(x + 15, y + by + 13, D, D);
+                ctx.fillStyle = pal.skin;
+                ctx.fillRect(x + 14, y + by + 17, 7, D);
                 ctx.fillStyle = pal.eyeW || '#f0f0ff';
                 ctx.fillRect(x + 27, y + by + 13, 7, 4);
                 ctx.fillStyle = pal.eye;
@@ -1931,7 +1969,11 @@ const RPGEngine = (function() {
                 ctx.fillRect(x + 29, y + by + 15, 2, 2);
                 ctx.fillStyle = '#fff';
                 ctx.fillRect(x + 31, y + by + 13, D, D);
+                ctx.fillStyle = pal.skin;
+                ctx.fillRect(x + 27, y + by + 17, 7, D);
                 ctx.fillStyle = pal.skinSh;
+                ctx.fillRect(x + 22, y + by + 15, 4, 2);
+                ctx.fillStyle = pal.skinDk || pal.skinSh;
                 ctx.fillRect(x + 23, y + by + 16, 2, D);
                 ctx.fillStyle = pal.mouth || pal.skinSh;
                 ctx.fillRect(x + 21, y + by + 18, 6, 2);
@@ -1939,7 +1981,7 @@ const RPGEngine = (function() {
                 ctx.fillRect(x + 22, y + by + 18, 4, D);
                 if (pal.cheek) {
                     ctx.fillStyle = pal.cheek;
-                    ctx.globalAlpha = 0.2;
+                    ctx.globalAlpha = 0.25;
                     ctx.fillRect(x + 12, y + by + 16, 4, 3);
                     ctx.fillRect(x + 32, y + by + 16, 4, 3);
                     ctx.globalAlpha = 1;
@@ -1960,6 +2002,9 @@ const RPGEngine = (function() {
                 ctx.fillRect(x + 22, y + by + 24, 2, 8);
                 ctx.fillStyle = pal.tunicDk;
                 for (let i = 0; i < 3; i++) ctx.fillRect(x + 14 + i * 4, y + by + 27, D, 3);
+                ctx.fillStyle = pal.tunicDk;
+                ctx.fillRect(x + 16, y + by + 26, 6, D);
+                ctx.fillRect(x + 28, y + by + 28, 4, D);
                 ctx.fillStyle = pal.belt;
                 ctx.fillRect(x + 10, y + by + 30, 28, 3);
                 ctx.fillStyle = pal.beltHL || pal.belt;
@@ -1967,12 +2012,14 @@ const RPGEngine = (function() {
                 ctx.fillStyle = pal.beltBk;
                 ctx.fillRect(x + 22, y + by + 30, 4, 3);
                 ctx.fillStyle = '#fff';
-                ctx.globalAlpha = 0.35;
-                ctx.fillRect(x + 22, y + by + 30, 2, 2);
+                ctx.globalAlpha = 0.4;
+                ctx.fillRect(x + 22, y + by + 30, 2, D);
+                ctx.globalAlpha = 0.2;
+                ctx.fillRect(x + 23, y + by + 31, D, D);
                 ctx.globalAlpha = 1;
                 ctx.fillStyle = pal.glove || pal.skin;
-                const laX = Math.round(6 + armL);
-                const raX = Math.round(36 + armR);
+                const laX = Math.round(6 + armL * 1.2);
+                const raX = Math.round(36 + armR * 1.2);
                 ctx.fillRect(x + laX, y + by + 24, 5, 9);
                 ctx.fillRect(x + raX, y + by + 24, 5, 9);
                 ctx.fillStyle = pal.gloveSh || pal.skinSh;
@@ -2001,12 +2048,15 @@ const RPGEngine = (function() {
                 ctx.fillStyle = pal.bootsDk || pal.boots;
                 ctx.fillRect(x + 11, y + 45 + legL, 10, 2);
                 ctx.fillRect(x + 27, y + 45 + legR, 10, 2);
-                ctx.fillStyle = pal.bootsSh || pal.bootsDk || pal.boots;
-                ctx.fillRect(x + 14, y + 41 + legL, 4, D);
-                ctx.fillRect(x + 30, y + 41 + legR, 4, D);
+                ctx.fillStyle = pal.outline;
+                ctx.fillRect(x + 11, y + 46 + legL, 10, D);
+                ctx.fillRect(x + 27, y + 46 + legR, 10, D);
                 ctx.fillStyle = pal.bootsHL;
                 ctx.fillRect(x + 15, y + 41 + legL, 2, D);
                 ctx.fillRect(x + 31, y + 41 + legR, 2, D);
+                ctx.fillStyle = pal.bootsSh || pal.bootsDk || pal.boots;
+                ctx.fillRect(x + 14, y + 42 + legL, D, 3);
+                ctx.fillRect(x + 30, y + 42 + legR, D, 3);
                 break;
             }
             case 'up': {
@@ -2060,11 +2110,11 @@ const RPGEngine = (function() {
                 ctx.fillStyle = pal.beltHL || pal.belt;
                 ctx.fillRect(x + 14, y + by + 30, 20, D);
                 ctx.fillStyle = pal.skin;
-                ctx.fillRect(x + Math.round(6 + armL), y + by + 24, 5, 8);
-                ctx.fillRect(x + Math.round(37 + armR), y + by + 24, 5, 8);
+                ctx.fillRect(x + Math.round(6 + armL * 1.2), y + by + 24, 5, 8);
+                ctx.fillRect(x + Math.round(37 + armR * 1.2), y + by + 24, 5, 8);
                 ctx.fillStyle = pal.skinSh;
-                ctx.fillRect(x + Math.round(6 + armL), y + by + 30, 5, 2);
-                ctx.fillRect(x + Math.round(37 + armR), y + by + 30, 5, 2);
+                ctx.fillRect(x + Math.round(6 + armL * 1.2), y + by + 30, 5, 2);
+                ctx.fillRect(x + Math.round(37 + armR * 1.2), y + by + 30, 5, 2);
                 ctx.fillStyle = pal.pants;
                 ctx.fillRect(x + 12, y + 33, 10, 6);
                 ctx.fillRect(x + 26, y + 33, 10, 6);
@@ -2081,6 +2131,9 @@ const RPGEngine = (function() {
                 ctx.fillStyle = pal.bootsDk || pal.boots;
                 ctx.fillRect(x + 11, y + 45 + legL, 10, 2);
                 ctx.fillRect(x + 27, y + 45 + legR, 10, 2);
+                ctx.fillStyle = pal.outline;
+                ctx.fillRect(x + 11, y + 46 + legL, 10, D);
+                ctx.fillRect(x + 27, y + 46 + legR, 10, D);
                 break;
             }
             case 'left': {
@@ -2124,10 +2177,16 @@ const RPGEngine = (function() {
                 ctx.fillRect(x + 22, y + by + 16, 2, D);
                 ctx.fillStyle = pal.mouth || pal.skinSh;
                 ctx.fillRect(x + 14, y + by + 18, 6, 2);
-                ctx.fillStyle = pal.skinSh;
-                ctx.fillRect(x + 32, y + by + 12, 2, 4);
                 ctx.fillStyle = pal.skin;
-                ctx.fillRect(x + 33, y + by + 13, D, 2);
+                ctx.fillRect(x + 10, y + by + 14, 3, 3);
+                ctx.fillStyle = pal.skinSh;
+                ctx.fillRect(x + 10, y + by + 15, 2, D);
+                ctx.fillStyle = pal.skinSh;
+                ctx.fillRect(x + 32, y + by + 12, 3, 4);
+                ctx.fillStyle = pal.skin;
+                ctx.fillRect(x + 33, y + by + 13, 2, 2);
+                ctx.fillStyle = pal.outline;
+                ctx.fillRect(x + 18, y + by + 20, 8, D);
                 ctx.fillStyle = pal.collar || pal.tunicHL;
                 ctx.fillRect(x + 14, y + by + 21, 14, 3);
                 ctx.fillStyle = pal.collarSh || pal.tunic;
@@ -2141,6 +2200,8 @@ const RPGEngine = (function() {
                 ctx.fillRect(x + 12, y + by + 30, 24, 2);
                 ctx.fillStyle = pal.tunicDk;
                 for (let i = 0; i < 2; i++) ctx.fillRect(x + 16 + i * 5, y + by + 27, D, 3);
+                ctx.fillStyle = pal.tunicDk;
+                ctx.fillRect(x + 18, y + by + 26, 5, D);
                 ctx.fillStyle = pal.belt;
                 ctx.fillRect(x + 12, y + by + 30, 24, 3);
                 ctx.fillStyle = pal.beltHL || pal.belt;
@@ -2148,13 +2209,13 @@ const RPGEngine = (function() {
                 ctx.fillStyle = pal.beltBk;
                 ctx.fillRect(x + 24, y + by + 30, 3, 3);
                 ctx.fillStyle = '#fff';
-                ctx.globalAlpha = 0.3;
+                ctx.globalAlpha = 0.4;
                 ctx.fillRect(x + 24, y + by + 30, 2, D);
                 ctx.globalAlpha = 1;
                 ctx.fillStyle = pal.glove || pal.skin;
-                ctx.fillRect(x + Math.round(6 + armL), y + by + 24, 5, 9);
+                ctx.fillRect(x + Math.round(6 + armL * 1.2), y + by + 24, 5, 9);
                 ctx.fillStyle = pal.gloveSh || pal.skinSh;
-                ctx.fillRect(x + Math.round(6 + armL), y + by + 31, 5, 2);
+                ctx.fillRect(x + Math.round(6 + armL * 1.2), y + by + 31, 5, 2);
                 ctx.fillStyle = pal.pants;
                 ctx.fillRect(x + 14, y + 33, 18, 6);
                 ctx.fillStyle = pal.pantsDk;
@@ -2171,6 +2232,9 @@ const RPGEngine = (function() {
                 ctx.fillStyle = pal.bootsDk || pal.boots;
                 ctx.fillRect(x + 12, y + 45 + legL, 10, 2);
                 ctx.fillRect(x + 24, y + 45 + legR, 10, 2);
+                ctx.fillStyle = pal.outline;
+                ctx.fillRect(x + 12, y + 46 + legL, 10, D);
+                ctx.fillRect(x + 24, y + 46 + legR, 10, D);
                 ctx.fillStyle = pal.bootsHL;
                 ctx.fillRect(x + 16, y + 41 + legL, 3, D);
                 ctx.fillRect(x + 28, y + 41 + legR, 3, D);
@@ -2217,10 +2281,16 @@ const RPGEngine = (function() {
                 ctx.fillRect(x + 24, y + by + 16, 2, D);
                 ctx.fillStyle = pal.mouth || pal.skinSh;
                 ctx.fillRect(x + 28, y + by + 18, 6, 2);
-                ctx.fillStyle = pal.skinSh;
-                ctx.fillRect(x + 14, y + by + 12, 2, 4);
                 ctx.fillStyle = pal.skin;
-                ctx.fillRect(x + 14, y + by + 13, D, 2);
+                ctx.fillRect(x + 35, y + by + 14, 3, 3);
+                ctx.fillStyle = pal.skinSh;
+                ctx.fillRect(x + 36, y + by + 15, 2, D);
+                ctx.fillStyle = pal.skinSh;
+                ctx.fillRect(x + 13, y + by + 12, 3, 4);
+                ctx.fillStyle = pal.skin;
+                ctx.fillRect(x + 13, y + by + 13, 2, 2);
+                ctx.fillStyle = pal.outline;
+                ctx.fillRect(x + 22, y + by + 20, 8, D);
                 ctx.fillStyle = pal.collar || pal.tunicHL;
                 ctx.fillRect(x + 20, y + by + 21, 14, 3);
                 ctx.fillStyle = pal.collarSh || pal.tunic;
@@ -2234,6 +2304,8 @@ const RPGEngine = (function() {
                 ctx.fillRect(x + 12, y + by + 30, 24, 2);
                 ctx.fillStyle = pal.tunicDk;
                 for (let i = 0; i < 2; i++) ctx.fillRect(x + 26 + i * 5, y + by + 27, D, 3);
+                ctx.fillStyle = pal.tunicDk;
+                ctx.fillRect(x + 24, y + by + 26, 5, D);
                 ctx.fillStyle = pal.belt;
                 ctx.fillRect(x + 12, y + by + 30, 24, 3);
                 ctx.fillStyle = pal.beltHL || pal.belt;
@@ -2241,13 +2313,13 @@ const RPGEngine = (function() {
                 ctx.fillStyle = pal.beltBk;
                 ctx.fillRect(x + 20, y + by + 30, 3, 3);
                 ctx.fillStyle = '#fff';
-                ctx.globalAlpha = 0.3;
+                ctx.globalAlpha = 0.4;
                 ctx.fillRect(x + 21, y + by + 30, 2, D);
                 ctx.globalAlpha = 1;
                 ctx.fillStyle = pal.glove || pal.skin;
-                ctx.fillRect(x + Math.round(37 + armR), y + by + 24, 5, 9);
+                ctx.fillRect(x + Math.round(37 + armR * 1.2), y + by + 24, 5, 9);
                 ctx.fillStyle = pal.gloveSh || pal.skinSh;
-                ctx.fillRect(x + Math.round(37 + armR), y + by + 31, 5, 2);
+                ctx.fillRect(x + Math.round(37 + armR * 1.2), y + by + 31, 5, 2);
                 ctx.fillStyle = pal.pants;
                 ctx.fillRect(x + 14, y + 33, 18, 6);
                 ctx.fillStyle = pal.pantsDk;
@@ -2264,6 +2336,9 @@ const RPGEngine = (function() {
                 ctx.fillStyle = pal.bootsDk || pal.boots;
                 ctx.fillRect(x + 12, y + 45 + legL, 10, 2);
                 ctx.fillRect(x + 24, y + 45 + legR, 10, 2);
+                ctx.fillStyle = pal.outline;
+                ctx.fillRect(x + 12, y + 46 + legL, 10, D);
+                ctx.fillRect(x + 24, y + 46 + legR, 10, D);
                 ctx.fillStyle = pal.bootsHL;
                 ctx.fillRect(x + 16, y + 41 + legL, 3, D);
                 ctx.fillRect(x + 28, y + 41 + legR, 3, D);
