@@ -1,0 +1,349 @@
+{% extends "core/base.html" %}
+
+{% block title %}{{ puzzle.puzzle_name }}{% endblock %}
+
+{% block content %}
+<style>
+    .puzzle-container {
+        max-width: 700px;
+        margin: 0 auto;
+        padding: 1rem;
+    }
+    .puzzle-intro {
+        background: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(0, 0, 0, 0.8));
+        border: 2px solid rgba(255, 193, 7, 0.4);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .merchant-speech {
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+    .merchant-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #ffc107, #ff9800);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        flex-shrink: 0;
+        color: #1a1a2e;
+    }
+    .speech-bubble {
+        background: rgba(0, 0, 0, 0.5);
+        border-radius: 12px;
+        padding: 1rem;
+        position: relative;
+        color: #e0e0e0;
+        line-height: 1.6;
+    }
+    .speech-bubble::before {
+        content: '';
+        position: absolute;
+        left: -10px;
+        top: 20px;
+        border-width: 10px;
+        border-style: solid;
+        border-color: transparent rgba(0, 0, 0, 0.5) transparent transparent;
+    }
+    .merchant-name {
+        color: #ffd54f;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    .timer-bar {
+        background: rgba(0, 0, 0, 0.5);
+        border-radius: 20px;
+        padding: 0.75rem 1.5rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        border: 1px solid rgba(255, 193, 7, 0.3);
+        gap: 1rem;
+    }
+    .timer {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #81c784;
+    }
+    .timer.warning { color: #ffd54f; }
+    .timer.danger { color: #ef5350; }
+    .calculation-card {
+        background: rgba(0, 0, 0, 0.7);
+        border: 2px solid rgba(255, 193, 7, 0.3);
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+    }
+    .data-display {
+        background: rgba(255, 193, 7, 0.1);
+        border-radius: 10px;
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+    .data-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        color: #e0e0e0;
+    }
+    .data-row:last-child {
+        border-bottom: none;
+    }
+    .data-label {
+        color: #b0b0b0;
+    }
+    .data-value {
+        color: #ffd54f;
+        font-weight: 600;
+    }
+    .formula-hint {
+        background: rgba(156, 39, 176, 0.15);
+        border-left: 4px solid #9c27b0;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        border-radius: 0 8px 8px 0;
+    }
+    .formula-hint h4 {
+        color: #ce93d8;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+    .formula-hint code {
+        color: #e0e0e0;
+        font-size: 1rem;
+    }
+    .answer-section {
+        text-align: center;
+    }
+    .answer-input {
+        background: rgba(0, 0, 0, 0.5);
+        border: 2px solid rgba(255, 193, 7, 0.4);
+        border-radius: 10px;
+        padding: 1rem 1.5rem;
+        font-size: 1.5rem;
+        color: #ffd54f;
+        text-align: center;
+        width: 200px;
+        margin-bottom: 1rem;
+    }
+    .answer-input:focus {
+        outline: none;
+        border-color: #ffc107;
+        box-shadow: 0 0 10px rgba(255, 193, 7, 0.3);
+    }
+    .answer-unit {
+        color: #b0b0b0;
+        font-size: 1.1rem;
+        margin-left: 0.5rem;
+    }
+    .btn-submit {
+        background: linear-gradient(135deg, #ffc107, #ff9800);
+        color: #1a1a2e;
+        border: none;
+        padding: 1rem 3rem;
+        border-radius: 30px;
+        font-size: 1.2rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 1rem;
+    }
+    .btn-submit:hover {
+        background: linear-gradient(135deg, #ffca28, #ffa726);
+        transform: scale(1.05);
+    }
+    .calculator-tip {
+        background: rgba(33, 150, 243, 0.1);
+        border-radius: 8px;
+        padding: 0.75rem;
+        margin-top: 1rem;
+        color: #90caf9;
+        font-size: 0.9rem;
+        text-align: center;
+    }
+</style>
+
+<div class="puzzle-container">
+    <div class="puzzle-intro">
+        <div class="merchant-speech">
+            <div class="merchant-avatar">
+                {% if puzzle.puzzle_type == 'profit_margin' %}
+                <i class="bi bi-percent"></i>
+                {% elif puzzle.puzzle_type == 'breakeven' %}
+                <i class="bi bi-graph-up"></i>
+                {% elif puzzle.puzzle_type == 'roi' %}
+                <i class="bi bi-piggy-bank"></i>
+                {% elif puzzle.puzzle_type == 'markup' %}
+                <i class="bi bi-tags"></i>
+                {% else %}
+                <i class="bi bi-calculator"></i>
+                {% endif %}
+            </div>
+            <div class="speech-bubble">
+                <div class="merchant-name">{{ puzzle.merchant_name }}</div>
+                {{ puzzle.story_intro }}
+            </div>
+        </div>
+    </div>
+    
+    <div class="timer-bar">
+        <i class="bi bi-stopwatch" style="color: #ffd54f; font-size: 1.25rem;"></i>
+        <div class="timer" id="timer">{{ (puzzle.time_limit_seconds / 60)|int }}:00</div>
+    </div>
+    
+    <div class="calculation-card">
+        <div class="data-display">
+            <h4 style="color: #ffd54f; margin-bottom: 1rem;"><i class="bi bi-clipboard-data"></i> Given Information</h4>
+            {% if puzzle.challenge_data %}
+                {% if puzzle.challenge_data.cost %}
+                <div class="data-row">
+                    <span class="data-label">Cost per unit:</span>
+                    <span class="data-value">{{ puzzle.challenge_data.cost }} gold</span>
+                </div>
+                {% endif %}
+                {% if puzzle.challenge_data.price %}
+                <div class="data-row">
+                    <span class="data-label">Selling price:</span>
+                    <span class="data-value">{{ puzzle.challenge_data.price }} gold</span>
+                </div>
+                {% endif %}
+                {% if puzzle.challenge_data.fixed_costs %}
+                <div class="data-row">
+                    <span class="data-label">Fixed costs:</span>
+                    <span class="data-value">{{ puzzle.challenge_data.fixed_costs }} gold/month</span>
+                </div>
+                {% endif %}
+                {% if puzzle.challenge_data.variable_cost %}
+                <div class="data-row">
+                    <span class="data-label">Variable cost per unit:</span>
+                    <span class="data-value">{{ puzzle.challenge_data.variable_cost }} gold</span>
+                </div>
+                {% endif %}
+                {% if puzzle.challenge_data.selling_price %}
+                <div class="data-row">
+                    <span class="data-label">Selling price:</span>
+                    <span class="data-value">{{ puzzle.challenge_data.selling_price }} gold</span>
+                </div>
+                {% endif %}
+                {% if puzzle.challenge_data.investment %}
+                <div class="data-row">
+                    <span class="data-label">Investment:</span>
+                    <span class="data-value">{{ puzzle.challenge_data.investment }} gold</span>
+                </div>
+                {% endif %}
+                {% if puzzle.challenge_data.return_value %}
+                <div class="data-row">
+                    <span class="data-label">Return:</span>
+                    <span class="data-value">{{ puzzle.challenge_data.return_value }} gold</span>
+                </div>
+                {% endif %}
+                {% if puzzle.challenge_data.markup_percent %}
+                <div class="data-row">
+                    <span class="data-label">Markup:</span>
+                    <span class="data-value">{{ puzzle.challenge_data.markup_percent }}%</span>
+                </div>
+                {% endif %}
+                {% if puzzle.challenge_data.visitors %}
+                <div class="data-row">
+                    <span class="data-label">Total visitors:</span>
+                    <span class="data-value">{{ puzzle.challenge_data.visitors }}</span>
+                </div>
+                {% endif %}
+                {% if puzzle.challenge_data.buyers %}
+                <div class="data-row">
+                    <span class="data-label">Buyers:</span>
+                    <span class="data-value">{{ puzzle.challenge_data.buyers }}</span>
+                </div>
+                {% endif %}
+            {% endif %}
+        </div>
+        
+        {% if puzzle.formula_hint %}
+        <div class="formula-hint">
+            <h4><i class="bi bi-lightbulb"></i> Formula Hint</h4>
+            <code>{{ puzzle.formula_hint }}</code>
+        </div>
+        {% endif %}
+        
+        <form action="{{ url_for('finance.submit_merchant_puzzle', puzzle_id=puzzle.puzzle_id) }}" method="POST" id="puzzleForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="time_seconds" id="timeSpent" value="0">
+            {% if path_id %}<input type="hidden" name="path_id" value="{{ path_id }}">{% endif %}
+            
+            <div class="answer-section">
+                <h4 style="color: #e0e0e0; margin-bottom: 1rem;">
+                    {% if puzzle.puzzle_type == 'profit_margin' %}
+                    What is the profit margin?
+                    {% elif puzzle.puzzle_type == 'breakeven' %}
+                    How many units to break even?
+                    {% elif puzzle.puzzle_type == 'roi' %}
+                    What is the ROI?
+                    {% elif puzzle.puzzle_type == 'markup' %}
+                    What should the selling price be?
+                    {% elif puzzle.puzzle_type == 'conversion_rate' %}
+                    What is the conversion rate?
+                    {% else %}
+                    Enter your answer:
+                    {% endif %}
+                </h4>
+                
+                <div>
+                    <input type="number" step="0.01" name="answer" id="answer" class="answer-input" placeholder="?" required>
+                    <span class="answer-unit">
+                        {% if puzzle.puzzle_type in ['profit_margin', 'roi', 'conversion_rate'] %}%{% elif puzzle.puzzle_type == 'breakeven' %}units{% else %}gold{% endif %}
+                    </span>
+                </div>
+                
+                <button type="submit" class="btn-submit">
+                    <i class="bi bi-check2-circle"></i> Submit Answer
+                </button>
+            </div>
+        </form>
+        
+        <div class="calculator-tip">
+            <i class="bi bi-info-circle"></i> Tip: Round your answer to the nearest whole number for units, or use up to 2 decimal places for percentages.
+        </div>
+    </div>
+    
+    <div class="text-center">
+        <a href="{{ url_for('finance.merchant_puzzles_list') }}" class="btn btn-outline-light">
+            <i class="bi bi-arrow-left"></i> Back to Puzzles
+        </a>
+    </div>
+</div>
+
+<script>
+let timeLimit = {{ puzzle.time_limit_seconds }};
+let timeSpent = 0;
+const timerEl = document.getElementById('timer');
+
+const countdown = setInterval(() => {
+    timeSpent++;
+    const remaining = timeLimit - timeSpent;
+    const minutes = Math.floor(remaining / 60);
+    const seconds = remaining % 60;
+    timerEl.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    document.getElementById('timeSpent').value = timeSpent;
+    
+    if (remaining <= 30) {
+        timerEl.classList.add('danger');
+    } else if (remaining <= 60) {
+        timerEl.classList.add('warning');
+    }
+    
+    if (remaining <= 0) {
+        clearInterval(countdown);
+        document.getElementById('puzzleForm').submit();
+    }
+}, 1000);
+
+document.getElementById('answer').focus();
+</script>
+{% endblock %}

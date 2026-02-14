@@ -1,0 +1,239 @@
+{% extends "core/base.html" %}
+
+{% block title %}New Game - Business Tycoon RPG{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center fade-in">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-header text-center">
+                <h2 class="game-title mb-0">
+                    <i class="bi bi-stars" style="-webkit-text-fill-color: #ffd700;"></i> Begin Your Legend
+                </h2>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="mb-4">
+                        <label class="form-label game-subtitle">
+                            <i class="bi bi-person-fill gold-text"></i> Hero Name
+                        </label>
+                        <input type="text" name="name" 
+                               class="form-control bg-dark text-light" 
+                               style="border: 2px solid rgba(255,215,0,0.3); font-size: 1.2rem; padding: 12px;"
+                               placeholder="Enter your name" maxlength="50" required>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label game-subtitle">
+                            <i class="bi bi-shield-lock-fill gold-text"></i> Password <small class="text-muted">(protects your save)</small>
+                        </label>
+                        <input type="password" name="password" 
+                               class="form-control bg-dark text-light" 
+                               style="border: 2px solid rgba(255,215,0,0.3); font-size: 1.1rem; padding: 12px;"
+                               placeholder="Create a password" minlength="4" required>
+                        <small class="text-muted">At least 4 characters. You'll need this to load your game.</small>
+                    </div>
+                    
+                    <div class="section-divider"></div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label game-subtitle">
+                            <i class="bi bi-signpost-split-fill gold-text"></i> Choose Your Destiny
+                        </label>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <input type="radio" class="btn-check" name="career_path" value="entrepreneur" id="path-entrepreneur" checked>
+                                <label class="btn w-100 p-4 text-start selection-card" for="path-entrepreneur"
+                                       style="background: linear-gradient(135deg, rgba(80,200,120,0.1) 0%, rgba(0,0,0,0.3) 100%); border: 2px solid rgba(80,200,120,0.5); border-radius: 12px;">
+                                    <span class="selected-badge"><i class="bi bi-check-circle-fill"></i> SELECTED</span>
+                                    <div class="d-flex align-items-center mb-3">
+                                        <i class="bi bi-crown-fill display-5 me-3" style="color: #50c878;"></i>
+                                        <div>
+                                            <strong class="fs-4 gold-text">The Entrepreneur</strong>
+                                            <span class="badge ms-2" style="background: linear-gradient(135deg, #50c878, #228b22);">Owner</span>
+                                        </div>
+                                    </div>
+                                    <ul class="list-unstyled mb-0">
+                                        <li class="mb-1"><i class="bi bi-coin text-warning"></i> Start with $10,000 capital</li>
+                                        <li class="mb-1"><i class="bi bi-star-fill text-warning"></i> 50 starting reputation</li>
+                                        <li class="mb-1"><i class="bi bi-lightning-fill text-info"></i> Full control from day one</li>
+                                        <li><i class="bi bi-exclamation-triangle-fill text-danger"></i> Higher risk, higher reward</li>
+                                    </ul>
+                                </label>
+                            </div>
+                            <div class="col-md-6">
+                                <input type="radio" class="btn-check" name="career_path" value="employee" id="path-employee">
+                                <label class="btn w-100 p-4 text-start selection-card" for="path-employee"
+                                       style="background: linear-gradient(135deg, rgba(74,144,217,0.1) 0%, rgba(0,0,0,0.3) 100%); border: 2px solid rgba(74,144,217,0.5); border-radius: 12px;">
+                                    <span class="selected-badge"><i class="bi bi-check-circle-fill"></i> SELECTED</span>
+                                    <div class="d-flex align-items-center mb-3">
+                                        <i class="bi bi-ladder display-5 me-3" style="color: #4a90d9;"></i>
+                                        <div>
+                                            <strong class="fs-4 gold-text">The Climber</strong>
+                                            <span class="badge ms-2" style="background: linear-gradient(135deg, #4a90d9, #2563a0);">Employee</span>
+                                        </div>
+                                    </div>
+                                    <ul class="list-unstyled mb-0">
+                                        <li class="mb-1"><i class="bi bi-coin text-warning"></i> Start with $500 savings</li>
+                                        <li class="mb-1"><i class="bi bi-book-fill text-info"></i> Learn from entry-level</li>
+                                        <li class="mb-1"><i class="bi bi-arrow-up-circle-fill text-success"></i> Earn promotions as you level</li>
+                                        <li><i class="bi bi-gem text-purple"></i> Eventually own your business!</li>
+                                    </ul>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="section-divider"></div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label game-subtitle">
+                            <i class="bi bi-globe2 gold-text"></i> Select Your World
+                        </label>
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <input type="radio" class="btn-check" name="world" value="Modern" id="world-modern" checked>
+                                <label class="btn w-100 p-3 text-center selection-card" for="world-modern"
+                                       style="background: linear-gradient(135deg, rgba(74,144,217,0.1) 0%, rgba(0,0,0,0.3) 100%); border: 2px solid rgba(74,144,217,0.5); border-radius: 12px;">
+                                    <span class="selected-badge"><i class="bi bi-check-circle-fill"></i> SELECTED</span>
+                                    <i class="bi bi-building-fill display-5 d-block mb-2 text-primary"></i>
+                                    <strong class="gold-text">Modern</strong>
+                                    <small class="d-block text-muted mt-1">Offices & Tech</small>
+                                </label>
+                            </div>
+                            <div class="col-md-3">
+                                <input type="radio" class="btn-check" name="world" value="Industrial" id="world-industrial">
+                                <label class="btn w-100 p-3 text-center selection-card" for="world-industrial"
+                                       style="background: linear-gradient(135deg, rgba(205,133,63,0.1) 0%, rgba(0,0,0,0.3) 100%); border: 2px solid rgba(205,133,63,0.5); border-radius: 12px;">
+                                    <span class="selected-badge"><i class="bi bi-check-circle-fill"></i> SELECTED</span>
+                                    <i class="bi bi-gear-wide-connected display-5 d-block mb-2" style="color: #cd853f;"></i>
+                                    <strong class="gold-text">Industrial</strong>
+                                    <small class="d-block text-muted mt-1">1800s Factories</small>
+                                </label>
+                            </div>
+                            <div class="col-md-3">
+                                <input type="radio" class="btn-check" name="world" value="Fantasy" id="world-fantasy" disabled>
+                                <label class="btn w-100 p-3 text-center" for="world-fantasy"
+                                       style="background: rgba(0,0,0,0.3); border: 2px solid rgba(100,100,100,0.3); opacity: 0.6; border-radius: 12px;">
+                                    <i class="bi bi-magic display-5 d-block mb-2" style="color: #666;"></i>
+                                    <strong>Fantasy</strong>
+                                    <small class="d-block text-muted mt-1">Coming Soon</small>
+                                </label>
+                            </div>
+                            <div class="col-md-3">
+                                <input type="radio" class="btn-check" name="world" value="SciFi" id="world-scifi" disabled>
+                                <label class="btn w-100 p-3 text-center" for="world-scifi"
+                                       style="background: rgba(0,0,0,0.3); border: 2px solid rgba(100,100,100,0.3); opacity: 0.6; border-radius: 12px;">
+                                    <i class="bi bi-rocket-takeoff display-5 d-block mb-2" style="color: #666;"></i>
+                                    <strong>Sci-Fi</strong>
+                                    <small class="d-block text-muted mt-1">Coming Soon</small>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4" id="modern-industries">
+                        <label class="form-label game-subtitle">
+                            <i class="bi bi-shop-window gold-text"></i> Select Your Industry
+                        </label>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <input type="radio" class="btn-check" name="industry" value="Restaurant" id="ind-restaurant" checked>
+                                <label class="btn w-100 p-3 selection-card" for="ind-restaurant"
+                                       style="background: linear-gradient(135deg, rgba(255,107,107,0.1) 0%, rgba(0,0,0,0.3) 100%); border: 2px solid rgba(255,107,107,0.5); border-radius: 12px;">
+                                    <span class="selected-badge"><i class="bi bi-check-circle-fill"></i> SELECTED</span>
+                                    <i class="bi bi-cup-hot-fill display-5 d-block mb-2" style="color: #ff6b6b;"></i>
+                                    <strong class="gold-text">Restaurant</strong>
+                                    <small class="d-block text-success mt-1">Marketing +20%, Legal -20%</small>
+                                </label>
+                            </div>
+                            <div class="col-md-6">
+                                <input type="radio" class="btn-check" name="industry" value="SaaS" id="ind-saas" disabled>
+                                <label class="btn w-100 p-3" for="ind-saas"
+                                       style="background: rgba(0,0,0,0.3); border: 2px solid rgba(100,100,100,0.3); opacity: 0.6; border-radius: 12px;">
+                                    <i class="bi bi-laptop-fill display-5 d-block mb-2" style="color: #666;"></i>
+                                    <strong>SaaS</strong>
+                                    <small class="d-block text-muted mt-1">Coming Soon</small>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4 d-none" id="industrial-industries">
+                        <label class="form-label game-subtitle">
+                            <i class="bi bi-buildings gold-text"></i> Select Your Industry
+                        </label>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <input type="radio" class="btn-check" name="industry" value="Steel Mill" id="ind-steel">
+                                <label class="btn w-100 p-3 selection-card" for="ind-steel"
+                                       style="background: linear-gradient(135deg, rgba(255,99,71,0.1) 0%, rgba(0,0,0,0.3) 100%); border: 2px solid rgba(255,99,71,0.5); border-radius: 12px;">
+                                    <span class="selected-badge"><i class="bi bi-check-circle-fill"></i> SELECTED</span>
+                                    <i class="bi bi-fire display-5 d-block mb-2" style="color: #ff6347;"></i>
+                                    <strong class="gold-text">Steel Mill</strong>
+                                    <small class="d-block text-success mt-1">Operations +40%, Finance +20%</small>
+                                </label>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="radio" class="btn-check" name="industry" value="Textile Factory" id="ind-textile">
+                                <label class="btn w-100 p-3 selection-card" for="ind-textile"
+                                       style="background: linear-gradient(135deg, rgba(221,160,221,0.1) 0%, rgba(0,0,0,0.3) 100%); border: 2px solid rgba(221,160,221,0.5); border-radius: 12px;">
+                                    <span class="selected-badge"><i class="bi bi-check-circle-fill"></i> SELECTED</span>
+                                    <i class="bi bi-scissors display-5 d-block mb-2" style="color: #dda0dd;"></i>
+                                    <strong class="gold-text">Textile Factory</strong>
+                                    <small class="d-block text-success mt-1">Operations +30%, HR +20%</small>
+                                </label>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="radio" class="btn-check" name="industry" value="Railroad" id="ind-railroad">
+                                <label class="btn w-100 p-3 selection-card" for="ind-railroad"
+                                       style="background: linear-gradient(135deg, rgba(139,69,19,0.2) 0%, rgba(0,0,0,0.3) 100%); border: 2px solid rgba(139,69,19,0.5); border-radius: 12px;">
+                                    <span class="selected-badge"><i class="bi bi-check-circle-fill"></i> SELECTED</span>
+                                    <i class="bi bi-train-front-fill display-5 d-block mb-2" style="color: #8b4513;"></i>
+                                    <strong class="gold-text">Railroad</strong>
+                                    <small class="d-block text-success mt-1">Strategy +30%, Finance +30%</small>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="section-divider"></div>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="{{ url_for('auth.index') }}" class="btn btn-outline-secondary btn-lg">
+                            <i class="bi bi-arrow-left"></i> Back
+                        </a>
+                        <button type="submit" class="btn btn-game btn-game-gold btn-lg">
+                            <i class="bi bi-play-fill"></i> Begin Adventure
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const worldRadios = document.querySelectorAll('input[name="world"]');
+    const modernIndustries = document.getElementById('modern-industries');
+    const industrialIndustries = document.getElementById('industrial-industries');
+    
+    worldRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'Industrial') {
+                modernIndustries.classList.add('d-none');
+                industrialIndustries.classList.remove('d-none');
+                document.getElementById('ind-steel').checked = true;
+            } else {
+                modernIndustries.classList.remove('d-none');
+                industrialIndustries.classList.add('d-none');
+                document.getElementById('ind-restaurant').checked = true;
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,113 @@
+{% extends "core/base.html" %}
+
+{% block title %}Equipment - Business Tycoon RPG{% endblock %}
+
+{% block body_class %}world-{{ stats.world|lower }}{% endblock %}
+
+{% block content %}
+<div class="row fade-in">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="game-title"><i class="bi bi-shield-shaded"></i> Equipment Armory</h2>
+            <a href="{{ url_for('core.hub') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to HQ
+            </a>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="bi bi-person-fill"></i> Equipped Gear
+                    </div>
+                    <div class="card-body">
+                        {% set slots = ['Head', 'Body', 'Accessory'] %}
+                        {% for slot in slots %}
+                        <div class="stat-card mb-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <small class="text-muted">{{ slot }}</small>
+                                    {% set equipped_item = None %}
+                                    {% for item in equipment_data.owned %}
+                                        {% if item.slot_type == slot and item.is_equipped %}
+                                            {% set equipped_item = item %}
+                                        {% endif %}
+                                    {% endfor %}
+                                    {% if equipped_item %}
+                                    <div class="text-success">{{ equipped_item.equipment_name }}</div>
+                                    <small class="text-info">+{{ equipped_item.stat_bonus_value }} {{ equipped_item.stat_bonus_type }}</small>
+                                    {% else %}
+                                    <div class="text-muted">Empty</div>
+                                    {% endif %}
+                                </div>
+                                <i class="bi bi-{% if slot == 'Head' %}gem{% elif slot == 'Body' %}suit-heart-fill{% else %}watch{% endif %}" style="font-size: 1.5rem; color: #6c757d;"></i>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="bi bi-shop-window"></i> Available Equipment
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            {% for item in equipment_data.all_equipment %}
+                            <div class="col-md-6">
+                                <div class="card h-100" style="background: linear-gradient(180deg, rgba(30,30,50,0.9), rgba(15,15,30,0.95)); border: 2px solid {% if item.equipment_id in equipment_data.owned_ids %}rgba(80,200,120,0.4){% elif item.rarity == 'legendary' %}rgba(255,215,0,0.4){% elif item.rarity == 'epic' %}rgba(138,43,226,0.4){% elif item.rarity == 'rare' %}rgba(0,191,255,0.4){% else %}rgba(100,100,100,0.3){% endif %};">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <div>
+                                                <h6 class="gold-text mb-0">{{ item.equipment_name }}</h6>
+                                                <small class="text-muted">{{ item.slot_type }} Slot</small>
+                                            </div>
+                                            <span class="badge" style="background: {% if item.rarity == 'legendary' %}#ffd700{% elif item.rarity == 'epic' %}#8a2be2{% elif item.rarity == 'rare' %}#00bfff{% else %}#6c757d{% endif %};">{{ item.rarity|capitalize }}</span>
+                                        </div>
+                                        
+                                        <p class="small text-muted mb-2">{{ item.equipment_description }}</p>
+                                        
+                                        <div class="stat-card p-2 mb-2">
+                                            <div class="text-success">+{{ item.stat_bonus_value }} {{ item.stat_bonus_type }}</div>
+                                            <small class="text-muted">Requires Level {{ item.level_required }}</small>
+                                        </div>
+                                        
+                                        {% if item.equipment_id in equipment_data.owned_ids %}
+                                            {% set is_equipped = False %}
+                                            {% for owned in equipment_data.owned %}
+                                                {% if owned.equipment_id == item.equipment_id and owned.is_equipped %}
+                                                    {% set is_equipped = True %}
+                                                {% endif %}
+                                            {% endfor %}
+                                            {% if is_equipped %}
+                                            <span class="badge bg-success w-100"><i class="bi bi-check-circle-fill"></i> Equipped</span>
+                                            {% else %}
+                                            <form action="{{ url_for('inventory.equip_item', equipment_id=item.equipment_id) }}" method="POST">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                <button type="submit" class="btn btn-sm btn-outline-success w-100">
+                                                    <i class="bi bi-arrow-up-circle"></i> Equip
+                                                </button>
+                                            </form>
+                                            {% endif %}
+                                        {% else %}
+                                        <form action="{{ url_for('inventory.purchase_equipment', equipment_id=item.equipment_id) }}" method="POST">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="btn btn-sm btn-game btn-game-gold w-100" {% if stats.cash < item.purchase_price %}disabled{% endif %}>
+                                                <i class="bi bi-coin"></i> Buy ${{ "{:,.0f}".format(item.purchase_price) }}
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

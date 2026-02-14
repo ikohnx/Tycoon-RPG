@@ -1,0 +1,231 @@
+{% extends "core/base.html" %}
+
+{% block title %}{{ challenge.title }} - Business Tycoon RPG{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="gold-text mb-0">
+                        <i class="bi bi-puzzle-fill"></i> {{ challenge.title }}
+                    </h2>
+                    <p class="text-muted mb-0">{{ challenge.challenge_type|replace('_', ' ')|title }} Challenge</p>
+                </div>
+                <a href="{{ url_for('finance.projects') }}" class="btn btn-outline-light">
+                    <i class="bi bi-arrow-left"></i> Back to Projects
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-question-circle"></i> Challenge
+                </div>
+                <div class="card-body">
+                    <p class="lead">{{ challenge.description }}</p>
+                    
+                    <form action="{{ url_for('finance.submit_scheduling_challenge', challenge_id=challenge.challenge_id) }}" method="post">
+                        {% if challenge.challenge_type == 'critical_path' %}
+                        <div class="mb-4">
+                            <h5>Tasks:</h5>
+                            <div class="table-responsive">
+                                <table class="table table-dark">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Task Name</th>
+                                            <th>Duration (weeks)</th>
+                                            <th>Predecessors</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for task in challenge.task_data.tasks %}
+                                        <tr>
+                                            <td><strong>{{ task.id }}</strong></td>
+                                            <td>{{ task.name }}</td>
+                                            <td>{{ task.duration }}</td>
+                                            <td>{{ task.predecessors|join(', ') or 'None' }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">What is the minimum project duration (in weeks)?</label>
+                                <input type="number" name="duration" class="form-control bg-dark text-light" 
+                                       min="1" max="52" required placeholder="Enter total weeks">
+                            </div>
+                        </div>
+                        
+                        {% elif challenge.challenge_type == 'estimation' %}
+                        <div class="mb-4">
+                            <div class="alert alert-info">
+                                <strong>PERT Three-Point Estimation:</strong>
+                                <ul class="mb-0">
+                                    <li>Optimistic (O): {{ challenge.task_data.optimistic }} weeks</li>
+                                    <li>Most Likely (M): {{ challenge.task_data.most_likely }} weeks</li>
+                                    <li>Pessimistic (P): {{ challenge.task_data.pessimistic }} weeks</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Calculate the Expected Duration using PERT formula:</label>
+                                <input type="number" name="expected" class="form-control bg-dark text-light" 
+                                       step="0.1" min="0" max="100" required placeholder="Enter expected weeks">
+                                <small class="text-muted">Hint: E = (O + 4M + P) / 6</small>
+                            </div>
+                        </div>
+                        
+                        {% elif challenge.challenge_type == 'resource_leveling' %}
+                        <div class="mb-4">
+                            <h5>Available Resources:</h5>
+                            <div class="row mb-3">
+                                {% for resource in challenge.task_data.resources %}
+                                <div class="col-md-4">
+                                    <div class="card bg-dark">
+                                        <div class="card-body text-center">
+                                            <strong>{{ resource.name }}</strong>
+                                            <br>
+                                            <small class="text-muted">{{ resource.capacity }} hrs/week</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            
+                            <h5>Tasks to Assign:</h5>
+                            {% for task in challenge.task_data.tasks %}
+                            <div class="card bg-dark mb-2">
+                                <div class="card-body">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-6">
+                                            <strong>{{ task.name }}</strong>
+                                            <br>
+                                            <small class="text-muted">{{ task.hours }} hours | Week {{ task.week }}</small>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <select name="assign_{{ task.id }}" class="form-select bg-dark text-light" required>
+                                                <option value="">Select Resource...</option>
+                                                {% for resource in challenge.task_data.resources %}
+                                                <option value="{{ resource.id }}">{{ resource.name }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        {% elif challenge.challenge_type == 'compression' %}
+                        <div class="mb-4">
+                            <div class="alert alert-warning">
+                                <strong>Project Status:</strong>
+                                <br>Current Duration: {{ challenge.task_data.current_duration }} weeks
+                                <br>Target Duration: {{ challenge.task_data.target_duration }} weeks
+                                <br><strong>You need to compress by {{ challenge.task_data.current_duration - challenge.task_data.target_duration }} weeks!</strong>
+                            </div>
+                            
+                            <h5>Available Options:</h5>
+                            {% for option in challenge.task_data.options %}
+                            <div class="form-check mb-3 p-3 bg-dark rounded">
+                                <input class="form-check-input" type="radio" name="choice" 
+                                       id="option_{{ loop.index }}" value="{{ option.type }}" required>
+                                <label class="form-check-label" for="option_{{ loop.index }}">
+                                    <strong>{{ option.type|title }}</strong>
+                                    {% if option.type == 'crash' %}
+                                    - {{ option.task }}
+                                    <br><small class="text-warning">Cost: ${{ option.cost }} | Saves: {{ option.time_saved }} weeks</small>
+                                    {% else %}
+                                    - Overlap {{ option.tasks|join(' & ') }}
+                                    <br><small class="text-info">Risk: {{ option.risk|title }} | Saves: {{ option.time_saved }} weeks</small>
+                                    {% endif %}
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        {% elif challenge.challenge_type == 'dependencies' %}
+                        <div class="mb-4">
+                            <h5>Tasks:</h5>
+                            <div class="table-responsive">
+                                <table class="table table-dark">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Task Name</th>
+                                            <th>Duration</th>
+                                            <th>Notes</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for task in challenge.task_data.tasks %}
+                                        <tr>
+                                            <td><strong>{{ task.id }}</strong></td>
+                                            <td>{{ task.name }}</td>
+                                            <td>{{ task.duration }} weeks</td>
+                                            <td>
+                                                {% if task.needs_logo %}Needs logo first{% endif %}
+                                                {% if task.needs %}Needs: {{ task.needs|join(', ') }}{% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Which tasks can run in parallel at the start?</label>
+                                <input type="text" name="parallel" class="form-control bg-dark text-light" 
+                                       placeholder="Enter task IDs separated by commas (e.g., A, C, D)">
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <button type="submit" class="btn btn-game btn-game-gold btn-lg w-100">
+                            <i class="bi bi-check-circle"></i> Submit Answer
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header bg-info bg-opacity-25">
+                    <i class="bi bi-lightbulb"></i> Hint
+                </div>
+                <div class="card-body">
+                    <p class="mb-0">{{ challenge.hint_text }}</p>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-trophy"></i> Reward
+                </div>
+                <div class="card-body text-center">
+                    <h3 class="text-success">+{{ challenge.exp_reward }} EXP</h3>
+                    <p class="text-muted mb-0">For correct answer</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-clock"></i> Time Limit
+                </div>
+                <div class="card-body text-center">
+                    <h4>{{ (challenge.time_limit_seconds / 60)|int }} minutes</h4>
+                    <p class="text-muted mb-0">Take your time to think!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

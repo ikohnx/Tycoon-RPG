@@ -1,0 +1,119 @@
+{% extends "core/base.html" %}
+
+{% block title %}Competitions - Business Tycoon RPG{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="gold-text mb-0">
+                        <i class="bi bi-award"></i> Competitions & Leagues
+                    </h2>
+                    <p class="text-muted mb-0">Compete with other players and climb the ranks</p>
+                </div>
+                <a href="{{ url_for('core.hub') }}" class="btn btn-outline-light">
+                    <i class="bi bi-arrow-left"></i> Back to Hub
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+        {% for message in messages %}
+        <div>{{ message }}</div>
+        {% endfor %}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-lightning"></i> Active Competitions
+                </div>
+                <div class="card-body">
+                    {% if competitions %}
+                    {% for comp in competitions %}
+                    <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-dark rounded">
+                        <div>
+                            <h6 class="mb-1">{{ comp.competition_name }}</h6>
+                            <p class="text-muted small mb-0">{{ comp.description }}</p>
+                            <small class="text-info">Ends: {{ comp.end_date.strftime('%b %d, %Y') if comp.end_date else 'Ongoing' }}</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-success mb-2">+{{ comp.exp_reward }} EXP</span>
+                            <div class="btn-group">
+                                <form action="{{ url_for('social.join_competition', active_id=comp.active_id) }}" method="post" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-outline-success btn-sm">Join</button>
+                                </form>
+                                <a href="{{ url_for('social.competition_leaderboard', active_id=comp.active_id) }}" class="btn btn-outline-info btn-sm">
+                                    <i class="bi bi-list-ol"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-calendar-x display-4 text-muted"></i>
+                        <p class="text-muted mt-2">No active competitions right now. Check back soon!</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            {% if league %}
+            <div class="card mb-4">
+                <div class="card-header bg-gradient" style="background: linear-gradient(135deg, {% if league.tier >= 5 %}#60a5fa, #3b82f6{% elif league.tier >= 4 %}#a855f7, #9333ea{% elif league.tier >= 3 %}#fbbf24, #f59e0b{% elif league.tier >= 2 %}#9ca3af, #6b7280{% else %}#f97316, #ea580c{% endif %});">
+                    <i class="bi bi-shield-fill"></i> Your League
+                </div>
+                <div class="card-body text-center">
+                    <h3 class="mb-1">{{ league.league_name }}</h3>
+                    <p class="text-muted">Tier {{ league.tier }}</p>
+                    <div class="mb-3">
+                        <span class="badge bg-success">{{ league.reward_multiplier }}x Rewards</span>
+                    </div>
+                    <div class="progress mb-2" style="height: 10px;">
+                        <div class="progress-bar" style="width: {{ (league.player_exp / league.next_tier_exp) * 100 }}%"></div>
+                    </div>
+                    <small class="text-muted">{{ "{:,}".format(league.player_exp) }} / {{ "{:,}".format(league.next_tier_exp) }} EXP to next tier</small>
+                </div>
+            </div>
+            {% else %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-shield"></i> Your League
+                </div>
+                <div class="card-body text-center">
+                    <p class="text-muted">Complete more scenarios to join a league!</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="card">
+                <div class="card-header bg-info bg-opacity-25">
+                    <i class="bi bi-info-circle"></i> How It Works
+                </div>
+                <div class="card-body small">
+                    <ul class="mb-0">
+                        <li class="mb-2">Join active competitions to compete</li>
+                        <li class="mb-2">Complete challenges to earn points</li>
+                        <li class="mb-2">Top players win bonus EXP rewards</li>
+                        <li class="mb-2">Climb leagues for reward multipliers</li>
+                        <li>New competitions start weekly</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

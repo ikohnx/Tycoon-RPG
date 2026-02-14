@@ -1,0 +1,120 @@
+{% extends "core/base.html" %}
+
+{% block title %}Achievements - Business Tycoon RPG{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="gold-text mb-0">
+                        <i class="bi bi-trophy-fill"></i> Achievements
+                    </h2>
+                    <p class="text-muted mb-0">Earn badges by mastering business skills</p>
+                </div>
+                <a href="{{ url_for('core.hub') }}" class="btn btn-outline-light">
+                    <i class="bi bi-arrow-left"></i> Back to Hub
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-center bg-success bg-opacity-25">
+                <div class="card-body">
+                    <h3 class="mb-0">{{ unlocked|length }}</h3>
+                    <small>Unlocked</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center bg-warning bg-opacity-25">
+                <div class="card-body">
+                    <h3 class="mb-0">{{ in_progress|length }}</h3>
+                    <small>In Progress</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center bg-secondary bg-opacity-25">
+                <div class="card-body">
+                    <h3 class="mb-0">{{ locked|length }}</h3>
+                    <small>Locked</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if unlocked %}
+    <h4 class="text-success mb-3"><i class="bi bi-check-circle-fill"></i> Unlocked</h4>
+    <div class="row mb-4">
+        {% for ach in unlocked %}
+        <div class="col-md-4 mb-3">
+            <div class="card h-100 border-success">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <span class="badge {% if ach.tier == 'diamond' %}bg-info{% elif ach.tier == 'platinum' %}bg-light text-dark{% elif ach.tier == 'gold' %}bg-warning text-dark{% elif ach.tier == 'silver' %}bg-secondary{% else %}bg-warning{% endif %}">
+                            {{ ach.tier|title }}
+                        </span>
+                        <i class="bi bi-check-circle-fill text-success"></i>
+                    </div>
+                    <h6>{{ ach.name }}</h6>
+                    <p class="text-muted small mb-2">{{ ach.description }}</p>
+                    <span class="badge bg-success">+{{ ach.exp_reward }} EXP</span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if in_progress %}
+    <h4 class="text-warning mb-3"><i class="bi bi-hourglass-split"></i> In Progress</h4>
+    <div class="row mb-4">
+        {% for ach in in_progress %}
+        <div class="col-md-4 mb-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <span class="badge {% if ach.tier == 'diamond' %}bg-info{% elif ach.tier == 'platinum' %}bg-light text-dark{% elif ach.tier == 'gold' %}bg-warning text-dark{% elif ach.tier == 'silver' %}bg-secondary{% else %}bg-warning{% endif %}">
+                            {{ ach.tier|title }}
+                        </span>
+                        <span class="text-muted">{{ ach.progress }}/{{ ach.requirement }}</span>
+                    </div>
+                    <h6>{{ ach.name }}</h6>
+                    <p class="text-muted small mb-2">{{ ach.description }}</p>
+                    <div class="progress mb-2" style="height: 8px;">
+                        <div class="progress-bar bg-warning" style="width: {{ ach.progress_pct }}%"></div>
+                    </div>
+                    <span class="badge bg-secondary">+{{ ach.exp_reward }} EXP</span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if locked %}
+    <h4 class="text-muted mb-3"><i class="bi bi-lock-fill"></i> Locked</h4>
+    <div class="row">
+        {% for ach in locked %}
+        <div class="col-md-4 mb-3">
+            <div class="card h-100 bg-dark bg-opacity-50">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <span class="badge bg-secondary">{{ ach.tier|title }}</span>
+                        <i class="bi bi-lock text-muted"></i>
+                    </div>
+                    <h6 class="text-muted">{{ ach.name }}</h6>
+                    <p class="text-muted small mb-2">{{ ach.description }}</p>
+                    <span class="badge bg-dark">+{{ ach.exp_reward }} EXP</span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

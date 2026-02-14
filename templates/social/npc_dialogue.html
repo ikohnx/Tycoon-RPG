@@ -1,0 +1,60 @@
+{% extends "core/base.html" %}
+
+{% block title %}{{ npc.npc_name }} - Business Tycoon RPG{% endblock %}
+
+{% block body_class %}world-{{ stats.world|lower if stats else 'modern' }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center fade-in">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="mb-0">{{ npc.npc_name }}</h4>
+                        <small class="text-muted">{{ npc.npc_title }}</small>
+                    </div>
+                    <div>
+                        <span class="badge bg-success">Relationship: {{ relationship }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="dialogue-box p-4 bg-dark bg-opacity-50 rounded mb-4">
+                    <div class="d-flex align-items-start">
+                        <div class="npc-avatar me-3">
+                            <i class="bi bi-person-circle display-4 text-primary"></i>
+                        </div>
+                        <div class="dialogue-text">
+                            <p class="fs-5 mb-0">"{{ npc.dialogue_intro }}"</p>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if relationship >= 5 %}
+                <div class="alert alert-success">
+                    <i class="bi bi-star-fill"></i> Your relationship is strong! {{ npc.npc_name }} offers you special bonuses.
+                </div>
+                {% elif relationship >= 3 %}
+                <div class="alert alert-info">
+                    <i class="bi bi-emoji-smile"></i> {{ npc.npc_name }} is warming up to you. Keep building this relationship!
+                </div>
+                {% else %}
+                <div class="alert alert-secondary">
+                    <i class="bi bi-hourglass-split"></i> You're just getting to know {{ npc.npc_name }}. Visit often to build trust.
+                </div>
+                {% endif %}
+                
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('social.npcs') }}" class="btn btn-outline-light">
+                        <i class="bi bi-arrow-left"></i> Back to Network
+                    </a>
+                    <a href="{{ url_for('core.hub') }}" class="btn btn-primary">
+                        <i class="bi bi-house"></i> Return to Hub
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,179 @@
+{% extends "core/base.html" %}
+
+{% block title %}Customize Avatar - Business Tycoon RPG{% endblock %}
+
+{% block body_class %}world-{{ stats.world|lower }}{% endblock %}
+
+{% block content %}
+<div class="row fade-in">
+    <div class="col-12 mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2><i class="bi bi-person-bounding-box"></i> Customize Your Avatar</h2>
+            <a href="{{ url_for('core.hub') }}" class="btn btn-outline-light">
+                <i class="bi bi-arrow-left"></i> Back to Hub
+            </a>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-person-circle"></i> Preview</h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="avatar-preview mb-3" style="width: 200px; height: 200px; margin: 0 auto; background: linear-gradient(135deg, var(--avatar-color, #0d6efd) 0%, #1a1a2e 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                    <i class="bi bi-person-fill display-1 text-white"></i>
+                </div>
+                <h4>{{ stats.name }}</h4>
+                <p class="text-muted">{{ stats.industry }} | {{ stats.world }} World</p>
+                
+                <div class="mt-3">
+                    <span class="badge bg-primary">{{ current.hair_style|default('default')|capitalize }}</span>
+                    <span class="badge bg-success">{{ current.outfit|default('default')|capitalize }}</span>
+                    <span class="badge bg-info">{{ current.accessory|default('none')|capitalize }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <form method="POST" action="{{ url_for('social.update_avatar') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <div class="card mb-4">
+                <div class="card-header bg-primary">
+                    <h5 class="mb-0"><i class="bi bi-palette"></i> Hair Style</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        {% for opt in options.hair %}
+                        <div class="col-4 col-md-3">
+                            <div class="form-check avatar-option">
+                                <input class="form-check-input" type="radio" name="hair" 
+                                       id="hair_{{ opt.option_code }}" value="{{ opt.option_code }}"
+                                       {% if current.hair_style == opt.option_code %}checked{% endif %}>
+                                <label class="form-check-label w-100 text-center p-2 rounded" for="hair_{{ opt.option_code }}">
+                                    <i class="bi bi-person-circle d-block display-6"></i>
+                                    {{ opt.option_name }}
+                                    {% if opt.unlock_cost > 0 %}
+                                    <br><small class="text-warning">${{ opt.unlock_cost }}</small>
+                                    {% endif %}
+                                </label>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header bg-success">
+                    <h5 class="mb-0"><i class="bi bi-suit-club"></i> Outfit</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        {% for opt in options.outfit %}
+                        <div class="col-4 col-md-3">
+                            <div class="form-check avatar-option">
+                                <input class="form-check-input" type="radio" name="outfit" 
+                                       id="outfit_{{ opt.option_code }}" value="{{ opt.option_code }}"
+                                       {% if current.outfit == opt.option_code %}checked{% endif %}>
+                                <label class="form-check-label w-100 text-center p-2 rounded" for="outfit_{{ opt.option_code }}">
+                                    <i class="bi bi-person-standing d-block display-6"></i>
+                                    {{ opt.option_name }}
+                                    {% if opt.unlock_cost > 0 %}
+                                    <br><small class="text-warning">${{ opt.unlock_cost }}</small>
+                                    {% endif %}
+                                </label>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header bg-info">
+                    <h5 class="mb-0"><i class="bi bi-sunglasses"></i> Accessory</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        {% for opt in options.accessory %}
+                        <div class="col-4 col-md-3">
+                            <div class="form-check avatar-option">
+                                <input class="form-check-input" type="radio" name="accessory" 
+                                       id="acc_{{ opt.option_code }}" value="{{ opt.option_code }}"
+                                       {% if current.accessory == opt.option_code %}checked{% endif %}>
+                                <label class="form-check-label w-100 text-center p-2 rounded" for="acc_{{ opt.option_code }}">
+                                    <i class="bi bi-gem d-block display-6"></i>
+                                    {{ opt.option_name }}
+                                    {% if opt.unlock_cost > 0 %}
+                                    <br><small class="text-warning">${{ opt.unlock_cost }}</small>
+                                    {% endif %}
+                                </label>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="bi bi-droplet-fill"></i> Color Scheme</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        {% for opt in options.color %}
+                        <div class="col-4 col-md-3">
+                            <div class="form-check avatar-option">
+                                <input class="form-check-input" type="radio" name="color" 
+                                       id="color_{{ opt.option_code }}" value="{{ opt.option_code }}"
+                                       {% if current.color_scheme == opt.option_code %}checked{% endif %}>
+                                <label class="form-check-label w-100 text-center p-2 rounded" for="color_{{ opt.option_code }}">
+                                    <div class="color-swatch mx-auto mb-1" style="width: 40px; height: 40px; border-radius: 50%; background: 
+                                        {% if 'blue' in opt.option_code %}#0d6efd{% endif %}
+                                        {% if 'red' in opt.option_code %}#dc3545{% endif %}
+                                        {% if 'green' in opt.option_code %}#198754{% endif %}
+                                        {% if 'purple' in opt.option_code %}#6f42c1{% endif %}
+                                        {% if 'gold' in opt.option_code %}#ffc107{% endif %}
+                                    ;"></div>
+                                    {{ opt.option_name }}
+                                    {% if opt.unlock_cost > 0 %}
+                                    <br><small class="text-warning">${{ opt.unlock_cost }}</small>
+                                    {% endif %}
+                                </label>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="bi bi-check-circle"></i> Save Avatar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.avatar-option .form-check-input {
+    display: none;
+}
+.avatar-option .form-check-label {
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+.avatar-option .form-check-input:checked + .form-check-label {
+    border-color: var(--bs-primary);
+    background: rgba(13, 110, 253, 0.2);
+}
+.avatar-option .form-check-label:hover {
+    border-color: rgba(255,255,255,0.3);
+}
+</style>
+{% endblock %}

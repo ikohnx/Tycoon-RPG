@@ -1,0 +1,152 @@
+{% extends "core/base.html" %}
+
+{% block title %}{{ scenario.title }} - Business Tycoon RPG{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="gold-text mb-0">
+                        <i class="bi bi-chat-quote-fill"></i> {{ scenario.title }}
+                    </h2>
+                    <p class="text-muted mb-0">Negotiating with {{ scenario.counterparty_name }}</p>
+                </div>
+                <a href="{{ url_for('finance.negotiation') }}" class="btn btn-outline-light">
+                    <i class="bi bi-arrow-left"></i> Back
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+        {% for message in messages %}
+        <div>{{ message }}</div>
+        {% endfor %}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header bg-dark">
+                    <i class="bi bi-info-circle"></i> Situation
+                </div>
+                <div class="card-body">
+                    <p class="lead">{{ scenario.description }}</p>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="alert alert-success">
+                                <h6><i class="bi bi-shield-check"></i> Your BATNA</h6>
+                                <small>
+                                    {% if scenario.your_batna %}
+                                    <strong>Alternative:</strong> {{ scenario.your_batna.alternative }}<br>
+                                    {% if scenario.your_batna.switching_cost %}Cost: ${{ scenario.your_batna.switching_cost }}{% endif %}
+                                    {% if scenario.your_batna.cost %}Cost: ${{ scenario.your_batna.cost }}{% endif %}
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="alert alert-warning">
+                                <h6><i class="bi bi-eye"></i> Their Position</h6>
+                                <small>
+                                    {% for key, value in scenario.opening_position.items() %}
+                                    {{ key|replace('_', ' ')|title }}: {{ value }}{% if not loop.last %}, {% endif %}
+                                    {% endfor %}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-hand-thumbs-up"></i> Make Your Offer
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('finance.submit_negotiation_offer', negotiation_id=negotiation_id) }}" method="post">
+                        {% for issue in scenario.issues %}
+                        <div class="mb-4">
+                            <label class="form-label">
+                                <strong>{{ issue.name|replace('_', ' ')|title }}</strong>
+                                <span class="badge bg-info ms-2">Importance: {{ issue.importance_you }}/10</span>
+                            </label>
+                            <div class="row align-items-center">
+                                <div class="col-3 text-end text-success small">
+                                    Your Ideal: {{ issue.your_ideal }}
+                                </div>
+                                <div class="col-6">
+                                    <input type="range" name="issue_{{ issue.name }}" 
+                                           class="form-range" 
+                                           min="{{ [issue.your_ideal, issue.their_ideal]|min }}" 
+                                           max="{{ [issue.your_ideal, issue.their_ideal]|max }}"
+                                           value="{{ ((issue.your_ideal + issue.their_ideal) / 2)|int }}"
+                                           oninput="document.getElementById('val_{{ issue.name }}').textContent = this.value">
+                                </div>
+                                <div class="col-3 text-danger small">
+                                    Their Ideal: {{ issue.their_ideal }}
+                                </div>
+                            </div>
+                            <div class="text-center">
+                                <span class="badge bg-secondary">Your Offer: <span id="val_{{ issue.name }}">{{ ((issue.your_ideal + issue.their_ideal) / 2)|int }}</span></span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        
+                        <button type="submit" class="btn btn-game btn-game-gold btn-lg w-100">
+                            <i class="bi bi-send"></i> Submit Offer
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header bg-dark">
+                    <i class="bi bi-person-badge"></i> {{ scenario.counterparty_name }}
+                </div>
+                <div class="card-body text-center">
+                    <div class="display-1 mb-3">
+                        {% if scenario.counterparty_style == 'collaborative' %}
+                        <i class="bi bi-emoji-smile text-success"></i>
+                        {% elif scenario.counterparty_style == 'competitive' %}
+                        <i class="bi bi-emoji-neutral text-warning"></i>
+                        {% else %}
+                        <i class="bi bi-emoji-expressionless text-info"></i>
+                        {% endif %}
+                    </div>
+                    <p class="mb-1"><strong>Style:</strong> {{ scenario.counterparty_style|title }}</p>
+                    <small class="text-muted">
+                        {% if scenario.counterparty_style == 'collaborative' %}
+                        Open to win-win solutions
+                        {% elif scenario.counterparty_style == 'competitive' %}
+                        Focused on maximizing their gains
+                        {% else %}
+                        Data-driven, logical approach
+                        {% endif %}
+                    </small>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-trophy"></i> Potential Reward
+                </div>
+                <div class="card-body text-center">
+                    <h3 class="text-success">Up to +{{ scenario.exp_reward }} EXP</h3>
+                    <p class="text-muted mb-0">Based on deal quality</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

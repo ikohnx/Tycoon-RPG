@@ -1,0 +1,129 @@
+{% extends "core/base.html" %}
+
+{% block title %}Market Events - Business Tycoon RPG{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="gold-text mb-0">
+                        <i class="bi bi-graph-up-arrow"></i> Dynamic Market
+                    </h2>
+                    <p class="text-muted mb-0">React to market events and global challenges</p>
+                </div>
+                <a href="{{ url_for('core.hub') }}" class="btn btn-outline-light">
+                    <i class="bi bi-arrow-left"></i> Back to Hub
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+        {% for message in messages %}
+        <div>{{ message }}</div>
+        {% endfor %}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        <div class="col-lg-8">
+            {% if cycle %}
+            <div class="card mb-4" style="background: linear-gradient(135deg, rgba({% if cycle.type == 'expansion' %}34,197,94{% elif cycle.type == 'recession' %}239,68,68{% else %}59,130,246{% endif %}, 0.2), rgba(0,0,0,0.3));">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="mb-1"><i class="bi bi-activity"></i> Current Market: {{ cycle.name }}</h4>
+                            <p class="text-muted mb-0">{{ cycle.description }}</p>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-{% if cycle.revenue_modifier > 1 %}success{% else %}danger{% endif %} mb-1">Revenue: {{ cycle.revenue_modifier }}x</span><br>
+                            <span class="badge bg-{% if cycle.cost_modifier < 1 %}success{% else %}warning{% endif %}">Costs: {{ cycle.cost_modifier }}x</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-newspaper"></i> Breaking News
+                </div>
+                <div class="card-body">
+                    {% for item in news %}
+                    <div class="mb-3 p-3 bg-dark rounded border-start border-warning border-3">
+                        <h6 class="mb-1">{{ item.headline }}</h6>
+                        <p class="text-muted small mb-2">{{ item.content }}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge bg-info">{{ item.discipline }}</span>
+                            <form action="{{ url_for('social.respond_news', news_id=item.news_id) }}" method="post" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="response" value="optimal">
+                                <button type="submit" class="btn btn-sm btn-outline-success">
+                                    <i class="bi bi-reply"></i> Respond (+{{ item.exp_reward }} EXP)
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center">No breaking news right now.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-lightning-fill"></i> Active Market Events
+                </div>
+                <div class="card-body">
+                    {% for event in events %}
+                    <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-dark rounded">
+                        <div>
+                            <h6 class="mb-1">{{ event.name }}</h6>
+                            <small class="text-muted">{{ event.description }}</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-{% if event.modifier > 1 %}success{% else %}danger{% endif %}">{{ event.modifier }}x</span>
+                            {% if event.is_global %}<span class="badge bg-warning text-dark">Global</span>{% endif %}
+                        </div>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center">Markets are stable. No active events.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-success bg-opacity-25">
+                    <i class="bi bi-globe"></i> Global Challenges
+                </div>
+                <div class="card-body">
+                    {% for challenge in global_challenges %}
+                    <div class="mb-3 p-3 bg-dark rounded">
+                        <h6 class="mb-1">{{ challenge.name }}</h6>
+                        <small class="text-muted">{{ challenge.description }}</small>
+                        <div class="progress my-2" style="height: 8px;">
+                            <div class="progress-bar bg-success" style="width: {{ challenge.progress_pct }}%"></div>
+                        </div>
+                        <div class="d-flex justify-content-between small">
+                            <span>{{ "{:,}".format(challenge.progress) }}/{{ "{:,}".format(challenge.target) }}</span>
+                            <span class="text-success">{{ "{:,}".format(challenge.reward_pool) }} EXP pool</span>
+                        </div>
+                        <small class="text-muted">{{ challenge.participants }} participants</small>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center">No active global challenges.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,160 @@
+{% extends "core/base.html" %}
+
+{% block title %}Market Simulator - Business Tycoon RPG{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="gold-text mb-0">
+                        <i class="bi bi-graph-up-arrow"></i> Market Simulator
+                    </h2>
+                    <p class="text-muted mb-0">Master pricing, competition, and market dynamics</p>
+                </div>
+                <a href="{{ url_for('core.hub') }}" class="btn btn-outline-light">
+                    <i class="bi bi-arrow-left"></i> Back to Hub
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+        {% for message in messages %}
+        <div>{{ message }}</div>
+        {% endfor %}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-puzzle"></i> Market Challenges
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for challenge in challenges %}
+                        <a href="{{ url_for('finance.market_challenge', challenge_id=challenge.challenge_id) }}" 
+                           class="list-group-item list-group-item-action bg-dark text-light d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">{{ challenge.title }}</h6>
+                                <small class="text-muted">{{ challenge.description[:80] }}...</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-info mb-1">{{ challenge.challenge_type|title }}</span>
+                                <div>
+                                    <span class="badge bg-success">+{{ challenge.exp_reward }} EXP</span>
+                                </div>
+                            </div>
+                        </a>
+                        {% else %}
+                        <div class="text-center text-muted py-3">
+                            <i class="bi bi-lock"></i> No challenges available yet
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-pie-chart"></i> Market Segments
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Segment</th>
+                                    <th class="text-center">Size</th>
+                                    <th class="text-center">Price Sens.</th>
+                                    <th class="text-center">Quality Pref.</th>
+                                    <th class="text-center">Your Share</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for seg in segments %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ seg.segment_name }}</strong>
+                                        <br><small class="text-muted">{{ seg.description[:40] }}...</small>
+                                    </td>
+                                    <td class="text-center">{{ "{:,}".format(seg.segment_size) }}</td>
+                                    <td class="text-center">
+                                        <div class="progress" style="height: 8px; width: 60px;">
+                                            <div class="progress-bar bg-warning" style="width: {{ seg.price_sensitivity }}%"></div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="progress" style="height: 8px; width: 60px;">
+                                            <div class="progress-bar bg-info" style="width: {{ seg.quality_preference }}%"></div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        {% for pos in position if pos.segment_id == seg.segment_id %}
+                                        {{ "%.2f"|format(pos.market_share * 100) }}%
+                                        {% endfor %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header bg-info bg-opacity-25">
+                    <i class="bi bi-lightbulb"></i> Marketing Concepts
+                </div>
+                <div class="card-body small">
+                    <div class="mb-3">
+                        <strong class="text-warning">Price Elasticity</strong>
+                        <p class="text-muted mb-0">How sensitive is demand to price changes? Elastic goods see big demand shifts; inelastic goods don't.</p>
+                    </div>
+                    <div class="mb-3">
+                        <strong class="text-success">Market Segmentation</strong>
+                        <p class="text-muted mb-0">Divide your market into groups with similar needs. Target the segments where you can win.</p>
+                    </div>
+                    <div class="mb-3">
+                        <strong class="text-info">Competitive Positioning</strong>
+                        <p class="text-muted mb-0">Find gaps where customer needs aren't met. Position your product to fill those gaps.</p>
+                    </div>
+                    <div>
+                        <strong class="text-danger">Marketing ROI</strong>
+                        <p class="text-muted mb-0">Every marketing dollar should earn more than it costs. Track Return on Investment carefully.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-calculator"></i> Quick Formulas
+                </div>
+                <div class="card-body">
+                    <div class="mb-2 p-2 bg-dark rounded">
+                        <small class="text-muted">Price Elasticity:</small>
+                        <div><code>% Change Quantity / % Change Price</code></div>
+                    </div>
+                    <div class="mb-2 p-2 bg-dark rounded">
+                        <small class="text-muted">Marketing ROI:</small>
+                        <div><code>(Profit - Cost) / Cost x 100</code></div>
+                    </div>
+                    <div class="p-2 bg-dark rounded">
+                        <small class="text-muted">Market Share:</small>
+                        <div><code>Your Sales / Total Market Sales</code></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

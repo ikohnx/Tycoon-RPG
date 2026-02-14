@@ -1,0 +1,163 @@
+{% extends "core/base.html" %}
+
+{% block title %}Investor Pitch Simulator - Business Tycoon RPG{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="gold-text mb-0">
+                        <i class="bi bi-presentation"></i> Investor Pitch Simulator
+                    </h2>
+                    <p class="text-muted mb-0">Create compelling pitch decks and practice fundraising</p>
+                </div>
+                <a href="{{ url_for('core.hub') }}" class="btn btn-outline-light">
+                    <i class="bi bi-arrow-left"></i> Back to Hub
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+        {% for message in messages %}
+        <div>{{ message }}</div>
+        {% endfor %}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-plus-circle"></i> Create New Pitch Deck
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('finance.create_pitch') }}" method="post">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Deck Name</label>
+                                <input type="text" name="deck_name" class="form-control bg-dark text-light" 
+                                       required placeholder="e.g., Series A Pitch">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Funding Stage</label>
+                                <select name="funding_stage" class="form-select bg-dark text-light">
+                                    <option value="pre_seed">Pre-Seed</option>
+                                    <option value="seed" selected>Seed</option>
+                                    <option value="series_a">Series A</option>
+                                    <option value="series_b">Series B</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Target Amount</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" name="target_amount" class="form-control bg-dark text-light" 
+                                           value="100000" required>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-game btn-game-emerald">
+                            <i class="bi bi-file-earmark-plus"></i> Create Pitch Deck
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            {% if decks %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-folder2-open"></i> Your Pitch Decks
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for deck in decks %}
+                        <div class="list-group-item bg-dark text-light">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <h6 class="mb-1">{{ deck.deck_name }}</h6>
+                                    <small class="text-muted">
+                                        {{ deck.funding_stage|replace('_', ' ')|title }} | 
+                                        Target: ${{ "{:,.0f}".format(deck.target_amount) }}
+                                    </small>
+                                </div>
+                                <span class="badge {% if deck.status == 'funded' %}bg-success{% elif deck.status == 'ready' %}bg-info{% else %}bg-secondary{% endif %}">
+                                    {{ deck.status|title }}
+                                </span>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <a href="{{ url_for('finance.edit_pitch', deck_id=deck.deck_id) }}" class="btn btn-outline-light btn-sm">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </a>
+                                <div class="dropdown">
+                                    <button class="btn btn-outline-success btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                        <i class="bi bi-play"></i> Present to Investor
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-dark">
+                                        {% for inv in investors %}
+                                        <li>
+                                            <a class="dropdown-item" href="{{ url_for('finance.present_pitch', deck_id=deck.deck_id, investor_id=inv.investor_id) }}">
+                                                {{ inv.investor_name }} ({{ inv.investor_type|replace('_', ' ')|title }})
+                                            </a>
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-person-workspace"></i> Investors
+                </div>
+                <div class="card-body small" style="max-height: 300px; overflow-y: auto;">
+                    {% for inv in investors %}
+                    <div class="mb-3 p-2 bg-dark rounded">
+                        <div class="d-flex justify-content-between">
+                            <strong>{{ inv.investor_name }}</strong>
+                            <span class="badge bg-info">{{ inv.investor_type|replace('_', ' ')|title }}</span>
+                        </div>
+                        <small class="text-muted">
+                            Investment: ${{ "{:,.0f}".format(inv.investment_range_min) }} - ${{ "{:,.0f}".format(inv.investment_range_max) }}
+                        </small>
+                        <div class="mt-1">
+                            {% for area in inv.focus_areas[:3] %}
+                            <span class="badge bg-secondary">{{ area }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header bg-info bg-opacity-25">
+                    <i class="bi bi-book"></i> Pitch Sections
+                </div>
+                <div class="card-body small">
+                    {% for section in section_templates %}
+                    <div class="mb-2 p-2 bg-dark rounded">
+                        <strong class="text-warning">{{ section.order }}. {{ section.name }}</strong>
+                        <p class="text-muted mb-0">{{ section.description }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

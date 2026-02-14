@@ -1,0 +1,167 @@
+{% extends "core/base.html" %}
+
+{% block title %}Boss Challenges - Business Tycoon RPG{% endblock %}
+
+{% block body_class %}world-{{ stats.world|lower }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid fade-in">
+    <div class="row mb-4">
+        <div class="col-12 text-center">
+            <h1 class="game-title display-4">
+                <i class="bi bi-skull text-danger"></i>
+                Boss Challenges
+            </h1>
+            <p class="game-subtitle">Conquer elite and boss scenarios to prove your mastery</p>
+        </div>
+    </div>
+    
+    <div class="row mb-3">
+        <div class="col-12 text-center">
+            <a href="{{ url_for('core.hub') }}" class="btn game-btn game-btn-purple">
+                <i class="bi bi-arrow-left"></i> Return to HQ
+            </a>
+            <a href="{{ url_for('core.campaign_map') }}" class="btn game-btn game-btn-gold ms-2">
+                <i class="bi bi-map"></i> Campaign Map
+            </a>
+        </div>
+    </div>
+    
+    {% set disciplines = {} %}
+    {% for boss in bosses %}
+        {% if boss.discipline not in disciplines %}
+            {% set _ = disciplines.update({boss.discipline: []}) %}
+        {% endif %}
+        {% set _ = disciplines[boss.discipline].append(boss) %}
+    {% endfor %}
+    
+    <div class="row">
+        {% for discipline in ['Marketing', 'Finance', 'Operations', 'Human Resources', 'Legal', 'Strategy'] %}
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100" style="background: rgba(0,0,0,0.7); border: 2px solid rgba(220,20,60,0.4);">
+                <div class="card-header" style="background: linear-gradient(135deg, rgba(220,20,60,0.2), rgba(139,0,0,0.2));">
+                    <h4 class="mb-0 text-danger">
+                        {% if discipline == 'Marketing' %}
+                        <i class="bi bi-megaphone-fill"></i>
+                        {% elif discipline == 'Finance' %}
+                        <i class="bi bi-currency-dollar"></i>
+                        {% elif discipline == 'Operations' %}
+                        <i class="bi bi-gear-fill"></i>
+                        {% elif discipline == 'Human Resources' %}
+                        <i class="bi bi-people-fill"></i>
+                        {% elif discipline == 'Legal' %}
+                        <i class="bi bi-briefcase-fill"></i>
+                        {% elif discipline == 'Strategy' %}
+                        <i class="bi bi-lightbulb-fill"></i>
+                        {% endif %}
+                        {{ discipline }}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% set disc_bosses = bosses|selectattr('discipline', 'equalto', discipline)|list %}
+                    {% if disc_bosses %}
+                        {% for boss in disc_bosses %}
+                        <div class="boss-card mb-3 p-3 rounded" 
+                             style="background: {% if boss.boss_type == 'Boss' %}linear-gradient(135deg, rgba(139,0,0,0.3), rgba(75,0,0,0.3)){% else %}linear-gradient(135deg, rgba(255,140,0,0.2), rgba(200,100,0,0.2)){% endif %};
+                                    border: 2px solid {% if boss.boss_type == 'Boss' %}rgba(220,20,60,0.5){% else %}rgba(255,140,0,0.5){% endif %};">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <div class="d-flex align-items-center mb-2">
+                                        {% if boss.boss_type == 'Boss' %}
+                                        <span class="badge bg-danger me-2">
+                                            <i class="bi bi-skull-crossbones"></i> BOSS
+                                        </span>
+                                        {% else %}
+                                        <span class="badge bg-warning text-dark me-2">
+                                            <i class="bi bi-star-fill"></i> ELITE
+                                        </span>
+                                        {% endif %}
+                                        <span class="badge bg-secondary">Level {{ boss.level }}</span>
+                                    </div>
+                                    <h5 class="mb-2 {% if boss.boss_type == 'Boss' %}text-danger{% else %}text-warning{% endif %}">
+                                        {{ boss.title }}
+                                    </h5>
+                                    <p class="text-muted small mb-2">{{ boss.narrative }}</p>
+                                    
+                                    {% if boss.completed %}
+                                    <div class="stars-earned">
+                                        {% for i in range(3) %}
+                                        <i class="bi bi-star{% if i < boss.stars %}-fill text-warning{% else %} text-secondary{% endif %}"></i>
+                                        {% endfor %}
+                                        <span class="text-success ms-2"><i class="bi bi-check-circle-fill"></i> Completed</span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="text-end">
+                                    {% if boss.completed %}
+                                    <a href="{{ url_for('scenarios.play_scenario', scenario_id=boss.scenario_id) }}" 
+                                       class="btn game-btn game-btn-emerald btn-sm">
+                                        <i class="bi bi-arrow-repeat"></i> Replay
+                                    </a>
+                                    {% elif boss.unlocked %}
+                                    <a href="{{ url_for('scenarios.play_scenario', scenario_id=boss.scenario_id) }}" 
+                                       class="btn game-btn {% if boss.boss_type == 'Boss' %}game-btn-crimson{% else %}game-btn-gold{% endif %}">
+                                        <i class="bi bi-sword"></i> Challenge
+                                    </a>
+                                    {% else %}
+                                    <button class="btn btn-outline-secondary" disabled>
+                                        <i class="bi bi-lock-fill"></i> Locked
+                                    </button>
+                                    <div class="small text-muted mt-1">Reach L{{ boss.level }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center text-muted py-4">
+                            <i class="bi bi-hourglass-split" style="font-size: 2rem;"></i>
+                            <p class="mt-2">No boss challenges available yet for this discipline.</p>
+                            <small>Complete more scenarios to unlock boss challenges!</small>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card" style="background: rgba(0,0,0,0.6); border: 2px solid rgba(255,215,0,0.3);">
+                <div class="card-body text-center">
+                    <h5 class="gold-text"><i class="bi bi-info-circle"></i> Boss Challenge Info</h5>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="p-3 rounded" style="background: rgba(255,140,0,0.1); border: 1px solid rgba(255,140,0,0.3);">
+                                <span class="badge bg-warning text-dark mb-2">
+                                    <i class="bi bi-star-fill"></i> ELITE
+                                </span>
+                                <p class="mb-0 small">Unlocks at <strong>Level 5</strong> of each discipline. Tests intermediate knowledge.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 rounded" style="background: rgba(220,20,60,0.1); border: 1px solid rgba(220,20,60,0.3);">
+                                <span class="badge bg-danger mb-2">
+                                    <i class="bi bi-skull-crossbones"></i> BOSS
+                                </span>
+                                <p class="mb-0 small">Unlocks at <strong>Level 10</strong> of each discipline. The ultimate challenge!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.boss-card {
+    transition: all 0.3s ease;
+}
+.boss-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 20px rgba(220,20,60,0.3);
+}
+</style>
+{% endblock %}

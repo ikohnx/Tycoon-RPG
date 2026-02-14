@@ -1,0 +1,1191 @@
+{% extends "core/base.html" %}
+
+{% block title %}{{ stats.name }}'s HQ - Business Tycoon RPG{% endblock %}
+
+{% block body_class %}world-{{ stats.world|lower }}{% endblock %}
+
+{% block content %}
+{% if resources %}
+<div class="command-hud-hub">
+    <div class="hud-resources-hub">
+        <div class="resource-item-hub capital">
+            <i class="bi bi-coin"></i>
+            <div class="resource-info-hub">
+                <span class="resource-label-hub">Capital</span>
+                <span class="resource-value-hub">${{ "{:,.0f}".format(resources.capital) }}</span>
+            </div>
+        </div>
+        <div class="resource-item-hub morale">
+            <i class="bi bi-emoji-smile"></i>
+            <div class="resource-info-hub">
+                <span class="resource-label-hub">Morale</span>
+                <div class="resource-bar-wrap-hub">
+                    <div class="resource-bar-hub bg-info" style="width: {{ resources.team_morale }}%;"></div>
+                </div>
+                <span class="resource-pct-hub">{{ resources.team_morale }}%</span>
+            </div>
+        </div>
+        <div class="resource-item-hub brand">
+            <i class="bi bi-heart-fill"></i>
+            <div class="resource-info-hub">
+                <span class="resource-label-hub">Brand HP</span>
+                <div class="resource-bar-wrap-hub">
+                    <div class="resource-bar-hub bg-danger" style="width: {{ resources.brand_equity }}%;"></div>
+                </div>
+                <span class="resource-pct-hub">{{ resources.brand_equity }}%</span>
+            </div>
+        </div>
+        <div class="resource-item-hub quarter">
+            <i class="bi bi-calendar3"></i>
+            <div class="resource-info-hub">
+                <span class="resource-label-hub">Quarter</span>
+                <span class="resource-value-hub quarter-badge-hub">Q{{ resources.fiscal_quarter }}</span>
+                <span class="decision-count-hub">{{ resources.decisions_this_quarter }}/3</span>
+            </div>
+        </div>
+    </div>
+    {% if active_abilities %}
+    <div class="active-buffs-hub">
+        <span class="buff-label-hub"><i class="bi bi-stars"></i> Active:</span>
+        {% for ability in active_abilities %}
+        <span class="buff-chip-hub" title="{{ ability.description }}">
+            <i class="bi bi-{{ ability.icon }}"></i> {{ ability.ability_name }}
+        </span>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<div class="text-center mb-4 fade-in">
+    <a href="{{ url_for('core.explore') }}" class="btn btn-lg" style="background: linear-gradient(135deg, #2244aa 0%, #4466cc 100%); color: #ffcc00; font-family: monospace; font-weight: bold; padding: 15px 40px; border: 3px solid #6688ee; border-radius: 8px; text-transform: uppercase; letter-spacing: 2px; font-size: 1.2rem; text-shadow: 0 0 10px rgba(255,204,0,0.5); box-shadow: 0 0 20px rgba(68,102,204,0.4);">
+        <i class="bi bi-joystick"></i> Explore Town
+    </a>
+</div>
+
+<div class="continue-journey-hero mb-4 fade-in">
+    <div class="journey-card">
+        <div class="journey-header">
+            <span class="journey-badge">
+                {% if next_step.type == 'lesson' %}<i class="bi bi-book-fill"></i> LESSON
+                {% elif next_step.type == 'trial' %}<i class="bi bi-question-circle-fill"></i> QUIZ
+                {% elif next_step.type == 'puzzle' %}<i class="bi bi-calculator-fill"></i> CHALLENGE
+                {% elif next_step.type == 'scenario' %}<i class="bi bi-flag-fill"></i> SCENARIO
+                {% elif next_step.type == 'complete' %}<i class="bi bi-gift-fill"></i> REWARDS
+                {% else %}<i class="bi bi-compass-fill"></i> EXPLORE
+                {% endif %}
+            </span>
+            {% if next_step.path_name %}
+            <span class="journey-path">{{ next_step.path_name }}</span>
+            {% endif %}
+        </div>
+        
+        <h2 class="journey-title">{{ next_step.message }}</h2>
+        
+        {% if next_step.stage_name %}
+        <p class="journey-subtitle">{{ next_step.stage_name }}</p>
+        {% endif %}
+        
+        {% if next_step.progress %}
+        <div class="journey-progress">
+            <div class="progress-step {% if next_step.progress.lesson %}done{% elif next_step.type == 'lesson' %}current{% endif %}">
+                <i class="bi bi-book"></i>
+                <span>Lesson</span>
+            </div>
+            <div class="progress-arrow"><i class="bi bi-chevron-right"></i></div>
+            <div class="progress-step {% if next_step.progress.trial %}done{% elif next_step.type == 'trial' %}current{% endif %}">
+                <i class="bi bi-question-circle"></i>
+                <span>Quiz</span>
+            </div>
+            <div class="progress-arrow"><i class="bi bi-chevron-right"></i></div>
+            <div class="progress-step {% if next_step.progress.puzzle %}done{% elif next_step.type == 'puzzle' %}current{% endif %}">
+                <i class="bi bi-calculator"></i>
+                <span>Challenge</span>
+            </div>
+            <div class="progress-arrow"><i class="bi bi-chevron-right"></i></div>
+            <div class="progress-step {% if next_step.progress.scenario %}done{% elif next_step.type == 'scenario' %}current{% endif %}">
+                <i class="bi bi-flag"></i>
+                <span>Scenario</span>
+            </div>
+        </div>
+        {% endif %}
+        
+        <a href="{{ next_step.action_url }}" class="journey-btn">
+            <i class="bi bi-play-fill"></i> {{ next_step.action_text }}
+        </a>
+    </div>
+</div>
+
+<style>
+.command-hud-hub {
+    background: linear-gradient(180deg, rgba(20,20,40,0.98) 0%, rgba(10,10,30,0.95) 100%);
+    border-bottom: 3px solid;
+    border-image: linear-gradient(90deg, transparent, #ffd700, transparent) 1;
+    padding: 15px;
+    margin: -1rem -1rem 1rem -1rem;
+}
+
+.hud-resources-hub {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.resource-item-hub {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(0,0,0,0.4);
+    padding: 10px 18px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.resource-item-hub i {
+    font-size: 1.6rem;
+}
+
+.resource-item-hub.capital i { color: #ffd700; }
+.resource-item-hub.morale i { color: #17a2b8; }
+.resource-item-hub.brand i { color: #dc3545; }
+.resource-item-hub.quarter i { color: #28a745; }
+
+.resource-info-hub {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.resource-label-hub {
+    font-size: 0.7rem;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.resource-value-hub {
+    font-family: 'Staatliches', cursive;
+    font-size: 1.3rem;
+    color: #fff;
+}
+
+.resource-bar-wrap-hub {
+    width: 90px;
+    height: 12px;
+    background: rgba(0,0,0,0.5);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.resource-bar-hub {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.5s ease;
+}
+
+.resource-pct-hub {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #fff;
+}
+
+.quarter-badge-hub {
+    background: linear-gradient(135deg, #28a745, #218838);
+    padding: 3px 12px;
+    border-radius: 5px;
+}
+
+.decision-count-hub {
+    font-size: 0.8rem;
+    color: #888;
+}
+
+.active-buffs-hub {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    flex-wrap: wrap;
+}
+
+.buff-label-hub {
+    color: #ffd700;
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+
+.buff-chip-hub {
+    background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(184,134,11,0.2));
+    border: 1px solid rgba(255,215,0,0.5);
+    color: #ffd700;
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+@media (max-width: 576px) {
+    .hud-resources-hub {
+        gap: 10px;
+    }
+    .resource-item-hub {
+        padding: 8px 12px;
+    }
+    .resource-item-hub i {
+        font-size: 1.3rem;
+    }
+    .resource-bar-wrap-hub {
+        width: 60px;
+    }
+    .resource-value-hub {
+        font-size: 1.1rem;
+    }
+}
+
+.continue-journey-hero {
+    margin: -1rem -1rem 1rem -1rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(33, 150, 243, 0.15));
+    border-bottom: 3px solid rgba(76, 175, 80, 0.4);
+}
+.journey-card {
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: center;
+}
+.journey-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+.journey-badge {
+    background: linear-gradient(135deg, #4caf50, #388e3c);
+    color: white;
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.journey-path {
+    color: #aaa;
+    font-size: 0.9rem;
+}
+.journey-title {
+    color: #fff;
+    font-family: 'Cinzel', serif;
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+.journey-subtitle {
+    color: #81c784;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+}
+.journey-progress {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+.progress-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    color: #666;
+    font-size: 0.8rem;
+}
+.progress-step i {
+    font-size: 1.2rem;
+    margin-bottom: 0.25rem;
+}
+.progress-step.done {
+    background: rgba(76, 175, 80, 0.2);
+    color: #81c784;
+}
+.progress-step.current {
+    background: rgba(33, 150, 243, 0.2);
+    color: #64b5f6;
+    border: 1px solid rgba(33, 150, 243, 0.5);
+}
+.progress-arrow {
+    color: #555;
+}
+.journey-btn {
+    display: inline-block;
+    background: linear-gradient(135deg, #4caf50, #388e3c);
+    color: white;
+    padding: 1rem 3rem;
+    border-radius: 30px;
+    font-size: 1.25rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+}
+.journey-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 25px rgba(76, 175, 80, 0.6);
+    color: white;
+}
+@media (max-width: 500px) {
+    .journey-title { font-size: 1.2rem; }
+    .journey-btn { padding: 0.8rem 2rem; font-size: 1rem; }
+    .progress-step { padding: 0.4rem 0.5rem; }
+}
+</style>
+
+{% if advisor_quote %}
+<div class="advisor-quote-card mb-4 fade-in">
+    <div class="quote-icon"><i class="bi bi-chat-quote-fill"></i></div>
+    <blockquote class="quote-text">"{{ advisor_quote }}"</blockquote>
+    <div class="quote-attribution">- Your Advisor</div>
+</div>
+<style>
+.advisor-quote-card {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.08), rgba(0, 0, 0, 0.4));
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    position: relative;
+    max-width: 700px;
+    margin: 0 auto 1.5rem;
+}
+.advisor-quote-card .quote-icon {
+    position: absolute;
+    top: -12px;
+    left: 20px;
+    background: linear-gradient(135deg, #ffd700, #ff8c00);
+    color: #1a1a2e;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+}
+.advisor-quote-card .quote-text {
+    color: #e8e8e8;
+    font-style: italic;
+    font-size: 1.05rem;
+    margin: 0.5rem 0;
+    line-height: 1.6;
+}
+.advisor-quote-card .quote-attribution {
+    color: #ffd700;
+    font-size: 0.85rem;
+    text-align: right;
+}
+</style>
+{% endif %}
+
+<div class="row fade-in">
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header text-center">
+                <div class="avatar-frame mx-auto mb-3">
+                    <img src="/static/images/business_tycoon_hero_portrait.png" alt="Your Hero">
+                </div>
+                <h4 class="game-title mb-1">{{ stats.name }}</h4>
+                {% if stats.career_path == 'employee' and stats.job_title %}
+                <div class="game-subtitle text-info">
+                    <i class="bi bi-award-fill"></i> {{ stats.job_title }}
+                </div>
+                {% elif stats.career_path == 'entrepreneur' %}
+                <div class="game-subtitle text-success">
+                    <i class="bi bi-crown-fill"></i> Business Owner
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if stats.career_path == 'employee' %}
+                <div class="stat-card" style="border-color: rgba(13, 202, 240, 0.3);">
+                    <small class="text-muted text-uppercase" style="font-size: 0.7rem; letter-spacing: 1px;">Career Progress</small>
+                    <div class="d-flex justify-content-between align-items-center mt-1">
+                        <div class="h5 mb-0 text-info">
+                            <i class="bi bi-ladder"></i> Rank {{ stats.job_level }}
+                        </div>
+                        <span class="badge bg-info">Employee</span>
+                    </div>
+                    <div class="progress mt-2">
+                        <div class="progress-bar bg-info" style="width: {{ (stats.job_level * 10) }}%; background: linear-gradient(180deg, #0dcaf0, #0a7c96) !important;"></div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="stat-card">
+                    <small class="text-muted text-uppercase" style="font-size: 0.7rem; letter-spacing: 1px;">World</small>
+                    <div class="h5 mb-0 mt-1">
+                        {% if stats.world == 'Modern' %}
+                        <i class="bi bi-building text-primary"></i>
+                        {% elif stats.world == 'Industrial' %}
+                        <i class="bi bi-gear-wide-connected" style="color: #cd853f;"></i>
+                        {% elif stats.world == 'Fantasy' %}
+                        <i class="bi bi-magic text-purple"></i>
+                        {% else %}
+                        <i class="bi bi-rocket text-info"></i>
+                        {% endif %}
+                        <span class="gold-text">{{ stats.world }}</span>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <small class="text-muted text-uppercase" style="font-size: 0.7rem; letter-spacing: 1px;">Industry</small>
+                    <div class="h5 mb-0 mt-1">
+                        {% if stats.industry == 'Restaurant' %}
+                        <i class="bi bi-cup-hot-fill text-warning"></i>
+                        {% elif stats.industry == 'SaaS' %}
+                        <i class="bi bi-laptop-fill text-info"></i>
+                        {% elif stats.industry == 'Steel Mill' %}
+                        <i class="bi bi-fire" style="color: #ff6347;"></i>
+                        {% elif stats.industry == 'Textile Factory' %}
+                        <i class="bi bi-scissors" style="color: #dda0dd;"></i>
+                        {% elif stats.industry == 'Railroad' %}
+                        <i class="bi bi-train-front-fill" style="color: #8b4513;"></i>
+                        {% else %}
+                        <i class="bi bi-shop-window"></i>
+                        {% endif %}
+                        {{ stats.industry }}
+                    </div>
+                </div>
+                
+                <div class="stat-card" style="border-color: rgba(80, 200, 120, 0.3);">
+                    <div class="d-flex align-items-center">
+                        <img src="/static/images/gold_coin_resource_icon.png" alt="Gold" style="width: 40px; height: 40px; margin-right: 10px;">
+                        <div>
+                            <small class="text-muted text-uppercase" style="font-size: 0.7rem; letter-spacing: 1px;">Treasury</small>
+                            <div class="h4 mb-0" style="color: #50c878;">
+                                ${{ "{:,.0f}".format(stats.cash) }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stat-card" style="border-color: rgba(255, 215, 0, 0.3);">
+                    <div class="d-flex align-items-center">
+                        <img src="/static/images/reputation_star_icon.png" alt="Reputation" style="width: 40px; height: 40px; margin-right: 10px;">
+                        <div class="flex-grow-1">
+                            <small class="text-muted text-uppercase" style="font-size: 0.7rem; letter-spacing: 1px;">Reputation</small>
+                            <div class="progress mt-1">
+                                <div class="progress-bar" style="width: {{ stats.reputation }}%">
+                                    <span style="font-size: 0.8rem; font-weight: bold;">{{ stats.reputation }}/100</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stat-card" style="border-color: rgba(0, 191, 255, 0.3);">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-lightning-charge-fill" style="font-size: 2rem; color: #00bfff; margin-right: 10px;"></i>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted text-uppercase" style="font-size: 0.7rem; letter-spacing: 1px;">Energy</small>
+                                {% if energy.current_energy < energy.max_energy %}
+                                <small class="text-info" style="font-size: 0.65rem;">
+                                    <i class="bi bi-clock"></i> Recharging...
+                                </small>
+                                {% endif %}
+                            </div>
+                            <div class="progress mt-1" style="height: 20px;">
+                                <div class="progress-bar" style="width: {{ (energy.current_energy / energy.max_energy * 100) }}%; background: linear-gradient(180deg, #00bfff, #0080ff) !important;">
+                                    <span style="font-size: 0.8rem; font-weight: bold;">{{ energy.current_energy }}/{{ energy.max_energy }}</span>
+                                </div>
+                            </div>
+                            <small class="text-muted" style="font-size: 0.65rem;">Costs 10 energy per scenario</small>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if idle_income %}
+                <div class="stat-card" style="border-color: rgba(255, 165, 0, 0.4); background: linear-gradient(180deg, rgba(255,165,0,0.1), rgba(0,0,0,0));">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-piggy-bank-fill" style="font-size: 2rem; color: #ffa500; margin-right: 10px;"></i>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted text-uppercase" style="font-size: 0.7rem; letter-spacing: 1px;">Idle Income</small>
+                                <small class="text-warning" style="font-size: 0.65rem;">
+                                    <i class="bi bi-clock-history"></i> ${{ "%.1f"|format(idle_income.gold_per_hour) }}/hr
+                                </small>
+                            </div>
+                            <div class="h5 mb-1" style="color: #ffa500;">
+                                ${{ "%.0f"|format(idle_income.accumulated_gold) }} <small class="text-muted">available</small>
+                            </div>
+                            {% if idle_income.accumulated_gold >= 1 %}
+                            <form action="{{ url_for('social.collect_idle') }}" method="POST" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-warning w-100">
+                                    <i class="bi bi-cash-coin"></i> Collect Gold
+                                </button>
+                            </form>
+                            {% else %}
+                            <small class="text-muted" style="font-size: 0.65rem;">Accumulating... Max 8 hours</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if prestige_status and prestige_status.prestige_level > 0 %}
+                <div class="stat-card" style="border-color: rgba(138, 43, 226, 0.4); background: linear-gradient(180deg, rgba(138,43,226,0.1), rgba(0,0,0,0));">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-gem" style="font-size: 1.5rem; color: #8a2be2; margin-right: 10px;"></i>
+                        <div>
+                            <small class="text-muted text-uppercase" style="font-size: 0.7rem; letter-spacing: 1px;">Prestige</small>
+                            <div class="h5 mb-0" style="color: #8a2be2;">
+                                Level {{ prestige_status.prestige_level }}
+                            </div>
+                            <small class="text-info" style="font-size: 0.65rem;">
+                                EXP x{{ "%.1f"|format(prestige_status.exp_multiplier) }} | Gold x{{ "%.2f"|format(prestige_status.gold_multiplier) }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if leaderboard and leaderboard.by_stars %}
+                <div class="stat-card" style="border-color: rgba(255, 215, 0, 0.4); background: linear-gradient(180deg, rgba(255,215,0,0.05), rgba(0,0,0,0));">
+                    <div class="mb-2">
+                        <i class="bi bi-trophy-fill" style="color: #ffd700;"></i>
+                        <small class="text-muted text-uppercase" style="font-size: 0.7rem; letter-spacing: 1px;">Top Players</small>
+                    </div>
+                    {% for player in leaderboard.by_stars[:3] %}
+                    <div class="d-flex justify-content-between align-items-center mb-1" style="font-size: 0.8rem;">
+                        <span>
+                            {% if loop.index == 1 %}<i class="bi bi-award-fill text-warning"></i>{% endif %}
+                            {% if loop.index == 2 %}<i class="bi bi-award-fill text-secondary"></i>{% endif %}
+                            {% if loop.index == 3 %}<i class="bi bi-award-fill" style="color: #cd7f32;"></i>{% endif %}
+                            {{ player.player_name[:12] }}
+                        </span>
+                        <span class="text-warning"><i class="bi bi-star-fill"></i> {{ player.total_stars|int }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-controller"></i> Quick Actions
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('core.character') }}" class="btn btn-game btn-game-purple">
+                        <i class="bi bi-person-badge-fill"></i> Character Stats
+                        {% if stats.character_stats.stat_points > 0 %}
+                        <span class="badge bg-warning text-dark ms-2">+{{ stats.character_stats.stat_points }}</span>
+                        {% endif %}
+                    </a>
+                    <a href="{{ url_for('social.avatar') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-person-bounding-box"></i> Customize Look
+                    </a>
+                    <a href="{{ url_for('inventory.inventory') }}" class="btn btn-outline-info">
+                        <i class="bi bi-backpack-fill"></i> Inventory
+                    </a>
+                    <a href="{{ url_for('inventory.shop') }}" class="btn btn-game btn-game-emerald">
+                        <i class="bi bi-shop-window"></i> Shop
+                    </a>
+                    <a href="{{ url_for('social.npcs') }}" class="btn btn-outline-warning">
+                        <i class="bi bi-people-fill"></i> Network
+                    </a>
+                    <a href="{{ url_for('social.quests') }}" class="btn btn-game btn-game-crimson">
+                        <i class="bi bi-journal-bookmark-fill"></i> Quests
+                    </a>
+                    <a href="{{ url_for('social.advisors') }}" class="btn btn-outline-primary">
+                        <i class="bi bi-person-check-fill"></i> Advisors
+                    </a>
+                    <a href="{{ url_for('inventory.equipment') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-shield-shaded"></i> Equipment
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-lightning-charge-fill"></i> Special Events
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('social.daily_login') }}" class="btn {% if login_status.can_claim %}btn-game btn-game-gold{% else %}btn-outline-success{% endif %}">
+                        <i class="bi bi-calendar-check-fill"></i> Daily Login
+                        {% if login_status.can_claim %}
+                        <span class="badge bg-danger ms-2">Claim!</span>
+                        {% else %}
+                        <span class="badge bg-success ms-2"><i class="bi bi-check"></i></span>
+                        {% endif %}
+                        <small class="ms-2">({{ login_status.current_streak }} day streak)</small>
+                    </a>
+                    {% set re = feature_access.get('random_event', {}) %}
+                    <a href="{{ url_for('scenarios.random_event') }}" class="btn btn-game btn-game-gold {% if not re.get('can_access', True) %}disabled{% endif %}" {% if not re.get('can_access', True) %}title="{{ re.get('locked_reason', 'Locked') }}"{% endif %}>
+                        <i class="bi bi-dice-5-fill"></i> Random Event
+                        {% if re.get('cost_display') %}<span class="badge bg-warning text-dark ms-1">{{ re.cost_display }}</span>{% endif %}
+                        {% if not re.get('can_access', True) %}<i class="bi bi-lock-fill ms-1"></i>{% endif %}
+                    </a>
+                    <a href="{{ url_for('social.challenges') }}" class="btn btn-outline-info">
+                        <i class="bi bi-calendar-week-fill"></i> Weekly Challenges
+                    </a>
+                    <a href="{{ url_for('core.dashboard') }}" class="btn btn-outline-success">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </a>
+                    {% set rv = feature_access.get('rivals', {}) %}
+                    <a href="{{ url_for('social.rivals') }}" class="btn btn-outline-danger {% if not rv.get('can_access', True) %}disabled{% endif %}" {% if not rv.get('can_access', True) %}title="{{ rv.get('locked_reason', 'Locked') }}"{% endif %}>
+                        <i class="bi bi-person-x-fill"></i> Rivals
+                        {% if rv.get('cost_display') %}<span class="badge bg-dark ms-1">{{ rv.cost_display }}</span>{% endif %}
+                        {% if not rv.get('can_access', True) %}<i class="bi bi-lock-fill ms-1"></i>{% endif %}
+                    </a>
+                    <a href="{{ url_for('social.daily_missions') }}" class="btn btn-outline-warning">
+                        <i class="bi bi-list-check"></i> Daily Missions
+                    </a>
+                    {% set ba = feature_access.get('battle_arena', {}) %}
+                    <a href="{{ url_for('social.battle_arena') }}" class="btn btn-game btn-game-crimson {% if not ba.get('can_access', True) %}disabled{% endif %}" {% if not ba.get('can_access', True) %}title="{{ ba.get('locked_reason', 'Locked') }}"{% endif %}>
+                        <i class="bi bi-trophy-fill"></i> Battle Arena
+                        {% if ba.get('cost_display') %}<span class="badge bg-dark ms-1">{{ ba.cost_display }}</span>{% endif %}
+                        {% if not ba.get('can_access', True) %}<i class="bi bi-lock-fill ms-1"></i>{% endif %}
+                    </a>
+                    <a href="{{ url_for('social.leaderboard') }}" class="btn btn-outline-light">
+                        <i class="bi bi-bar-chart-fill"></i> Leaderboard
+                    </a>
+                    {% set pr = feature_access.get('prestige', {}) %}
+                    <a href="{{ url_for('inventory.prestige') }}" class="btn btn-game btn-game-purple {% if not pr.get('can_access', True) %}disabled{% endif %}" {% if not pr.get('can_access', True) %}title="{{ pr.get('locked_reason', 'Locked') }}"{% endif %}>
+                        <i class="bi bi-gem"></i> Prestige
+                        {% if not pr.get('can_access', True) %}<i class="bi bi-lock-fill ms-1"></i>{% endif %}
+                    </a>
+                    <a href="{{ url_for('core.campaign_map') }}" class="btn btn-game btn-game-gold">
+                        <i class="bi bi-map-fill"></i> Campaign Map
+                    </a>
+                    {% set bc = feature_access.get('boss_challenges', {}) %}
+                    <a href="{{ url_for('core.boss_challenges') }}" class="btn btn-game btn-game-crimson {% if not bc.get('can_access', True) %}disabled{% endif %}" {% if not bc.get('can_access', True) %}title="{{ bc.get('locked_reason', 'Locked') }}"{% endif %}>
+                        <i class="bi bi-skull"></i> Boss Challenges
+                        {% if bc.get('cost_display') %}<span class="badge bg-dark ms-1">{{ bc.cost_display }}</span>{% endif %}
+                        {% if not bc.get('can_access', True) %}<i class="bi bi-lock-fill ms-1"></i>{% endif %}
+                    </a>
+                    <a href="{{ url_for('finance.accounting') }}" class="btn btn-game btn-game-emerald">
+                        <i class="bi bi-journal-bookmark-fill"></i> Accounting HQ
+                    </a>
+                    <a href="{{ url_for('finance.projects') }}" class="btn btn-game btn-game-purple">
+                        <i class="bi bi-kanban-fill"></i> Project HQ
+                    </a>
+                    <a href="{{ url_for('finance.cashflow') }}" class="btn btn-game btn-game-gold">
+                        <i class="bi bi-cash-stack"></i> Cash Flow
+                    </a>
+                    <a href="{{ url_for('finance.businessplan') }}" class="btn btn-outline-info">
+                        <i class="bi bi-file-earmark-text"></i> Business Plans
+                    </a>
+                    {% set ng = feature_access.get('negotiation', {}) %}
+                    <a href="{{ url_for('finance.negotiation') }}" class="btn btn-outline-warning {% if not ng.get('can_access', True) %}disabled{% endif %}" {% if not ng.get('can_access', True) %}title="{{ ng.get('locked_reason', 'Locked') }}"{% endif %}>
+                        <i class="bi bi-people-fill"></i> Negotiation
+                        {% if ng.get('cost_display') %}<span class="badge bg-dark ms-1">{{ ng.cost_display }}</span>{% endif %}
+                        {% if not ng.get('can_access', True) %}<i class="bi bi-lock-fill ms-1"></i>{% endif %}
+                    </a>
+                    {% set rm = feature_access.get('risks', {}) %}
+                    <a href="{{ url_for('finance.risks') }}" class="btn btn-outline-danger {% if not rm.get('can_access', True) %}disabled{% endif %}" {% if not rm.get('can_access', True) %}title="{{ rm.get('locked_reason', 'Locked') }}"{% endif %}>
+                        <i class="bi bi-shield-exclamation"></i> Risk Manager
+                        {% if not rm.get('can_access', True) %}<i class="bi bi-lock-fill ms-1"></i>{% endif %}
+                    </a>
+                    {% set sc = feature_access.get('supplychain', {}) %}
+                    <a href="{{ url_for('finance.supplychain') }}" class="btn btn-outline-success {% if not sc.get('can_access', True) %}disabled{% endif %}" {% if not sc.get('can_access', True) %}title="{{ sc.get('locked_reason', 'Locked') }}"{% endif %}>
+                        <i class="bi bi-truck"></i> Supply Chain
+                        {% if sc.get('cost_display') %}<span class="badge bg-dark ms-1">{{ sc.cost_display }}</span>{% endif %}
+                        {% if not sc.get('can_access', True) %}<i class="bi bi-lock-fill ms-1"></i>{% endif %}
+                    </a>
+                    {% set mk = feature_access.get('market', {}) %}
+                    <a href="{{ url_for('finance.market') }}" class="btn btn-game btn-game-purple {% if not mk.get('can_access', True) %}disabled{% endif %}" {% if not mk.get('can_access', True) %}title="{{ mk.get('locked_reason', 'Locked') }}"{% endif %}>
+                        <i class="bi bi-graph-up-arrow"></i> Market Sim
+                        {% if mk.get('cost_display') %}<span class="badge bg-warning text-dark ms-1">{{ mk.cost_display }}</span>{% endif %}
+                        {% if not mk.get('can_access', True) %}<i class="bi bi-lock-fill ms-1"></i>{% endif %}
+                    </a>
+                    {% set hr = feature_access.get('hrmanagement', {}) %}
+                    <a href="{{ url_for('finance.hrmanagement') }}" class="btn btn-outline-info {% if not hr.get('can_access', True) %}disabled{% endif %}" {% if not hr.get('can_access', True) %}title="{{ hr.get('locked_reason', 'Locked') }}"{% endif %}>
+                        <i class="bi bi-people-fill"></i> HR Manager
+                        {% if hr.get('cost_display') %}<span class="badge bg-dark ms-1">{{ hr.cost_display }}</span>{% endif %}
+                        {% if not hr.get('can_access', True) %}<i class="bi bi-lock-fill ms-1"></i>{% endif %}
+                    </a>
+                    {% set pt = feature_access.get('pitch', {}) %}
+                    <a href="{{ url_for('finance.pitch') }}" class="btn btn-game btn-game-gold {% if not pt.get('can_access', True) %}disabled{% endif %}" {% if not pt.get('can_access', True) %}title="{{ pt.get('locked_reason', 'Locked') }}"{% endif %}>
+                        <i class="bi bi-presentation"></i> Pitch Deck
+                        {% if pt.get('cost_display') %}<span class="badge bg-warning text-dark ms-1">{{ pt.cost_display }}</span>{% endif %}
+                        {% if not pt.get('can_access', True) %}<i class="bi bi-lock-fill ms-1"></i>{% endif %}
+                    </a>
+                    <a href="{{ url_for('finance.analytics') }}" class="btn btn-game btn-game-emerald">
+                        <i class="bi bi-bar-chart-line"></i> Analytics
+                    </a>
+                    <a href="{{ url_for('social.achievements') }}" class="btn btn-outline-warning">
+                        <i class="bi bi-trophy-fill"></i> Achievements
+                    </a>
+                    <a href="{{ url_for('social.competitions') }}" class="btn btn-outline-info">
+                        <i class="bi bi-award"></i> Compete
+                    </a>
+                    {% set sm = feature_access.get('simulations', {}) %}
+                    <a href="{{ url_for('finance.simulations') }}" class="btn btn-game btn-game-crimson {% if not sm.get('can_access', True) %}disabled{% endif %}" {% if not sm.get('can_access', True) %}title="{{ sm.get('locked_reason', 'Locked') }}"{% endif %}>
+                        <i class="bi bi-building"></i> Simulations
+                        {% if sm.get('cost_display') %}<span class="badge bg-dark ms-1">{{ sm.cost_display }}</span>{% endif %}
+                        {% if not sm.get('can_access', True) %}<i class="bi bi-lock-fill ms-1"></i>{% endif %}
+                    </a>
+                    <a href="{{ url_for('social.network') }}" class="btn btn-outline-success">
+                        <i class="bi bi-diagram-3"></i> Network
+                    </a>
+                    <a href="{{ url_for('social.industries') }}" class="btn btn-game btn-game-gold">
+                        <i class="bi bi-award-fill"></i> Industries
+                    </a>
+                    <a href="{{ url_for('social.market_events') }}" class="btn btn-outline-danger">
+                        <i class="bi bi-graph-up-arrow"></i> Market Events
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-4" style="background: linear-gradient(135deg, rgba(138,43,226,0.1), rgba(0,191,255,0.1)); border: 2px solid rgba(138,43,226,0.4);">
+            <div class="card-header" style="background: linear-gradient(90deg, rgba(138,43,226,0.2), rgba(0,191,255,0.2));">
+                <i class="bi bi-stars"></i> Multiplayer & Social
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('social.guilds') }}" class="btn btn-game btn-game-purple">
+                        <i class="bi bi-shield-fill"></i> Guilds & Alliances
+                    </a>
+                    <a href="{{ url_for('social.coop') }}" class="btn btn-outline-info">
+                        <i class="bi bi-people-fill"></i> Co-op Challenges
+                    </a>
+                    <a href="{{ url_for('social.trading') }}" class="btn btn-outline-success">
+                        <i class="bi bi-shop"></i> Trading Post
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-4" style="background: linear-gradient(135deg, rgba(255,69,0,0.1), rgba(255,215,0,0.1)); border: 2px solid rgba(255,140,0,0.4);">
+            <div class="card-header" style="background: linear-gradient(90deg, rgba(255,69,0,0.2), rgba(255,215,0,0.2));">
+                <i class="bi bi-calendar-event"></i> Seasonal Content
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('social.seasons') }}" class="btn btn-game btn-game-gold">
+                        <i class="bi bi-calendar-event"></i> Seasons & Battle Pass
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-4" style="background: linear-gradient(135deg, rgba(0,191,255,0.1), rgba(0,255,127,0.1)); border: 2px solid rgba(0,191,255,0.4);">
+            <div class="card-header" style="background: linear-gradient(90deg, rgba(0,191,255,0.2), rgba(0,255,127,0.2));">
+                <i class="bi bi-robot"></i> AI Features
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('core.coach') }}" class="btn btn-game btn-game-emerald">
+                        <i class="bi bi-robot"></i> AI Business Coach
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-4" style="background: linear-gradient(135deg, rgba(255,215,0,0.1), rgba(255,105,180,0.1)); border: 2px solid rgba(255,215,0,0.4);">
+            <div class="card-header" style="background: linear-gradient(90deg, rgba(255,215,0,0.2), rgba(255,105,180,0.2));">
+                <i class="bi bi-globe-americas"></i> Expanded Content
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('core.worlds') }}" class="btn btn-game btn-game-gold">
+                        <i class="bi bi-globe-americas"></i> Expanded Worlds
+                    </a>
+                    <a href="{{ url_for('core.case_studies') }}" class="btn btn-outline-info">
+                        <i class="bi bi-journal-text"></i> Case Studies
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-gear-fill"></i> Settings
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('core.settings') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-gear-fill"></i> Accessibility & Settings
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card mb-4" style="background: linear-gradient(135deg, rgba(255,215,0,0.1), rgba(255,140,0,0.1)); border: 2px solid rgba(255,215,0,0.5);">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h4 class="gold-text mb-2">
+                            <i class="bi bi-map-fill"></i> Campaign Map
+                        </h4>
+                        <p class="text-muted mb-0">Navigate your journey through all 6 disciplines with a visual node-based progression map!</p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <a href="{{ url_for('core.campaign_map') }}" class="btn btn-game btn-game-gold btn-lg">
+                            <i class="bi bi-play-fill"></i> View Map
+                        </a>
+                        <a href="{{ url_for('core.boss_challenges') }}" class="btn btn-game btn-game-crimson btn-lg mt-2">
+                            <i class="bi bi-skull"></i> Boss Fights
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-buildings"></i> Your Business Empire
+            </div>
+            <div class="card-body">
+                <p class="game-subtitle mb-4">Build and master the six disciplines to become the ultimate tycoon!</p>
+                
+                <div class="row g-3">
+                    {% for discipline, data in stats.disciplines.items() %}
+                    <div class="col-md-4 col-6">
+                        <a href="{{ url_for('scenarios.scenarios', discipline=discipline) }}" class="text-decoration-none">
+                            <div class="building-card text-center p-3" style="background: linear-gradient(180deg, rgba(30,30,50,0.9) 0%, rgba(15,15,30,0.95) 100%); border: 2px solid rgba(255,215,0,0.3); border-radius: 12px; transition: all 0.3s; cursor: pointer;">
+                                <div class="building-icon-wrapper mb-2" style="position: relative;">
+                                    {% if discipline == 'Marketing' %}
+                                    <img src="/static/images/marketing_guild_building_icon.png" alt="Marketing" class="building-icon" style="width: 80px; height: 80px; filter: drop-shadow(0 0 10px rgba(255,215,0,0.3));">
+                                    {% elif discipline == 'Finance' %}
+                                    <img src="/static/images/finance_building_icon.png" alt="Finance" class="building-icon" style="width: 80px; height: 80px; filter: drop-shadow(0 0 10px rgba(255,215,0,0.3));">
+                                    {% elif discipline == 'Operations' %}
+                                    <img src="/static/images/operations_building_icon.png" alt="Operations" class="building-icon" style="width: 80px; height: 80px; filter: drop-shadow(0 0 10px rgba(255,215,0,0.3));">
+                                    {% elif discipline == 'Human Resources' %}
+                                    <img src="/static/images/hr_building_icon.png" alt="HR" class="building-icon" style="width: 80px; height: 80px; filter: drop-shadow(0 0 10px rgba(255,215,0,0.3));">
+                                    {% elif discipline == 'Legal' %}
+                                    <img src="/static/images/legal_building_icon.png" alt="Legal" class="building-icon" style="width: 80px; height: 80px; filter: drop-shadow(0 0 10px rgba(255,215,0,0.3));">
+                                    {% elif discipline == 'Strategy' %}
+                                    <img src="/static/images/strategy_building_icon.png" alt="Strategy" class="building-icon" style="width: 80px; height: 80px; filter: drop-shadow(0 0 10px rgba(255,215,0,0.3));">
+                                    {% endif %}
+                                    <span class="level-badge" style="position: absolute; bottom: -5px; right: 10px; font-size: 0.7rem; padding: 3px 10px;">LV {{ data.level }}</span>
+                                </div>
+                                <h6 class="mb-1 gold-text" style="font-family: 'Cinzel', serif; font-size: 0.9rem;">{{ discipline }}</h6>
+                                <small class="text-muted d-block mb-2" style="font-size: 0.7rem;">{{ data.title }}</small>
+                                <div class="progress mb-2" style="height: 8px;">
+                                    {% set progress_pct = ((data.total_exp - (data.total_exp - data.exp_to_next if data.level < 10 else 0)) / (data.exp_to_next + data.total_exp - (data.total_exp - data.exp_to_next if data.level < 10 else 0))) * 100 if data.level < 10 else 100 %}
+                                    <div class="progress-bar" style="width: {{ progress_pct|default(100) }}%"></div>
+                                </div>
+                                <small style="color: #50c878; font-size: 0.75rem;">{{ data.total_exp }} EXP</small>
+                            </div>
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-shield-fill-exclamation"></i> Your Rivals</span>
+                <a href="{{ url_for('social.rivals') }}" class="btn btn-sm btn-outline-danger">View All</a>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <img src="/static/images/rival_villain_portrait.png" alt="Rival" style="width: 60px; height: 60px; border-radius: 50%; border: 2px solid #dc143c; margin-right: 15px;">
+                    <div>
+                        <h6 class="mb-0" style="color: #ff6b6b;">Business Rivals Await</h6>
+                        <small class="text-muted">Compete and dominate your industry!</small>
+                    </div>
+                    <a href="{{ url_for('social.rivals') }}" class="btn btn-game btn-game-crimson ms-auto">
+                        <i class="bi bi-sword"></i> Challenge
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.building-card:hover {
+    transform: translateY(-5px);
+    border-color: #ffd700 !important;
+    box-shadow: 0 10px 30px rgba(255,215,0,0.2);
+}
+.building-card:hover .building-icon {
+    filter: drop-shadow(0 0 20px rgba(255,215,0,0.6)) !important;
+    transform: scale(1.1);
+}
+.building-icon {
+    transition: all 0.3s ease;
+}
+
+/* Mobile Bottom Navigation */
+.mobile-bottom-nav {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(180deg, rgba(20,20,40,0.98), rgba(10,10,25,1));
+    border-top: 2px solid rgba(255,215,0,0.4);
+    padding: 8px 5px 15px 5px;
+    z-index: 1000;
+    justify-content: space-around;
+}
+
+.mobile-bottom-nav a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: #888;
+    font-size: 0.65rem;
+    padding: 5px 8px;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.mobile-bottom-nav a i {
+    font-size: 1.4rem;
+    margin-bottom: 3px;
+}
+
+.mobile-bottom-nav a.active,
+.mobile-bottom-nav a:active {
+    color: #ffd700;
+    background: rgba(255,215,0,0.1);
+}
+
+.mobile-bottom-nav .nav-map {
+    background: linear-gradient(135deg, #ffd700, #ff8c00);
+    color: #000 !important;
+    padding: 10px 15px;
+    border-radius: 50%;
+    margin-top: -20px;
+    box-shadow: 0 0 15px rgba(255,215,0,0.5);
+}
+
+.mobile-bottom-nav .nav-map i {
+    font-size: 1.6rem;
+    margin: 0;
+}
+
+/* Mobile Quick Stats Bar */
+.mobile-stats-bar {
+    display: none;
+    background: rgba(0,0,0,0.9);
+    padding: 8px 10px;
+    border-bottom: 1px solid rgba(255,215,0,0.3);
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 99;
+}
+
+.mobile-stat {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.8rem;
+}
+
+.mobile-stat i {
+    font-size: 1rem;
+}
+
+.mobile-stat .value {
+    font-weight: bold;
+}
+
+@media (max-width: 768px) {
+    .mobile-bottom-nav {
+        display: flex;
+    }
+    
+    .mobile-stats-bar {
+        display: flex;
+    }
+    
+    body {
+        padding-bottom: 80px;
+    }
+    
+    .game-hud {
+        display: none !important;
+    }
+    
+    .col-md-4:first-child {
+        order: 2;
+    }
+    
+    .col-md-8 {
+        order: 1;
+    }
+    
+    .card-header {
+        padding: 10px;
+        font-size: 0.9rem;
+    }
+    
+    .building-card {
+        padding: 10px !important;
+    }
+    
+    .building-icon {
+        width: 50px !important;
+        height: 50px !important;
+    }
+    
+    .building-card h6 {
+        font-size: 0.7rem !important;
+    }
+    
+    .d-grid.gap-2 .btn {
+        padding: 12px 10px;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    
+    .stat-card {
+        padding: 10px;
+    }
+    
+    .avatar-frame {
+        width: 60px;
+        height: 60px;
+    }
+}
+
+@media (max-width: 480px) {
+    .building-icon {
+        width: 40px !important;
+        height: 40px !important;
+    }
+    
+    .building-card h6 {
+        font-size: 0.65rem !important;
+    }
+    
+    .level-badge {
+        font-size: 0.55rem !important;
+        padding: 2px 6px !important;
+    }
+    
+    .mobile-stat {
+        font-size: 0.7rem;
+    }
+}
+</style>
+
+<!-- Mobile Stats Bar -->
+<div class="mobile-stats-bar">
+    <div class="mobile-stat">
+        <i class="bi bi-coin text-warning"></i>
+        <span class="value" style="color: #50c878;">${{ "{:,.0f}".format(stats.cash) }}</span>
+    </div>
+    <div class="mobile-stat">
+        <i class="bi bi-lightning-charge-fill text-info"></i>
+        <span class="value">{{ energy.current_energy }}/{{ energy.max_energy }}</span>
+    </div>
+    <div class="mobile-stat">
+        <i class="bi bi-star-fill text-warning"></i>
+        <span class="value">{{ stats.reputation }}</span>
+    </div>
+</div>
+
+<!-- Mobile Bottom Navigation -->
+<nav class="mobile-bottom-nav">
+    <a href="{{ url_for('core.hub') }}" class="active">
+        <i class="bi bi-house-door-fill"></i>
+        <span>Home</span>
+    </a>
+    <a href="{{ url_for('core.character') }}">
+        <i class="bi bi-person-badge-fill"></i>
+        <span>Character</span>
+    </a>
+    <a href="{{ url_for('core.campaign_map') }}" class="nav-map">
+        <i class="bi bi-map-fill"></i>
+    </a>
+    <a href="{{ url_for('inventory.shop') }}">
+        <i class="bi bi-shop-window"></i>
+        <span>Shop</span>
+    </a>
+    <a href="{{ url_for('core.progress') }}">
+        <i class="bi bi-bar-chart-fill"></i>
+        <span>Stats</span>
+    </a>
+</nav>
+
+{% if is_new_player %}
+<div class="modal-backdrop" id="welcomeBackdrop" style="background: rgba(0,0,0,0.8); position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1040;"></div>
+<div class="modal" id="welcomeModal" tabindex="-1" style="display: block; position: fixed; z-index: 1050;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border: 2px solid #ffd700;">
+            <div class="modal-header border-0">
+                <h4 class="modal-title w-100 text-center" style="color: #ffd700; font-family: 'Cinzel', serif;">
+                    <i class="bi bi-stars"></i> Welcome, Entrepreneur!
+                </h4>
+            </div>
+            <div class="modal-body text-center py-4">
+                <p class="lead" style="color: #e8e8e8;">
+                    You're about to embark on a journey to become a Business Tycoon!
+                </p>
+                <p style="color: #aaa;">
+                    This game will teach you real-world business skills through interactive scenarios and challenges.
+                </p>
+                <div class="mt-4">
+                    <h5 style="color: #50c878;"><i class="bi bi-lightbulb"></i> Quick Tips:</h5>
+                    <ul class="text-start" style="color: #e8e8e8; list-style: none; padding-left: 0;">
+                        <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i> Start with the <strong>Tutorial</strong> to learn the basics</li>
+                        <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i> Complete <strong>scenarios</strong> to gain experience</li>
+                        <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i> Master all <strong>6 business disciplines</strong></li>
+                        <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i> Build your empire and climb the <strong>leaderboard</strong></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer border-0 justify-content-center gap-3">
+                <a href="{{ url_for('core.tutorial') }}" class="btn btn-lg" style="background: linear-gradient(135deg, #50c878, #3a9d5d); color: white; font-weight: bold;">
+                    <i class="bi bi-mortarboard"></i> Start Tutorial
+                </a>
+                <button type="button" class="btn btn-lg btn-outline-light" onclick="dismissOnboarding()">
+                    Explore Hub
+                </button>
+<script>
+function dismissOnboarding() {
+    fetch('{{ url_for("core.dismiss_onboarding") }}', {
+        method: 'POST',
+        headers: {'X-CSRFToken': '{{ csrf_token() }}'}
+    }).finally(() => {
+        document.getElementById('welcomeModal').remove();
+        document.getElementById('welcomeBackdrop').remove();
+    });
+}
+document.querySelectorAll('a.disabled').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+    });
+    btn.style.pointerEvents = 'auto';
+    btn.style.cursor = 'not-allowed';
+    btn.style.opacity = '0.6';
+});
+</script>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

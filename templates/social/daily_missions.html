@@ -1,0 +1,93 @@
+{% extends "core/base.html" %}
+
+{% block title %}Daily Missions - Business Tycoon RPG{% endblock %}
+
+{% block body_class %}world-{{ stats.world|lower }}{% endblock %}
+
+{% block content %}
+<div class="row fade-in">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="game-title"><i class="bi bi-list-check"></i> Daily Missions</h2>
+            <a href="{{ url_for('core.hub') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to HQ
+            </a>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-calendar-day-fill"></i> Today's Missions ({{ missions_data.date }})
+            </div>
+            <div class="card-body">
+                <p class="game-subtitle">Complete daily missions to earn bonus rewards!</p>
+                
+                <div class="row g-3">
+                    {% for mission in missions_data.missions %}
+                    <div class="col-md-4">
+                        <div class="card h-100" style="background: linear-gradient(180deg, rgba(30,30,50,0.9), rgba(15,15,30,0.95)); border: 2px solid {% if mission.is_claimed %}rgba(100,100,100,0.3){% elif mission.is_completed %}rgba(80,200,120,0.5){% else %}rgba(255,193,7,0.4){% endif %};">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h5 class="gold-text mb-0">{{ mission.mission_name }}</h5>
+                                    {% if mission.is_claimed %}
+                                    <span class="badge bg-secondary"><i class="bi bi-check-circle-fill"></i> Done</span>
+                                    {% elif mission.is_completed %}
+                                    <span class="badge bg-success pulse"><i class="bi bi-gift-fill"></i> Claim!</span>
+                                    {% else %}
+                                    <span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split"></i> Active</span>
+                                    {% endif %}
+                                </div>
+                                
+                                <p class="text-muted small mb-3">{{ mission.mission_description }}</p>
+                                
+                                <div class="progress mb-2" style="height: 20px;">
+                                    <div class="progress-bar {% if mission.is_completed %}bg-success{% else %}bg-warning{% endif %}" style="width: {{ (mission.current_progress / mission.target_value * 100)|min(100) }}%;">
+                                        {{ mission.current_progress }}/{{ mission.target_value }}
+                                    </div>
+                                </div>
+                                
+                                <div class="stat-card p-2 mb-3">
+                                    <div class="text-center">
+                                        <small class="text-muted">Reward:</small>
+                                        <div class="text-warning">
+                                            {% if mission.reward_type == 'gold' %}
+                                            <i class="bi bi-coin"></i> ${{ mission.reward_amount }}
+                                            {% elif mission.reward_type == 'energy' %}
+                                            <i class="bi bi-lightning-charge-fill"></i> {{ mission.reward_amount }} Energy
+                                            {% else %}
+                                            <i class="bi bi-star-fill"></i> {{ mission.reward_amount }} {{ mission.reward_type }}
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                {% if mission.is_claimed %}
+                                <button class="btn btn-secondary w-100" disabled>
+                                    <i class="bi bi-check-all"></i> Claimed
+                                </button>
+                                {% elif mission.is_completed %}
+                                <form action="{{ url_for('social.claim_mission', mission_id=mission.mission_id) }}" method="POST">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-game btn-game-emerald w-100">
+                                        <i class="bi bi-gift-fill"></i> Claim Reward
+                                    </button>
+                                </form>
+                                {% else %}
+                                <button class="btn btn-outline-warning w-100" disabled>
+                                    <i class="bi bi-clock-fill"></i> In Progress
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="col-12 text-center text-muted">
+                        <i class="bi bi-emoji-frown" style="font-size: 3rem;"></i>
+                        <p>No missions available today. Check back tomorrow!</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

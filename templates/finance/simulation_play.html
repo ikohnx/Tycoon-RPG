@@ -1,0 +1,41 @@
+{% extends "core/base.html" %}
+
+{% block title %}Simulation - Business Tycoon RPG{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="gold-text mb-0">
+                        <i class="bi bi-play-circle"></i> Simulation In Progress
+                    </h2>
+                    <p class="text-muted mb-0">Make strategic decisions to complete the simulation</p>
+                </div>
+                <a href="{{ url_for('finance.simulations') }}" class="btn btn-outline-light">
+                    <i class="bi bi-arrow-left"></i> Exit Simulation
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-hourglass-split display-1 text-warning mb-3"></i>
+                    <h3>Simulation Mode</h3>
+                    <p class="text-muted">
+                        This advanced simulation feature is coming soon. 
+                        For now, explore the simulation details to learn about the scenario.
+                    </p>
+                    <a href="{{ url_for('finance.simulations') }}" class="btn btn-game btn-game-gold">
+                        <i class="bi bi-arrow-left"></i> Return to Simulations
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

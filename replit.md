@@ -1,74 +1,98 @@
 # Business Tycoon RPG
 
 ## Overview
-Business Tycoon RPG is a 2D educational role-playing game developed with Python/Flask. Its primary purpose is to impart practical business skills through engaging, scenario-based gameplay. The game covers six core business disciplines and eight transferable sub-skills, each with a 10-level progression system. The vision is to create an immersive learning experience across diverse themed worlds (Modern, Industrial, Fantasy, Sci-Fi), ultimately preparing players for real-world business challenges. The game aims to provide an immersive learning experience, combining educational content with engaging RPG mechanics to create a unique and effective platform for business skill development.
+Business Tycoon RPG is a 2D educational role-playing game developed with Python/Flask. Its primary purpose is to impart practical business skills through engaging, scenario-based gameplay. The game covers six core business disciplines and eight transferable sub-skills, each with a 10-level progression system. The vision is to create an immersive learning experience across diverse themed worlds (Modern, Industrial, Fantasy, Sci-Fi), ultimately preparing players for real-world business challenges.
 
 ## User Preferences
 I prefer iterative development, with a focus on delivering functional, well-tested features in logical steps. Please ask for clarification if there are ambiguities, and propose solutions before implementing major changes. I value clear, concise explanations and prefer a collaborative approach where we discuss design choices.
 
-## System Architecture
-The game is built as a Flask web application with a responsive, mobile-first UI, leveraging Jinja2 templates, CSS animations, and cartoon-style graphics.
+## Project Architecture
 
-**Core Components & Mechanics:**
--   **Game Engine:** Manages player progression, scenario processing, and core game logic.
--   **Leveling System:** 10-level EXP progression with dynamic calculations.
--   **Database:** PostgreSQL for player data, scenario information, and a comprehensive double-entry bookkeeping system.
--   **Content Structure:** Scenarios teach business concepts across Marketing, Finance, Operations, Human Resources, Legal, and Strategy.
--   **UI/UX:** RPG aesthetic with custom fonts, game-styled buttons, HUD navbar, SVG campaign map, and visual novel-style dialogue with NPC portraits.
--   **Core Game Mechanics:** Star rating, energy/stamina, daily rewards, idle income, advisor collection, equipment, prestige, boss challenges, daily missions, leaderboards, and rival battles.
--   **Educational Mechanics:** Interactive challenges with real-world calculations (e.g., ROI, Break-Even Analysis), and a training system with concept explanations.
--   **Financial Engine:** Robust accounting system supporting Chart of Accounts, Journal Entry, Trial Balance, Income Statement, Balance Sheet, and period close.
--   **Project Management System:** Scheduling subsystem with initiative/task management, critical path calculation, resource allocation, and weekly simulation. Includes 5 interactive scheduling challenges.
--   **Cash Flow Forecasting System:** 13-week rolling forecasts with challenges covering receivables, payables, seasonal planning, and emergency reserves.
--   **Business Plan Workshop:** Guided business plan creation with 8 sections and mentor feedback.
--   **Negotiation Simulator:** Interactive deal-making scenarios covering BATNA, anchoring, concessions, and win-win strategies across various negotiation types.
--   **Risk Management Dashboard:** Portfolio-style risk assessment for identification, scoring, and mitigation across 8 categories.
--   **Supply Chain Simulator:** Inventory management with reorder points, safety stock, lead times, and supplier relationships.
--   **Market Simulation:** Price-demand dynamics teaching elasticity, competitive responses, and promotion ROI through 5 challenge types.
--   **HR Performance Management:** Covers employee lifecycle, hiring, performance reviews, team dynamics, conflict resolution, and succession planning.
--   **Investor Pitch Simulator:** Guided pitch deck creation with 8 sections and mentor scoring for different investor profiles.
--   **Learning Analytics Dashboard:** Tracks skill progress, identifies weak areas, and provides personalized recommendations.
--   **Achievement System:** Educational badges, mastery rewards, streak tracking, and scenario unlocks.
--   **Competitive Features:** Business competitions with league rankings, weekly challenges, and leaderboards.
--   **Advanced Simulations:** Includes M&A, international expansion, crisis management, and full business lifecycle simulation.
--   **Tutorial/Onboarding:** Guided tutorial system with progress tracking.
--   **Storyline Quest System:** Multi-chapter narrative arcs with branching decisions across different world themes.
--   **Mentorship & Advisor Progression:** Deep relationships with NPC advisors, affinity system, mentor missions, and skill tree unlocking.
--   **Business Network & Partnerships:** Player networking, joint ventures, networking events, and partnership management.
--   **Industry Specialization Tracks:** Deep-dive career paths for 5 industries with specific challenges and certifications.
--   **Dynamic Market Events:** Real-time economic events, market cycles, breaking news, and global community challenges.
--   **Multiplayer & Social:** Guild/alliance system, co-op challenges, player-to-player trading, and mentoring system.
--   **Seasonal Content:** Rotating weekly/monthly events, battle pass, limited-time boss challenges, and holiday events.
--   **AI Personalization:** Adaptive difficulty, AI-powered learning path recommendations, personalized scenario generation, and virtual business coach.
--   **Content Expansion:** New world themes, real-world business case studies, guest mentor NPCs, and deeper industry specialization.
--   **Accessibility & Polish:** PWA optimization, screen reader support, color blind modes, high contrast, reduced motion, and customizable font sizes.
+### Directory Structure
+```
+├── app.py                     # Flask app factory (~60 lines) - creates app, registers blueprints
+├── main.py                    # CLI game entry point
+├── src/
+│   ├── __init__.py
+│   ├── database.py            # Backward-compat shim → imports from src.db
+│   ├── game_engine.py         # Backward-compat shim → imports from src.engine
+│   ├── ai_tutor.py            # AI-powered tutoring features
+│   ├── company_resources.py   # Company resource management, skill trees, abilities
+│   ├── leveling.py            # Level titles, progress bars, EXP calculations
+│   ├── routes/                # Flask Blueprints (split from monolithic app.py)
+│   │   ├── __init__.py
+│   │   ├── helpers.py         # Shared decorators: login_required, feature_gated, game_over_check, energy_required, get_engine
+│   │   ├── auth.py            # Blueprint 'auth': index, new_game, load_game, logout
+│   │   ├── core.py            # Blueprint 'core': hub, explore, dashboard, progress, character, settings, campaign_map, etc.
+│   │   ├── scenarios.py       # Blueprint 'scenarios': scenarios, play, training, challenges, events
+│   │   ├── inventory.py       # Blueprint 'inventory': shop, buy, equipment, prestige
+│   │   ├── social.py          # Blueprint 'social': npcs, quests, rivals, guilds, trading, seasons, etc.
+│   │   ├── api.py             # Blueprint 'api' (url_prefix=/api): stats, scenarios, shop, buy, play, choose
+│   │   └── finance.py         # Blueprint 'finance': accounting, scheduling, cashflow, negotiation, risks, etc.
+│   ├── db/                    # Database package (split from monolithic database.py)
+│   │   ├── __init__.py        # Re-exports all public functions for backward compat
+│   │   ├── connection.py      # Connection pool, get_connection, return_connection, db_cursor
+│   │   ├── schema.py          # init_database with all CREATE TABLE statements
+│   │   ├── seed.py            # All seed_* functions and seed_all
+│   │   └── queries.py         # Chart of accounts, accounting init, project templates
+│   └── engine/                # Game engine package (split from monolithic game_engine.py)
+│       ├── __init__.py        # Re-exports all classes/functions for backward compat
+│       ├── player.py          # Player class, ADVISOR_QUOTES, get_random_advisor_quote
+│       ├── core.py            # GameEngine class (inherits mixins), core methods
+│       ├── scenarios.py       # ScenariosMixin: scenario loading, processing, challenges
+│       ├── progression.py     # ProgressionMixin: daily login, idle income, prestige, battles
+│       ├── social.py          # SocialMixin: shop, NPCs, quests, achievements, avatars
+│       └── accounting.py      # Standalone functions: accounting, projects, scheduling, etc.
+├── static/
+│   ├── js/
+│   │   ├── rpg/               # 2D RPG engine (split from monolithic engine.js)
+│   │   │   ├── colors.js      # Color palette (C) and utilities (hexToHSL, hslHex, shade)
+│   │   │   ├── tiles.js       # Tile rendering (drawTile, dither, ditherFast) - 29 tile types
+│   │   │   ├── sprites.js     # Sprite system (drawSprite, archetypes, skin/hair/eye variety)
+│   │   │   ├── engine.js      # Core engine (game loop, input, camera, dialogue, HUD, overlays)
+│   │   │   └── maps.js        # Map definitions (hub town, market district)
+│   │   └── game-effects.js    # UI effects for non-RPG pages
+│   ├── icons/                 # PWA icons
+│   ├── images/                # Game artwork
+│   ├── manifest.json          # PWA manifest
+│   └── sw.js                  # Service worker
+└── templates/                 # Jinja2 templates organized by feature
+    ├── auth/                  # Authentication: index, login, new_game (3 files)
+    ├── core/                  # Core pages: base, hub, explore, dashboard, etc. (13 files)
+    ├── scenarios/             # Gameplay: scenarios, play, training, result, etc. (7 files)
+    ├── inventory/             # Items: shop, inventory, equipment, prestige (4 files)
+    ├── social/                # Social: npcs, quests, guilds, trading, etc. (28 files)
+    └── finance/               # Business tools: accounting, scheduling, etc. (30 files)
+```
 
-**Technical Implementations:**
--   **Business Mastery Simulation:** Implements Capital, Team Morale, and Brand Equity tracking. Fiscal quarters advance with decisions, triggering quarterly events. Features a skill tree with 6 discipline-specific abilities.
--   **Explorable 2D RPG Map System:** HTML5 Canvas-based 2D tile engine with FF-style grid-based stepping movement (180ms per tile, input locked during steps). Camera scrolling, collision detection, sprite rendering with walk cycle animations. Includes dialogue system, NPC interactions, and map transitions. Characters use tileX/tileY for grid position and px/py for interpolated pixel rendering.
--   **In-Game Overlay System:** All gameplay happens inside the 2D map view. NPC interactions open FF-styled overlay panels for scenarios, shop, and status instead of redirecting to external pages. JSON API endpoints (`/api/stats`, `/api/scenarios/<discipline>`, `/api/shop`, `/api/buy/<item_id>`, `/api/play/<scenario_id>`, `/api/choose/<scenario_id>/<choice>`) serve data to overlays. FF-style pause menu (Escape key) shows Status, Skills, and Items panels. Toast notifications for purchase feedback. Engine pauses when overlays are active.
--   **Resource Integration & Feature Gating:** Server-side `check_feature_requirements()` and `deduct_feature_cost()` enforce resource costs. Uses `@feature_gated`, `@game_over_check`, and `@energy_required` decorators for route protection. API endpoints include energy and completion checks.
--   **Security & Infrastructure:** Bcrypt for password hashing, `@login_required` for route protection, CSRF token validation via X-CSRFToken header for API calls, PostgreSQL connection pooling, and request-scoped `GameEngine` instances.
--   **Mobile & Cross-Platform Support:** Full Progressive Web App (PWA) implementation for offline caching and "Add to Home Screen" functionality. Capacitor configuration for native iOS and Android builds. Responsive design enhancements for touch interactions, safe areas, and accessibility modes.
+### Architecture Patterns
+- **Flask Blueprints**: Routes split into 7 blueprints (auth, core, scenarios, inventory, social, api, finance)
+- **Mixin Pattern**: GameEngine uses ScenariosMixin, ProgressionMixin, SocialMixin for method organization
+- **Backward Compatibility Shims**: `src/database.py` and `src/game_engine.py` re-export from their respective packages
+- **Request-scoped Engine**: `get_engine()` creates per-request GameEngine instances via Flask's `g` object
+- **IIFE + Namespace Pattern (JS)**: RPGColors, RPGTiles, RPGSprites are window globals consumed by RPGEngine
+- **Template Organization**: 85 templates in 6 feature subdirectories, all extending `core/base.html`
+
+### Key Technical Details
+- **Database**: PostgreSQL with connection pooling (ThreadedConnectionPool, 2-20 connections)
+- **Security**: bcrypt password hashing, CSRF via Flask-WTF, @login_required decorator
+- **2D Engine**: HTML5 Canvas, 16px tiles at 3x scale (48px), FF-style grid movement (180ms steps)
+- **Sprite System**: 8 archetypes (merchant, scholar, elder, warrior, scout, noble, artisan, mystic), 6 skin tones, 8 hair colors/styles, modular rendering (drawHair, drawFace, drawOutfit, drawAcc, etc.)
+- **url_for references**: Use blueprint prefix (e.g., `url_for('auth.index')`, `url_for('core.hub')`)
 
 ## Recent Changes (Feb 2026)
--   Modern HD pixel art overhaul (Sea of Stars quality): organic shapes via ctx.ellipse, rich multi-layer gradients, vegetation detail (moss, vines, ivy), atmospheric depth
--   Expanded color palette to 242 colors: rock tones (rk1-9), moss/vine greens (mv1-6), warm lights (wml/wmd), water spray/mist (wms/wmm), deep shadows (dsh1-2), highlights (hl1-2), extended greens (g11-14), floor tiles (fl1-4)
--   All 26 tile types rewritten with modern pixel art techniques: 5-layer dithered grass with 16 blade clusters, 15 organic cobblestones with mortar/grass tufts, 5-depth water with 10 animated ripples and caustic diamonds, individually shaded bricks with moss growth, 7-layer tree canopy with 8 ellipse calls for organic leaf clusters
--   Tree tile centerpiece: 104 lines, bark texture with knot holes, root spread, ivy/vine detail, gentle sway animation, 8 ellipse calls for multi-layer canopy
--   Character sprites upgraded to modern quality: rounded head outlines, multi-layer hair with highlights, eyes with sclera/iris/pupil/catchlight, fabric fold lines, belt buckles with metallic highlight, weapon hints, boot lacing detail
--   NPC differentiation: procedural hats (spriteId % 3), aprons (spriteId % 4), cape animation for hero
--   Enhanced shadows with 5-layer graduated ellipses (alpha 0.02-0.28) and interaction bubbles with multi-sparkle shimmer effects
--   18 total ctx.ellipse calls for organic shapes, 20 ditherFast + 8 dither calls for rich gradients
--   D=1 rendering system maintained: 48x48 addressable pixels per tile, 80-300 fillRect calls per tile (trees highest)
--   Dashboard converted to in-game overlay accessible via pause menu (Command Center)
--   Converted all in-game interactions from external page redirects to in-game FF-styled overlay panels
--   Added JSON API endpoints for scenarios, shop, inventory, and player stats
--   Implemented FF-style pause menu replacing hamburger menu links
--   HUD auto-updates after in-game actions (gold, energy, morale, brand)
--   Engine supports overlay pause state to prevent movement during panel interaction
+- **Major Refactoring**: Split 4 monolithic files (23,000+ lines total) into modular packages:
+  - app.py (3,278→59 lines) → 7 Flask Blueprints in src/routes/
+  - database.py (9,405→1 line shim) → src/db/ package (connection, schema, seed, queries)
+  - game_engine.py (8,125→8 line shim) → src/engine/ package (player, core, scenarios, progression, social, accounting)
+  - engine.js (2,992→754 lines) → 4 JS modules (colors, tiles, sprites, engine)
+- **Template Organization**: 85 templates moved from flat directory into 6 feature subdirectories
+- Modern HD pixel art overhaul (Sea of Stars quality): organic shapes, rich gradients, vegetation detail
+- Character sprite archetype system with diverse appearances
+- In-game overlay system replacing page redirects
+- FF-style pause menu and HUD auto-updates
 
 ## External Dependencies
--   **PostgreSQL:** Relational database for all game data persistence.
--   **Flask-WTF:** Used for CSRF protection in web forms.
--   **bcrypt:** Industry-standard password hashing library.
+- **PostgreSQL:** Relational database for all game data persistence.
+- **Flask-WTF:** Used for CSRF protection in web forms.
+- **bcrypt:** Industry-standard password hashing library.

@@ -1,0 +1,107 @@
+{% extends "core/base.html" %}
+
+{% block title %}Leaderboard - Business Tycoon RPG{% endblock %}
+
+{% block body_class %}world-{{ stats.world|lower }}{% endblock %}
+
+{% block content %}
+<div class="row fade-in">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="game-title"><i class="bi bi-bar-chart-fill"></i> Leaderboard</h2>
+            <a href="{{ url_for('core.hub') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to HQ
+            </a>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center flex-wrap">
+                    <span><i class="bi bi-trophy-fill"></i> Top Players</span>
+                    <div class="btn-group" role="group">
+                        <a href="{{ url_for('social.leaderboard', category='stars') }}" class="btn btn-sm {% if category == 'stars' %}btn-game btn-game-gold{% else %}btn-outline-warning{% endif %}">
+                            <i class="bi bi-star-fill"></i> Stars
+                        </a>
+                        <a href="{{ url_for('social.leaderboard', category='wealth') }}" class="btn btn-sm {% if category == 'wealth' %}btn-game btn-game-emerald{% else %}btn-outline-success{% endif %}">
+                            <i class="bi bi-coin"></i> Wealth
+                        </a>
+                        <a href="{{ url_for('social.leaderboard', category='levels') }}" class="btn btn-sm {% if category == 'levels' %}btn-game btn-game-purple{% else %}btn-outline-info{% endif %}">
+                            <i class="bi bi-graph-up"></i> Levels
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover">
+                        <thead>
+                            <tr>
+                                <th style="width: 60px;">Rank</th>
+                                <th>Player</th>
+                                <th>World</th>
+                                <th class="text-end">
+                                    {% if category == 'stars' %}Stars
+                                    {% elif category == 'wealth' %}Gold
+                                    {% else %}Total Levels{% endif %}
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for player in rankings %}
+                            <tr {% if player.player_name == stats.name %}style="background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.3);"{% endif %}>
+                                <td>
+                                    {% if loop.index == 1 %}
+                                    <i class="bi bi-trophy-fill" style="color: #ffd700; font-size: 1.5rem;"></i>
+                                    {% elif loop.index == 2 %}
+                                    <i class="bi bi-trophy-fill" style="color: #c0c0c0; font-size: 1.3rem;"></i>
+                                    {% elif loop.index == 3 %}
+                                    <i class="bi bi-trophy-fill" style="color: #cd7f32; font-size: 1.1rem;"></i>
+                                    {% else %}
+                                    <span class="text-muted">{{ loop.index }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <i class="bi bi-person-circle me-2" style="color: {% if loop.index <= 3 %}#ffd700{% else %}#6c757d{% endif %};"></i>
+                                    {{ player.player_name }}
+                                    {% if player.player_name == stats.name %}
+                                    <span class="badge bg-primary ms-2">You</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if player.chosen_world == 'Modern' %}
+                                    <i class="bi bi-building text-primary"></i>
+                                    {% elif player.chosen_world == 'Industrial' %}
+                                    <i class="bi bi-gear-wide-connected" style="color: #cd853f;"></i>
+                                    {% elif player.chosen_world == 'Fantasy' %}
+                                    <i class="bi bi-magic text-purple"></i>
+                                    {% else %}
+                                    <i class="bi bi-rocket text-info"></i>
+                                    {% endif %}
+                                    {{ player.chosen_world }}
+                                </td>
+                                <td class="text-end">
+                                    {% if category == 'stars' %}
+                                    <span class="text-warning"><i class="bi bi-star-fill"></i> {{ player.total_stars }}</span>
+                                    <small class="text-muted">({{ player.total_scenarios }} scenarios)</small>
+                                    {% elif category == 'wealth' %}
+                                    <span class="text-success">${{ "{:,.0f}".format(player.score) }}</span>
+                                    {% else %}
+                                    <span class="text-info">{{ player.total_levels }} levels</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">
+                                    No players ranked yet. Be the first!
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

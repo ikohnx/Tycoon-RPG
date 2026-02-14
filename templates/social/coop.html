@@ -1,0 +1,82 @@
+{% extends "core/base.html" %}
+
+{% block title %}Co-op Challenges - Business Tycoon RPG{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="gold-text mb-0">
+                        <i class="bi bi-people-fill"></i> Co-op Challenges
+                    </h2>
+                    <p class="text-muted mb-0">Team up with other players to tackle business challenges</p>
+                </div>
+                <a href="{{ url_for('core.hub') }}" class="btn btn-outline-light">
+                    <i class="bi bi-arrow-left"></i> Back to Hub
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{% if category == 'error' %}danger{% else %}success{% endif %} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        {% for challenge in challenges %}
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="gold-text">{{ challenge.name }}</h5>
+                        <span class="badge bg-{% if challenge.difficulty <= 2 %}success{% elif challenge.difficulty <= 3 %}warning{% else %}danger{% endif %}">
+                            Difficulty {{ challenge.difficulty }}/5
+                        </span>
+                    </div>
+                    <p class="text-muted">{{ challenge.description }}</p>
+                    
+                    <div class="row text-center mb-3">
+                        <div class="col-4">
+                            <small class="text-muted d-block">Players</small>
+                            <strong>{{ challenge.min_players }}-{{ challenge.max_players }}</strong>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted d-block">Time</small>
+                            <strong>{{ challenge.time_limit }}m</strong>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted d-block">Reward</small>
+                            <strong class="text-success">+{{ challenge.exp_reward }} EXP</strong>
+                        </div>
+                    </div>
+                    
+                    <span class="badge bg-info">{{ challenge.type|title }}</span>
+                </div>
+                <div class="card-footer">
+                    <form action="{{ url_for('social.join_coop_challenge', challenge_id=challenge.challenge_id) }}" method="post">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-game btn-game-gold w-100">
+                            <i class="bi bi-play-fill"></i> Join Challenge
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12 text-center py-5">
+            <i class="bi bi-people display-1 text-muted"></i>
+            <p class="text-muted mt-3">No co-op challenges available yet.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

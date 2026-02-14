@@ -1,0 +1,95 @@
+{% extends "core/base.html" %}
+
+{% block title %}Random Event - Business Tycoon RPG{% endblock %}
+
+{% block body_class %}world-{{ stats.world|lower }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center fade-in">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h4 class="mb-0">
+                    <i class="bi bi-exclamation-triangle-fill"></i> 
+                    {{ event.event_name }}
+                </h4>
+                <small>
+                    {% if event.event_type == 'opportunity' %}
+                    <span class="badge bg-success">Opportunity</span>
+                    {% elif event.event_type == 'crisis' %}
+                    <span class="badge bg-danger">Crisis</span>
+                    {% elif event.event_type == 'challenge' %}
+                    <span class="badge bg-info">Challenge</span>
+                    {% else %}
+                    <span class="badge bg-secondary">Decision</span>
+                    {% endif %}
+                    <span class="badge bg-dark ms-1">{{ event.rarity|capitalize }}</span>
+                </small>
+            </div>
+            <div class="card-body">
+                <div class="bg-dark p-4 rounded mb-4">
+                    <p class="lead mb-0">{{ event.event_description }}</p>
+                </div>
+                
+                <h5 class="mb-3"><i class="bi bi-signpost-split"></i> What do you do?</h5>
+                
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="card bg-dark h-100 choice-card" onclick="window.location='{{ url_for('scenarios.resolve_event', event_id=event.event_id, choice='A') }}'">
+                            <div class="card-body">
+                                <h5 class="text-primary"><i class="bi bi-a-circle"></i> Option A</h5>
+                                <p class="mb-3">{{ event.choice_a_text }}</p>
+                                <div class="d-flex gap-2">
+                                    {% if event.choice_a_cash_change != 0 %}
+                                    <span class="badge {% if event.choice_a_cash_change > 0 %}bg-success{% else %}bg-danger{% endif %}">
+                                        {% if event.choice_a_cash_change > 0 %}+{% endif %}${{ event.choice_a_cash_change }}
+                                    </span>
+                                    {% endif %}
+                                    {% if event.choice_a_reputation_change != 0 %}
+                                    <span class="badge {% if event.choice_a_reputation_change > 0 %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                                        {% if event.choice_a_reputation_change > 0 %}+{% endif %}{{ event.choice_a_reputation_change }} Rep
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-dark h-100 choice-card" onclick="window.location='{{ url_for('scenarios.resolve_event', event_id=event.event_id, choice='B') }}'">
+                            <div class="card-body">
+                                <h5 class="text-info"><i class="bi bi-b-circle"></i> Option B</h5>
+                                <p class="mb-3">{{ event.choice_b_text }}</p>
+                                <div class="d-flex gap-2">
+                                    {% if event.choice_b_cash_change != 0 %}
+                                    <span class="badge {% if event.choice_b_cash_change > 0 %}bg-success{% else %}bg-danger{% endif %}">
+                                        {% if event.choice_b_cash_change > 0 %}+{% endif %}${{ event.choice_b_cash_change }}
+                                    </span>
+                                    {% endif %}
+                                    {% if event.choice_b_reputation_change != 0 %}
+                                    <span class="badge {% if event.choice_b_reputation_change > 0 %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                                        {% if event.choice_b_reputation_change > 0 %}+{% endif %}{{ event.choice_b_reputation_change }} Rep
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.choice-card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+.choice-card:hover {
+    border-color: var(--bs-primary);
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+}
+</style>
+{% endblock %}

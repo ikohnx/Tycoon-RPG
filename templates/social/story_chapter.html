@@ -1,0 +1,75 @@
+{% extends "core/base.html" %}
+
+{% block title %}{{ arc.arc_name }} - Business Tycoon RPG{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <small class="text-muted">{{ arc.arc_name }}</small>
+                    <h2 class="gold-text mb-0">
+                        <i class="bi bi-journal-text"></i> Chapter {{ chapter.chapter_number }}: {{ chapter.title }}
+                    </h2>
+                </div>
+                <a href="{{ url_for('social.stories') }}" class="btn btn-outline-light">
+                    <i class="bi bi-arrow-left"></i> Exit Story
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="story-narrative p-4 bg-dark rounded mb-4" style="line-height: 1.8; font-size: 1.1rem;">
+                        {{ chapter.narrative }}
+                    </div>
+                    
+                    {% if chapter.is_finale %}
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i> This is the final chapter. Your choice will complete the story!
+                    </div>
+                    {% endif %}
+                    
+                    <h5 class="mb-3"><i class="bi bi-signpost-split"></i> What do you do?</h5>
+                    
+                    <form action="{{ url_for('social.story_choice', arc_id=arc.arc_id, chapter_num=chapter.chapter_number) }}" method="post">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        
+                        {% for choice in chapter.choices %}
+                        {% if choice %}
+                        <div class="form-check mb-3 p-3 bg-dark rounded border border-secondary choice-option" style="cursor: pointer;">
+                            <input class="form-check-input" type="radio" name="choice" id="choice_{{ choice.id }}" value="{{ choice.id }}" required>
+                            <label class="form-check-label w-100" for="choice_{{ choice.id }}" style="cursor: pointer;">
+                                <strong class="text-warning">Option {{ choice.id|upper }}:</strong> {{ choice.text }}
+                            </label>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                        
+                        <button type="submit" class="btn btn-game btn-game-gold btn-lg w-100 mt-3">
+                            <i class="bi bi-check-circle"></i> Make Your Choice
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="text-center">
+                <small class="text-muted">
+                    <i class="bi bi-star-fill text-warning"></i> +{{ chapter.exp_reward }} EXP for completing this chapter
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.choice-option:hover {
+    border-color: #ffc107 !important;
+    background: rgba(255, 193, 7, 0.1) !important;
+}
+</style>
+{% endblock %}

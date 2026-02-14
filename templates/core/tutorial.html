@@ -1,0 +1,320 @@
+{% extends "core/base.html" %}
+
+{% block title %}Tutorial - Business Tycoon RPG{% endblock %}
+
+{% block content %}
+<style>
+    .tutorial-section {
+        background: rgba(0, 0, 0, 0.7);
+        border: 2px solid rgba(255, 215, 0, 0.4);
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        overflow: hidden;
+    }
+    .tutorial-header {
+        padding: 1rem 1.25rem;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .tutorial-header:hover {
+        background: rgba(255, 215, 0, 0.1);
+    }
+    .tutorial-content {
+        display: none;
+        padding: 0 1.25rem 1.25rem;
+        border-top: 1px solid rgba(255, 215, 0, 0.2);
+        background: rgba(0, 0, 0, 0.3);
+    }
+    .tutorial-content.show {
+        display: block;
+    }
+    .tutorial-text {
+        color: #e0e0e0;
+        font-size: 1rem;
+        line-height: 1.7;
+    }
+    .tutorial-text strong {
+        color: #ffd700;
+    }
+    .tutorial-text ul {
+        margin: 1rem 0;
+        padding-left: 1.5rem;
+    }
+    .tutorial-text li {
+        margin-bottom: 0.5rem;
+        color: #d0d0d0;
+    }
+    .tutorial-tip {
+        background: rgba(76, 175, 80, 0.2);
+        border-left: 4px solid #4CAF50;
+        padding: 0.75rem 1rem;
+        margin: 1rem 0;
+        border-radius: 0 8px 8px 0;
+        color: #c8e6c9;
+    }
+    .tutorial-note {
+        background: rgba(33, 150, 243, 0.2);
+        border-left: 4px solid #2196F3;
+        padding: 0.75rem 1rem;
+        margin: 1rem 0;
+        border-radius: 0 8px 8px 0;
+        color: #bbdefb;
+    }
+    .section-desc {
+        color: #b0b0b0;
+        font-size: 0.9rem;
+    }
+    .chevron-icon {
+        transition: transform 0.3s;
+    }
+    .tutorial-section.expanded .chevron-icon {
+        transform: rotate(180deg);
+    }
+    .complete-btn {
+        background: linear-gradient(135deg, #4CAF50, #45a049);
+        border: none;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+    .complete-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+    }
+</style>
+
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <h2 class="gold-text mb-0">
+                        <i class="bi bi-mortarboard"></i> Tutorial
+                    </h2>
+                    <p class="section-desc mb-0">Learn how to play Business Tycoon RPG</p>
+                </div>
+                <a href="{{ url_for('core.hub') }}" class="btn btn-outline-light">
+                    <i class="bi bi-arrow-left"></i> Back to Hub
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+        {% for message in messages %}
+        <div>{{ message }}</div>
+        {% endfor %}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            {% for section in sections %}
+            <div class="tutorial-section" data-section="{{ section.id }}">
+                <div class="tutorial-header d-flex justify-content-between align-items-center" onclick="toggleSection('{{ section.id }}')">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <span class="badge {% if section.is_completed %}bg-success{% else %}bg-warning text-dark{% endif %} rounded-circle" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
+                                {% if section.is_completed %}
+                                <i class="bi bi-check-lg"></i>
+                                {% else %}
+                                {{ section.order }}
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div>
+                            <h5 class="mb-0 {% if section.is_completed %}text-success{% else %}gold-text{% endif %}">{{ section.title }}</h5>
+                            <small class="section-desc">
+                                {% if section.id == 'welcome' %}
+                                Learn about the game's goals and how to get started
+                                {% elif section.id == 'navigation' %}
+                                Discover the Hub and how to access different features
+                                {% elif section.id == 'scenarios' %}
+                                Understand how to play scenarios and make decisions
+                                {% elif section.id == 'disciplines' %}
+                                Learn about the 6 business disciplines you'll master
+                                {% elif section.id == 'challenges' %}
+                                Explore interactive challenges and simulations
+                                {% elif section.id == 'simulations' %}
+                                Tackle advanced business simulations
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        {% if section.is_completed %}
+                        <span class="badge bg-success px-3 py-2">Completed</span>
+                        {% endif %}
+                        <i class="bi bi-chevron-down chevron-icon" style="color: #ffd700; font-size: 1.2rem;"></i>
+                    </div>
+                </div>
+                <div class="tutorial-content" id="content-{{ section.id }}">
+                    <div class="tutorial-text pt-3">
+                        {% if section.id == 'welcome' %}
+                        <p><strong>Welcome to Business Tycoon RPG!</strong> This game teaches you real-world business skills through interactive scenarios and challenges.</p>
+                        
+                        <p>Your goal is to build your business empire by mastering six core disciplines:</p>
+                        <ul>
+                            <li><strong>Marketing</strong> - Learn to attract and retain customers</li>
+                            <li><strong>Finance & Accounting</strong> - Master budgeting, bookkeeping, financial statements, and investment analysis</li>
+                            <li><strong>Operations</strong> - Optimize processes and supply chains</li>
+                            <li><strong>Human Resources</strong> - Build and manage winning teams</li>
+                            <li><strong>Legal</strong> - Navigate contracts and compliance</li>
+                            <li><strong>Strategy</strong> - Make decisions that shape your business future</li>
+                        </ul>
+                        
+                        <div class="tutorial-tip">
+                            <strong>Tip:</strong> Start with scenarios in your chosen industry to build familiarity, then branch out to other disciplines as you level up!
+                        </div>
+                        
+                        {% elif section.id == 'navigation' %}
+                        <p><strong>The Hub is your command center.</strong> From here, you can access all game features:</p>
+                        
+                        <ul>
+                            <li><strong>Scenarios</strong> - Story-driven business challenges with choices and consequences</li>
+                            <li><strong>Challenges</strong> - Interactive exercises like budgeting, ROI calculations, and break-even analysis</li>
+                            <li><strong>Training</strong> - Learn concepts before applying them in gameplay</li>
+                            <li><strong>Map</strong> - Visual campaign progress across different worlds</li>
+                            <li><strong>Shop</strong> - Purchase equipment and items to boost your abilities</li>
+                            <li><strong>Profile</strong> - View your stats, achievements, and progress</li>
+                        </ul>
+                        
+                        <div class="tutorial-note">
+                            <strong>Note:</strong> The top navigation bar shows your current cash, energy, and quick access to key features. Energy regenerates over time or can be restored with items.
+                        </div>
+                        
+                        {% elif section.id == 'scenarios' %}
+                        <p><strong>Scenarios are the heart of the game.</strong> Each scenario presents a business situation where you must make decisions.</p>
+                        
+                        <p>Here's how scenarios work:</p>
+                        <ul>
+                            <li><strong>Read the situation</strong> - Understand the business context and challenge</li>
+                            <li><strong>Consider your options</strong> - Each choice has different outcomes</li>
+                            <li><strong>Make your decision</strong> - Your choice affects cash, reputation, and experience</li>
+                            <li><strong>Learn from feedback</strong> - See why certain choices are better than others</li>
+                        </ul>
+                        
+                        <p>Scenarios are rated with <strong>stars (1-3)</strong> based on how well you perform. Better choices earn more stars, XP, and rewards!</p>
+                        
+                        <div class="tutorial-tip">
+                            <strong>Tip:</strong> Don't worry about making mistakes - they're learning opportunities! You can replay scenarios to improve your score.
+                        </div>
+                        
+                        {% elif section.id == 'disciplines' %}
+                        <p><strong>Master all six business disciplines</strong> to become a true Business Tycoon:</p>
+                        
+                        <ul>
+                            <li><strong>Marketing (Level 1-10)</strong> - Customer acquisition, branding, advertising, market research, and promotion strategies</li>
+                            <li><strong>Finance & Accounting (Level 1-10)</strong> - The accounting equation, journal entries, budgeting, cash flow, financial statements, investments, and risk management</li>
+                            <li><strong>Operations (Level 1-10)</strong> - Supply chain, inventory, quality control, and process optimization</li>
+                            <li><strong>Human Resources (Level 1-10)</strong> - Hiring, training, performance management, and team building</li>
+                            <li><strong>Legal (Level 1-10)</strong> - Contracts, compliance, intellectual property, and business law</li>
+                            <li><strong>Strategy (Level 1-10)</strong> - Business planning, competitive analysis, and long-term decision making</li>
+                        </ul>
+                        
+                        <div class="tutorial-note">
+                            <strong>Progression:</strong> Each discipline has 10 levels. Complete scenarios and challenges in that discipline to earn XP and level up. Higher levels unlock new content and abilities!
+                        </div>
+                        
+                        {% elif section.id == 'challenges' %}
+                        <p><strong>Interactive Challenges</strong> test your skills with hands-on exercises:</p>
+                        
+                        <ul>
+                            <li><strong>Budget Calculator</strong> - Create and balance business budgets</li>
+                            <li><strong>ROI Analysis</strong> - Calculate return on investment for different options</li>
+                            <li><strong>Break-Even Analysis</strong> - Determine when a business becomes profitable</li>
+                            <li><strong>Cash Flow Forecasting</strong> - Project future cash positions</li>
+                            <li><strong>Negotiation Simulator</strong> - Practice deal-making and bargaining</li>
+                            <li><strong>Risk Assessment</strong> - Identify and mitigate business risks</li>
+                        </ul>
+                        
+                        <p>Challenges provide <strong>immediate feedback</strong> on your calculations and decisions, helping you learn practical business skills.</p>
+                        
+                        <div class="tutorial-tip">
+                            <strong>Tip:</strong> Use the Training section first to learn the formulas and concepts, then apply them in challenges!
+                        </div>
+                        
+                        {% elif section.id == 'simulations' %}
+                        <p><strong>Advanced Simulations</strong> let you run complex business scenarios over time:</p>
+                        
+                        <ul>
+                            <li><strong>Market Simulation</strong> - Set prices, respond to competition, and maximize profit</li>
+                            <li><strong>Supply Chain Simulator</strong> - Manage inventory, suppliers, and logistics</li>
+                            <li><strong>HR Management</strong> - Hire, develop, and retain employees</li>
+                            <li><strong>Investor Pitch</strong> - Create pitch decks and present to virtual investors</li>
+                            <li><strong>Business Plan Workshop</strong> - Develop comprehensive business plans</li>
+                        </ul>
+                        
+                        <p>Simulations run over multiple "weeks" or "months" in-game, letting you see the long-term impact of your decisions.</p>
+                        
+                        <div class="tutorial-note">
+                            <strong>Unlock Requirement:</strong> Most advanced simulations require reaching higher levels in relevant disciplines. Keep progressing to unlock new content!
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    {% if not section.is_completed %}
+                    <div class="text-end mt-3">
+                        <form action="{{ url_for('core.complete_tutorial', section_id=section.id) }}" method="post" style="display: inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="complete-btn">
+                                <i class="bi bi-check-circle"></i> I've Read This - Mark Complete
+                            </button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+
+            {% set completed_count = sections|selectattr('is_completed')|list|length %}
+            <div class="text-center mt-4">
+                <div class="progress mb-3" style="height: 24px; background: rgba(0,0,0,0.5); border-radius: 12px;">
+                    <div class="progress-bar bg-success" style="width: {{ (completed_count / sections|length) * 100 }}%; border-radius: 12px;">
+                        <span style="font-weight: 600;">{{ completed_count }}/{{ sections|length }} Complete</span>
+                    </div>
+                </div>
+                {% if completed_count == sections|length %}
+                <div class="alert" style="background: rgba(76, 175, 80, 0.2); border: 2px solid #4CAF50; color: #c8e6c9;">
+                    <i class="bi bi-trophy-fill" style="color: #ffd700;"></i> 
+                    <strong>Congratulations!</strong> You've completed the tutorial! You're ready to become a Business Tycoon!
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleSection(sectionId) {
+    const section = document.querySelector(`[data-section="${sectionId}"]`);
+    const content = document.getElementById(`content-${sectionId}`);
+    
+    if (content.classList.contains('show')) {
+        content.classList.remove('show');
+        section.classList.remove('expanded');
+    } else {
+        content.classList.add('show');
+        section.classList.add('expanded');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const sections = document.querySelectorAll('.tutorial-section');
+    for (const section of sections) {
+        const isCompleted = section.querySelector('.badge.bg-success.rounded-circle');
+        if (!isCompleted) {
+            const sectionId = section.dataset.section;
+            toggleSection(sectionId);
+            break;
+        }
+    }
+});
+</script>
+{% endblock %}

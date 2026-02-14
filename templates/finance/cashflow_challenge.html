@@ -1,0 +1,209 @@
+{% extends "core/base.html" %}
+
+{% block title %}{{ challenge.title }} - Business Tycoon RPG{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="gold-text mb-0">
+                        <i class="bi bi-cash-coin"></i> {{ challenge.title }}
+                    </h2>
+                    <p class="text-muted mb-0">{{ challenge.challenge_type|replace('_', ' ')|title }} Challenge</p>
+                </div>
+                <a href="{{ url_for('finance.cashflow') }}" class="btn btn-outline-light">
+                    <i class="bi bi-arrow-left"></i> Back to Cash Flow
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-question-circle"></i> Challenge
+                </div>
+                <div class="card-body">
+                    <p class="lead">{{ challenge.description }}</p>
+                    
+                    <form action="{{ url_for('finance.submit_cashflow_challenge', challenge_id=challenge.challenge_id) }}" method="post">
+                        {% if challenge.challenge_type == 'timing' %}
+                        <div class="mb-4">
+                            <h5>Scenario:</h5>
+                            <div class="alert alert-secondary">
+                                <p><strong>Contract Value:</strong> ${{ challenge.scenario_data.contract_value|default(0) }}</p>
+                                <p><strong>Current Cash:</strong> ${{ challenge.scenario_data.current_cash|default(0) }}</p>
+                                <p class="mb-0"><strong>Weekly Expenses:</strong> ${{ challenge.scenario_data.weekly_expenses|default(0) }}</p>
+                            </div>
+                            
+                            <h5>Payment Options:</h5>
+                            {% for option in challenge.scenario_data.options %}
+                            <div class="form-check mb-3 p-3 bg-dark rounded">
+                                <input class="form-check-input" type="radio" name="choice" 
+                                       id="option_{{ option.id }}" value="{{ option.id }}" required>
+                                <label class="form-check-label" for="option_{{ option.id }}">
+                                    <strong>Option {{ option.id }}:</strong> {{ option.name }}
+                                    <br>
+                                    <small class="text-muted">
+                                        Upfront: ${{ option.upfront|default(0) }}
+                                        {% if option.on_delivery %} | On Delivery: ${{ option.on_delivery }}{% endif %}
+                                        {% if option.net30 %} | Net 30: ${{ option.net30 }}{% endif %}
+                                    </small>
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        {% elif challenge.challenge_type == 'planning' %}
+                        <div class="mb-4">
+                            <div class="alert alert-secondary">
+                                <p><strong>Weekly Fixed Costs:</strong> ${{ challenge.scenario_data.weekly_fixed_costs|default(0) }}</p>
+                                <p><strong>Weekly Variable Costs:</strong> ${{ challenge.scenario_data.weekly_variable_costs|default(0) }}</p>
+                                <p class="mb-0"><strong>Average Weekly Revenue:</strong> ${{ challenge.scenario_data.average_weekly_revenue|default(0) }}</p>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">How many weeks of operating expenses should you keep as emergency reserve?</label>
+                                <input type="number" name="weeks" class="form-control bg-dark text-light" 
+                                       min="1" max="52" required placeholder="Enter number of weeks">
+                            </div>
+                        </div>
+                        
+                        {% elif challenge.challenge_type == 'forecast' %}
+                        <div class="mb-4">
+                            <div class="alert alert-secondary">
+                                <p><strong>Starting Cash:</strong> ${{ challenge.scenario_data.starting_cash|default(0) }}</p>
+                                <p class="mb-0"><strong>Minimum Cash Required:</strong> ${{ challenge.scenario_data.minimum_cash|default(0) }}</p>
+                            </div>
+                            
+                            <div class="table-responsive mb-3">
+                                <table class="table table-sm table-dark">
+                                    <thead>
+                                        <tr>
+                                            <th>Week</th>
+                                            <th class="text-end">Inflows</th>
+                                            <th class="text-end">Outflows</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for week in challenge.scenario_data.weeks %}
+                                        <tr>
+                                            <td>Week {{ week.week }}</td>
+                                            <td class="text-end text-success">+${{ week.inflows }}</td>
+                                            <td class="text-end text-danger">-${{ week.outflows }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">In which week will you first need a credit line (cash drops below minimum)?</label>
+                                <input type="number" name="credit_needed_week" class="form-control bg-dark text-light" 
+                                       min="1" max="13" required placeholder="Enter week number">
+                            </div>
+                        </div>
+                        
+                        {% elif challenge.challenge_type == 'prioritization' %}
+                        <div class="mb-4">
+                            <div class="alert alert-secondary">
+                                <p class="mb-0"><strong>Available Cash:</strong> ${{ challenge.scenario_data.available_cash|default(0) }}</p>
+                            </div>
+                            
+                            <h5>Bills to Pay:</h5>
+                            <div class="table-responsive mb-3">
+                                <table class="table table-sm table-dark">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Vendor</th>
+                                            <th>Amount</th>
+                                            <th>Due</th>
+                                            <th>Penalty</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for bill in challenge.scenario_data.bills %}
+                                        <tr>
+                                            <td>{{ bill.id }}</td>
+                                            <td>{{ bill.vendor }}</td>
+                                            <td>${{ bill.amount }}</td>
+                                            <td>{{ bill.due }}</td>
+                                            <td class="text-danger">{{ bill.penalty }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Which bills should you pay first? (Enter IDs in priority order, comma-separated)</label>
+                                <input type="text" name="priority" class="form-control bg-dark text-light" 
+                                       required placeholder="e.g., 1, 3, 2">
+                            </div>
+                        </div>
+                        
+                        {% elif challenge.challenge_type == 'seasonal' %}
+                        <div class="mb-4">
+                            <div class="alert alert-secondary">
+                                <p><strong>Fixed Costs (Monthly):</strong> ${{ challenge.scenario_data.fixed_costs_monthly|default(0) }}</p>
+                                <p><strong>Variable Cost %:</strong> {{ (challenge.scenario_data.variable_cost_pct|default(0) * 100)|int }}%</p>
+                                <p class="mb-0"><strong>Current Cash:</strong> ${{ challenge.scenario_data.current_cash|default(0) }}</p>
+                            </div>
+                            
+                            <h5>Monthly Revenue:</h5>
+                            <div class="row mb-3">
+                                {% for month, revenue in challenge.scenario_data.monthly_revenue.items() %}
+                                <div class="col-4 col-md-2 mb-2">
+                                    <div class="text-center p-2 bg-dark rounded">
+                                        <small class="text-muted">{{ month }}</small>
+                                        <div class="{% if revenue < 12000 %}text-danger{% elif revenue < 20000 %}text-warning{% else %}text-success{% endif %}">
+                                            ${{ revenue }}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">How much cash do you need to save to cover the slow months?</label>
+                                <input type="number" name="savings_needed" class="form-control bg-dark text-light" 
+                                       min="0" max="100000" required placeholder="Enter dollar amount">
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <button type="submit" class="btn btn-game btn-game-gold btn-lg w-100">
+                            <i class="bi bi-check-circle"></i> Submit Answer
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header bg-info bg-opacity-25">
+                    <i class="bi bi-lightbulb"></i> Hint
+                </div>
+                <div class="card-body">
+                    <p class="mb-0">{{ challenge.hint_text }}</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-trophy"></i> Reward
+                </div>
+                <div class="card-body text-center">
+                    <h3 class="text-success">+{{ challenge.exp_reward }} EXP</h3>
+                    <p class="text-muted mb-0">For correct answer</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

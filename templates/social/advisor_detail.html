@@ -1,0 +1,102 @@
+{% extends "core/base.html" %}
+
+{% block title %}{{ advisor.name }} - Business Tycoon RPG{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="gold-text mb-0">
+                        <i class="bi bi-person-badge"></i> {{ advisor.name }}
+                    </h2>
+                    <p class="text-muted mb-0">{{ advisor.specialty }} Expert</p>
+                </div>
+                <a href="{{ url_for('social.mentorship') }}" class="btn btn-outline-light">
+                    <i class="bi bi-arrow-left"></i> Back to Mentorship
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="bi bi-person-circle display-1 text-info"></i>
+                    </div>
+                    <h4>{{ advisor.name }}</h4>
+                    <p class="text-muted">{{ advisor.specialty }}</p>
+                    
+                    <div class="mb-3">
+                        <small class="text-muted">Affinity Level</small>
+                        <h3 class="text-info">{{ advisor.affinity }}</h3>
+                        <div class="progress">
+                            <div class="progress-bar bg-info" style="width: {{ advisor.affinity }}%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-muted small">
+                        <i class="bi bi-chat-dots"></i> {{ advisor.interactions }} interactions
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-diagram-3"></i> Skill Tree
+                </div>
+                <div class="card-body">
+                    {% for tier in [1, 2, 3] %}
+                    <div class="mb-3">
+                        <small class="text-muted">Tier {{ tier }}</small>
+                        <div class="row">
+                            {% for skill in skills if skill.tier == tier %}
+                            <div class="col-md-4 mb-2">
+                                <div class="p-2 bg-dark rounded border border-secondary">
+                                    <strong class="small">{{ skill.name }}</strong>
+                                    <div class="small text-muted">{{ skill.description[:50] }}...</div>
+                                    <div class="d-flex justify-content-between mt-1">
+                                        <span class="badge bg-info small">+{{ skill.bonus_value }}% {{ skill.bonus_type }}</span>
+                                        <span class="badge bg-warning small">{{ skill.unlock_cost }} pts</span>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-flag"></i> Mentorship Missions
+                </div>
+                <div class="card-body">
+                    {% for mission in missions %}
+                    <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-dark rounded">
+                        <div>
+                            <h6 class="mb-1">{{ mission.name }}</h6>
+                            <small class="text-muted">{{ mission.description }}</small>
+                            <div class="mt-1">
+                                <span class="badge bg-secondary">Requires {{ mission.required_affinity }} affinity</span>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-success">+{{ mission.exp_reward }} EXP</span>
+                        </div>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center">No missions available for this advisor.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

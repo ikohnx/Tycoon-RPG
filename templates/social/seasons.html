@@ -1,0 +1,151 @@
+{% extends "core/base.html" %}
+
+{% block title %}Seasons - Business Tycoon RPG{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="gold-text mb-0">
+                        <i class="bi bi-calendar-event"></i> Seasons & Events
+                    </h2>
+                    <p class="text-muted mb-0">Limited-time content and battle passes</p>
+                </div>
+                <a href="{{ url_for('core.hub') }}" class="btn btn-outline-light">
+                    <i class="bi bi-arrow-left"></i> Back to Hub
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{% if category == 'error' %}danger{% else %}success{% endif %} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    {% if season %}
+    <div class="card mb-4" style="background: linear-gradient(135deg, rgba(255,193,7,0.2), rgba(0,0,0,0.3));">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h3 class="gold-text">{{ season.name }}</h3>
+                    <p class="text-muted">{{ season.description }}</p>
+                    <span class="badge bg-info">Theme: {{ season.theme|title }}</span>
+                </div>
+                <div class="col-md-4 text-end">
+                    {% if season.battle_pass %}
+                    <div class="mb-2">
+                        <strong>{{ season.battle_pass.name }}</strong>
+                        <div class="text-muted small">{{ season.battle_pass.max_tier }} tiers</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if battle_pass %}
+    <div class="card mb-4 border-warning">
+        <div class="card-header bg-warning bg-opacity-25">
+            <i class="bi bi-award-fill"></i> Your Battle Pass Progress
+        </div>
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h5 class="mb-0">{{ battle_pass.name }}</h5>
+                    <small class="text-muted">Current Tier: {{ battle_pass.current_tier }} / {{ battle_pass.max_tier }}</small>
+                </div>
+                <div class="text-end">
+                    <span class="text-warning">{{ battle_pass.season_points }} SP</span>
+                </div>
+            </div>
+            <div class="progress mb-3" style="height: 20px;">
+                <div class="progress-bar bg-warning" style="width: {{ (battle_pass.current_tier / battle_pass.max_tier) * 100 }}%">
+                    Tier {{ battle_pass.current_tier }}
+                </div>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                {% for tier in range(1, battle_pass.current_tier + 1) %}
+                <form action="{{ url_for('social.claim_battle_pass_reward', tier=tier) }}" method="post" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-sm {% if tier in (battle_pass.claimed_tiers or []) %}btn-secondary disabled{% else %}btn-outline-warning{% endif %}">
+                        Tier {{ tier }} {% if tier in (battle_pass.claimed_tiers or []) %}<i class="bi bi-check"></i>{% endif %}
+                    </button>
+                </form>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-star-fill"></i> Seasonal Events
+                </div>
+                <div class="card-body">
+                    {% for event in events %}
+                    <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-dark rounded">
+                        <div>
+                            <h6 class="mb-1">{{ event.name }}</h6>
+                            <small class="text-muted">{{ event.description }}</small>
+                            <div class="mt-1">
+                                <span class="badge bg-info">{{ event.theme }}</span>
+                                <span class="badge bg-success">{{ event.bonus_multiplier }}x Bonus</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center">No active seasonal events.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-danger bg-opacity-25">
+                    <i class="bi bi-skull"></i> Limited-Time Bosses
+                </div>
+                <div class="card-body">
+                    {% for boss in bosses %}
+                    <div class="mb-3 p-3 bg-dark rounded">
+                        <h6 class="mb-1 text-danger">{{ boss.name }}</h6>
+                        <small class="text-muted">{{ boss.title }}</small>
+                        <div class="progress my-2" style="height: 8px;">
+                            <div class="progress-bar bg-danger" style="width: {{ (boss.hp / boss.max_hp) * 100 }}%"></div>
+                        </div>
+                        <div class="d-flex justify-content-between small mb-2">
+                            <span>HP: {{ "{:,}".format(boss.hp) }}/{{ "{:,}".format(boss.max_hp) }}</span>
+                            <span class="text-success">+{{ boss.exp_reward }} EXP</span>
+                        </div>
+                        {% if boss.hp > 0 %}
+                        <form action="{{ url_for('social.attack_limited_boss', boss_id=boss.boss_id) }}" method="post">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger w-100">
+                                <i class="bi bi-lightning-fill"></i> Attack!
+                            </button>
+                        </form>
+                        {% else %}
+                        <span class="badge bg-secondary w-100 text-center py-2">DEFEATED</span>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center">No limited bosses active.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
