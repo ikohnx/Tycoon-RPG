@@ -52,6 +52,11 @@ The game is built as a Flask web application with a responsive, mobile-first UI,
 -   **Mobile & Cross-Platform Support:** Full Progressive Web App (PWA) implementation for offline caching and "Add to Home Screen" functionality. Capacitor configuration for native iOS and Android builds. Responsive design enhancements for touch interactions, safe areas, and accessibility modes.
 
 ## Recent Changes (Feb 2026)
+-   Upgraded graphics fidelity 6x with D=1 rendering system: 48x48 addressable pixels per tile (up from 16x16 logical grid)
+-   All 26 tile types rewritten with layered pixel art: individual grass blades, rounded cobblestones, animated water ripples, detailed brick mortar, wood grain textures, proper shading
+-   Character sprites upgraded to SNES quality: detailed facial features with visible eye whites/iris/pupils/highlights, layered hair with shine, clothing with fold lines and shading, proper chibi proportions, smooth 4-frame walk animations
+-   Expanded color palette from 134 to 141 colors for richer detail and shading
+-   Dashboard converted to in-game overlay accessible via pause menu (Command Center)
 -   Converted all in-game interactions from external page redirects to in-game FF-styled overlay panels
 -   Added JSON API endpoints for scenarios, shop, inventory, and player stats
 -   Implemented FF-style pause menu replacing hamburger menu links
