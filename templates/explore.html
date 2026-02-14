@@ -261,7 +261,7 @@
 </div>
 
 <div id="explore-container">
-    <canvas id="game-canvas"></canvas>
+    <canvas id="game-canvas" tabindex="0"></canvas>
 </div>
 
 <div id="dpad">
@@ -346,6 +346,11 @@ setTimeout(function() {
     const startMap = RPGMaps.getMap('{{ current_map | default("hub") }}');
     RPGEngine.loadMap(startMap);
     RPGEngine.start();
+
+    const gc = document.getElementById('game-canvas');
+    gc.focus();
+    document.addEventListener('click', function() { gc.focus(); });
+    document.addEventListener('touchstart', function() { gc.focus(); });
 }, 2000);
 </script>
 {% endblock %}
