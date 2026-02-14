@@ -163,72 +163,72 @@ const RPGMaps = (function() {
         const npcs = [
             {
                 x: 7, y: 9, name: 'Marketing Maven',
-                spriteType: 'npc', color: '#cc4488', facing: 'down',
+                spriteType: 'npc', color: '#cc4488', facing: 'down', spriteId: 5,
                 dialogue: ["Welcome to the Marketing Guild!", "I specialize in branding, campaigns, and customer acquisition.", "Let me show you how to boost your company's reach."],
                 action: 'marketing', route: '/scenarios/Marketing'
             },
             {
                 x: 14, y: 9, name: 'Finance Director',
-                spriteType: 'npc', color: '#44aa44', facing: 'down',
+                spriteType: 'npc', color: '#44aa44', facing: 'down', spriteId: 1,
                 dialogue: ["The Treasury is just behind me.", "Budgets, investments, financial forecasting... I manage it all.", "Let's make sure your books are balanced!"],
                 action: 'finance', route: '/scenarios/Finance'
             },
             {
                 x: 19, y: 8, name: 'Town Elder',
-                spriteType: 'npc', color: '#8866aa', facing: 'down', stationary: true,
+                spriteType: 'npc', color: '#8866aa', facing: 'down', stationary: true, spriteId: 2,
                 dialogue: ["Welcome to Business Town, young entrepreneur!", "Each building here represents a different business discipline.", "Speak with the guild masters to learn and grow your empire.", "Use the arrow keys to move and press Enter or Space to talk."],
                 action: 'tutorial', route: '/tutorial'
             },
             {
                 x: 26, y: 9, name: 'Operations Chief',
-                spriteType: 'npc', color: '#dd8833', facing: 'down',
+                spriteType: 'npc', color: '#dd8833', facing: 'down', spriteId: 3,
                 dialogue: ["I oversee the operations and logistics.", "Supply chains, inventory, scheduling...", "Come learn how to streamline your business!"],
                 action: 'operations', route: '/scenarios/Operations'
             },
             {
                 x: 33, y: 9, name: 'HR Manager',
-                spriteType: 'npc', color: '#33aadd', facing: 'down',
+                spriteType: 'npc', color: '#33aadd', facing: 'down', spriteId: 4,
                 dialogue: ["People are any company's greatest asset!", "Hiring, training, team dynamics...", "Let me teach you to build an amazing team."],
                 action: 'hr', route: '/scenarios/Human Resources'
             },
             {
                 x: 7, y: 25, name: 'Legal Counsel',
-                spriteType: 'npc', color: '#aa6633', facing: 'up',
+                spriteType: 'npc', color: '#aa6633', facing: 'up', spriteId: 7,
                 dialogue: ["Contracts, compliance, intellectual property...", "The law can be complex, but I'll guide you.", "Protect your business from legal pitfalls!"],
                 action: 'legal', route: '/scenarios/Legal'
             },
             {
                 x: 14, y: 25, name: 'Strategy Advisor',
-                spriteType: 'npc', color: '#8844cc', facing: 'up',
+                spriteType: 'npc', color: '#8844cc', facing: 'up', spriteId: 6,
                 dialogue: ["Strategy is the art of seeing the big picture.", "Market analysis, competitive positioning, long-term planning...", "Let me sharpen your strategic thinking!"],
                 action: 'strategy', route: '/scenarios/Strategy'
             },
             {
                 x: 26, y: 25, name: 'Merchant',
-                spriteType: 'npc', color: '#ccaa33', facing: 'up',
+                spriteType: 'npc', color: '#ccaa33', facing: 'up', spriteId: 0,
                 dialogue: ["Looking to buy or sell? You've come to the right place!", "I have equipment, items, and special offers!", "Step into my shop to browse the inventory."],
                 action: 'shop', route: '/inventory'
             },
             {
                 x: 33, y: 25, name: 'Guild Master',
-                spriteType: 'npc', color: '#cc3355', facing: 'up',
+                spriteType: 'npc', color: '#cc3355', facing: 'up', spriteId: 11,
                 dialogue: ["The Business Guild offers challenges and competitions.", "Prove your skills against other entrepreneurs!", "Are you ready for the next challenge?"],
                 action: 'guild', route: '/dashboard'
             },
             {
                 x: 19, y: 15, name: 'Mayor',
-                spriteType: 'npc', color: '#dddd44', facing: 'down', stationary: true,
+                spriteType: 'npc', color: '#dddd44', facing: 'down', stationary: true, spriteId: 13,
                 dialogue: ["I am the Mayor of Business Town.", "This plaza is the heart of our community.", "All paths lead here. Visit the guilds to learn!", "Your progress is tracked in the Command Center."],
                 action: 'hub', route: '/hub'
             },
             {
                 x: 7, y: 17, name: 'Wandering Trader',
-                spriteType: 'npc', color: '#55bb88', facing: 'right',
+                spriteType: 'npc', color: '#55bb88', facing: 'right', spriteId: 8,
                 dialogue: ["I travel between worlds collecting rare goods.", "Sometimes the market stalls have special deals!", "Check back often for new stock."]
             },
             {
                 x: 33, y: 17, name: 'Courier',
-                spriteType: 'npc', color: '#bb5555', facing: 'left',
+                spriteType: 'npc', color: '#bb5555', facing: 'left', spriteId: 12,
                 dialogue: ["I deliver messages and daily missions.", "Check your mission board regularly!", "There are always new opportunities."]
             }
         ];
@@ -320,13 +320,13 @@ const RPGMaps = (function() {
             tiles, collision,
             spawnX: 15, spawnY: 2,
             npcs: [
-                { x: 5, y: 6, name: 'Item Merchant', spriteType: 'npc', color: '#ddaa33', facing: 'down', stationary: true,
+                { x: 5, y: 6, name: 'Item Merchant', spriteType: 'npc', color: '#ddaa33', facing: 'down', stationary: true, spriteId: 9,
                   dialogue: ["Welcome to my stall!", "I sell potions, scrolls, and more.", "Browse my wares!"], action: 'shop', route: '/inventory' },
-                { x: 23, y: 6, name: 'Equipment Smith', spriteType: 'npc', color: '#887766', facing: 'down', stationary: true,
+                { x: 23, y: 6, name: 'Equipment Smith', spriteType: 'npc', color: '#887766', facing: 'down', stationary: true, spriteId: 14,
                   dialogue: ["Need better gear?", "I forge the finest business tools!", "Let me show you my crafts."], action: 'equipment', route: '/inventory' },
-                { x: 5, y: 16, name: 'Fortune Teller', spriteType: 'npc', color: '#9933cc', facing: 'down', stationary: true,
+                { x: 5, y: 16, name: 'Fortune Teller', spriteType: 'npc', color: '#9933cc', facing: 'down', stationary: true, spriteId: 15,
                   dialogue: ["The stars foretell great success...", "But only if you make the right decisions!", "Shall I read your business fortune?"] },
-                { x: 23, y: 16, name: 'Recruiter', spriteType: 'npc', color: '#3388aa', facing: 'down', stationary: true,
+                { x: 23, y: 16, name: 'Recruiter', spriteType: 'npc', color: '#3388aa', facing: 'down', stationary: true, spriteId: 10,
                   dialogue: ["Looking to expand your team?", "I can help you find the best talent!", "Visit the HR Guild for more."], action: 'hr', route: '/scenarios/Human Resources' }
             ],
             transitions: [
