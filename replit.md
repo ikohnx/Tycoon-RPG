@@ -52,12 +52,14 @@ The game is built as a Flask web application with a responsive, mobile-first UI,
 -   **Mobile & Cross-Platform Support:** Full Progressive Web App (PWA) implementation for offline caching and "Add to Home Screen" functionality. Capacitor configuration for native iOS and Android builds. Responsive design enhancements for touch interactions, safe areas, and accessibility modes.
 
 ## Recent Changes (Feb 2026)
--   FF6-quality graphics overhaul: SNES-authentic dithering patterns, material-specific textures (metal specular, wood grain, stone roughness, fabric folds), proper edge beveling with consistent top-left lighting
--   Dither helper function for checkerboard color blending (FF6's signature SNES look)
--   Chrono Trigger-quality tile rendering: true SNES checkerboard dithering (pixel-by-pixel alternating pattern), 6-layer dithered grass gradients with blade clusters/pebbles/mushrooms, multi-layer tree canopies with bark detail/knot holes/root bumps/overflow branches, cobblestones with rounded shapes and grass tufts, 5-layer deep water with animated caustics/ripples/foam
--   Character sprites upgraded to CT chibi quality: rounded head shapes with hair spikes, 4-layer hair shading, expressive eyes (sclera/iris/pupil/highlight), nose/ear detail on side views, clothing wrinkle lines, metallic belt buckles, boot soles with lacing
--   Expanded color palette to 198 colors: deep shadow greens (gsh1-3), bark detail (tkh/tkg), canopy intermediates (trc/trd), metallic series (mtl1-4), material-specific intermediates for all tile types
--   Enhanced shadows with 4-layer graduated ellipses and interaction bubbles with shimmer sparkle effects
+-   Modern HD pixel art overhaul (Sea of Stars quality): organic shapes via ctx.ellipse, rich multi-layer gradients, vegetation detail (moss, vines, ivy), atmospheric depth
+-   Expanded color palette to 242 colors: rock tones (rk1-9), moss/vine greens (mv1-6), warm lights (wml/wmd), water spray/mist (wms/wmm), deep shadows (dsh1-2), highlights (hl1-2), extended greens (g11-14), floor tiles (fl1-4)
+-   All 26 tile types rewritten with modern pixel art techniques: 5-layer dithered grass with 16 blade clusters, 15 organic cobblestones with mortar/grass tufts, 5-depth water with 10 animated ripples and caustic diamonds, individually shaded bricks with moss growth, 7-layer tree canopy with 8 ellipse calls for organic leaf clusters
+-   Tree tile centerpiece: 104 lines, bark texture with knot holes, root spread, ivy/vine detail, gentle sway animation, 8 ellipse calls for multi-layer canopy
+-   Character sprites upgraded to modern quality: rounded head outlines, multi-layer hair with highlights, eyes with sclera/iris/pupil/catchlight, fabric fold lines, belt buckles with metallic highlight, weapon hints, boot lacing detail
+-   NPC differentiation: procedural hats (spriteId % 3), aprons (spriteId % 4), cape animation for hero
+-   Enhanced shadows with 5-layer graduated ellipses (alpha 0.02-0.28) and interaction bubbles with multi-sparkle shimmer effects
+-   18 total ctx.ellipse calls for organic shapes, 20 ditherFast + 8 dither calls for rich gradients
 -   D=1 rendering system maintained: 48x48 addressable pixels per tile, 80-300 fillRect calls per tile (trees highest)
 -   Dashboard converted to in-game overlay accessible via pause menu (Command Center)
 -   Converted all in-game interactions from external page redirects to in-game FF-styled overlay panels
