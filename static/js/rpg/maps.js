@@ -7,7 +7,8 @@ const RPGMaps = (function() {
         SIGN: 12, SAND: 13, STONE_FLOOR: 14, HEDGE: 15,
         CHEST: 16, PORTAL: 17, FOUNTAIN: 18, LAMP: 19,
         STALL: 20, BENCH: 21, WELL: 22, CRATES: 23,
-        FIREPLACE: 24, BOOKSHELF: 25
+        FIREPLACE: 24, BOOKSHELF: 25,
+        CLIFF: 26, CLIFF_TOP: 27, WATERFALL: 28, ROCK: 29
     };
 
     function createHubTown() {
@@ -125,6 +126,13 @@ const RPGMaps = (function() {
         for (let c = 10; c <= 12; c++) { tiles[30][c] = T.WATER; tiles[31][c] = T.WATER; tiles[32][c] = T.WATER; }
         for (let c = 27; c <= 29; c++) { tiles[30][c] = T.WATER; tiles[31][c] = T.WATER; tiles[32][c] = T.WATER; }
 
+        tiles[29][10] = T.CLIFF_TOP; tiles[29][11] = T.CLIFF_TOP; tiles[29][12] = T.CLIFF_TOP;
+        tiles[29][27] = T.CLIFF_TOP; tiles[29][28] = T.CLIFF_TOP; tiles[29][29] = T.CLIFF_TOP;
+        tiles[33][10] = T.ROCK; tiles[33][12] = T.ROCK;
+        tiles[33][27] = T.ROCK; tiles[33][29] = T.ROCK;
+        tiles[32][9] = T.CLIFF; tiles[32][13] = T.CLIFF;
+        tiles[32][26] = T.CLIFF; tiles[32][30] = T.CLIFF;
+
         tiles[30][14] = T.FLOWERS; tiles[30][15] = T.FLOWERS;
         tiles[31][14] = T.FLOWERS; tiles[31][15] = T.FLOWERS;
         tiles[30][24] = T.FLOWERS; tiles[30][25] = T.FLOWERS;
@@ -148,7 +156,7 @@ const RPGMaps = (function() {
             collision[r] = [];
             for (let c = 0; c < W; c++) {
                 const t = tiles[r][c];
-                collision[r][c] = [T.TREE, T.WALL, T.WALL_TOP, T.ROOF, T.WINDOW, T.WATER, T.HEDGE, T.CHEST, T.SIGN, T.FOUNTAIN, T.STALL, T.WELL, T.LAMP, T.BENCH, T.CRATES, T.FIREPLACE, T.BOOKSHELF].includes(t) ? 1 : 0;
+                collision[r][c] = [T.TREE, T.WALL, T.WALL_TOP, T.ROOF, T.WINDOW, T.WATER, T.HEDGE, T.CHEST, T.SIGN, T.FOUNTAIN, T.STALL, T.WELL, T.LAMP, T.BENCH, T.CRATES, T.FIREPLACE, T.BOOKSHELF, T.CLIFF, T.CLIFF_TOP, T.WATERFALL, T.ROCK].includes(t) ? 1 : 0;
             }
         }
 
