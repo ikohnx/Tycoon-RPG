@@ -1935,27 +1935,30 @@ const RPGEngine = (function() {
         const D = 1;
         const isHero = type === 'hero';
         const pal = isHero ? {
-            hair: '#3a2518', hairHL: '#5a4030', hairDk: '#241008', hairMd: '#4a3020',
-            skin: '#f4d0a0', skinHL: '#ffe8c8', skinSh: '#d8a870', skinDk: '#c09060',
-            eyeW: '#f0f0ff', eye: '#1830a0', eyeHL: '#4060d0', pupil: '#080830',
-            mouth: '#c07050', cheek: '#e8b090',
-            tunic: '#2848c0', tunicHL: '#4870e0', tunicMd: '#3058d0', tunicDk: '#182878', tunicSh: '#101850',
-            collar: '#e0d8c0', collarSh: '#c0b898',
+            hair: '#3a2518', hairHL: '#6a5040', hairDk: '#1a0808', hairMd: '#4a3020', hairTip: '#8a6848',
+            skin: '#f4d0a0', skinHL: '#ffe8c8', skinSh: '#d8a870', skinDk: '#c09060', skinRim: '#e8c090',
+            eyeW: '#f0f0ff', eye: '#1830a0', eyeHL: '#4060d0', pupil: '#080830', eyeLash: '#201018',
+            mouth: '#c07050', cheek: '#e8b090', nose: '#d8b080',
+            tunic: '#2848c0', tunicHL: '#5878e8', tunicMd: '#3858d0', tunicDk: '#182878', tunicSh: '#101850',
+            tunicTrim: '#c0b060', tunicTrimDk: '#908030',
+            collar: '#e8e0d0', collarSh: '#c0b898',
             belt: '#d8a830', beltBk: '#b08020', beltHL: '#f0c848',
-            pants: '#384898', pantsDk: '#283068', pantsHL: '#4858a8',
-            boots: '#503020', bootsHL: '#704830', bootsDk: '#301810', bootsSh: '#402818',
-            cape: '#c82828', capeMd: '#a82020', capeDk: '#781818', capeHL: '#e04040',
-            glove: '#e8d8b8', gloveSh: '#c8b890',
-            outline: '#181020', outlineHL: '#282838'
+            pants: '#384898', pantsDk: '#283068', pantsHL: '#5060b0', pantsSeam: '#202858',
+            boots: '#503020', bootsHL: '#785838', bootsDk: '#2a1408', bootsSh: '#402818', bootsCuff: '#685030', bootsSole: '#201008',
+            cape: '#c82828', capeMd: '#a82020', capeDk: '#681010', capeHL: '#e84848', capeEdge: '#500808',
+            glove: '#e8d8b8', gloveSh: '#c8b890', gloveCuff: '#b8a870',
+            shoulder: '#3050d0', shoulderHL: '#5070e8',
+            outline: '#100818', outlineHL: '#282838',
+            weapon: '#a0a8b8', weaponHL: '#d0d8e0', weaponDk: '#606878'
         } : getNPCPal(color, spriteId);
 
-        const bob = moving ? Math.sin(frame * Math.PI / 2) * 1.8 : 0;
-        const breathe = !moving ? Math.sin(gt / 800) * 0.6 : 0;
+        const bob = moving ? Math.sin(frame * Math.PI / 2) * 2.0 : 0;
+        const breathe = !moving ? Math.sin(gt / 700) * 0.8 : 0;
         const wc = moving ? frame % 4 : 0;
-        const legL = wc === 1 ? 4 : wc === 3 ? -2 : 0;
-        const legR = wc === 1 ? -2 : wc === 3 ? 4 : 0;
-        const armL = moving ? Math.sin(frame * Math.PI / 2) * 4 : 0;
-        const armR = moving ? -Math.sin(frame * Math.PI / 2) * 4 : 0;
+        const legL = wc === 1 ? 4 : wc === 3 ? -3 : 0;
+        const legR = wc === 1 ? -3 : wc === 3 ? 4 : 0;
+        const armL = moving ? Math.sin(frame * Math.PI / 2) * 5 : 0;
+        const armR = moving ? -Math.sin(frame * Math.PI / 2) * 5 : 0;
         const by = Math.round(-bob + breathe);
         const hasHat = !isHero && ((spriteId || 0) % 3 === 0);
         const hasApron = !isHero && ((spriteId || 0) % 4 === 0);
@@ -1963,237 +1966,305 @@ const RPGEngine = (function() {
         switch(facing) {
             case 'down': {
                 ctx.fillStyle = pal.outline;
-                ctx.fillRect(x + 12, y + by - 3, 24, 2);
-                ctx.fillRect(x + 10, y + by - 1, 2, 2);
-                ctx.fillRect(x + 36, y + by - 1, 2, 2);
-                ctx.fillRect(x + 8, y + by + 1, 2, 12);
-                ctx.fillRect(x + 38, y + by + 1, 2, 12);
+                ctx.beginPath();
+                ctx.ellipse(x + 24, y + by + 8, 15, 13, 0, 0, Math.PI * 2);
+                ctx.fill();
                 if (hasHat) {
                     ctx.fillStyle = pal.hat || pal.hair;
-                    ctx.fillRect(x + 8, y + by - 6, 32, 6);
+                    ctx.beginPath();
+                    ctx.ellipse(x + 24, y + by + 2, 17, 8, 0, 0, Math.PI * 2);
+                    ctx.fill();
                     ctx.fillStyle = pal.hatHL || pal.hairHL;
-                    ctx.fillRect(x + 10, y + by - 5, 28, 2);
+                    ctx.beginPath();
+                    ctx.ellipse(x + 22, y + by + 1, 12, 5, 0, 0, Math.PI * 2);
+                    ctx.fill();
                     ctx.fillStyle = pal.hatDk || pal.hairDk;
-                    ctx.fillRect(x + 8, y + by - 1, 32, 2);
+                    ctx.fillRect(x + 8, y + by + 4, 32, 3);
                     ctx.fillStyle = pal.hatMd || pal.hat || pal.hair;
-                    ctx.fillRect(x + 12, y + by - 4, 24, 3);
+                    ctx.fillRect(x + 12, y + by + 2, 24, 2);
                 } else {
                     ctx.fillStyle = pal.hairDk || pal.hair;
-                    ctx.fillRect(x + 12, y + by - 3, 24, 5);
-                    ctx.fillRect(x + 10, y + by - 1, 28, 3);
+                    ctx.beginPath();
+                    ctx.ellipse(x + 24, y + by + 3, 15, 10, 0, 0, Math.PI * 2);
+                    ctx.fill();
                     ctx.fillStyle = pal.hair;
-                    ctx.fillRect(x + 10, y + by + 1, 28, 11);
-                    ctx.fillRect(x + 8, y + by + 3, 4, 9);
-                    ctx.fillRect(x + 36, y + by + 3, 4, 9);
+                    ctx.beginPath();
+                    ctx.ellipse(x + 24, y + by + 5, 14, 9, 0, 0, Math.PI * 2);
+                    ctx.fill();
                     ctx.fillStyle = pal.hairHL;
-                    ctx.fillRect(x + 14, y + by + 1, 20, 3);
-                    ctx.fillRect(x + 18, y + by - 1, 12, 2);
+                    ctx.beginPath();
+                    ctx.ellipse(x + 22, y + by + 3, 8, 5, 0, 0, Math.PI * 2);
+                    ctx.fill();
                     ctx.fillStyle = pal.hairMd || pal.hair;
-                    ctx.fillRect(x + 10, y + by + 8, 28, 3);
+                    ctx.fillRect(x + 9, y + by + 8, 30, 4);
+                    ctx.fillStyle = pal.hairTip || pal.hairHL;
+                    ctx.fillRect(x + 18, y + by + 1, 4, 2);
+                    ctx.fillRect(x + 24, y + by + 0, 3, 2);
                     if (isHero) {
+                        ctx.fillStyle = pal.hair;
+                        ctx.fillRect(x + 7, y + by + 2, 4, 8);
+                        ctx.fillRect(x + 37, y + by + 2, 4, 8);
                         ctx.fillStyle = pal.hairDk || pal.hair;
-                        ctx.fillRect(x + 8, y + by - 1, 3, 3);
-                        ctx.fillRect(x + 37, y + by - 1, 3, 3);
-                        ctx.fillRect(x + 14, y + by - 5, 2, 3);
-                        ctx.fillRect(x + 32, y + by - 4, 2, 2);
-                        ctx.fillRect(x + 22, y + by - 6, 2, 4);
+                        ctx.fillRect(x + 13, y + by - 4, 3, 5);
+                        ctx.fillRect(x + 20, y + by - 6, 3, 7);
+                        ctx.fillRect(x + 28, y + by - 5, 3, 6);
+                        ctx.fillRect(x + 34, y + by - 3, 3, 4);
+                        ctx.fillStyle = pal.hairHL;
+                        ctx.fillRect(x + 14, y + by - 3, D, 3);
+                        ctx.fillRect(x + 21, y + by - 5, D, 4);
+                        ctx.fillRect(x + 29, y + by - 4, D, 3);
                     }
                 }
                 ctx.fillStyle = pal.skin;
-                ctx.fillRect(x + 12, y + by + 10, 24, 11);
+                ctx.beginPath();
+                ctx.ellipse(x + 24, y + by + 14, 12, 9, 0, 0, Math.PI * 2);
+                ctx.fill();
                 ctx.fillStyle = pal.skinHL || pal.skin;
-                ctx.fillRect(x + 14, y + by + 10, 20, 3);
+                ctx.beginPath();
+                ctx.ellipse(x + 22, y + by + 12, 7, 5, 0, 0, Math.PI * 2);
+                ctx.fill();
                 ctx.fillStyle = pal.skinSh;
                 ctx.fillRect(x + 12, y + by + 18, 24, 3);
-                ctx.fillStyle = pal.skinDk || pal.skinSh;
-                ctx.fillRect(x + 18, y + by + 19, 12, 2);
-                ctx.fillStyle = pal.outline;
-                ctx.fillRect(x + 20, y + by + 20, 8, D);
+                ctx.fillStyle = pal.skinRim || pal.skinSh;
+                ctx.fillRect(x + 14, y + by + 20, 20, D);
                 ctx.fillStyle = pal.eyeW || '#f0f0ff';
-                ctx.fillRect(x + 14, y + by + 13, 7, 4);
-                ctx.fillStyle = pal.eye;
-                ctx.fillRect(x + 16, y + by + 13, 4, 4);
-                ctx.fillStyle = pal.eyeHL || '#4060d0';
-                ctx.fillRect(x + 17, y + by + 13, 2, 2);
-                ctx.fillStyle = pal.pupil || '#080830';
-                ctx.fillRect(x + 17, y + by + 15, 2, 2);
-                ctx.fillStyle = '#fff';
-                ctx.fillRect(x + 15, y + by + 13, D, D);
+                ctx.fillRect(x + 14, y + by + 12, 8, 5);
+                ctx.fillRect(x + 26, y + by + 12, 8, 5);
                 ctx.fillStyle = pal.outline;
-                ctx.globalAlpha = 0.2;
-                ctx.fillRect(x + 14, y + by + 17, 7, D);
-                ctx.globalAlpha = 1;
-                ctx.fillStyle = pal.eyeW || '#f0f0ff';
-                ctx.fillRect(x + 27, y + by + 13, 7, 4);
+                ctx.fillRect(x + 14, y + by + 11, 8, D);
+                ctx.fillRect(x + 26, y + by + 11, 8, D);
+                ctx.fillRect(x + 13, y + by + 12, D, 5);
+                ctx.fillRect(x + 22, y + by + 12, D, 5);
+                ctx.fillRect(x + 25, y + by + 12, D, 5);
+                ctx.fillRect(x + 34, y + by + 12, D, 5);
+                ctx.fillRect(x + 14, y + by + 17, 8, D);
+                ctx.fillRect(x + 26, y + by + 17, 8, D);
                 ctx.fillStyle = pal.eye;
-                ctx.fillRect(x + 28, y + by + 13, 4, 4);
+                ctx.fillRect(x + 16, y + by + 13, 5, 4);
+                ctx.fillRect(x + 28, y + by + 13, 5, 4);
                 ctx.fillStyle = pal.eyeHL || '#4060d0';
-                ctx.fillRect(x + 29, y + by + 13, 2, 2);
+                ctx.fillRect(x + 17, y + by + 13, 3, 2);
+                ctx.fillRect(x + 29, y + by + 13, 3, 2);
                 ctx.fillStyle = pal.pupil || '#080830';
-                ctx.fillRect(x + 29, y + by + 15, 2, 2);
-                ctx.fillStyle = '#fff';
-                ctx.fillRect(x + 31, y + by + 13, D, D);
-                ctx.fillStyle = pal.outline;
-                ctx.globalAlpha = 0.2;
-                ctx.fillRect(x + 27, y + by + 17, 7, D);
+                ctx.fillRect(x + 18, y + by + 14, 2, 3);
+                ctx.fillRect(x + 30, y + by + 14, 2, 3);
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(x + 16, y + by + 13, D, D);
+                ctx.fillRect(x + 28, y + by + 13, D, D);
+                ctx.globalAlpha = 0.5;
+                ctx.fillRect(x + 20, y + by + 15, D, D);
+                ctx.fillRect(x + 32, y + by + 15, D, D);
                 ctx.globalAlpha = 1;
-                ctx.fillStyle = pal.skinSh;
-                ctx.fillRect(x + 22, y + by + 15, 4, 2);
+                ctx.fillStyle = pal.eyeLash || pal.outline;
+                ctx.fillRect(x + 14, y + by + 11, 2, D);
+                ctx.fillRect(x + 20, y + by + 11, 2, D);
+                ctx.fillRect(x + 26, y + by + 11, 2, D);
+                ctx.fillRect(x + 32, y + by + 11, 2, D);
+                ctx.fillStyle = pal.nose || pal.skinSh;
+                ctx.fillRect(x + 22, y + by + 16, 4, 2);
                 ctx.fillStyle = pal.skinDk || pal.skinSh;
-                ctx.fillRect(x + 23, y + by + 16, 2, D);
+                ctx.fillRect(x + 23, y + by + 17, 2, D);
                 ctx.fillStyle = pal.mouth || pal.skinSh;
-                ctx.fillRect(x + 21, y + by + 18, 6, 2);
+                ctx.fillRect(x + 21, y + by + 19, 6, D);
                 ctx.fillStyle = pal.skinHL || pal.skin;
-                ctx.fillRect(x + 22, y + by + 18, 4, D);
+                ctx.fillRect(x + 22, y + by + 19, 4, D);
                 if (pal.cheek) {
                     ctx.fillStyle = pal.cheek;
-                    ctx.globalAlpha = 0.25;
-                    ctx.fillRect(x + 12, y + by + 16, 4, 3);
-                    ctx.fillRect(x + 32, y + by + 16, 4, 3);
+                    ctx.globalAlpha = 0.3;
+                    ctx.beginPath();
+                    ctx.ellipse(x + 14, y + by + 16, 3, 2, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.ellipse(x + 34, y + by + 16, 3, 2, 0, 0, Math.PI * 2);
+                    ctx.fill();
                     ctx.globalAlpha = 1;
                 }
+                ctx.fillStyle = pal.outline;
+                ctx.fillRect(x + 16, y + by + 20, 16, D);
                 ctx.fillStyle = pal.collar || pal.tunicHL;
-                ctx.fillRect(x + 14, y + by + 21, 20, 3);
+                ctx.fillRect(x + 12, y + by + 21, 24, 3);
                 ctx.fillStyle = pal.collarSh || pal.tunic;
-                ctx.fillRect(x + 18, y + by + 22, 12, 2);
+                ctx.fillRect(x + 16, y + by + 22, 16, 2);
+                ctx.fillRect(x + 22, y + by + 21, 4, 3);
+                ctx.fillStyle = pal.shoulder || pal.tunic;
+                ctx.beginPath();
+                ctx.ellipse(x + 10, y + by + 25, 5, 4, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(x + 38, y + by + 25, 5, 4, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = pal.shoulderHL || pal.tunicHL;
+                ctx.fillRect(x + 8, y + by + 23, 5, 2);
+                ctx.fillRect(x + 36, y + by + 23, 5, 2);
                 ctx.fillStyle = pal.tunic;
-                ctx.fillRect(x + 10, y + by + 24, 28, 8);
+                ctx.fillRect(x + 10, y + by + 24, 28, 9);
                 ctx.fillStyle = pal.tunicHL;
-                ctx.fillRect(x + 14, y + by + 24, 10, 6);
+                ctx.fillRect(x + 12, y + by + 24, 12, 7);
                 ctx.fillStyle = pal.tunicMd || pal.tunic;
-                ctx.fillRect(x + 24, y + by + 24, 10, 6);
+                ctx.fillRect(x + 24, y + by + 24, 12, 7);
                 ctx.fillStyle = pal.tunicDk;
-                ctx.fillRect(x + 10, y + by + 30, 28, 2);
+                ctx.fillRect(x + 10, y + by + 31, 28, 2);
                 ctx.fillStyle = pal.tunicSh || pal.tunicDk;
-                ctx.fillRect(x + 22, y + by + 24, 2, 8);
+                ctx.fillRect(x + 23, y + by + 24, 2, 9);
                 ctx.fillStyle = pal.tunicDk;
-                for (let i = 0; i < 3; i++) ctx.fillRect(x + 14 + i * 4, y + by + 27, D, 3);
+                for (let i = 0; i < 3; i++) ctx.fillRect(x + 14 + i * 4, y + by + 27, D, 4);
                 ctx.fillRect(x + 16, y + by + 26, 6, D);
                 ctx.fillRect(x + 28, y + by + 28, 4, D);
+                ctx.fillStyle = pal.tunicTrim || pal.tunicHL;
+                ctx.fillRect(x + 10, y + by + 31, 28, D);
+                ctx.fillStyle = pal.tunicTrimDk || pal.tunicDk;
+                ctx.fillRect(x + 10, y + by + 32, 28, D);
                 if (hasApron) {
                     ctx.fillStyle = pal.apron || '#e0d0b0';
-                    ctx.fillRect(x + 14, y + by + 28, 20, 6);
+                    ctx.fillRect(x + 14, y + by + 28, 20, 7);
                     ctx.fillStyle = pal.apronSh || '#c0b090';
-                    ctx.fillRect(x + 14, y + by + 32, 20, 2);
+                    ctx.fillRect(x + 14, y + by + 33, 20, 2);
                     ctx.fillStyle = pal.apronHL || '#f0e0c0';
                     ctx.fillRect(x + 16, y + by + 28, 16, D);
+                    ctx.fillStyle = pal.apron || '#e0d0b0';
+                    ctx.fillRect(x + 22, y + by + 26, 4, 2);
                 }
                 ctx.fillStyle = pal.belt;
-                ctx.fillRect(x + 10, y + by + 30, 28, 3);
+                ctx.fillRect(x + 10, y + by + 31, 28, 3);
                 ctx.fillStyle = pal.beltHL || pal.belt;
-                ctx.fillRect(x + 14, y + by + 30, 8, D);
+                ctx.fillRect(x + 12, y + by + 31, 10, D);
                 ctx.fillStyle = pal.beltBk;
-                ctx.fillRect(x + 22, y + by + 30, 4, 3);
+                ctx.fillRect(x + 22, y + by + 31, 5, 3);
                 ctx.fillStyle = '#fff';
-                ctx.globalAlpha = 0.4;
-                ctx.fillRect(x + 22, y + by + 30, 2, D);
-                ctx.globalAlpha = 0.2;
-                ctx.fillRect(x + 23, y + by + 31, D, D);
+                ctx.globalAlpha = 0.5;
+                ctx.fillRect(x + 23, y + by + 31, 2, D);
+                ctx.globalAlpha = 0.25;
+                ctx.fillRect(x + 24, y + by + 32, D, D);
                 ctx.globalAlpha = 1;
                 if (isHero) {
-                    ctx.fillStyle = pal.outline;
-                    ctx.fillRect(x + 7, y + by + 30, 3, 3);
-                    ctx.fillStyle = '#a09080';
-                    ctx.fillRect(x + 7, y + by + 30, 2, 2);
-                    ctx.fillStyle = '#c0b0a0';
-                    ctx.fillRect(x + 7, y + by + 30, D, D);
+                    ctx.fillStyle = pal.weapon || '#a0a8b8';
+                    ctx.fillRect(x + 6, y + by + 28, 3, 8);
+                    ctx.fillStyle = pal.weaponHL || '#d0d8e0';
+                    ctx.fillRect(x + 6, y + by + 28, D, 6);
+                    ctx.fillStyle = pal.weaponDk || '#606878';
+                    ctx.fillRect(x + 8, y + by + 29, D, 6);
+                    ctx.fillStyle = '#c0a040';
+                    ctx.fillRect(x + 5, y + by + 28, 5, 2);
+                    ctx.fillStyle = '#e0c060';
+                    ctx.fillRect(x + 6, y + by + 28, 3, D);
                 }
                 ctx.fillStyle = pal.glove || pal.skin;
-                const laX = Math.round(6 + armL * 1.2);
-                const raX = Math.round(36 + armR * 1.2);
-                ctx.fillRect(x + laX, y + by + 24, 5, 9);
-                ctx.fillRect(x + raX, y + by + 24, 5, 9);
+                const laX = Math.round(5 + armL * 1.3);
+                const raX = Math.round(37 + armR * 1.3);
+                ctx.fillRect(x + laX, y + by + 24, 6, 10);
+                ctx.fillRect(x + raX, y + by + 24, 6, 10);
+                ctx.fillStyle = pal.gloveCuff || pal.gloveSh || pal.skinSh;
+                ctx.fillRect(x + laX, y + by + 24, 6, 2);
+                ctx.fillRect(x + raX, y + by + 24, 6, 2);
                 ctx.fillStyle = pal.gloveSh || pal.skinSh;
-                ctx.fillRect(x + laX, y + by + 31, 5, 2);
-                ctx.fillRect(x + raX, y + by + 31, 5, 2);
+                ctx.fillRect(x + laX, y + by + 32, 6, 2);
+                ctx.fillRect(x + raX, y + by + 32, 6, 2);
                 ctx.fillStyle = pal.skin;
-                ctx.fillRect(x + laX + 1, y + by + 31, 3, 2);
-                ctx.fillRect(x + raX + 1, y + by + 31, 3, 2);
+                ctx.fillRect(x + laX + 1, y + by + 32, 4, 2);
+                ctx.fillRect(x + raX + 1, y + by + 32, 4, 2);
                 ctx.fillStyle = pal.pants;
-                ctx.fillRect(x + 12, y + 33, 10, 6);
-                ctx.fillRect(x + 26, y + 33, 10, 6);
-                ctx.fillStyle = pal.pantsDk;
-                ctx.fillRect(x + 22, y + 33, 4, 6);
+                ctx.fillRect(x + 12, y + 34, 11, 6);
+                ctx.fillRect(x + 25, y + 34, 11, 6);
                 ctx.fillStyle = pal.pantsHL || pal.pants;
-                ctx.fillRect(x + 14, y + 33, 3, 3);
-                ctx.fillRect(x + 30, y + 33, 3, 3);
+                ctx.fillRect(x + 14, y + 34, 4, 4);
+                ctx.fillRect(x + 30, y + 34, 4, 4);
                 ctx.fillStyle = pal.pantsDk;
-                ctx.fillRect(x + 12, y + 37, 10, 2);
-                ctx.fillRect(x + 26, y + 37, 10, 2);
+                ctx.fillRect(x + 23, y + 34, 4, 6);
+                ctx.fillStyle = pal.pantsSeam || pal.pantsDk;
+                ctx.fillRect(x + 17, y + 34, D, 5);
+                ctx.fillRect(x + 31, y + 34, D, 5);
+                ctx.fillStyle = pal.pantsDk;
+                ctx.fillRect(x + 12, y + 38, 11, 2);
+                ctx.fillRect(x + 25, y + 38, 11, 2);
                 ctx.fillStyle = pal.boots;
-                ctx.fillRect(x + 11, y + 39 + legL, 10, 8);
-                ctx.fillRect(x + 27, y + 39 + legR, 10, 8);
+                ctx.fillRect(x + 11, y + 40 + legL, 11, 7);
+                ctx.fillRect(x + 26, y + 40 + legR, 11, 7);
+                ctx.fillStyle = pal.bootsCuff || pal.bootsHL;
+                ctx.fillRect(x + 11, y + 40 + legL, 11, 2);
+                ctx.fillRect(x + 26, y + 40 + legR, 11, 2);
                 ctx.fillStyle = pal.bootsHL;
-                ctx.fillRect(x + 11, y + 39 + legL, 10, 2);
-                ctx.fillRect(x + 27, y + 39 + legR, 10, 2);
+                ctx.fillRect(x + 13, y + 40 + legL, 4, D);
+                ctx.fillRect(x + 28, y + 40 + legR, 4, D);
                 ctx.fillStyle = pal.bootsDk || pal.boots;
-                ctx.fillRect(x + 11, y + 45 + legL, 10, 2);
-                ctx.fillRect(x + 27, y + 45 + legR, 10, 2);
-                ctx.fillStyle = pal.outline;
-                ctx.fillRect(x + 11, y + 46 + legL, 10, D);
-                ctx.fillRect(x + 27, y + 46 + legR, 10, D);
+                ctx.fillRect(x + 11, y + 45 + legL, 11, D);
+                ctx.fillRect(x + 26, y + 45 + legR, 11, D);
+                ctx.fillStyle = pal.bootsSole || pal.bootsDk || pal.boots;
+                ctx.fillRect(x + 10, y + 46 + legL, 13, 2);
+                ctx.fillRect(x + 25, y + 46 + legR, 13, 2);
                 ctx.fillStyle = pal.bootsHL;
-                ctx.fillRect(x + 15, y + 41 + legL, 2, D);
-                ctx.fillRect(x + 31, y + 41 + legR, 2, D);
+                ctx.fillRect(x + 15, y + 42 + legL, D, D);
+                ctx.fillRect(x + 15, y + 44 + legL, D, D);
+                ctx.fillRect(x + 30, y + 42 + legR, D, D);
+                ctx.fillRect(x + 30, y + 44 + legR, D, D);
                 ctx.fillStyle = pal.bootsSh || pal.bootsDk || pal.boots;
-                ctx.fillRect(x + 14, y + 42 + legL, D, 3);
-                ctx.fillRect(x + 30, y + 42 + legR, D, 3);
-                ctx.fillStyle = pal.bootsHL;
-                ctx.globalAlpha = 0.3;
-                ctx.fillRect(x + 13, y + 43 + legL, D, D);
+                ctx.fillRect(x + 14, y + 43 + legL, D, D);
                 ctx.fillRect(x + 29, y + 43 + legR, D, D);
-                ctx.globalAlpha = 1;
                 break;
             }
             case 'up': {
                 ctx.fillStyle = pal.outline;
-                ctx.fillRect(x + 12, y + by - 3, 24, 2);
-                ctx.fillRect(x + 10, y + by - 1, 2, 2);
-                ctx.fillRect(x + 36, y + by - 1, 2, 2);
-                ctx.fillRect(x + 8, y + by + 1, 2, 12);
-                ctx.fillRect(x + 38, y + by + 1, 2, 12);
+                ctx.beginPath();
+                ctx.ellipse(x + 24, y + by + 8, 15, 13, 0, 0, Math.PI * 2);
+                ctx.fill();
                 if (hasHat) {
                     ctx.fillStyle = pal.hat || pal.hair;
-                    ctx.fillRect(x + 8, y + by - 6, 32, 6);
+                    ctx.beginPath();
+                    ctx.ellipse(x + 24, y + by + 2, 17, 8, 0, 0, Math.PI * 2);
+                    ctx.fill();
                     ctx.fillStyle = pal.hatHL || pal.hairHL;
-                    ctx.fillRect(x + 10, y + by - 5, 28, 2);
+                    ctx.beginPath();
+                    ctx.ellipse(x + 22, y + by + 1, 12, 5, 0, 0, Math.PI * 2);
+                    ctx.fill();
                     ctx.fillStyle = pal.hatDk || pal.hairDk;
-                    ctx.fillRect(x + 8, y + by - 1, 32, 2);
+                    ctx.fillRect(x + 8, y + by + 4, 32, 3);
                 } else {
                     ctx.fillStyle = pal.hairDk || pal.hair;
-                    ctx.fillRect(x + 12, y + by - 3, 24, 5);
-                    ctx.fillRect(x + 10, y + by - 1, 28, 3);
+                    ctx.beginPath();
+                    ctx.ellipse(x + 24, y + by + 3, 16, 11, 0, 0, Math.PI * 2);
+                    ctx.fill();
                     ctx.fillStyle = pal.hair;
-                    ctx.fillRect(x + 8, y + by + 1, 32, 20);
+                    ctx.beginPath();
+                    ctx.ellipse(x + 24, y + by + 6, 15, 12, 0, 0, Math.PI * 2);
+                    ctx.fill();
                     ctx.fillStyle = pal.hairHL;
-                    ctx.fillRect(x + 16, y + by + 3, 16, 5);
-                    ctx.fillRect(x + 20, y + by + 1, 8, 2);
+                    ctx.beginPath();
+                    ctx.ellipse(x + 22, y + by + 4, 9, 6, 0, 0, Math.PI * 2);
+                    ctx.fill();
                     ctx.fillStyle = pal.hairMd || pal.hair;
-                    ctx.fillRect(x + 10, y + by + 10, 28, 4);
+                    ctx.fillRect(x + 10, y + by + 12, 28, 6);
                     ctx.fillStyle = pal.hairDk || pal.hair;
                     ctx.fillRect(x + 12, y + by + 16, 24, 5);
-                    ctx.fillRect(x + 14, y + by + 18, 20, 3);
                     if (isHero) {
+                        ctx.fillStyle = pal.hair;
+                        ctx.fillRect(x + 7, y + by + 2, 4, 10);
+                        ctx.fillRect(x + 37, y + by + 2, 4, 10);
                         ctx.fillStyle = pal.hairDk || pal.hair;
-                        ctx.fillRect(x + 8, y + by - 1, 3, 3);
-                        ctx.fillRect(x + 37, y + by - 1, 3, 3);
+                        ctx.fillRect(x + 13, y + by - 4, 3, 5);
+                        ctx.fillRect(x + 20, y + by - 6, 3, 7);
+                        ctx.fillRect(x + 28, y + by - 5, 3, 6);
+                        ctx.fillRect(x + 34, y + by - 3, 3, 4);
                     }
                 }
                 if (isHero) {
                     ctx.fillStyle = pal.cape;
-                    ctx.fillRect(x + 8, y + by + 21, 32, 12);
-                    ctx.fillStyle = pal.capeMd || pal.capeDk;
-                    ctx.fillRect(x + 22, y + by + 21, 3, 12);
+                    ctx.fillRect(x + 8, y + by + 21, 32, 14);
                     ctx.fillStyle = pal.capeHL || pal.cape;
-                    ctx.fillRect(x + 12, y + by + 21, 8, 10);
+                    ctx.fillRect(x + 10, y + by + 21, 10, 12);
+                    ctx.fillStyle = pal.capeMd || pal.capeDk;
+                    ctx.fillRect(x + 22, y + by + 21, 3, 14);
                     ctx.fillStyle = pal.capeDk;
-                    ctx.fillRect(x + 30, y + by + 22, 8, 11);
-                    ctx.fillRect(x + 8, y + by + 31, 32, 2);
+                    ctx.fillRect(x + 28, y + by + 22, 10, 13);
+                    ctx.fillStyle = pal.capeEdge || pal.capeDk;
+                    ctx.fillRect(x + 8, y + by + 33, 32, 2);
                     ctx.fillStyle = pal.cape;
-                    for (let i = 0; i < 4; i++) ctx.fillRect(x + 12 + i * 5, y + by + 25, D, 6);
-                    const capeWave = moving ? Math.sin(frame * Math.PI / 2) * 2 : 0;
+                    for (let i = 0; i < 5; i++) ctx.fillRect(x + 10 + i * 5, y + by + 25, D, 7);
+                    const capeWave = moving ? Math.sin(frame * Math.PI / 2) * 3 : Math.sin(gt / 1200) * 0.5;
                     ctx.fillStyle = pal.capeDk;
-                    ctx.fillRect(x + 14, y + by + 31 + capeWave, 20, 2);
+                    ctx.fillRect(x + 12, y + by + 33 + Math.round(capeWave), 24, 2);
+                    ctx.fillStyle = pal.capeHL || pal.cape;
+                    ctx.globalAlpha = 0.3;
+                    ctx.fillRect(x + 12, y + by + 22, 8, 2);
+                    ctx.globalAlpha = 1;
                 } else {
                     ctx.fillStyle = pal.tunic;
                     ctx.fillRect(x + 10, y + by + 21, 28, 12);
@@ -2202,274 +2273,366 @@ const RPGEngine = (function() {
                     ctx.fillStyle = pal.tunicDk;
                     ctx.fillRect(x + 22, y + by + 21, 3, 12);
                     ctx.fillRect(x + 10, y + by + 31, 28, 2);
+                    ctx.fillStyle = pal.tunicTrim || pal.tunicHL;
+                    ctx.fillRect(x + 10, y + by + 31, 28, D);
                     ctx.fillStyle = pal.tunicDk;
                     for (let i = 0; i < 3; i++) ctx.fillRect(x + 14 + i * 4, y + by + 25, D, 5);
                 }
+                ctx.fillStyle = pal.shoulder || pal.tunic;
+                ctx.beginPath();
+                ctx.ellipse(x + 10, y + by + 25, 5, 4, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(x + 38, y + by + 25, 5, 4, 0, 0, Math.PI * 2);
+                ctx.fill();
                 ctx.fillStyle = pal.belt;
-                ctx.fillRect(x + 10, y + by + 30, 28, 3);
+                ctx.fillRect(x + 10, y + by + 31, 28, 3);
                 ctx.fillStyle = pal.beltHL || pal.belt;
-                ctx.fillRect(x + 14, y + by + 30, 20, D);
+                ctx.fillRect(x + 14, y + by + 31, 20, D);
                 ctx.fillStyle = pal.skin;
-                ctx.fillRect(x + Math.round(6 + armL * 1.2), y + by + 24, 5, 8);
-                ctx.fillRect(x + Math.round(37 + armR * 1.2), y + by + 24, 5, 8);
+                const ulaX = Math.round(5 + armL * 1.3);
+                const uraX = Math.round(37 + armR * 1.3);
+                ctx.fillRect(x + ulaX, y + by + 24, 6, 9);
+                ctx.fillRect(x + uraX, y + by + 24, 6, 9);
+                ctx.fillStyle = pal.gloveCuff || pal.gloveSh || pal.skinSh;
+                ctx.fillRect(x + ulaX, y + by + 24, 6, 2);
+                ctx.fillRect(x + uraX, y + by + 24, 6, 2);
                 ctx.fillStyle = pal.skinSh;
-                ctx.fillRect(x + Math.round(6 + armL * 1.2), y + by + 30, 5, 2);
-                ctx.fillRect(x + Math.round(37 + armR * 1.2), y + by + 30, 5, 2);
+                ctx.fillRect(x + ulaX, y + by + 31, 6, 2);
+                ctx.fillRect(x + uraX, y + by + 31, 6, 2);
                 ctx.fillStyle = pal.pants;
-                ctx.fillRect(x + 12, y + 33, 10, 6);
-                ctx.fillRect(x + 26, y + 33, 10, 6);
+                ctx.fillRect(x + 12, y + 34, 11, 6);
+                ctx.fillRect(x + 25, y + 34, 11, 6);
                 ctx.fillStyle = pal.pantsDk;
-                ctx.fillRect(x + 22, y + 33, 4, 6);
-                ctx.fillRect(x + 12, y + 37, 10, 2);
-                ctx.fillRect(x + 26, y + 37, 10, 2);
+                ctx.fillRect(x + 23, y + 34, 4, 6);
+                ctx.fillRect(x + 12, y + 38, 11, 2);
+                ctx.fillRect(x + 25, y + 38, 11, 2);
                 ctx.fillStyle = pal.boots;
-                ctx.fillRect(x + 11, y + 39 + legL, 10, 8);
-                ctx.fillRect(x + 27, y + 39 + legR, 10, 8);
-                ctx.fillStyle = pal.bootsHL;
-                ctx.fillRect(x + 11, y + 39 + legL, 10, 2);
-                ctx.fillRect(x + 27, y + 39 + legR, 10, 2);
+                ctx.fillRect(x + 11, y + 40 + legL, 11, 7);
+                ctx.fillRect(x + 26, y + 40 + legR, 11, 7);
+                ctx.fillStyle = pal.bootsCuff || pal.bootsHL;
+                ctx.fillRect(x + 11, y + 40 + legL, 11, 2);
+                ctx.fillRect(x + 26, y + 40 + legR, 11, 2);
                 ctx.fillStyle = pal.bootsDk || pal.boots;
-                ctx.fillRect(x + 11, y + 45 + legL, 10, 2);
-                ctx.fillRect(x + 27, y + 45 + legR, 10, 2);
-                ctx.fillStyle = pal.outline;
-                ctx.fillRect(x + 11, y + 46 + legL, 10, D);
-                ctx.fillRect(x + 27, y + 46 + legR, 10, D);
+                ctx.fillRect(x + 11, y + 45 + legL, 11, D);
+                ctx.fillRect(x + 26, y + 45 + legR, 11, D);
+                ctx.fillStyle = pal.bootsSole || pal.bootsDk || pal.boots;
+                ctx.fillRect(x + 10, y + 46 + legL, 13, 2);
+                ctx.fillRect(x + 25, y + 46 + legR, 13, 2);
                 break;
             }
             case 'left': {
                 ctx.fillStyle = pal.outline;
-                ctx.fillRect(x + 8, y + by - 3, 24, 2);
-                ctx.fillRect(x + 6, y + by - 1, 2, 2);
-                ctx.fillRect(x + 32, y + by - 1, 2, 2);
-                ctx.fillRect(x + 4, y + by + 1, 2, 12);
-                ctx.fillRect(x + 34, y + by + 1, 2, 10);
+                ctx.beginPath();
+                ctx.ellipse(x + 20, y + by + 8, 14, 13, 0, 0, Math.PI * 2);
+                ctx.fill();
                 if (hasHat) {
                     ctx.fillStyle = pal.hat || pal.hair;
-                    ctx.fillRect(x + 4, y + by - 6, 30, 6);
+                    ctx.beginPath();
+                    ctx.ellipse(x + 18, y + by + 2, 16, 8, 0, 0, Math.PI * 2);
+                    ctx.fill();
                     ctx.fillStyle = pal.hatHL || pal.hairHL;
-                    ctx.fillRect(x + 6, y + by - 5, 26, 2);
+                    ctx.beginPath();
+                    ctx.ellipse(x + 16, y + by + 1, 10, 5, 0, 0, Math.PI * 2);
+                    ctx.fill();
                     ctx.fillStyle = pal.hatDk || pal.hairDk;
-                    ctx.fillRect(x + 4, y + by - 1, 30, 2);
+                    ctx.fillRect(x + 4, y + by + 4, 30, 3);
                 } else {
                     ctx.fillStyle = pal.hairDk || pal.hair;
-                    ctx.fillRect(x + 8, y + by - 3, 24, 5);
-                    ctx.fillRect(x + 6, y + by - 1, 28, 3);
+                    ctx.beginPath();
+                    ctx.ellipse(x + 20, y + by + 3, 15, 11, 0, 0, Math.PI * 2);
+                    ctx.fill();
                     ctx.fillStyle = pal.hair;
-                    ctx.fillRect(x + 6, y + by + 1, 28, 11);
-                    ctx.fillRect(x + 4, y + by + 3, 4, 11);
+                    ctx.beginPath();
+                    ctx.ellipse(x + 20, y + by + 5, 14, 10, 0, 0, Math.PI * 2);
+                    ctx.fill();
                     ctx.fillStyle = pal.hairHL;
-                    ctx.fillRect(x + 12, y + by + 2, 14, 3);
+                    ctx.beginPath();
+                    ctx.ellipse(x + 18, y + by + 3, 8, 5, 0, 0, Math.PI * 2);
+                    ctx.fill();
                     ctx.fillStyle = pal.hairMd || pal.hair;
-                    ctx.fillRect(x + 6, y + by + 8, 28, 3);
+                    ctx.fillRect(x + 6, y + by + 8, 26, 3);
                     ctx.fillStyle = pal.hair;
-                    ctx.fillRect(x + 4, y + by + 10, 10, 7);
+                    ctx.fillRect(x + 4, y + by + 10, 10, 8);
+                    if (isHero) {
+                        ctx.fillStyle = pal.hairDk || pal.hair;
+                        ctx.fillRect(x + 10, y + by - 4, 3, 5);
+                        ctx.fillRect(x + 16, y + by - 5, 3, 6);
+                        ctx.fillRect(x + 24, y + by - 3, 3, 4);
+                    }
                 }
                 ctx.fillStyle = pal.skin;
-                ctx.fillRect(x + 12, y + by + 10, 22, 11);
+                ctx.beginPath();
+                ctx.ellipse(x + 20, y + by + 14, 11, 8, 0, 0, Math.PI * 2);
+                ctx.fill();
                 ctx.fillStyle = pal.skinHL || pal.skin;
-                ctx.fillRect(x + 14, y + by + 10, 16, 3);
+                ctx.beginPath();
+                ctx.ellipse(x + 18, y + by + 12, 6, 4, 0, 0, Math.PI * 2);
+                ctx.fill();
                 ctx.fillStyle = pal.skinSh;
-                ctx.fillRect(x + 12, y + by + 18, 22, 3);
-                ctx.fillStyle = pal.skinDk || pal.skinSh;
-                ctx.fillRect(x + 14, y + by + 19, 10, 2);
+                ctx.fillRect(x + 10, y + by + 18, 20, 3);
+                ctx.fillStyle = pal.skin;
+                ctx.fillRect(x + 8, y + by + 14, 4, 4);
+                ctx.fillStyle = pal.skinSh;
+                ctx.fillRect(x + 8, y + by + 15, 3, D);
                 ctx.fillStyle = pal.eyeW || '#f0f0ff';
-                ctx.fillRect(x + 12, y + by + 13, 7, 4);
+                ctx.fillRect(x + 11, y + by + 12, 8, 5);
+                ctx.fillStyle = pal.outline;
+                ctx.fillRect(x + 11, y + by + 11, 8, D);
+                ctx.fillRect(x + 10, y + by + 12, D, 5);
+                ctx.fillRect(x + 19, y + by + 12, D, 5);
+                ctx.fillRect(x + 11, y + by + 17, 8, D);
                 ctx.fillStyle = pal.eye;
                 ctx.fillRect(x + 12, y + by + 13, 5, 4);
                 ctx.fillStyle = pal.eyeHL || '#4060d0';
-                ctx.fillRect(x + 14, y + by + 13, 2, 2);
+                ctx.fillRect(x + 13, y + by + 13, 2, 2);
                 ctx.fillStyle = pal.pupil || '#080830';
-                ctx.fillRect(x + 12, y + by + 15, 2, 2);
-                ctx.fillStyle = '#fff';
+                ctx.fillRect(x + 12, y + by + 14, 2, 3);
+                ctx.fillStyle = '#ffffff';
                 ctx.fillRect(x + 14, y + by + 13, D, D);
-                ctx.fillStyle = pal.skinSh;
-                ctx.fillRect(x + 22, y + by + 16, 2, D);
+                ctx.fillStyle = pal.nose || pal.skinSh;
+                ctx.fillRect(x + 10, y + by + 16, 2, 2);
                 ctx.fillStyle = pal.mouth || pal.skinSh;
-                ctx.fillRect(x + 14, y + by + 18, 6, 2);
-                ctx.fillStyle = pal.skin;
-                ctx.fillRect(x + 10, y + by + 14, 3, 3);
-                ctx.fillStyle = pal.skinSh;
-                ctx.fillRect(x + 10, y + by + 15, 2, D);
-                ctx.fillStyle = pal.skinSh;
-                ctx.fillRect(x + 32, y + by + 12, 3, 4);
-                ctx.fillStyle = pal.skin;
-                ctx.fillRect(x + 33, y + by + 13, 2, 2);
+                ctx.fillRect(x + 12, y + by + 19, 6, D);
                 ctx.fillStyle = pal.outline;
-                ctx.fillRect(x + 18, y + by + 20, 8, D);
+                ctx.fillRect(x + 14, y + by + 20, 10, D);
                 ctx.fillStyle = pal.collar || pal.tunicHL;
-                ctx.fillRect(x + 14, y + by + 21, 14, 3);
+                ctx.fillRect(x + 12, y + by + 21, 18, 3);
                 ctx.fillStyle = pal.collarSh || pal.tunic;
-                ctx.fillRect(x + 16, y + by + 22, 10, 2);
+                ctx.fillRect(x + 14, y + by + 22, 14, 2);
+                ctx.fillStyle = pal.shoulder || pal.tunic;
+                ctx.beginPath();
+                ctx.ellipse(x + 8, y + by + 25, 5, 4, 0, 0, Math.PI * 2);
+                ctx.fill();
                 ctx.fillStyle = pal.tunic;
-                ctx.fillRect(x + 12, y + by + 24, 24, 8);
+                ctx.fillRect(x + 10, y + by + 24, 22, 9);
                 ctx.fillStyle = pal.tunicHL;
-                ctx.fillRect(x + 14, y + by + 24, 10, 6);
+                ctx.fillRect(x + 12, y + by + 24, 10, 7);
                 ctx.fillStyle = pal.tunicDk;
-                ctx.fillRect(x + 30, y + by + 24, 6, 8);
-                ctx.fillRect(x + 12, y + by + 30, 24, 2);
+                ctx.fillRect(x + 26, y + by + 24, 6, 9);
+                ctx.fillRect(x + 10, y + by + 31, 22, 2);
+                ctx.fillStyle = pal.tunicTrim || pal.tunicHL;
+                ctx.fillRect(x + 10, y + by + 31, 22, D);
                 ctx.fillStyle = pal.tunicDk;
-                for (let i = 0; i < 2; i++) ctx.fillRect(x + 16 + i * 5, y + by + 27, D, 3);
-                ctx.fillRect(x + 18, y + by + 26, 5, D);
+                for (let i = 0; i < 2; i++) ctx.fillRect(x + 14 + i * 5, y + by + 27, D, 4);
+                ctx.fillRect(x + 16, y + by + 26, 5, D);
                 if (hasApron) {
                     ctx.fillStyle = pal.apron || '#e0d0b0';
-                    ctx.fillRect(x + 14, y + by + 28, 16, 6);
+                    ctx.fillRect(x + 12, y + by + 28, 18, 7);
                     ctx.fillStyle = pal.apronSh || '#c0b090';
-                    ctx.fillRect(x + 14, y + by + 32, 16, 2);
+                    ctx.fillRect(x + 12, y + by + 33, 18, 2);
                 }
                 ctx.fillStyle = pal.belt;
-                ctx.fillRect(x + 12, y + by + 30, 24, 3);
+                ctx.fillRect(x + 10, y + by + 31, 22, 3);
                 ctx.fillStyle = pal.beltHL || pal.belt;
-                ctx.fillRect(x + 16, y + by + 30, 8, D);
+                ctx.fillRect(x + 14, y + by + 31, 8, D);
                 ctx.fillStyle = pal.beltBk;
-                ctx.fillRect(x + 24, y + by + 30, 3, 3);
+                ctx.fillRect(x + 22, y + by + 31, 4, 3);
                 ctx.fillStyle = '#fff';
                 ctx.globalAlpha = 0.4;
-                ctx.fillRect(x + 24, y + by + 30, 2, D);
+                ctx.fillRect(x + 22, y + by + 31, 2, D);
                 ctx.globalAlpha = 1;
+                if (isHero) {
+                    ctx.fillStyle = pal.weapon || '#a0a8b8';
+                    ctx.fillRect(x + 30, y + by + 20, 3, 14);
+                    ctx.fillStyle = pal.weaponHL || '#d0d8e0';
+                    ctx.fillRect(x + 30, y + by + 20, D, 12);
+                    ctx.fillStyle = pal.weaponDk || '#606878';
+                    ctx.fillRect(x + 32, y + by + 21, D, 12);
+                    ctx.fillStyle = '#c0a040';
+                    ctx.fillRect(x + 29, y + by + 32, 5, 2);
+                }
                 ctx.fillStyle = pal.glove || pal.skin;
-                ctx.fillRect(x + Math.round(6 + armL * 1.2), y + by + 24, 5, 9);
+                const llaX = Math.round(4 + armL * 1.3);
+                ctx.fillRect(x + llaX, y + by + 24, 6, 10);
+                ctx.fillStyle = pal.gloveCuff || pal.gloveSh || pal.skinSh;
+                ctx.fillRect(x + llaX, y + by + 24, 6, 2);
                 ctx.fillStyle = pal.gloveSh || pal.skinSh;
-                ctx.fillRect(x + Math.round(6 + armL * 1.2), y + by + 31, 5, 2);
+                ctx.fillRect(x + llaX, y + by + 32, 6, 2);
+                ctx.fillStyle = pal.skin;
+                ctx.fillRect(x + llaX + 1, y + by + 32, 4, 2);
                 ctx.fillStyle = pal.pants;
-                ctx.fillRect(x + 14, y + 33, 18, 6);
+                ctx.fillRect(x + 12, y + 34, 18, 6);
                 ctx.fillStyle = pal.pantsDk;
-                ctx.fillRect(x + 14, y + 33, 6, 6);
-                ctx.fillRect(x + 14, y + 37, 18, 2);
+                ctx.fillRect(x + 12, y + 34, 6, 6);
+                ctx.fillRect(x + 12, y + 38, 18, 2);
                 ctx.fillStyle = pal.pantsHL || pal.pants;
-                ctx.fillRect(x + 22, y + 33, 4, 3);
+                ctx.fillRect(x + 22, y + 34, 4, 4);
+                ctx.fillStyle = pal.pantsSeam || pal.pantsDk;
+                ctx.fillRect(x + 20, y + 35, D, 4);
                 ctx.fillStyle = pal.boots;
-                ctx.fillRect(x + 12, y + 39 + legL, 10, 8);
-                ctx.fillRect(x + 24, y + 39 + legR, 10, 8);
-                ctx.fillStyle = pal.bootsHL;
-                ctx.fillRect(x + 12, y + 39 + legL, 10, 2);
-                ctx.fillRect(x + 24, y + 39 + legR, 10, 2);
+                ctx.fillRect(x + 10, y + 40 + legL, 11, 7);
+                ctx.fillRect(x + 23, y + 40 + legR, 11, 7);
+                ctx.fillStyle = pal.bootsCuff || pal.bootsHL;
+                ctx.fillRect(x + 10, y + 40 + legL, 11, 2);
+                ctx.fillRect(x + 23, y + 40 + legR, 11, 2);
                 ctx.fillStyle = pal.bootsDk || pal.boots;
-                ctx.fillRect(x + 12, y + 45 + legL, 10, 2);
-                ctx.fillRect(x + 24, y + 45 + legR, 10, 2);
-                ctx.fillStyle = pal.outline;
-                ctx.fillRect(x + 12, y + 46 + legL, 10, D);
-                ctx.fillRect(x + 24, y + 46 + legR, 10, D);
+                ctx.fillRect(x + 10, y + 45 + legL, 11, D);
+                ctx.fillRect(x + 23, y + 45 + legR, 11, D);
+                ctx.fillStyle = pal.bootsSole || pal.bootsDk || pal.boots;
+                ctx.fillRect(x + 9, y + 46 + legL, 13, 2);
+                ctx.fillRect(x + 22, y + 46 + legR, 13, 2);
                 ctx.fillStyle = pal.bootsHL;
-                ctx.fillRect(x + 16, y + 41 + legL, 3, D);
-                ctx.fillRect(x + 28, y + 41 + legR, 3, D);
+                ctx.fillRect(x + 14, y + 42 + legL, D, D);
+                ctx.fillRect(x + 14, y + 44 + legL, D, D);
+                ctx.fillRect(x + 27, y + 42 + legR, D, D);
                 break;
             }
             case 'right': {
                 ctx.fillStyle = pal.outline;
-                ctx.fillRect(x + 16, y + by - 3, 24, 2);
-                ctx.fillRect(x + 14, y + by - 1, 2, 2);
-                ctx.fillRect(x + 40, y + by - 1, 2, 2);
-                ctx.fillRect(x + 12, y + by + 1, 2, 10);
-                ctx.fillRect(x + 42, y + by + 1, 2, 12);
+                ctx.beginPath();
+                ctx.ellipse(x + 28, y + by + 8, 14, 13, 0, 0, Math.PI * 2);
+                ctx.fill();
                 if (hasHat) {
                     ctx.fillStyle = pal.hat || pal.hair;
-                    ctx.fillRect(x + 14, y + by - 6, 30, 6);
+                    ctx.beginPath();
+                    ctx.ellipse(x + 30, y + by + 2, 16, 8, 0, 0, Math.PI * 2);
+                    ctx.fill();
                     ctx.fillStyle = pal.hatHL || pal.hairHL;
-                    ctx.fillRect(x + 16, y + by - 5, 26, 2);
+                    ctx.beginPath();
+                    ctx.ellipse(x + 32, y + by + 1, 10, 5, 0, 0, Math.PI * 2);
+                    ctx.fill();
                     ctx.fillStyle = pal.hatDk || pal.hairDk;
-                    ctx.fillRect(x + 14, y + by - 1, 30, 2);
+                    ctx.fillRect(x + 14, y + by + 4, 30, 3);
                 } else {
                     ctx.fillStyle = pal.hairDk || pal.hair;
-                    ctx.fillRect(x + 16, y + by - 3, 24, 5);
-                    ctx.fillRect(x + 14, y + by - 1, 28, 3);
+                    ctx.beginPath();
+                    ctx.ellipse(x + 28, y + by + 3, 15, 11, 0, 0, Math.PI * 2);
+                    ctx.fill();
                     ctx.fillStyle = pal.hair;
-                    ctx.fillRect(x + 14, y + by + 1, 28, 11);
-                    ctx.fillRect(x + 40, y + by + 3, 4, 11);
+                    ctx.beginPath();
+                    ctx.ellipse(x + 28, y + by + 5, 14, 10, 0, 0, Math.PI * 2);
+                    ctx.fill();
                     ctx.fillStyle = pal.hairHL;
-                    ctx.fillRect(x + 22, y + by + 2, 14, 3);
+                    ctx.beginPath();
+                    ctx.ellipse(x + 30, y + by + 3, 8, 5, 0, 0, Math.PI * 2);
+                    ctx.fill();
                     ctx.fillStyle = pal.hairMd || pal.hair;
-                    ctx.fillRect(x + 14, y + by + 8, 28, 3);
+                    ctx.fillRect(x + 16, y + by + 8, 26, 3);
                     ctx.fillStyle = pal.hair;
-                    ctx.fillRect(x + 34, y + by + 10, 10, 7);
+                    ctx.fillRect(x + 34, y + by + 10, 10, 8);
+                    if (isHero) {
+                        ctx.fillStyle = pal.hairDk || pal.hair;
+                        ctx.fillRect(x + 21, y + by - 4, 3, 5);
+                        ctx.fillRect(x + 28, y + by - 5, 3, 6);
+                        ctx.fillRect(x + 35, y + by - 3, 3, 4);
+                    }
                 }
                 ctx.fillStyle = pal.skin;
-                ctx.fillRect(x + 14, y + by + 10, 22, 11);
+                ctx.beginPath();
+                ctx.ellipse(x + 28, y + by + 14, 11, 8, 0, 0, Math.PI * 2);
+                ctx.fill();
                 ctx.fillStyle = pal.skinHL || pal.skin;
-                ctx.fillRect(x + 18, y + by + 10, 16, 3);
+                ctx.beginPath();
+                ctx.ellipse(x + 30, y + by + 12, 6, 4, 0, 0, Math.PI * 2);
+                ctx.fill();
                 ctx.fillStyle = pal.skinSh;
-                ctx.fillRect(x + 14, y + by + 18, 22, 3);
-                ctx.fillStyle = pal.skinDk || pal.skinSh;
-                ctx.fillRect(x + 24, y + by + 19, 10, 2);
+                ctx.fillRect(x + 18, y + by + 18, 20, 3);
+                ctx.fillStyle = pal.skin;
+                ctx.fillRect(x + 36, y + by + 14, 4, 4);
+                ctx.fillStyle = pal.skinSh;
+                ctx.fillRect(x + 37, y + by + 15, 3, D);
                 ctx.fillStyle = pal.eyeW || '#f0f0ff';
-                ctx.fillRect(x + 29, y + by + 13, 7, 4);
+                ctx.fillRect(x + 29, y + by + 12, 8, 5);
+                ctx.fillStyle = pal.outline;
+                ctx.fillRect(x + 29, y + by + 11, 8, D);
+                ctx.fillRect(x + 28, y + by + 12, D, 5);
+                ctx.fillRect(x + 37, y + by + 12, D, 5);
+                ctx.fillRect(x + 29, y + by + 17, 8, D);
                 ctx.fillStyle = pal.eye;
                 ctx.fillRect(x + 31, y + by + 13, 5, 4);
                 ctx.fillStyle = pal.eyeHL || '#4060d0';
-                ctx.fillRect(x + 32, y + by + 13, 2, 2);
+                ctx.fillRect(x + 33, y + by + 13, 2, 2);
                 ctx.fillStyle = pal.pupil || '#080830';
-                ctx.fillRect(x + 34, y + by + 15, 2, 2);
-                ctx.fillStyle = '#fff';
+                ctx.fillRect(x + 34, y + by + 14, 2, 3);
+                ctx.fillStyle = '#ffffff';
                 ctx.fillRect(x + 33, y + by + 13, D, D);
-                ctx.fillStyle = pal.skinSh;
-                ctx.fillRect(x + 24, y + by + 16, 2, D);
+                ctx.fillStyle = pal.nose || pal.skinSh;
+                ctx.fillRect(x + 36, y + by + 16, 2, 2);
                 ctx.fillStyle = pal.mouth || pal.skinSh;
-                ctx.fillRect(x + 28, y + by + 18, 6, 2);
-                ctx.fillStyle = pal.skin;
-                ctx.fillRect(x + 35, y + by + 14, 3, 3);
-                ctx.fillStyle = pal.skinSh;
-                ctx.fillRect(x + 36, y + by + 15, 2, D);
-                ctx.fillStyle = pal.skinSh;
-                ctx.fillRect(x + 13, y + by + 12, 3, 4);
-                ctx.fillStyle = pal.skin;
-                ctx.fillRect(x + 13, y + by + 13, 2, 2);
+                ctx.fillRect(x + 30, y + by + 19, 6, D);
                 ctx.fillStyle = pal.outline;
-                ctx.fillRect(x + 22, y + by + 20, 8, D);
+                ctx.fillRect(x + 24, y + by + 20, 10, D);
                 ctx.fillStyle = pal.collar || pal.tunicHL;
-                ctx.fillRect(x + 20, y + by + 21, 14, 3);
+                ctx.fillRect(x + 18, y + by + 21, 18, 3);
                 ctx.fillStyle = pal.collarSh || pal.tunic;
-                ctx.fillRect(x + 22, y + by + 22, 10, 2);
+                ctx.fillRect(x + 20, y + by + 22, 14, 2);
+                ctx.fillStyle = pal.shoulder || pal.tunic;
+                ctx.beginPath();
+                ctx.ellipse(x + 40, y + by + 25, 5, 4, 0, 0, Math.PI * 2);
+                ctx.fill();
                 ctx.fillStyle = pal.tunic;
-                ctx.fillRect(x + 12, y + by + 24, 24, 8);
+                ctx.fillRect(x + 16, y + by + 24, 22, 9);
                 ctx.fillStyle = pal.tunicHL;
-                ctx.fillRect(x + 24, y + by + 24, 10, 6);
+                ctx.fillRect(x + 26, y + by + 24, 10, 7);
                 ctx.fillStyle = pal.tunicDk;
-                ctx.fillRect(x + 12, y + by + 24, 6, 8);
-                ctx.fillRect(x + 12, y + by + 30, 24, 2);
+                ctx.fillRect(x + 16, y + by + 24, 6, 9);
+                ctx.fillRect(x + 16, y + by + 31, 22, 2);
+                ctx.fillStyle = pal.tunicTrim || pal.tunicHL;
+                ctx.fillRect(x + 16, y + by + 31, 22, D);
                 ctx.fillStyle = pal.tunicDk;
-                for (let i = 0; i < 2; i++) ctx.fillRect(x + 26 + i * 5, y + by + 27, D, 3);
-                ctx.fillRect(x + 24, y + by + 26, 5, D);
+                for (let i = 0; i < 2; i++) ctx.fillRect(x + 28 + i * 5, y + by + 27, D, 4);
+                ctx.fillRect(x + 26, y + by + 26, 5, D);
                 if (hasApron) {
                     ctx.fillStyle = pal.apron || '#e0d0b0';
-                    ctx.fillRect(x + 18, y + by + 28, 16, 6);
+                    ctx.fillRect(x + 18, y + by + 28, 18, 7);
                     ctx.fillStyle = pal.apronSh || '#c0b090';
-                    ctx.fillRect(x + 18, y + by + 32, 16, 2);
+                    ctx.fillRect(x + 18, y + by + 33, 18, 2);
                 }
                 ctx.fillStyle = pal.belt;
-                ctx.fillRect(x + 12, y + by + 30, 24, 3);
+                ctx.fillRect(x + 16, y + by + 31, 22, 3);
                 ctx.fillStyle = pal.beltHL || pal.belt;
-                ctx.fillRect(x + 22, y + by + 30, 8, D);
+                ctx.fillRect(x + 26, y + by + 31, 8, D);
                 ctx.fillStyle = pal.beltBk;
-                ctx.fillRect(x + 20, y + by + 30, 3, 3);
+                ctx.fillRect(x + 22, y + by + 31, 4, 3);
                 ctx.fillStyle = '#fff';
                 ctx.globalAlpha = 0.4;
-                ctx.fillRect(x + 21, y + by + 30, 2, D);
+                ctx.fillRect(x + 23, y + by + 31, 2, D);
                 ctx.globalAlpha = 1;
+                if (isHero) {
+                    ctx.fillStyle = pal.weapon || '#a0a8b8';
+                    ctx.fillRect(x + 15, y + by + 20, 3, 14);
+                    ctx.fillStyle = pal.weaponHL || '#d0d8e0';
+                    ctx.fillRect(x + 17, y + by + 20, D, 12);
+                    ctx.fillStyle = pal.weaponDk || '#606878';
+                    ctx.fillRect(x + 15, y + by + 21, D, 12);
+                    ctx.fillStyle = '#c0a040';
+                    ctx.fillRect(x + 14, y + by + 32, 5, 2);
+                }
                 ctx.fillStyle = pal.glove || pal.skin;
-                ctx.fillRect(x + Math.round(37 + armR * 1.2), y + by + 24, 5, 9);
+                const rraX = Math.round(38 + armR * 1.3);
+                ctx.fillRect(x + rraX, y + by + 24, 6, 10);
+                ctx.fillStyle = pal.gloveCuff || pal.gloveSh || pal.skinSh;
+                ctx.fillRect(x + rraX, y + by + 24, 6, 2);
                 ctx.fillStyle = pal.gloveSh || pal.skinSh;
-                ctx.fillRect(x + Math.round(37 + armR * 1.2), y + by + 31, 5, 2);
+                ctx.fillRect(x + rraX, y + by + 32, 6, 2);
+                ctx.fillStyle = pal.skin;
+                ctx.fillRect(x + rraX + 1, y + by + 32, 4, 2);
                 ctx.fillStyle = pal.pants;
-                ctx.fillRect(x + 14, y + 33, 18, 6);
+                ctx.fillRect(x + 18, y + 34, 18, 6);
                 ctx.fillStyle = pal.pantsDk;
-                ctx.fillRect(x + 26, y + 33, 6, 6);
-                ctx.fillRect(x + 14, y + 37, 18, 2);
+                ctx.fillRect(x + 30, y + 34, 6, 6);
+                ctx.fillRect(x + 18, y + 38, 18, 2);
                 ctx.fillStyle = pal.pantsHL || pal.pants;
-                ctx.fillRect(x + 22, y + 33, 4, 3);
+                ctx.fillRect(x + 22, y + 34, 4, 4);
+                ctx.fillStyle = pal.pantsSeam || pal.pantsDk;
+                ctx.fillRect(x + 28, y + 35, D, 4);
                 ctx.fillStyle = pal.boots;
-                ctx.fillRect(x + 12, y + 39 + legL, 10, 8);
-                ctx.fillRect(x + 24, y + 39 + legR, 10, 8);
-                ctx.fillStyle = pal.bootsHL;
-                ctx.fillRect(x + 12, y + 39 + legL, 10, 2);
-                ctx.fillRect(x + 24, y + 39 + legR, 10, 2);
+                ctx.fillRect(x + 16, y + 40 + legL, 11, 7);
+                ctx.fillRect(x + 29, y + 40 + legR, 11, 7);
+                ctx.fillStyle = pal.bootsCuff || pal.bootsHL;
+                ctx.fillRect(x + 16, y + 40 + legL, 11, 2);
+                ctx.fillRect(x + 29, y + 40 + legR, 11, 2);
                 ctx.fillStyle = pal.bootsDk || pal.boots;
-                ctx.fillRect(x + 12, y + 45 + legL, 10, 2);
-                ctx.fillRect(x + 24, y + 45 + legR, 10, 2);
-                ctx.fillStyle = pal.outline;
-                ctx.fillRect(x + 12, y + 46 + legL, 10, D);
-                ctx.fillRect(x + 24, y + 46 + legR, 10, D);
+                ctx.fillRect(x + 16, y + 45 + legL, 11, D);
+                ctx.fillRect(x + 29, y + 45 + legR, 11, D);
+                ctx.fillStyle = pal.bootsSole || pal.bootsDk || pal.boots;
+                ctx.fillRect(x + 15, y + 46 + legL, 13, 2);
+                ctx.fillRect(x + 28, y + 46 + legR, 13, 2);
                 ctx.fillStyle = pal.bootsHL;
-                ctx.fillRect(x + 16, y + 41 + legL, 3, D);
-                ctx.fillRect(x + 28, y + 41 + legR, 3, D);
+                ctx.fillRect(x + 20, y + 42 + legL, D, D);
+                ctx.fillRect(x + 20, y + 44 + legL, D, D);
+                ctx.fillRect(x + 33, y + 42 + legR, D, D);
                 break;
             }
         }
@@ -2486,17 +2649,21 @@ const RPGEngine = (function() {
             hairHL: hslHex(hairH, hairS, 42),
             hairDk: hslHex(hairH, hairS, 14),
             hairMd: hslHex(hairH, hairS, 32),
-            skin: '#f4d0a0', skinHL: '#ffe8c8', skinSh: '#d8a870', skinDk: '#c09060',
-            eyeW: '#f0f0ff', eye: '#203060', eyeHL: '#3050a0', pupil: '#080830',
-            mouth: '#c07050', cheek: '#e8a888',
+            hairTip: hslHex(hairH, hairS, 50),
+            skin: '#f4d0a0', skinHL: '#ffe8c8', skinSh: '#d8a870', skinDk: '#c09060', skinRim: '#e8c090',
+            eyeW: '#f0f0ff', eye: '#203060', eyeHL: '#3050a0', pupil: '#080830', eyeLash: '#201018',
+            mouth: '#c07050', cheek: '#e8a888', nose: '#d8b080',
             tunic: c, tunicHL: shade(c, 30), tunicMd: shade(c, 15), tunicDk: shade(c, -30), tunicSh: shade(c, -45),
+            tunicTrim: shade(c, 40), tunicTrimDk: shade(c, 10),
             collar: shade(c, 50), collarSh: shade(c, 30),
+            shoulder: shade(c, 5), shoulderHL: shade(c, 25),
             belt: '#b09030', beltBk: '#806020', beltHL: '#d0b040',
-            pants: shade(c, -35), pantsDk: shade(c, -50), pantsHL: shade(c, -20),
-            boots: '#504030', bootsHL: '#685040', bootsDk: '#382818', bootsSh: '#402818',
-            glove: '#e8d8b8', gloveSh: '#c8b890',
-            cape: shade(c, -15), capeMd: shade(c, -25), capeDk: shade(c, -40), capeHL: shade(c, 5),
+            pants: shade(c, -35), pantsDk: shade(c, -50), pantsHL: shade(c, -20), pantsSeam: shade(c, -55),
+            boots: '#504030', bootsHL: '#685040', bootsDk: '#382818', bootsSh: '#402818', bootsCuff: '#605038', bootsSole: '#201008',
+            glove: '#e8d8b8', gloveSh: '#c8b890', gloveCuff: '#b8a870',
+            cape: shade(c, -15), capeMd: shade(c, -25), capeDk: shade(c, -40), capeHL: shade(c, 5), capeEdge: shade(c, -50),
             outline: '#181020', outlineHL: '#282838',
+            weapon: '#a0a8b8', weaponHL: '#d0d8e0', weaponDk: '#606878',
             hat: hslHex(hatH, Math.min(h.s + 5, 60), 35),
             hatHL: hslHex(hatH, Math.min(h.s + 5, 60), 52),
             hatDk: hslHex(hatH, Math.min(h.s + 5, 60), 20),
