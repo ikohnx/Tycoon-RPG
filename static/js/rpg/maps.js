@@ -1,16 +1,17 @@
 const RPGMaps = (function() {
 
-    function createHubTown() {
-        const W = 30;
-        const H = 25;
+    const T = {
+        EMPTY: 0, GRASS: 1, PATH: 2, WATER: 3,
+        WALL: 4, WALL_TOP: 5, ROOF: 6, DOOR: 7,
+        WINDOW: 8, TREE: 9, FLOWERS: 10, WOOD_FLOOR: 11,
+        SIGN: 12, SAND: 13, STONE_FLOOR: 14, HEDGE: 15,
+        CHEST: 16, PORTAL: 17, FOUNTAIN: 18, LAMP: 19,
+        STALL: 20, BENCH: 21, WELL: 22
+    };
 
-        const T = {
-            EMPTY: 0, GRASS: 1, PATH: 2, WATER: 3,
-            WALL: 4, WALL_TOP: 5, ROOF: 6, DOOR: 7,
-            WINDOW: 8, TREE: 9, FLOWERS: 10, WOOD_FLOOR: 11,
-            SIGN: 12, SAND: 13, STONE_FLOOR: 14, HEDGE: 15,
-            CHEST: 16, PORTAL: 17
-        };
+    function createHubTown() {
+        const W = 34;
+        const H = 30;
 
         const tiles = [];
         for (let r = 0; r < H; r++) {
@@ -20,150 +21,216 @@ const RPGMaps = (function() {
             }
         }
 
-        for (let c = 0; c < W; c++) { tiles[0][c] = T.TREE; tiles[H-1][c] = T.TREE; }
-        for (let r = 0; r < H; r++) { tiles[r][0] = T.TREE; tiles[r][W-1] = T.TREE; }
+        for (let c = 0; c < W; c++) { tiles[0][c] = T.TREE; tiles[1][c] = T.TREE; tiles[H-1][c] = T.TREE; tiles[H-2][c] = T.TREE; }
+        for (let r = 0; r < H; r++) { tiles[r][0] = T.TREE; tiles[r][1] = T.TREE; tiles[r][W-1] = T.TREE; tiles[r][W-2] = T.TREE; }
 
-        for (let r = 10; r <= 14; r++) {
-            for (let c = 2; c < W - 2; c++) tiles[r][c] = T.PATH;
+        tiles[0][16] = T.GRASS; tiles[0][17] = T.GRASS;
+        tiles[1][16] = T.GRASS; tiles[1][17] = T.GRASS;
+
+        for (let r = 3; r <= H - 4; r++) {
+            for (let c = 14; c <= 19; c++) tiles[r][c] = T.PATH;
         }
-        for (let r = 2; r < H - 2; r++) {
-            for (let c = 13; c <= 16; c++) tiles[r][c] = T.PATH;
+        for (let c = 3; c <= W - 4; c++) {
+            for (let r = 13; r <= 16; r++) tiles[r][c] = T.PATH;
         }
 
-        function placeBuilding(startR, startC, w, h, hasDoor) {
-            for (let c = startC; c < startC + w; c++) tiles[startR][c] = T.ROOF;
-            for (let c = startC; c < startC + w; c++) tiles[startR + 1][c] = T.ROOF;
+        for (let c = 5; c <= 8; c++) {
+            for (let r = 8; r <= 10; r++) tiles[r][c] = T.PATH;
+        }
+        for (let c = 25; c <= 28; c++) {
+            for (let r = 8; r <= 10; r++) tiles[r][c] = T.PATH;
+        }
+        for (let c = 5; c <= 8; c++) {
+            for (let r = 19; r <= 21; r++) tiles[r][c] = T.PATH;
+        }
+        for (let c = 25; c <= 28; c++) {
+            for (let r = 19; r <= 21; r++) tiles[r][c] = T.PATH;
+        }
+
+        for (let c = 14; c <= 19; c++) {
+            for (let r = 10; r <= 13; r++) tiles[r][c] = T.STONE_FLOOR;
+        }
+        for (let c = 13; c <= 20; c++) {
+            for (let r = 11; r <= 12; r++) tiles[r][c] = T.STONE_FLOOR;
+        }
+
+        tiles[11][16] = T.FOUNTAIN;
+        tiles[11][17] = T.FOUNTAIN;
+        tiles[12][16] = T.FOUNTAIN;
+        tiles[12][17] = T.FOUNTAIN;
+
+        function placeBuilding(startR, startC, w, h) {
+            for (let c = startC; c < startC + w; c++) {
+                tiles[startR][c] = T.ROOF;
+                tiles[startR + 1][c] = T.ROOF;
+            }
             for (let r = startR + 2; r < startR + h; r++) {
                 for (let c = startC; c < startC + w; c++) {
                     tiles[r][c] = T.WALL;
                 }
             }
-            if (w >= 4) {
+            if (w >= 5) {
                 tiles[startR + 2][startC + 1] = T.WINDOW;
                 tiles[startR + 2][startC + w - 2] = T.WINDOW;
             }
-            if (hasDoor) {
-                const doorC = startC + Math.floor(w / 2);
-                tiles[startR + h - 1][doorC] = T.DOOR;
-            }
+            const doorC = startC + Math.floor(w / 2);
+            tiles[startR + h - 1][doorC] = T.DOOR;
         }
 
-        placeBuilding(2, 2, 5, 5, true);
-        placeBuilding(2, 8, 4, 5, true);
-        placeBuilding(2, 18, 5, 5, true);
-        placeBuilding(2, 24, 5, 5, true);
+        placeBuilding(3, 3, 6, 5);
+        placeBuilding(3, 10, 5, 5);
 
-        placeBuilding(16, 2, 5, 5, true);
-        placeBuilding(16, 8, 4, 5, true);
-        placeBuilding(16, 18, 5, 5, true);
-        placeBuilding(16, 24, 5, 5, true);
+        placeBuilding(3, 22, 5, 5);
+        placeBuilding(3, 28, 5, 5);
 
-        for (let c = 12; c <= 17; c++) {
-            tiles[3][c] = T.STONE_FLOOR;
-            tiles[4][c] = T.STONE_FLOOR;
-            tiles[5][c] = T.STONE_FLOOR;
+        placeBuilding(18, 3, 6, 5);
+        placeBuilding(18, 10, 5, 5);
+
+        placeBuilding(18, 22, 5, 5);
+        placeBuilding(18, 28, 5, 5);
+
+        for (let c = 13; c <= 20; c++) {
+            tiles[3][c] = T.WALL_TOP;
+            tiles[4][c] = T.WALL;
+            tiles[5][c] = T.WALL;
         }
-        tiles[2][13] = T.WALL_TOP; tiles[2][14] = T.WALL_TOP; tiles[2][15] = T.WALL_TOP; tiles[2][16] = T.WALL_TOP;
+        tiles[5][16] = T.DOOR; tiles[5][17] = T.DOOR;
+        tiles[4][14] = T.WINDOW; tiles[4][19] = T.WINDOW;
 
-        tiles[8][5] = T.FLOWERS;
-        tiles[8][7] = T.FLOWERS;
-        tiles[8][22] = T.FLOWERS;
-        tiles[8][24] = T.FLOWERS;
+        tiles[9][5] = T.LAMP;
+        tiles[9][8] = T.LAMP;
+        tiles[9][25] = T.LAMP;
+        tiles[9][28] = T.LAMP;
+        tiles[20][5] = T.LAMP;
+        tiles[20][8] = T.LAMP;
+        tiles[20][25] = T.LAMP;
+        tiles[20][28] = T.LAMP;
 
-        tiles[12][6] = T.SIGN;
-        tiles[12][23] = T.SIGN;
+        tiles[13][5] = T.STALL;
+        tiles[13][7] = T.STALL;
+        tiles[13][26] = T.STALL;
+        tiles[13][28] = T.STALL;
 
-        tiles[22][14] = T.PORTAL;
-        tiles[22][15] = T.PORTAL;
+        tiles[15][5] = T.BENCH;
+        tiles[15][28] = T.BENCH;
 
-        for (let c = 3; c < 8; c++) tiles[15][c] = T.FLOWERS;
-        for (let c = 22; c < 27; c++) tiles[15][c] = T.FLOWERS;
+        tiles[9][16] = T.SIGN;
+        tiles[9][17] = T.SIGN;
+
+        tiles[15][11] = T.FLOWERS;
+        tiles[15][12] = T.FLOWERS;
+        tiles[15][21] = T.FLOWERS;
+        tiles[15][22] = T.FLOWERS;
+        tiles[10][11] = T.FLOWERS;
+        tiles[10][12] = T.FLOWERS;
+        tiles[10][21] = T.FLOWERS;
+        tiles[10][22] = T.FLOWERS;
+
+        tiles[8][3] = T.FLOWERS;
+        tiles[8][8] = T.FLOWERS;
+        tiles[8][25] = T.FLOWERS;
+        tiles[8][30] = T.FLOWERS;
+        tiles[22][3] = T.FLOWERS;
+        tiles[22][8] = T.FLOWERS;
+        tiles[22][25] = T.FLOWERS;
+        tiles[22][30] = T.FLOWERS;
+
+        tiles[24][10] = T.WELL;
+        tiles[24][23] = T.WELL;
+
+        for (let c = 7; c <= 9; c++) {
+            tiles[25][c] = T.WATER;
+            tiles[26][c] = T.WATER;
+        }
+        for (let c = 24; c <= 26; c++) {
+            tiles[25][c] = T.WATER;
+            tiles[26][c] = T.WATER;
+        }
+
+        tiles[H-2][16] = T.PORTAL;
+        tiles[H-2][17] = T.PORTAL;
+        tiles[H-1][16] = T.PORTAL;
+        tiles[H-1][17] = T.PORTAL;
 
         const collision = [];
         for (let r = 0; r < H; r++) {
             collision[r] = [];
             for (let c = 0; c < W; c++) {
                 const t = tiles[r][c];
-                collision[r][c] = [T.TREE, T.WALL, T.WALL_TOP, T.ROOF, T.WINDOW, T.WATER, T.HEDGE, T.CHEST, T.SIGN].includes(t) ? 1 : 0;
+                collision[r][c] = [T.TREE, T.WALL, T.WALL_TOP, T.ROOF, T.WINDOW, T.WATER, T.HEDGE, T.CHEST, T.SIGN, T.FOUNTAIN, T.STALL, T.WELL, T.LAMP, T.BENCH].includes(t) ? 1 : 0;
             }
         }
 
         const npcs = [
             {
-                x: 4, y: 8, name: 'Marketing Maven',
+                x: 6, y: 9, name: 'Marketing Maven',
                 spriteType: 'npc', color: '#cc4488',
                 facing: 'down',
                 dialogue: [
-                    "Welcome to the Marketing District!",
-                    "I can teach you about branding, campaigns, and customer acquisition.",
-                    "Ready to boost your company's visibility?"
+                    "Welcome to the Marketing Guild!",
+                    "I specialize in branding, campaigns, and customer acquisition.",
+                    "Let me show you how to boost your company's reach."
                 ],
-                action: 'marketing',
-                route: '/scenarios/Marketing'
+                action: 'marketing', route: '/scenarios/Marketing'
             },
             {
-                x: 10, y: 8, name: 'Finance Director',
+                x: 12, y: 9, name: 'Finance Director',
                 spriteType: 'npc', color: '#44aa44',
                 facing: 'down',
                 dialogue: [
-                    "Ah, the Finance Office is right here.",
-                    "I handle budgets, investments, and financial forecasting.",
-                    "Let's make sure your books are in order!"
+                    "The Treasury is just behind me.",
+                    "Budgets, investments, financial forecasting... I manage it all.",
+                    "Let's make sure your books are balanced!"
                 ],
-                action: 'finance',
-                route: '/scenarios/Finance'
+                action: 'finance', route: '/scenarios/Finance'
             },
             {
-                x: 14, y: 5, name: 'Town Elder',
+                x: 16, y: 7, name: 'Town Elder',
                 spriteType: 'npc', color: '#8866aa',
-                facing: 'down',
+                facing: 'down', stationary: true,
                 dialogue: [
                     "Welcome to Business Town, young entrepreneur!",
-                    "Each building in this town represents a different business discipline.",
-                    "Talk to the specialists to learn and grow your empire!",
-                    "Use arrow keys to move and Enter to interact."
+                    "Each building here represents a different business discipline.",
+                    "Speak with the guild masters to learn and grow your empire.",
+                    "Use the arrow keys to move, and press Enter to interact."
                 ],
-                action: 'tutorial',
-                route: '/tutorial'
+                action: 'tutorial', route: '/tutorial'
             },
             {
-                x: 20, y: 8, name: 'Operations Chief',
+                x: 24, y: 9, name: 'Operations Chief',
                 spriteType: 'npc', color: '#dd8833',
                 facing: 'down',
                 dialogue: [
-                    "The Operations Center is behind me.",
-                    "Supply chains, logistics, scheduling... I handle it all!",
-                    "Want to optimize your business processes?"
+                    "The Operations Center stands behind me.",
+                    "Supply chains, logistics, scheduling... I keep it all running.",
+                    "Ready to optimize your business processes?"
                 ],
-                action: 'operations',
-                route: '/scenarios/Operations'
+                action: 'operations', route: '/scenarios/Operations'
             },
             {
-                x: 26, y: 8, name: 'Legal Counsel',
+                x: 30, y: 9, name: 'Legal Counsel',
                 spriteType: 'npc', color: '#5577bb',
                 facing: 'down',
                 dialogue: [
-                    "The Law Office. Contracts, regulations, compliance.",
-                    "Every successful business needs solid legal foundations.",
+                    "Greetings. The Law Office is right here.",
+                    "Contracts, regulations, compliance... all essential foundations.",
                     "Shall we review your legal standing?"
                 ],
-                action: 'legal',
-                route: '/scenarios/Legal'
+                action: 'legal', route: '/scenarios/Legal'
             },
             {
-                x: 4, y: 22, name: 'HR Manager',
+                x: 6, y: 23, name: 'HR Manager',
                 spriteType: 'npc', color: '#ee6655',
                 facing: 'up',
                 dialogue: [
-                    "Welcome to Human Resources!",
-                    "Building a great team is the key to any successful business.",
+                    "Welcome to the HR Department!",
+                    "Building a great team is the key to any successful venture.",
                     "Let me teach you about hiring, management, and team dynamics."
                 ],
-                action: 'hr',
-                route: '/scenarios/Human Resources'
+                action: 'hr', route: '/scenarios/Human Resources'
             },
             {
-                x: 10, y: 22, name: 'Strategy Advisor',
+                x: 12, y: 23, name: 'Strategy Advisor',
                 spriteType: 'npc', color: '#aaaa33',
                 facing: 'up',
                 dialogue: [
@@ -171,102 +238,90 @@ const RPGMaps = (function() {
                     "Competition analysis, market positioning, long-term planning...",
                     "Ready to think like a CEO?"
                 ],
-                action: 'strategy',
-                route: '/scenarios/Strategy'
+                action: 'strategy', route: '/scenarios/Strategy'
             },
             {
-                x: 20, y: 22, name: 'Shop Keeper',
+                x: 24, y: 23, name: 'Shop Keeper',
                 spriteType: 'npc', color: '#bb8844',
                 facing: 'up',
                 dialogue: [
-                    "Welcome to the Item Shop!",
+                    "Welcome to my shop, traveler!",
                     "I sell equipment and supplies to help on your journey.",
-                    "Browse my wares?"
+                    "Care to browse my finest wares?"
                 ],
-                action: 'shop',
-                route: '/shop'
+                action: 'shop', route: '/shop'
             },
             {
-                x: 26, y: 22, name: 'Arena Champion',
+                x: 30, y: 23, name: 'Arena Champion',
                 spriteType: 'npc', color: '#cc2222',
                 facing: 'up',
                 dialogue: [
                     "The Battle Arena awaits, challenger!",
-                    "Test your business knowledge against rivals!",
-                    "Are you brave enough to enter?"
+                    "Only the sharpest business minds survive here.",
+                    "Do you have what it takes to compete?"
                 ],
-                action: 'battle',
-                route: '/battle_arena'
+                action: 'battle', route: '/battle_arena'
             },
             {
-                x: 14, y: 12, name: 'Command Officer',
+                x: 14, y: 14, name: 'Command Officer',
                 spriteType: 'npc', color: '#4488cc',
-                facing: 'right',
+                facing: 'right', stationary: true,
                 dialogue: [
                     "This is the Command Center.",
                     "Monitor your company's resources, view reports, and plan strategy.",
-                    "Check your dashboard for the latest updates."
+                    "Your dashboard has the latest intel."
                 ],
-                action: 'command_center',
-                route: '/dashboard'
+                action: 'command_center', route: '/dashboard'
             },
             {
-                x: 16, y: 12, name: 'Quest Board',
+                x: 19, y: 14, name: 'Quest Master',
                 spriteType: 'npc', color: '#996633',
-                facing: 'left',
+                facing: 'left', stationary: true,
                 dialogue: [
                     "The Quest Board has daily missions and challenges!",
-                    "Complete them for bonus rewards.",
-                    "Check back every day for new tasks."
+                    "Complete them for bonus rewards and experience.",
+                    "New assignments arrive every day. Check back often!"
                 ],
-                action: 'quests',
-                route: '/daily_missions'
+                action: 'quests', route: '/daily_missions'
             }
         ];
 
         const interactables = [
             {
-                x: 12, y: 6, name: 'Notice Board',
-                dialogue: ["== BUSINESS TOWN NOTICE BOARD ==", "Explore the town and talk to NPCs to access different game features!", "Each specialist can teach you a different business discipline."],
+                x: 16, y: 9, name: 'Town Notice Board',
+                dialogue: [
+                    "== BUSINESS TOWN NOTICE BOARD ==",
+                    "Explore the town and speak with the guild masters.",
+                    "Each building houses a different discipline.",
+                    "Visit the plaza fountain for a moment of peace."
+                ],
             },
             {
-                x: 23, y: 12, name: 'Signpost',
-                dialogue: ["East: Legal Office & Arena", "West: Marketing & Finance"],
-            },
-            {
-                x: 6, y: 12, name: 'Signpost',
-                dialogue: ["North: Marketing & Finance", "South: HR & Strategy"],
+                x: 17, y: 9, name: 'Town Notice Board',
+                dialogue: [
+                    "== COMING SOON ==",
+                    "New trade routes opening to the Industrial District!",
+                    "Arena tournament season begins next quarter."
+                ],
             }
         ];
 
         return {
             name: 'Business Town',
-            width: W,
-            height: H,
-            tiles: tiles,
-            collision: collision,
-            npcs: npcs,
-            interactables: interactables,
-            spawnX: 14,
-            spawnY: 12,
+            width: W, height: H,
+            tiles, collision, npcs, interactables,
+            spawnX: 16, spawnY: 14,
             transitions: [
-                { x: 14, y: 24, target: 'world_map', spawnX: 5, spawnY: 5 },
-                { x: 15, y: 24, target: 'world_map', spawnX: 5, spawnY: 5 }
+                { x: 16, y: 29, target: 'world_map', spawnX: 5, spawnY: 5 },
+                { x: 17, y: 29, target: 'world_map', spawnX: 5, spawnY: 5 }
             ],
             playerSprite: 'hero'
         };
     }
 
     function createMarketDistrict() {
-        const W = 20;
-        const H = 15;
-        const T = {
-            EMPTY: 0, GRASS: 1, PATH: 2, WATER: 3,
-            WALL: 4, WALL_TOP: 5, ROOF: 6, DOOR: 7,
-            WINDOW: 8, TREE: 9, FLOWERS: 10, WOOD_FLOOR: 11,
-            SIGN: 12, SAND: 13, STONE_FLOOR: 14, HEDGE: 15,
-            CHEST: 16, PORTAL: 17
-        };
+        const W = 24;
+        const H = 18;
 
         const tiles = [];
         for (let r = 0; r < H; r++) {
@@ -279,54 +334,59 @@ const RPGMaps = (function() {
         for (let c = 0; c < W; c++) { tiles[0][c] = T.WALL; tiles[H-1][c] = T.WALL; }
         for (let r = 0; r < H; r++) { tiles[r][0] = T.WALL; tiles[r][W-1] = T.WALL; }
 
-        for (let r = 5; r <= 9; r++) for (let c = 3; c <= W - 4; c++) tiles[r][c] = T.PATH;
+        for (let r = 6; r <= 11; r++) for (let c = 4; c <= W - 5; c++) tiles[r][c] = T.PATH;
 
-        for (let c = 3; c <= 7; c++) { tiles[2][c] = T.ROOF; tiles[3][c] = T.WALL; tiles[4][c] = T.WALL; }
+        for (let c = 3; c <= 8; c++) { tiles[2][c] = T.ROOF; tiles[3][c] = T.WALL; tiles[4][c] = T.WALL; }
+        tiles[3][4] = T.WINDOW; tiles[3][7] = T.WINDOW;
         tiles[4][5] = T.DOOR;
 
-        for (let c = 12; c <= 16; c++) { tiles[2][c] = T.ROOF; tiles[3][c] = T.WALL; tiles[4][c] = T.WALL; }
-        tiles[4][14] = T.DOOR;
+        for (let c = 15; c <= 20; c++) { tiles[2][c] = T.ROOF; tiles[3][c] = T.WALL; tiles[4][c] = T.WALL; }
+        tiles[3][16] = T.WINDOW; tiles[3][19] = T.WINDOW;
+        tiles[4][17] = T.DOOR;
 
-        tiles[H-1][W/2] = T.DOOR;
+        tiles[8][6] = T.STALL;
+        tiles[8][8] = T.STALL;
+        tiles[8][15] = T.STALL;
+        tiles[8][17] = T.STALL;
+
+        tiles[10][10] = T.LAMP;
+        tiles[10][13] = T.LAMP;
+
+        tiles[H-1][12] = T.DOOR;
 
         const collision = [];
         for (let r = 0; r < H; r++) {
             collision[r] = [];
             for (let c = 0; c < W; c++) {
                 const t = tiles[r][c];
-                collision[r][c] = [T.TREE, T.WALL, T.WALL_TOP, T.ROOF, T.WINDOW, T.WATER, T.HEDGE].includes(t) ? 1 : 0;
+                collision[r][c] = [T.TREE, T.WALL, T.WALL_TOP, T.ROOF, T.WINDOW, T.WATER, T.HEDGE, T.STALL, T.LAMP, T.BENCH, T.SIGN, T.FOUNTAIN, T.WELL, T.CHEST].includes(t) ? 1 : 0;
             }
         }
 
         return {
             name: 'Market District',
-            width: W,
-            height: H,
-            tiles: tiles,
-            collision: collision,
+            width: W, height: H,
+            tiles, collision,
             npcs: [
                 {
-                    x: 5, y: 6, name: 'Merchant',
+                    x: 7, y: 7, name: 'Merchant',
                     spriteType: 'npc', color: '#ddaa33',
                     facing: 'down',
-                    dialogue: ["Looking to buy or sell?", "Check out our finest wares!"],
-                    action: 'market',
-                    route: '/market'
+                    dialogue: ["Looking to buy or sell?", "I have the finest wares in all the land!"],
+                    action: 'market', route: '/market'
                 },
                 {
-                    x: 14, y: 6, name: 'Investor',
+                    x: 16, y: 7, name: 'Investor',
                     spriteType: 'npc', color: '#33aa77',
                     facing: 'down',
-                    dialogue: ["I'm looking for promising ventures to invest in.", "Got a pitch for me?"],
-                    action: 'pitch',
-                    route: '/pitch'
+                    dialogue: ["I seek promising ventures to fund.", "Have you prepared your pitch?"],
+                    action: 'pitch', route: '/pitch'
                 }
             ],
             interactables: [],
-            spawnX: 10,
-            spawnY: 12,
+            spawnX: 12, spawnY: 15,
             transitions: [
-                { x: 10, y: 14, target: 'hub', spawnX: 14, spawnY: 10 }
+                { x: 12, y: 17, target: 'hub', spawnX: 16, spawnY: 12 }
             ],
             playerSprite: 'hero'
         };

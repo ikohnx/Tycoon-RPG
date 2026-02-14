@@ -3,6 +3,7 @@
 {% block title %}Explore - Business Tycoon RPG{% endblock %}
 
 {% block extra_head %}
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
     body {
         overflow: hidden;
@@ -29,22 +30,22 @@
     }
     #dpad {
         position: fixed;
-        bottom: 20px;
-        left: 20px;
-        width: 140px;
-        height: 140px;
+        bottom: 30px;
+        left: 24px;
+        width: 150px;
+        height: 150px;
         z-index: 100;
         display: none;
     }
     .dpad-btn {
         position: absolute;
-        width: 46px;
-        height: 46px;
-        background: rgba(255,255,255,0.15);
-        border: 2px solid rgba(255,255,255,0.3);
-        border-radius: 8px;
-        color: #fff;
-        font-size: 20px;
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(180deg, #303080 0%, #181850 100%);
+        border: 2px solid #8080c0;
+        border-radius: 4px;
+        color: #c0c0e0;
+        font-size: 18px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -52,61 +53,76 @@
         user-select: none;
         -webkit-user-select: none;
         touch-action: none;
+        font-family: 'Press Start 2P', monospace;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.15);
     }
     .dpad-btn:active {
-        background: rgba(255,255,255,0.35);
+        background: linear-gradient(180deg, #4040a0 0%, #282870 100%);
+        border-color: #a0a0e0;
     }
-    #dpad-up { top: 0; left: 47px; }
-    #dpad-down { bottom: 0; left: 47px; }
-    #dpad-left { top: 47px; left: 0; }
-    #dpad-right { top: 47px; right: 0; }
+    #dpad-up { top: 0; left: 51px; }
+    #dpad-down { bottom: 0; left: 51px; }
+    #dpad-left { top: 51px; left: 0; }
+    #dpad-right { top: 51px; right: 0; }
+    .dpad-center {
+        position: absolute;
+        top: 51px; left: 51px;
+        width: 48px; height: 48px;
+        background: #202060;
+        border-radius: 4px;
+    }
     #action-buttons {
         position: fixed;
-        bottom: 30px;
-        right: 20px;
+        bottom: 40px;
+        right: 24px;
         z-index: 100;
         display: none;
     }
-    #btn-action {
-        width: 60px;
-        height: 60px;
-        background: rgba(68, 136, 255, 0.3);
-        border: 2px solid rgba(68, 136, 255, 0.6);
+    .action-btn-ff {
+        width: 56px;
+        height: 56px;
+        background: linear-gradient(180deg, #303080 0%, #181850 100%);
+        border: 2px solid #8080c0;
         border-radius: 50%;
-        color: #fff;
-        font-size: 14px;
+        color: #e0e0f0;
+        font-size: 11px;
         font-weight: bold;
         cursor: pointer;
         user-select: none;
         -webkit-user-select: none;
         touch-action: none;
+        font-family: 'Press Start 2P', monospace;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.15);
+        margin: 4px;
     }
-    #btn-action:active {
-        background: rgba(68, 136, 255, 0.6);
+    .action-btn-ff:active {
+        background: linear-gradient(180deg, #4040a0 0%, #282870 100%);
     }
     #btn-menu {
         position: fixed;
-        top: 50px;
-        right: 10px;
-        width: 40px;
-        height: 40px;
-        background: rgba(0,0,51,0.8);
-        border: 2px solid #4444aa;
-        border-radius: 6px;
-        color: #fff;
-        font-size: 18px;
+        top: 56px;
+        right: 12px;
+        width: 44px;
+        height: 44px;
+        background: linear-gradient(180deg, #181888 0%, #080840 100%);
+        border: 2px solid #8888c0;
+        border-radius: 4px;
+        color: #c0c0e0;
+        font-size: 16px;
         cursor: pointer;
         z-index: 100;
         display: flex;
         align-items: center;
         justify-content: center;
+        font-family: 'Press Start 2P', monospace;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.5);
     }
     #menu-overlay {
         display: none;
         position: fixed;
         top: 0; left: 0;
         width: 100vw; height: 100vh;
-        background: rgba(0,0,30,0.9);
+        background: rgba(0,0,20,0.85);
         z-index: 200;
     }
     #menu-panel {
@@ -114,36 +130,56 @@
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        background: #000033;
-        border: 3px solid #4444aa;
-        border-radius: 8px;
-        padding: 30px;
-        min-width: 300px;
-        text-align: center;
+        background: linear-gradient(180deg, #181888 0%, #101060 30%, #080840 100%);
+        border: 2px solid #e8e8f0;
+        border-radius: 4px;
+        padding: 24px 32px;
+        min-width: 280px;
+        text-align: left;
+        box-shadow: inset 0 0 0 3px #484888, 0 0 30px rgba(0,0,100,0.5);
     }
     #menu-panel h2 {
-        color: #ffcc00;
-        font-family: monospace;
+        color: #f0d850;
+        font-family: 'Press Start 2P', monospace;
+        font-size: 16px;
         margin-bottom: 20px;
+        text-align: center;
+        text-shadow: 2px 2px 0 #000030;
     }
     .menu-item {
         display: block;
         width: 100%;
-        padding: 12px 20px;
-        margin: 8px 0;
+        padding: 10px 16px 10px 28px;
+        margin: 6px 0;
         background: transparent;
-        border: 2px solid #4444aa;
-        border-radius: 4px;
-        color: #fff;
-        font-family: monospace;
-        font-size: 16px;
+        border: none;
+        color: #c0c0e0;
+        font-family: 'Press Start 2P', monospace;
+        font-size: 12px;
         cursor: pointer;
         text-decoration: none;
-        text-align: center;
+        text-align: left;
+        position: relative;
+        transition: color 0.1s;
     }
-    .menu-item:hover {
-        background: rgba(68,68,170,0.3);
-        color: #ffcc00;
+    .menu-item:hover, .menu-item:focus {
+        color: #ffffff;
+    }
+    .menu-item:hover::before {
+        content: '\25B6';
+        position: absolute;
+        left: 8px;
+        color: #e8e8f0;
+        animation: cursorBob 0.4s ease-in-out infinite alternate;
+    }
+    @keyframes cursorBob {
+        from { transform: translateX(0); }
+        to { transform: translateX(3px); }
+    }
+    .menu-divider {
+        border: none;
+        border-top: 1px solid #484888;
+        margin: 12px 0;
     }
     #loading-screen {
         position: fixed;
@@ -155,40 +191,54 @@
         align-items: center;
         justify-content: center;
         z-index: 500;
-        color: #fff;
-        font-family: monospace;
+        color: #c0c0e0;
+        font-family: 'Press Start 2P', monospace;
     }
     #loading-screen h2 {
-        color: #ffcc00;
-        margin-bottom: 20px;
+        color: #f0d850;
+        font-size: 18px;
+        margin-bottom: 8px;
+        text-shadow: 2px 2px 0 #000030;
+    }
+    #loading-screen p {
+        font-size: 10px;
+        margin-bottom: 24px;
+        color: #8080c0;
     }
     .loading-bar {
-        width: 300px;
-        height: 20px;
-        border: 2px solid #4444aa;
-        border-radius: 4px;
+        width: 280px;
+        height: 16px;
+        border: 2px solid #8888c0;
+        border-radius: 2px;
         overflow: hidden;
+        background: #080840;
     }
     .loading-fill {
         height: 100%;
-        background: linear-gradient(90deg, #4444aa, #6666cc);
+        background: linear-gradient(90deg, #2040a8, #4060c8, #2040a8);
+        background-size: 200% 100%;
         width: 0%;
-        animation: loadAnim 1.5s ease-out forwards;
+        animation: loadAnim 1.8s ease-out forwards, shimmer 1s linear infinite;
     }
     @keyframes loadAnim {
         0% { width: 0%; }
         100% { width: 100%; }
     }
+    @keyframes shimmer {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
     @media (pointer: coarse), (max-width: 768px) {
-        #dpad, #action-buttons { display: block; }
+        #dpad, #action-buttons { display: flex; }
+        #action-buttons { flex-direction: column; align-items: center; }
     }
 </style>
 {% endblock %}
 
 {% block content %}
 <div id="loading-screen">
-    <h2>BUSINESS TYCOON RPG</h2>
-    <p>Loading Business Town...</p>
+    <h2>BUSINESS TYCOON</h2>
+    <p>Loading...</p>
     <div class="loading-bar">
         <div class="loading-fill"></div>
     </div>
@@ -199,26 +249,29 @@
 </div>
 
 <div id="dpad">
+    <div class="dpad-center"></div>
     <div class="dpad-btn" id="dpad-up">&#9650;</div>
     <div class="dpad-btn" id="dpad-down">&#9660;</div>
     <div class="dpad-btn" id="dpad-left">&#9664;</div>
     <div class="dpad-btn" id="dpad-right">&#9654;</div>
 </div>
 <div id="action-buttons">
-    <button id="btn-action">ACT</button>
+    <button class="action-btn-ff" id="btn-action">A</button>
+    <button class="action-btn-ff" id="btn-cancel" style="font-size:10px;">B</button>
 </div>
 
 <button id="btn-menu" onclick="toggleMenu()">&#9776;</button>
 
-<div id="menu-overlay">
-    <div id="menu-panel">
+<div id="menu-overlay" onclick="toggleMenu()">
+    <div id="menu-panel" onclick="event.stopPropagation()">
         <h2>MENU</h2>
         <a href="{{ url_for('hub') }}" class="menu-item">Hub Dashboard</a>
-        <a href="{{ url_for('command_center') }}" class="menu-item">Command Center</a>
+        <a href="{{ url_for('dashboard') }}" class="menu-item">Command Center</a>
         <a href="{{ url_for('inventory') }}" class="menu-item">Inventory</a>
         <a href="{{ url_for('progress') }}" class="menu-item">Progress</a>
+        <hr class="menu-divider">
         <a href="{{ url_for('settings') }}" class="menu-item">Settings</a>
-        <button class="menu-item" onclick="toggleMenu()">Resume Game</button>
+        <button class="menu-item" onclick="toggleMenu()">Resume</button>
     </div>
 </div>
 
@@ -248,9 +301,7 @@ document.addEventListener('keydown', function(e) {
 
 function handleNPCInteract(npc) {
     if (npc.route) {
-        if (confirm('Go to ' + npc.name + '?')) {
-            window.location.href = npc.route;
-        }
+        window.location.href = npc.route;
     }
 }
 
@@ -279,6 +330,6 @@ setTimeout(function() {
     const startMap = RPGMaps.getMap('{{ current_map | default("hub") }}');
     RPGEngine.loadMap(startMap);
     RPGEngine.start();
-}, 1600);
+}, 2000);
 </script>
 {% endblock %}
