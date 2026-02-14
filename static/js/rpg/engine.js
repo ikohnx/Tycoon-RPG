@@ -100,9 +100,8 @@ const RPGEngine = (function() {
     }
 
     function resizeCanvas() {
-        const container = canvas.parentElement;
-        canvas.width = container.clientWidth;
-        canvas.height = container.clientHeight;
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
         ctx.imageSmoothingEnabled = false;
     }
 

@@ -5,26 +5,42 @@
 {% block extra_head %}
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
-    body {
-        overflow: hidden;
-        margin: 0;
-        padding: 0;
-        background: #000;
+    html, body {
+        overflow: hidden !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #000 !important;
+        width: 100vw !important;
+        height: 100vh !important;
     }
-    .navbar, footer, .hud-resources-bar {
+    body::before, body::after {
         display: none !important;
     }
+    .navbar, footer, .hud-resources-bar, .game-hud, #pwa-install-banner, .alert {
+        display: none !important;
+    }
+    body > .container {
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: 100vw !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+    }
     #explore-container {
-        position: fixed;
+        position: fixed !important;
         top: 0; left: 0;
-        width: 100vw;
-        height: 100vh;
+        width: 100vw !important;
+        height: 100vh !important;
         background: #000;
+        z-index: 10;
     }
     #game-canvas {
         display: block;
-        width: 100%;
-        height: 100%;
+        width: 100vw;
+        height: 100vh;
         image-rendering: pixelated;
         image-rendering: crisp-edges;
     }
@@ -34,7 +50,7 @@
         left: 24px;
         width: 150px;
         height: 150px;
-        z-index: 100;
+        z-index: 200;
         display: none;
     }
     .dpad-btn {
@@ -75,7 +91,7 @@
         position: fixed;
         bottom: 40px;
         right: 24px;
-        z-index: 100;
+        z-index: 200;
         display: none;
     }
     .action-btn-ff {
@@ -110,7 +126,7 @@
         color: #c0c0e0;
         font-size: 16px;
         cursor: pointer;
-        z-index: 100;
+        z-index: 300;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -123,7 +139,7 @@
         top: 0; left: 0;
         width: 100vw; height: 100vh;
         background: rgba(0,0,20,0.85);
-        z-index: 200;
+        z-index: 500;
     }
     #menu-panel {
         position: absolute;
@@ -190,7 +206,7 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        z-index: 500;
+        z-index: 1000;
         color: #c0c0e0;
         font-family: 'Press Start 2P', monospace;
     }
