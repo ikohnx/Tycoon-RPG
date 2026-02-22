@@ -491,31 +491,73 @@ const Game = (function() {
         drawText('Click or use \u25B2\u25BC + ENTER', cx, h - 30, '#4848a0', 8, 'center');
     }
 
+    let _titleScene = null;
+    function buildTitleScene(cols, rows) {
+        const scene = [];
+        for (let r = 0; r < rows; r++) {
+            scene[r] = [];
+            for (let c = 0; c < cols; c++) {
+                let t = 1;
+                const rng = ((r * 137 + c * 241 + 73) % 100) / 100;
+                if (r <= 1 || r >= rows - 2) { t = 9; }
+                else if (c <= 1 || c >= cols - 2) { t = 9; }
+                else if (r >= rows - 5 && r < rows - 2) {
+                    t = 3;
+                    if (r === rows - 5 && rng < 0.3) t = 27;
+                }
+                else if (r >= 3 && r <= 5 && c >= 4 && c <= 8) { t = 6; if (r === 5) t = 4; }
+                else if (r === 6 && c >= 4 && c <= 8) { t = 4; if (c === 6) t = 7; }
+                else if (r >= 3 && r <= 5 && c >= cols - 9 && c <= cols - 5) { t = 6; if (r === 5) t = 4; }
+                else if (r === 6 && c >= cols - 9 && c <= cols - 5) { t = 4; if (c === cols - 7) t = 7; }
+                else if (r >= Math.floor(rows/2) - 1 && r <= Math.floor(rows/2) + 1 && c >= Math.floor(cols/2) - 2 && c <= Math.floor(cols/2) + 2) { t = 14; if (r === Math.floor(rows/2) && c === Math.floor(cols/2)) t = 18; }
+                else if (Math.abs(c - Math.floor(cols/2)) <= 1) { t = 2; }
+                else if (Math.abs(r - Math.floor(rows/2)) <= 0) { t = 2; }
+                else if (rng < 0.06) t = 9;
+                else if (rng < 0.10) t = 10;
+                else if (rng < 0.14) t = 30;
+                else if (rng < 0.17) t = 31;
+                else if (rng < 0.19) t = 29;
+
+                if (r === 4 && (c === 3 || c === 9 || c === cols - 10 || c === cols - 4)) t = 19;
+                if (r === Math.floor(rows/2) + 3 && (c === 5 || c === cols - 6)) t = 22;
+                if (r === Math.floor(rows/2) - 3 && c >= Math.floor(cols/2) - 1 && c <= Math.floor(cols/2) + 1) t = 33;
+
+                scene[r][c] = t;
+            }
+        }
+        return scene;
+    }
+
     function renderTitleBackground() {
         const w = canvas.width;
         const h = canvas.height;
+        const cols = Math.ceil(w / 48) + 1;
+        const rows = Math.ceil(h / 48) + 1;
 
-        for (let r = 0; r < Math.ceil(h / 48) + 1; r++) {
-            for (let c = 0; c < Math.ceil(w / 48) + 1; c++) {
-                const tileId = (r < 2 || r > Math.ceil(h/48) - 2) ? 9 : ((r + c) % 7 === 0 ? 10 : 1);
-                RPGTiles.drawTile(ctx, C, tileId, c * 48, r * 48, r, c, gameTime, 48);
+        if (!_titleScene || _titleScene.length !== rows || _titleScene[0].length !== cols) {
+            _titleScene = buildTitleScene(cols, rows);
+        }
+
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                RPGTiles.drawTile(ctx, C, _titleScene[r][c], c * 48, r * 48, r, c, gameTime, 48);
             }
         }
 
-        ctx.fillStyle = 'rgba(0,0,20,0.75)';
+        ctx.fillStyle = 'rgba(0,0,20,0.55)';
         ctx.fillRect(0, 0, w, h);
 
-        const grd = ctx.createLinearGradient(0, 0, 0, 60);
-        grd.addColorStop(0, 'rgba(0,0,30,0.9)');
+        const grd = ctx.createLinearGradient(0, 0, 0, 80);
+        grd.addColorStop(0, 'rgba(0,0,30,0.85)');
         grd.addColorStop(1, 'transparent');
         ctx.fillStyle = grd;
-        ctx.fillRect(0, 0, w, 60);
+        ctx.fillRect(0, 0, w, 80);
 
-        const grd2 = ctx.createLinearGradient(0, h - 60, 0, h);
+        const grd2 = ctx.createLinearGradient(0, h - 80, 0, h);
         grd2.addColorStop(0, 'transparent');
-        grd2.addColorStop(1, 'rgba(0,0,30,0.9)');
+        grd2.addColorStop(1, 'rgba(0,0,30,0.85)');
         ctx.fillStyle = grd2;
-        ctx.fillRect(0, h - 60, w, 60);
+        ctx.fillRect(0, h - 80, w, 80);
     }
 
     function handleTitleKey(key) {

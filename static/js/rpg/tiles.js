@@ -5,35 +5,16 @@ window.RPGTiles = (function() {
     let allLoaded = false;
 
     const TILE_NAMES = {
-        1: 'grass',
-        2: 'path',
-        3: 'water',
-        4: 'wall',
-        5: 'wall_top',
-        6: 'roof',
-        7: 'door',
-        8: 'window',
-        9: 'tree',
-        10: 'flowers',
-        11: 'wood_floor',
-        12: 'sign',
-        13: 'sand',
-        14: 'stone_floor',
-        15: 'hedge',
-        16: 'chest',
-        17: 'portal',
-        18: 'fountain',
-        19: 'lamp',
-        20: 'stall',
-        21: 'bench',
-        22: 'well',
-        23: 'crates',
-        24: 'fireplace',
-        25: 'bookshelf',
-        26: 'cliff',
-        27: 'cliff_top',
-        28: 'waterfall',
-        29: 'rock'
+        1: 'grass', 2: 'path', 3: 'water', 4: 'wall',
+        5: 'wall_top', 6: 'roof', 7: 'door', 8: 'window',
+        9: 'tree', 10: 'flowers', 11: 'wood_floor', 12: 'sign',
+        13: 'sand', 14: 'stone_floor', 15: 'hedge', 16: 'chest',
+        17: 'portal', 18: 'fountain', 19: 'lamp', 20: 'stall',
+        21: 'bench', 22: 'well', 23: 'crates', 24: 'fireplace',
+        25: 'bookshelf', 26: 'cliff', 27: 'cliff_top', 28: 'waterfall',
+        29: 'rock',
+        30: 'grass2', 31: 'grass3', 32: 'bridge',
+        33: 'cobble', 34: 'statue', 35: 'fence'
     };
 
     const ANIMATED_TILES = {3: true, 17: true, 18: true, 19: true, 24: true, 28: true};
@@ -61,8 +42,6 @@ window.RPGTiles = (function() {
 
     loadAllTiles();
 
-    const _cache = {};
-
     function drawTile(ctx, C, id, x, y, row, col, gt, TS) {
         if (id === 0) return;
 
@@ -78,7 +57,7 @@ window.RPGTiles = (function() {
                 drawAnimOverlay(ctx, id, x, y, gt, TS, row, col);
             }
         } else {
-            drawFallbackTile(ctx, C, id, x, y, TS);
+            drawFallbackTile(ctx, id, x, y, TS);
         }
     }
 
@@ -88,9 +67,7 @@ window.RPGTiles = (function() {
         if (id === 3) {
             ctx.fillStyle = 'rgba(160,220,255,0.12)';
             const waveX = Math.sin(t * 2 + col * 0.8) * TS * 0.3;
-            const waveW = TS * 0.4;
-            ctx.fillRect(x + waveX + TS * 0.3, y, waveW, TS);
-
+            ctx.fillRect(x + waveX + TS * 0.3, y, TS * 0.4, TS);
             ctx.fillStyle = 'rgba(255,255,255,0.08)';
             const shimX = Math.sin(t * 3 + row * 1.2) * TS * 0.2;
             ctx.fillRect(x + shimX + TS * 0.4, y + TS * 0.2, TS * 0.2, TS * 0.15);
@@ -102,7 +79,6 @@ window.RPGTiles = (function() {
             ctx.beginPath();
             ctx.arc(x + TS / 2, y + TS / 2, TS * 0.35, 0, Math.PI * 2);
             ctx.fill();
-
             ctx.fillStyle = 'rgba(200,180,255,' + (pulse * 0.5) + ')';
             ctx.beginPath();
             ctx.arc(x + TS / 2, y + TS / 2, TS * 0.2, 0, Math.PI * 2);
@@ -129,7 +105,6 @@ window.RPGTiles = (function() {
             const flicker = Math.random() * 0.1 + 0.08;
             ctx.fillStyle = 'rgba(255,150,50,' + flicker + ')';
             ctx.fillRect(x, y, TS, TS);
-
             ctx.fillStyle = 'rgba(255,200,80,' + (flicker * 0.6) + ')';
             ctx.fillRect(x + TS * 0.2, y + TS * 0.3, TS * 0.6, TS * 0.4);
         }
@@ -139,13 +114,12 @@ window.RPGTiles = (function() {
             ctx.fillStyle = 'rgba(200,230,255,0.12)';
             ctx.fillRect(x + TS * 0.2, y + flowY - TS, TS * 0.2, TS);
             ctx.fillRect(x + TS * 0.55, y + ((flowY + TS / 2) % TS) - TS, TS * 0.15, TS);
-
             ctx.fillStyle = 'rgba(255,255,255,0.08)';
             ctx.fillRect(x + TS * 0.3, y + ((flowY + TS / 3) % TS), TS * 0.1, TS * 0.2);
         }
     }
 
-    function drawFallbackTile(ctx, C, id, x, y, TS) {
+    function drawFallbackTile(ctx, id, x, y, TS) {
         const colors = {
             1: '#2a8a28', 2: '#c8a878', 3: '#2060a0', 4: '#907050',
             5: '#806040', 6: '#a05030', 7: '#705030', 8: '#607090',
@@ -154,7 +128,8 @@ window.RPGTiles = (function() {
             17: '#5030a0', 18: '#4080b0', 19: '#c0a040', 20: '#a07040',
             21: '#806030', 22: '#708090', 23: '#906830', 24: '#c06020',
             25: '#604020', 26: '#687080', 27: '#507040', 28: '#3878b0',
-            29: '#687070'
+            29: '#687070', 30: '#308a30', 31: '#1a6a18', 32: '#8a6a40',
+            33: '#606878', 34: '#909090', 35: '#7a5a30'
         };
         ctx.fillStyle = colors[id] || '#444';
         ctx.fillRect(x, y, TS, TS);
