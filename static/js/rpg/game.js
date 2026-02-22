@@ -17,6 +17,51 @@ const Game = (function() {
     let titleCursor = 0;
     let titlePlayerCursor = 0;
     let titleScrollOffset = 0;
+    let textInputCallback = null;
+
+    function showTextInput(label, placeholder, maxLen, isPassword, initialValue, callback) {
+        const overlay = document.getElementById('text-input-overlay');
+        const field = document.getElementById('text-input-field');
+        const lbl = document.getElementById('text-input-label');
+        const err = document.getElementById('text-input-error');
+        const btn = document.getElementById('text-input-submit');
+        if (!overlay || !field) return;
+        lbl.textContent = label;
+        field.value = initialValue || '';
+        field.maxLength = maxLen || 20;
+        field.placeholder = placeholder || 'Type here...';
+        field.type = isPassword ? 'password' : 'text';
+        err.textContent = '';
+        overlay.classList.add('active');
+        textInputCallback = callback;
+        setTimeout(() => field.focus(), 100);
+
+        const submitFn = () => {
+            const val = field.value;
+            if (textInputCallback) {
+                const result = textInputCallback(val);
+                if (result && result.error) {
+                    err.textContent = result.error;
+                    return;
+                }
+            }
+            hideTextInput();
+        };
+
+        btn.onclick = submitFn;
+        field.onkeydown = (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); submitFn(); }
+            else if (e.key === 'Escape') { e.preventDefault(); hideTextInput(); }
+        };
+    }
+
+    function hideTextInput() {
+        const overlay = document.getElementById('text-input-overlay');
+        if (overlay) overlay.classList.remove('active');
+        textInputCallback = null;
+        const c = document.getElementById('game-canvas');
+        if (c) c.focus();
+    }
 
     const WORLDS = ['Modern', 'Industrial', 'Fantasy', 'Sci-Fi'];
     const INDUSTRIES = {
@@ -118,7 +163,13 @@ const Game = (function() {
         }
     }
 
+    function isTextInputActive() {
+        const overlay = document.getElementById('text-input-overlay');
+        return overlay && overlay.classList.contains('active');
+    }
+
     function onKeyDown(e) {
+        if (isTextInputActive()) return;
         keys[e.key] = true;
         const prevented = ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' ','Enter','w','a','s','d','Escape','Tab'];
         if (prevented.includes(e.key)) e.preventDefault();
@@ -147,6 +198,7 @@ const Game = (function() {
     }
 
     function onClick(e) {
+        if (isTextInputActive()) return;
         const rect = canvas.getBoundingClientRect();
         const mx = e.clientX - rect.left;
         const my = e.clientY - rect.top;
@@ -247,6 +299,11 @@ const Game = (function() {
                     loginState.error = '';
                     loginState.active = true;
                     setState('LOGIN');
+                    showTextInput('Enter password for ' + loginState.playerName + ':', 'Password...', 32, true, '', (val) => {
+                        loginState.password = val;
+                        loginPlayer(loginState.playerId, val);
+                        return null;
+                    });
                 } else {
                     loginState.error = d.error || 'Login failed';
                 }
@@ -478,8 +535,21 @@ const Game = (function() {
                 charSelectState.careerIndex = 0;
                 charSelectState.error = '';
                 setState('CHAR_SELECT');
+                promptForName();
             }
         }
+    }
+
+    function promptForName() {
+        showTextInput('Enter your character name:', 'Your name...', 20, false, charSelectState.name, (val) => {
+            if (!val || val.trim().length === 0) {
+                return { error: 'Please enter a name' };
+            }
+            charSelectState.name = val.trim();
+            charSelectState.step = 1;
+            charSelectState.error = '';
+            return null;
+        });
     }
 
     function handleTitleClick(mx, my) {
@@ -551,14 +621,13 @@ const Game = (function() {
             drawText('Enter your name:', panelX + 20, y, '#c0c0e0', 10);
             y += 30;
             drawFFBox(panelX + 20, y - 10, panelW - 40, 36);
-            const nameText = charSelectState.name + (Math.floor(charSelectState.cursorBlink / 400) % 2 === 0 ? '_' : '');
-            drawText(nameText, panelX + 32, y + 8, '#fff', 12);
+            if (charSelectState.name) {
+                drawText(charSelectState.name, panelX + 32, y + 8, '#fff', 12);
+            } else {
+                drawText('(click to type)', panelX + 32, y + 8, '#5050a0', 10);
+            }
             y += 50;
-            ctx.fillStyle = 'rgba(80,80,160,0.3)';
-            ctx.fillRect(panelX + 20, y - 10, panelW - 40, 30);
-            drawText('\u25B6 NEXT', panelX + 44, y + 5, charSelectState.name.trim().length > 0 ? '#f0d850' : '#5050a0', 11);
-            y += 40;
-            drawText('Type your name, then click NEXT', panelX + 20, y, '#5050a0', 8);
+            drawText('Click anywhere to enter your name', panelX + 20, y, '#5050a0', 8);
         } else if (charSelectState.step === 1) {
             drawText('Choose your world:', panelX + 20, y, '#c0c0e0', 10);
             y += 30;
@@ -627,24 +696,16 @@ const Game = (function() {
     function handleCharSelectKey(key) {
         if (charSelectState.step === 0) {
             if (key === 'Enter') {
-                if (charSelectState.name.trim().length > 0) {
-                    charSelectState.step = 1;
-                    charSelectState.error = '';
-                } else {
-                    charSelectState.error = 'Please enter a name';
-                }
-            } else if (key === 'Backspace') {
-                charSelectState.name = charSelectState.name.slice(0, -1);
+                promptForName();
             } else if (key === 'Escape') {
+                hideTextInput();
                 setState('TITLE');
-            } else if (key.length === 1 && charSelectState.name.length < 20) {
-                charSelectState.name += key;
             }
         } else if (charSelectState.step === 1) {
             if (key === 'ArrowUp' || key === 'w') charSelectState.worldIndex = Math.max(0, charSelectState.worldIndex - 1);
             else if (key === 'ArrowDown' || key === 's') charSelectState.worldIndex = Math.min(WORLDS.length - 1, charSelectState.worldIndex + 1);
             else if (key === 'Enter' || key === ' ') { charSelectState.step = 2; charSelectState.industryIndex = 0; }
-            else if (key === 'Escape') charSelectState.step = 0;
+            else if (key === 'Escape') { charSelectState.step = 0; promptForName(); }
         } else if (charSelectState.step === 2) {
             const world = WORLDS[charSelectState.worldIndex];
             const industries = INDUSTRIES[world] || ['General'];
@@ -678,15 +739,7 @@ const Game = (function() {
         y += 22 * 5 + 10 + 1 + 16;
 
         if (charSelectState.step === 0) {
-            const btnY = y + 30 + 50;
-            if (mx >= panelX + 20 && mx <= panelX + panelW - 20 && my >= btnY - 10 && my <= btnY + 20) {
-                if (charSelectState.name.trim().length > 0) {
-                    charSelectState.step = 1;
-                    charSelectState.error = '';
-                } else {
-                    charSelectState.error = 'Please enter a name';
-                }
-            }
+            promptForName();
             return;
         } else if (charSelectState.step === 1) {
             y += 30;
@@ -764,14 +817,9 @@ const Game = (function() {
     }
 
     function handleLoginKey(key) {
-        if (key === 'Enter') {
-            loginPlayer(loginState.playerId, loginState.password);
-        } else if (key === 'Escape') {
+        if (key === 'Escape') {
+            hideTextInput();
             setState('TITLE');
-        } else if (key === 'Backspace') {
-            loginState.password = loginState.password.slice(0, -1);
-        } else if (key.length === 1 && loginState.password.length < 32) {
-            loginState.password += key;
         }
     }
 
