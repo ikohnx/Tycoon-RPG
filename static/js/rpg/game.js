@@ -308,33 +308,19 @@ const Game = (function() {
         } catch(e) { charSelectState.error = 'Connection error'; }
     }
 
-    async function loginPlayer(playerId, password) {
+    async function loginPlayer(playerId) {
         try {
             const r = await fetch('/api/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-                body: JSON.stringify({ player_id: playerId, password: password })
+                body: JSON.stringify({ player_id: playerId })
             });
             const d = await r.json();
             if (d.success) {
                 playerData = d.player;
                 setState('WORLD');
             } else {
-                if (d.needs_password) {
-                    loginState.playerId = playerId;
-                    loginState.playerName = allPlayers.find(p => p.player_id === playerId)?.player_name || 'Player';
-                    loginState.password = '';
-                    loginState.error = '';
-                    loginState.active = true;
-                    setState('LOGIN');
-                    showTextInput('Enter password for ' + loginState.playerName + ':', 'Password...', 32, true, '', (val) => {
-                        loginState.password = val;
-                        loginPlayer(loginState.playerId, val);
-                        return null;
-                    });
-                } else {
-                    loginState.error = d.error || 'Login failed';
-                }
+                loginState.error = d.error || 'Login failed';
             }
         } catch(e) { loginState.error = 'Connection error'; }
     }
@@ -544,7 +530,7 @@ const Game = (function() {
             }
             if (key === 'Enter' || key === ' ') {
                 const p = allPlayers[titlePlayerCursor];
-                loginPlayer(p.player_id, null);
+                loginPlayer(p.player_id);
                 return;
             }
             if (key === 'Escape') {
@@ -608,7 +594,7 @@ const Game = (function() {
                 const iy = listY + 14 + (i - titleScrollOffset) * 40;
                 if (my >= iy - 8 && my <= iy + 28 && mx >= panelX && mx <= panelX + panelW) {
                     titlePlayerCursor = i;
-                    loginPlayer(allPlayers[i].player_id, null);
+                    loginPlayer(allPlayers[i].player_id);
                     return;
                 }
             }
