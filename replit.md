@@ -66,31 +66,39 @@ I prefer iterative development, with a focus on delivering functional, well-test
 ```
 
 ### Architecture Patterns
+- **Single-Page Canvas Game**: `templates/game.html` serves as the sole entry point; all gameplay happens on one full-screen HTML5 Canvas page
+- **Game State Machine**: `static/js/rpg/game.js` is the master controller managing states: TITLE, CHAR_SELECT, LOGIN, WORLD, BATTLE, PAUSE_MENU
+- **External Loop Pattern**: game.js owns the game loop; RPGEngine provides `externalUpdate(dt)` and `externalRender()` for WORLD state delegation
+- **JSON API Backend**: All game data flows through `/api/*` endpoints (CSRF, players, create_player, login, stats, scenarios, play, choose, shop, buy)
 - **Flask Blueprints**: Routes split into 7 blueprints (auth, core, scenarios, inventory, social, api, finance)
 - **Mixin Pattern**: GameEngine uses ScenariosMixin, ProgressionMixin, SocialMixin for method organization
 - **Backward Compatibility Shims**: `src/database.py` and `src/game_engine.py` re-export from their respective packages
 - **Request-scoped Engine**: `get_engine()` creates per-request GameEngine instances via Flask's `g` object
-- **IIFE + Namespace Pattern (JS)**: RPGColors, RPGTiles, RPGSprites are window globals consumed by RPGEngine
-- **Template Organization**: 85 templates in 6 feature subdirectories, all extending `core/base.html`
+- **IIFE + Namespace Pattern (JS)**: RPGColors, RPGTiles, RPGSprites, RPGEngine, Game are window globals
 
 ### Key Technical Details
 - **Database**: PostgreSQL with connection pooling (ThreadedConnectionPool, 2-20 connections)
-- **Security**: bcrypt password hashing, CSRF via Flask-WTF, @login_required decorator
+- **Security**: bcrypt password hashing, CSRF via Flask-WTF, JSON API uses X-CSRFToken header
 - **2D Engine**: HTML5 Canvas, 16px tiles at 3x scale (48px), FF-style grid movement (180ms steps)
-- **Sprite System**: 8 archetypes (merchant, scholar, elder, warrior, scout, noble, artisan, mystic), 6 skin tones, 8 hair colors/styles, modular rendering (drawHair, drawFace, drawOutfit, drawAcc, etc.)
+- **Sprite System**: 8 archetypes (merchant, scholar, elder, warrior, scout, noble, artisan, mystic), 6 skin tones, 8 hair colors/styles
+- **Battle System**: Prodigy-style turn-based combat where business scenarios ARE the battles (correct answer = attack, wrong = take damage)
+- **Game Flow**: Title Screen → Character Creation → World Exploration → NPC Interaction → Battle (scenario questions) → Victory/Defeat
 - **url_for references**: Use blueprint prefix (e.g., `url_for('auth.index')`, `url_for('core.hub')`)
 
 ## Recent Changes (Feb 2026)
-- **Major Refactoring**: Split 4 monolithic files (23,000+ lines total) into modular packages:
-  - app.py (3,278→59 lines) → 7 Flask Blueprints in src/routes/
-  - database.py (9,405→1 line shim) → src/db/ package (connection, schema, seed, queries)
-  - game_engine.py (8,125→8 line shim) → src/engine/ package (player, core, scenarios, progression, social, accounting)
-  - engine.js (2,992→754 lines) → 4 JS modules (colors, tiles, sprites, engine)
-- **Template Organization**: 85 templates moved from flat directory into 6 feature subdirectories
-- Modern HD pixel art overhaul (Sea of Stars quality): organic shapes, rich gradients, vegetation detail
+- **Canvas Game Overhaul**: Transformed from multi-page HTML to single-page full-canvas Prodigy-style RPG
+  - Created `templates/game.html` as sole entry point (no base.html dependency)
+  - Created `static/js/rpg/game.js` master state machine (TITLE, CHAR_SELECT, LOGIN, WORLD, BATTLE, PAUSE_MENU)
+  - Added JSON API endpoints: `/api/csrf`, `/api/players`, `/api/create_player`, `/api/login`
+  - RPGEngine extended with `externalUpdate()`, `externalRender()`, `handleKeyDown()`, `handleKeyUp()`
+  - Title screen with animated tile background, FF-style menu panels
+  - Character creation wizard (name → world → industry → career → confirm)
+  - Turn-based battle system with HP bars, particles, damage feedback
+  - Pause menu with Status/Skills/Items/Resume/Save&Quit
+  - `Cache-Control: no-cache` added to HTML responses
+- **Major Refactoring**: Split 4 monolithic files (23,000+ lines total) into modular packages
+- Modern HD pixel art overhaul (Chrono Trigger SNES quality): organic shapes, rich gradients, vegetation detail
 - Character sprite archetype system with diverse appearances
-- In-game overlay system replacing page redirects
-- FF-style pause menu and HUD auto-updates
 
 ## External Dependencies
 - **PostgreSQL:** Relational database for all game data persistence.

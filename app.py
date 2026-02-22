@@ -55,5 +55,14 @@ app.register_blueprint(api_bp)
 app.register_blueprint(finance_bp)
 
 
+@app.after_request
+def add_cache_control(response):
+    if 'text/html' in response.content_type:
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+    return response
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

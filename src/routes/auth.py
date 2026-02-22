@@ -6,6 +6,11 @@ auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/')
 def index():
+    return render_template('game.html')
+
+
+@auth_bp.route('/old')
+def index_old():
     players = get_engine().get_all_players()
     return render_template('auth/index.html', players=players)
 

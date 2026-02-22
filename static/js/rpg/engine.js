@@ -37,31 +37,46 @@ const RPGEngine = (function() {
 
     const C = RPGColors.C;
 
+    let initialized = false;
+    let engineKeyHandler = null;
+    let engineKeyUpHandler = null;
+
     function init(canvasId, options = {}) {
         canvas = document.getElementById(canvasId);
         if (!canvas) return;
         ctx = canvas.getContext('2d');
         ctx.imageSmoothingEnabled = false;
-        resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
-        window.addEventListener('keydown', e => {
-            keys[e.key] = true;
-            if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' ','Enter','w','a','s','d'].includes(e.key)) e.preventDefault();
-            if (choiceActive) {
-                if (e.key === 'ArrowUp' || e.key === 'w') choiceIndex = Math.max(0, choiceIndex - 1);
-                if (e.key === 'ArrowDown' || e.key === 's') choiceIndex = Math.min(choiceOptions.length - 1, choiceIndex + 1);
-                if (e.key === 'Enter' || e.key === ' ') resolveChoice();
-                if (e.key === 'Escape' || e.key === 'b' || e.key === 'B') { choiceIndex = choiceOptions.length - 1; resolveChoice(); }
-                return;
-            }
-            if ((e.key === 'Enter' || e.key === ' ') && dialogueActive) { advanceDialogue(); return; }
-            if ((e.key === 'Enter' || e.key === ' ') && !dialogueActive) { tryInteract(); return; }
-        });
-        window.addEventListener('keyup', e => { keys[e.key] = false; });
+
+        if (!initialized) {
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+        }
+
         if (options.onInteract) interactCallback = options.onInteract;
         if (options.onTransition) transitionCallback = options.onTransition;
         if (options.hudData) hudData = options.hudData;
-        setupTouch();
+
+        if (!options.externalLoop && !initialized) {
+            engineKeyHandler = function(e) {
+                keys[e.key] = true;
+                if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' ','Enter','w','a','s','d'].includes(e.key)) e.preventDefault();
+                if (choiceActive) {
+                    if (e.key === 'ArrowUp' || e.key === 'w') choiceIndex = Math.max(0, choiceIndex - 1);
+                    if (e.key === 'ArrowDown' || e.key === 's') choiceIndex = Math.min(choiceOptions.length - 1, choiceIndex + 1);
+                    if (e.key === 'Enter' || e.key === ' ') resolveChoice();
+                    if (e.key === 'Escape' || e.key === 'b' || e.key === 'B') { choiceIndex = choiceOptions.length - 1; resolveChoice(); }
+                    return;
+                }
+                if ((e.key === 'Enter' || e.key === ' ') && dialogueActive) { advanceDialogue(); return; }
+                if ((e.key === 'Enter' || e.key === ' ') && !dialogueActive) { tryInteract(); return; }
+            };
+            engineKeyUpHandler = function(e) { keys[e.key] = false; };
+            window.addEventListener('keydown', engineKeyHandler);
+            window.addEventListener('keyup', engineKeyUpHandler);
+            setupTouch();
+        }
+
+        initialized = true;
     }
 
     function resizeCanvas() {
@@ -148,6 +163,36 @@ const RPGEngine = (function() {
         render();
         requestAnimationFrame(loop);
     }
+
+    function setKeys(k) { keys = k; }
+    function setOnScreenControls(c) { onScreenControls = c; }
+
+    function externalUpdate(dt, extGt) {
+        if (extGt !== undefined) gt = extGt;
+        if (!canvas || !currentMap) return;
+        update(dt);
+    }
+
+    function externalRender() {
+        if (!canvas || !ctx || !currentMap) return;
+        render();
+    }
+
+    function handleKeyDown(key) {
+        keys[key] = true;
+        if (choiceActive) {
+            if (key === 'ArrowUp' || key === 'w') choiceIndex = Math.max(0, choiceIndex - 1);
+            if (key === 'ArrowDown' || key === 's') choiceIndex = Math.min(choiceOptions.length - 1, choiceIndex + 1);
+            if (key === 'Enter' || key === ' ') resolveChoice();
+            if (key === 'Escape' || key === 'b' || key === 'B') { choiceIndex = choiceOptions.length - 1; resolveChoice(); }
+            return true;
+        }
+        if ((key === 'Enter' || key === ' ') && dialogueActive) { advanceDialogue(); return true; }
+        if ((key === 'Enter' || key === ' ') && !dialogueActive) { tryInteract(); return true; }
+        return false;
+    }
+
+    function handleKeyUp(key) { keys[key] = false; }
 
     function update(dt) {
         if (overlayActive) return;
@@ -750,5 +795,5 @@ const RPGEngine = (function() {
     function setOverlayActive(v) { overlayActive = v; }
     function isOverlayActive() { return overlayActive; }
 
-    return { init, loadMap, start, stop, updateHUD, setPlayerPosition, showDialogue, showChoice, isDialogueActive, isOverlayActive, setOverlayActive, PAL: C, SCALED_TILE: TS };
+    return { init, loadMap, start, stop, externalUpdate, externalRender, setKeys, setOnScreenControls, handleKeyDown, handleKeyUp, updateHUD, setPlayerPosition, showDialogue, showChoice, isDialogueActive, isOverlayActive, setOverlayActive, PAL: C, SCALED_TILE: TS };
 })();

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="BizTycoon">
+    <meta name="theme-color" content="#080840">
+    <title>Business Tycoon RPG</title>
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/icon-96x96.png">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            width: 100vw; height: 100vh; overflow: hidden;
+            background: #000; font-family: 'Press Start 2P', monospace;
+            touch-action: none; user-select: none; -webkit-user-select: none;
+        }
+        #game-canvas {
+            display: block; width: 100vw; height: 100vh;
+            image-rendering: pixelated; image-rendering: crisp-edges;
+        }
+        #dpad {
+            position: fixed; bottom: 30px; left: 24px;
+            width: 150px; height: 150px; z-index: 200; display: none;
+        }
+        .dpad-btn {
+            position: absolute; width: 48px; height: 48px;
+            background: linear-gradient(180deg, #303080 0%, #181850 100%);
+            border: 2px solid #8080c0; border-radius: 4px;
+            color: #c0c0e0; font-size: 18px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; touch-action: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.15);
+        }
+        .dpad-btn:active { background: linear-gradient(180deg, #4040a0 0%, #282870 100%); border-color: #a0a0e0; }
+        #dpad-up { top: 0; left: 51px; }
+        #dpad-down { bottom: 0; left: 51px; }
+        #dpad-left { top: 51px; left: 0; }
+        #dpad-right { top: 51px; right: 0; }
+        .dpad-center { position: absolute; top: 51px; left: 51px; width: 48px; height: 48px; background: #202060; border-radius: 4px; }
+        #action-buttons { position: fixed; bottom: 40px; right: 24px; z-index: 200; display: none; flex-direction: column; align-items: center; }
+        .action-btn {
+            width: 56px; height: 56px;
+            background: linear-gradient(180deg, #303080 0%, #181850 100%);
+            border: 2px solid #8080c0; border-radius: 50%;
+            color: #e0e0f0; font-size: 11px; font-weight: bold;
+            cursor: pointer; touch-action: none; margin: 4px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.15);
+        }
+        .action-btn:active { background: linear-gradient(180deg, #4040a0 0%, #282870 100%); }
+        @media (pointer: coarse), (max-width: 768px) {
+            #dpad, #action-buttons { display: flex; }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="game-canvas" tabindex="0"></canvas>
+
+    <div id="dpad">
+        <div class="dpad-center"></div>
+        <div class="dpad-btn" id="dpad-up">&#9650;</div>
+        <div class="dpad-btn" id="dpad-down">&#9660;</div>
+        <div class="dpad-btn" id="dpad-left">&#9664;</div>
+        <div class="dpad-btn" id="dpad-right">&#9654;</div>
+    </div>
+    <div id="action-buttons">
+        <button class="action-btn" id="btn-action">A</button>
+        <button class="action-btn" id="btn-cancel">B</button>
+    </div>
+
+    <script src="/static/js/rpg/colors.js"></script>
+    <script src="/static/js/rpg/tiles.js"></script>
+    <script src="/static/js/rpg/sprites.js"></script>
+    <script src="/static/js/rpg/engine.js"></script>
+    <script src="/static/js/rpg/maps.js"></script>
+    <script src="/static/js/rpg/game.js"></script>
+    <script>
+        window.addEventListener('load', () => {
+            Game.init('game-canvas');
+        });
+    </script>
+</body>
+</html>
