@@ -209,6 +209,10 @@ const Game = (function() {
         else if (currentState === 'PAUSE_MENU') handlePauseClick(mx, my);
     }
 
+    function dpadToKey(d) {
+        return d === 'up' ? 'ArrowUp' : d === 'down' ? 'ArrowDown' : d === 'left' ? 'ArrowLeft' : 'ArrowRight';
+    }
+
     function setupTouch() {
         ['up','down','left','right'].forEach(d => {
             const b = document.getElementById('dpad-' + d);
@@ -217,6 +221,11 @@ const Game = (function() {
                 if (e) e.preventDefault();
                 onScreenControls[d] = true;
                 b.classList.add('pressed');
+                if (currentState === 'TITLE') handleTitleKey(dpadToKey(d));
+                else if (currentState === 'CHAR_SELECT') handleCharSelectKey(dpadToKey(d));
+                else if (currentState === 'LOGIN') handleLoginKey(dpadToKey(d));
+                else if (currentState === 'PAUSE_MENU') handlePauseKey(dpadToKey(d));
+                else if (currentState === 'BATTLE') handleBattleKey(dpadToKey(d));
             };
             const release = (e) => {
                 if (e) e.preventDefault();
