@@ -99,6 +99,16 @@ I prefer iterative development, with a focus on delivering functional, well-test
 - **Major Refactoring**: Split 4 monolithic files (23,000+ lines total) into modular packages
 - Modern HD pixel art overhaul (Chrono Trigger SNES quality): organic shapes, rich gradients, vegetation detail
 - Character sprite archetype system with diverse appearances
+- **Image-Based Tile System**: Replaced ~900 lines of procedural tile drawing with image-based renderer
+  - 35 tile types total (29 original + 6 new: GRASS2, GRASS3, BRIDGE, COBBLE, STATUE, FENCE)
+  - All tiles loaded as PNG images from `/static/images/tiles/`
+  - Animated overlay effects for water, portal, fountain, lamp, fireplace, waterfall
+  - Fallback colored rectangles if images fail to load
+- **Expanded Maps**: Hub Town 80x65 tiles, Market District 60x50 tiles
+  - Hub Town: winding river with bridges, tree clusters, gardens, lake, central fountain plaza, 16 NPCs
+  - Market District: 4 market areas with stalls, central plaza, buildings, gardens, water features, 8 NPCs
+  - Terrain variation system: grass variants, scattered flowers/rocks, deterministic seeding
+- **No-Password Single Player**: Removed password authentication, players create/load without passwords
 
 ## External Dependencies
 - **PostgreSQL:** Relational database for all game data persistence.
