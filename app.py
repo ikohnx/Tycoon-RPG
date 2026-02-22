@@ -6,6 +6,8 @@ from src.database import init_database, seed_all
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key")
+app.config['SESSION_COOKIE_SAMESITE'] = 'None'
+app.config['SESSION_COOKIE_SECURE'] = True
 csrf = CSRFProtect(app)
 
 

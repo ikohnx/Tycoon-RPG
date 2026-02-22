@@ -81,6 +81,8 @@
     <script>
         window.addEventListener('load', () => {
             Game.init('game-canvas');
+            const c = document.getElementById('game-canvas');
+            if (c) { c.focus(); c.addEventListener('click', () => c.focus()); }
         });
     </script>
 </body>

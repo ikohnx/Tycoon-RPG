@@ -417,7 +417,7 @@ const Game = (function() {
             drawText('No saved games found', panelX + 20, listY + 25, '#6868a0', 9);
         }
 
-        drawText('\u25B2\u25BC Select   ENTER Confirm', cx, h - 30, '#4848a0', 8, 'center');
+        drawText('Click or use \u25B2\u25BC + ENTER', cx, h - 30, '#4848a0', 8, 'center');
     }
 
     function renderTitleBackground() {
@@ -486,19 +486,27 @@ const Game = (function() {
         const cx = canvas.width / 2;
         const panelW = 320;
         const panelX = cx - panelW / 2;
+        const firstPanelY = 185;
+        const secondPanelY = firstPanelY + 60;
 
         if (mx >= panelX && mx <= panelX + panelW) {
-            if (my >= 185 && my <= 235) {
+            if (my >= firstPanelY && my <= firstPanelY + 50) {
                 titleCursor = 0;
                 handleTitleKey('Enter');
-            } else if (my >= 245 && my <= 295) {
-                titleCursor = 1;
+                return;
+            } else if (my >= secondPanelY && my <= secondPanelY + 50) {
+                if (titleCursor !== 1) {
+                    titleCursor = 1;
+                    return;
+                }
             }
         }
 
         if (titleCursor === 1 && allPlayers.length > 0) {
-            const listY = 305;
-            for (let i = 0; i < allPlayers.length; i++) {
+            const listY = secondPanelY + 60;
+            const listH = Math.min(allPlayers.length * 40 + 20, canvas.height - listY - 40);
+            const visibleCount = Math.floor((listH - 20) / 40);
+            for (let i = titleScrollOffset; i < allPlayers.length && i < titleScrollOffset + visibleCount; i++) {
                 const iy = listY + 14 + (i - titleScrollOffset) * 40;
                 if (my >= iy - 8 && my <= iy + 28 && mx >= panelX && mx <= panelX + panelW) {
                     titlePlayerCursor = i;
@@ -546,7 +554,11 @@ const Game = (function() {
             const nameText = charSelectState.name + (Math.floor(charSelectState.cursorBlink / 400) % 2 === 0 ? '_' : '');
             drawText(nameText, panelX + 32, y + 8, '#fff', 12);
             y += 50;
-            drawText('Type your name and press ENTER', panelX + 20, y, '#5050a0', 8);
+            ctx.fillStyle = 'rgba(80,80,160,0.3)';
+            ctx.fillRect(panelX + 20, y - 10, panelW - 40, 30);
+            drawText('\u25B6 NEXT', panelX + 44, y + 5, charSelectState.name.trim().length > 0 ? '#f0d850' : '#5050a0', 11);
+            y += 40;
+            drawText('Type your name, then click NEXT', panelX + 20, y, '#5050a0', 8);
         } else if (charSelectState.step === 1) {
             drawText('Choose your world:', panelX + 20, y, '#c0c0e0', 10);
             y += 30;
@@ -609,7 +621,7 @@ const Game = (function() {
             drawText(charSelectState.error, cx, h - 50, '#e84040', 9, 'center');
         }
 
-        drawText('ESC Back   \u25B2\u25BC Select   ENTER Confirm', cx, h - 20, '#4848a0', 8, 'center');
+        drawText('Click to select   ESC to go back', cx, h - 20, '#4848a0', 8, 'center');
     }
 
     function handleCharSelectKey(key) {
@@ -656,6 +668,69 @@ const Game = (function() {
     }
 
     function handleCharSelectClick(mx, my) {
+        const cx = canvas.width / 2;
+        const h = canvas.height;
+        const panelW = 400;
+        const panelX = cx - panelW / 2;
+        const panelY = 80;
+
+        let y = panelY + 30;
+        y += 22 * 5 + 10 + 1 + 16;
+
+        if (charSelectState.step === 0) {
+            const btnY = y + 30 + 50;
+            if (mx >= panelX + 20 && mx <= panelX + panelW - 20 && my >= btnY - 10 && my <= btnY + 20) {
+                if (charSelectState.name.trim().length > 0) {
+                    charSelectState.step = 1;
+                    charSelectState.error = '';
+                } else {
+                    charSelectState.error = 'Please enter a name';
+                }
+            }
+            return;
+        } else if (charSelectState.step === 1) {
+            y += 30;
+            for (let i = 0; i < WORLDS.length; i++) {
+                if (mx >= panelX + 20 && mx <= panelX + panelW - 20 && my >= y - 10 && my <= y + 20) {
+                    charSelectState.worldIndex = i;
+                    charSelectState.step = 2;
+                    charSelectState.industryIndex = 0;
+                    return;
+                }
+                y += 34;
+            }
+        } else if (charSelectState.step === 2) {
+            const world = WORLDS[charSelectState.worldIndex];
+            const industries = INDUSTRIES[world] || ['General'];
+            y += 30;
+            for (let i = 0; i < industries.length; i++) {
+                if (mx >= panelX + 20 && mx <= panelX + panelW - 20 && my >= y - 10 && my <= y + 20) {
+                    charSelectState.industryIndex = i;
+                    charSelectState.step = 3;
+                    charSelectState.careerIndex = 0;
+                    return;
+                }
+                y += 34;
+            }
+        } else if (charSelectState.step === 3) {
+            y += 30;
+            for (let i = 0; i < CAREERS.length; i++) {
+                if (mx >= panelX + 20 && mx <= panelX + panelW - 20 && my >= y - 10 && my <= y + 20) {
+                    charSelectState.careerIndex = i;
+                    charSelectState.step = 4;
+                    return;
+                }
+                y += 34;
+            }
+        } else if (charSelectState.step === 4) {
+            y += 30 + 24 * 4 + 16;
+            if (mx >= panelX + 20 && mx <= panelX + panelW - 20 && my >= y - 10 && my <= y + 20) {
+                const world = WORLDS[charSelectState.worldIndex];
+                const industry = (INDUSTRIES[world] || ['General'])[charSelectState.industryIndex];
+                const career = CAREERS[charSelectState.careerIndex];
+                createPlayer(charSelectState.name.trim(), 'pass', world, industry, career);
+            }
+        }
     }
 
 
@@ -988,6 +1063,29 @@ const Game = (function() {
         if (!battleState) return;
         if (battleState.phase === 'result') {
             handleBattleKey('Enter');
+            return;
+        }
+        if (battleState.phase === 'question' && battleState.choices.length > 0) {
+            const w = canvas.width;
+            const h = canvas.height;
+            const qBoxH = Math.min(h * 0.45, 300);
+            const qBoxY = h - qBoxH - 10;
+            const qBoxW = w - 20;
+
+            let y = qBoxY + 24;
+            if (battleState.question && battleState.question.scenario_text) {
+                const textLines = Math.ceil(battleState.question.scenario_text.length / Math.floor((qBoxW - 60) / 8));
+                y += textLines * 20 + 30;
+            }
+
+            for (let i = 0; i < battleState.choices.length; i++) {
+                if (mx >= 20 && mx <= 20 + qBoxW - 40 && my >= y - 8 && my <= y + 22) {
+                    battleState.choiceIndex = i;
+                    submitBattleChoice();
+                    return;
+                }
+                y += 30;
+            }
         }
     }
 
