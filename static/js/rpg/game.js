@@ -213,10 +213,29 @@ const Game = (function() {
         ['up','down','left','right'].forEach(d => {
             const b = document.getElementById('dpad-' + d);
             if (!b) return;
-            b.addEventListener('touchstart', e => { e.preventDefault(); onScreenControls[d] = true; });
-            b.addEventListener('touchend', e => { e.preventDefault(); onScreenControls[d] = false; });
-            b.addEventListener('mousedown', () => { onScreenControls[d] = true; });
-            b.addEventListener('mouseup', () => { onScreenControls[d] = false; });
+            const press = (e) => {
+                if (e) e.preventDefault();
+                onScreenControls[d] = true;
+                b.classList.add('pressed');
+            };
+            const release = (e) => {
+                if (e) e.preventDefault();
+                onScreenControls[d] = false;
+                b.classList.remove('pressed');
+            };
+            b.addEventListener('touchstart', press);
+            b.addEventListener('touchend', release);
+            b.addEventListener('touchcancel', release);
+            b.addEventListener('mousedown', press);
+            b.addEventListener('mouseup', release);
+            b.addEventListener('mouseleave', release);
+        });
+        window.addEventListener('mouseup', () => {
+            ['up','down','left','right'].forEach(d => {
+                onScreenControls[d] = false;
+                const b = document.getElementById('dpad-' + d);
+                if (b) b.classList.remove('pressed');
+            });
         });
         const ab = document.getElementById('btn-action');
         if (ab) {

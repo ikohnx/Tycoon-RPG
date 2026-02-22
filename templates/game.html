@@ -25,7 +25,8 @@
         }
         #dpad {
             position: fixed; bottom: 30px; left: 24px;
-            width: 150px; height: 150px; z-index: 200; display: none;
+            width: 150px; height: 150px; z-index: 200; display: flex;
+            opacity: 0.85;
         }
         .dpad-btn {
             position: absolute; width: 48px; height: 48px;
@@ -36,13 +37,13 @@
             cursor: pointer; touch-action: none;
             box-shadow: 0 2px 4px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.15);
         }
-        .dpad-btn:active { background: linear-gradient(180deg, #4040a0 0%, #282870 100%); border-color: #a0a0e0; }
+        .dpad-btn:active, .dpad-btn.pressed { background: linear-gradient(180deg, #4040a0 0%, #282870 100%); border-color: #a0a0e0; }
         #dpad-up { top: 0; left: 51px; }
         #dpad-down { bottom: 0; left: 51px; }
         #dpad-left { top: 51px; left: 0; }
         #dpad-right { top: 51px; right: 0; }
         .dpad-center { position: absolute; top: 51px; left: 51px; width: 48px; height: 48px; background: #202060; border-radius: 4px; }
-        #action-buttons { position: fixed; bottom: 40px; right: 24px; z-index: 200; display: none; flex-direction: column; align-items: center; }
+        #action-buttons { position: fixed; bottom: 40px; right: 24px; z-index: 200; display: flex; flex-direction: column; align-items: center; opacity: 0.85; }
         .action-btn {
             width: 56px; height: 56px;
             background: linear-gradient(180deg, #303080 0%, #181850 100%);
@@ -51,10 +52,7 @@
             cursor: pointer; touch-action: none; margin: 4px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.15);
         }
-        .action-btn:active { background: linear-gradient(180deg, #4040a0 0%, #282870 100%); }
-        @media (pointer: coarse), (max-width: 768px) {
-            #dpad, #action-buttons { display: flex; }
-        }
+        .action-btn:active, .action-btn.pressed { background: linear-gradient(180deg, #4040a0 0%, #282870 100%); }
         #text-input-overlay {
             display: none;
             position: fixed;
