@@ -1010,13 +1010,15 @@ const Game = (function() {
             ctx.globalAlpha = 1;
         }
 
-        const playerSpriteX = w * 0.2;
-        const playerSpriteY = h * 0.35;
-        RPGSprites.drawSprite(ctx, gameTime, 'hero', playerSpriteX, playerSpriteY, 'right', 0, false, undefined, undefined, 48, 32);
+        const battleTS = 96;
+        const battleYOFF = 64;
+        const playerSpriteX = w * 0.18;
+        const playerSpriteY = h * 0.28;
+        RPGSprites.drawSprite(ctx, gameTime, 'hero', playerSpriteX, playerSpriteY, 'right', 0, false, undefined, undefined, battleTS, battleYOFF);
 
-        const enemySpriteX = w * 0.7;
-        const enemySpriteY = h * 0.3;
-        RPGSprites.drawSprite(ctx, gameTime, 'npc', enemySpriteX, enemySpriteY, 'left', 0, false, '#cc4444', (battleState.discipline || '').length, 48, 32);
+        const enemySpriteX = w * 0.68;
+        const enemySpriteY = h * 0.24;
+        RPGSprites.drawSprite(ctx, gameTime, 'npc', enemySpriteX, enemySpriteY, 'left', 0, false, '#cc4444', (battleState.discipline || '').length, battleTS, battleYOFF);
 
         const barW = 200;
         const barH = 16;
