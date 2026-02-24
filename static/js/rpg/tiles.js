@@ -587,6 +587,439 @@ window.RPGTiles = (function() {
         _ctx.fillRect(x + p * 7, y + p * 2, p, p);
     }
 
+    function drawDirtGround(x, y, S, row, col) {
+        const s = seed(row, col);
+        _ctx.fillStyle = '#7a6842';
+        _ctx.fillRect(x, y, S, S);
+        const p = S / 8;
+        for (let i = 0; i < 8; i++)
+            for (let j = 0; j < 8; j++) {
+                const v = seed(row * 8 + i + 300, col * 8 + j + 300);
+                if (v < 0.2) { _ctx.fillStyle = '#6a5832'; _ctx.fillRect(x + j * p, y + i * p, p, p); }
+                else if (v > 0.85) { _ctx.fillStyle = '#8a7852'; _ctx.fillRect(x + j * p, y + i * p, p, p); }
+            }
+        if (s > 0.7) { _ctx.fillStyle = '#5a4828'; _ctx.fillRect(x + p * 3, y + p * 5, p * 2, p); }
+    }
+
+    function drawFactoryWall(x, y, S) {
+        _ctx.fillStyle = '#3a3030';
+        _ctx.fillRect(x, y, S, S);
+        const p = S / 8;
+        _ctx.fillStyle = '#2a2020';
+        for (let i = 0; i < 4; i++) {
+            const off = (i % 2) * 4;
+            for (let j = 0; j < 8; j += 4) {
+                _ctx.strokeStyle = '#1a1818';
+                _ctx.lineWidth = 1;
+                _ctx.strokeRect(x + (j + off) % 8 * p, y + i * p * 2, p * 4, p * 2);
+            }
+        }
+        _ctx.fillStyle = '#484040';
+        _ctx.fillRect(x + p * 2, y + p, p, p);
+        _ctx.fillRect(x + p * 5, y + p * 4, p, p);
+    }
+
+    function drawFactoryRoof(x, y, S) {
+        _ctx.fillStyle = '#484048';
+        _ctx.fillRect(x, y, S, S);
+        const p = S / 8;
+        for (let i = 0; i < 8; i++) {
+            _ctx.fillStyle = i % 2 === 0 ? '#404038' : '#504848';
+            _ctx.fillRect(x, y + i * p, S, p);
+        }
+        _ctx.fillStyle = '#383030';
+        _ctx.fillRect(x, y, p, S);
+        _ctx.fillRect(x + S - p, y, p, S);
+        _ctx.fillStyle = '#585050';
+        _ctx.fillRect(x + p * 3, y + p, p * 2, p);
+    }
+
+    function drawFactoryDoor(x, y, S) {
+        drawFactoryWall(x, y, S);
+        const p = S / 8;
+        _ctx.fillStyle = '#282020';
+        _ctx.fillRect(x + p, y + p, p * 6, p * 7);
+        _ctx.fillStyle = '#201818';
+        _ctx.fillRect(x + p * 2, y + p * 2, p * 4, p * 5);
+        _ctx.fillStyle = '#c8a030';
+        _ctx.fillRect(x + p * 5, y + p * 4, p, p);
+        _ctx.fillStyle = '#383030';
+        _ctx.fillRect(x + p * 3.5, y + p, 1, p * 7);
+    }
+
+    function drawFactoryWindow(x, y, S) {
+        drawFactoryWall(x, y, S);
+        const p = S / 8;
+        _ctx.fillStyle = '#c89030';
+        _ctx.fillRect(x + p, y + p, p * 6, p * 5);
+        _ctx.fillStyle = '#e8b050';
+        _ctx.fillRect(x + p * 2, y + p * 2, p * 2, p);
+        _ctx.fillStyle = '#d8a040';
+        _ctx.fillRect(x + p * 4, y + p * 2, p * 2, p);
+        _ctx.fillStyle = '#282020';
+        _ctx.fillRect(x + p * 3.5, y + p, 1, p * 5);
+        _ctx.fillRect(x + p, y + p * 3, p * 6, 1);
+        _ctx.fillStyle = '#2a2020';
+        _ctx.fillRect(x + p, y + p * 6, p * 6, p);
+    }
+
+    function drawSmokestack(x, y, S, row, col, gt) {
+        drawFactoryRoof(x, y, S);
+        const p = S / 8;
+        const t = (gt || 0) / 1000;
+        _ctx.fillStyle = '#505050';
+        _ctx.fillRect(x + p * 2, y, p * 4, S);
+        _ctx.fillStyle = '#585858';
+        _ctx.fillRect(x + p * 3, y, p * 2, S);
+        _ctx.fillStyle = '#404040';
+        _ctx.fillRect(x + p * 2, y, p * 4, p);
+        _ctx.fillStyle = '#c83020';
+        _ctx.fillRect(x + p * 2, y + p * 3, p * 4, p);
+        for (let i = 0; i < 3; i++) {
+            const sy = -p * (2 + i * 2) - Math.sin(t * 2 + i) * p;
+            const sx = Math.sin(t * 1.5 + i * 2) * p;
+            const a = 0.4 - i * 0.12;
+            _ctx.fillStyle = 'rgba(180,180,180,' + a + ')';
+            _ctx.beginPath();
+            _ctx.arc(x + p * 4 + sx, y + sy, p * (1.5 + i * 0.5), 0, Math.PI * 2);
+            _ctx.fill();
+        }
+    }
+
+    function drawRailH(x, y, S, row, col) {
+        drawDirtGround(x, y, S, row, col);
+        const p = S / 8;
+        _ctx.fillStyle = '#484048';
+        _ctx.fillRect(x, y + p * 2, S, p);
+        _ctx.fillRect(x, y + p * 5, S, p);
+        _ctx.fillStyle = '#606060';
+        _ctx.fillRect(x, y + p * 2, S, 1);
+        _ctx.fillRect(x, y + p * 6 - 1, S, 1);
+        _ctx.fillStyle = '#604828';
+        for (let j = 0; j < 8; j += 2) {
+            _ctx.fillRect(x + j * p + p * 0.3, y + p, p * 0.4, p * 6);
+        }
+    }
+
+    function drawRailV(x, y, S, row, col) {
+        drawDirtGround(x, y, S, row, col);
+        const p = S / 8;
+        _ctx.fillStyle = '#484048';
+        _ctx.fillRect(x + p * 2, y, p, S);
+        _ctx.fillRect(x + p * 5, y, p, S);
+        _ctx.fillStyle = '#606060';
+        _ctx.fillRect(x + p * 2, y, 1, S);
+        _ctx.fillRect(x + p * 6 - 1, y, 1, S);
+        _ctx.fillStyle = '#604828';
+        for (let i = 0; i < 8; i += 2) {
+            _ctx.fillRect(x + p, y + i * p + p * 0.3, p * 6, p * 0.4);
+        }
+    }
+
+    function drawRailCross(x, y, S, row, col) {
+        drawDirtGround(x, y, S, row, col);
+        const p = S / 8;
+        _ctx.fillStyle = '#604828';
+        for (let j = 0; j < 8; j += 2) _ctx.fillRect(x + j * p + p * 0.3, y + p, p * 0.4, p * 6);
+        for (let i = 0; i < 8; i += 2) _ctx.fillRect(x + p, y + i * p + p * 0.3, p * 6, p * 0.4);
+        _ctx.fillStyle = '#484048';
+        _ctx.fillRect(x, y + p * 2, S, p);
+        _ctx.fillRect(x, y + p * 5, S, p);
+        _ctx.fillRect(x + p * 2, y, p, S);
+        _ctx.fillRect(x + p * 5, y, p, S);
+    }
+
+    function drawDock(x, y, S) {
+        _ctx.fillStyle = '#1858a0';
+        _ctx.fillRect(x, y, S, S);
+        const p = S / 8;
+        _ctx.fillStyle = '#705028';
+        _ctx.fillRect(x, y, S, p * 6);
+        _ctx.fillStyle = '#806030';
+        for (let j = 0; j < 8; j += 2) _ctx.fillRect(x + j * p, y, p * 2, p * 6);
+        _ctx.fillStyle = '#604018';
+        for (let j = 1; j < 8; j += 2) _ctx.fillRect(x + j * p, y + p, 1, p * 4);
+        _ctx.fillStyle = '#504020';
+        _ctx.fillRect(x, y + p * 5, S, p);
+    }
+
+    function drawPineTree(x, y, S, row, col) {
+        const p = S / 8;
+        const s = seed(row, col);
+        _ctx.fillStyle = '#1a3a1a';
+        _ctx.fillRect(x, y, S, S);
+        _ctx.fillStyle = '#483020';
+        _ctx.fillRect(x + p * 3, y + p * 5, p * 2, p * 3);
+        _ctx.fillStyle = '#1a4a1a';
+        _ctx.beginPath();
+        _ctx.moveTo(x + S / 2, y + p);
+        _ctx.lineTo(x + p * 7, y + p * 5);
+        _ctx.lineTo(x + p, y + p * 5);
+        _ctx.closePath();
+        _ctx.fill();
+        _ctx.fillStyle = '#1a5818';
+        _ctx.beginPath();
+        _ctx.moveTo(x + S / 2, y + p * 2);
+        _ctx.lineTo(x + p * 6.5, y + p * 6);
+        _ctx.lineTo(x + p * 1.5, y + p * 6);
+        _ctx.closePath();
+        _ctx.fill();
+        if (s > 0.5) {
+            _ctx.fillStyle = '#205820';
+            _ctx.fillRect(x + p * 2, y + p * 4, p, p);
+        }
+        _ctx.fillStyle = '#0a2a0a';
+        _ctx.fillRect(x + p * 5, y + p * 5, p * 2, p * 2);
+        _ctx.fillRect(x + p, y + p * 6, p * 2, p);
+    }
+
+    function drawMountain(x, y, S, row, col) {
+        _ctx.fillStyle = '#505860';
+        _ctx.fillRect(x, y, S, S);
+        const p = S / 8;
+        _ctx.fillStyle = '#404850';
+        _ctx.beginPath();
+        _ctx.moveTo(x + S / 2, y);
+        _ctx.lineTo(x + S, y + S);
+        _ctx.lineTo(x, y + S);
+        _ctx.closePath();
+        _ctx.fill();
+        _ctx.fillStyle = '#606870';
+        _ctx.beginPath();
+        _ctx.moveTo(x + S / 2, y);
+        _ctx.lineTo(x + S * 0.65, y + S * 0.4);
+        _ctx.lineTo(x + S * 0.35, y + S * 0.4);
+        _ctx.closePath();
+        _ctx.fill();
+        _ctx.fillStyle = '#e0e8f0';
+        _ctx.beginPath();
+        _ctx.moveTo(x + S / 2, y);
+        _ctx.lineTo(x + S * 0.58, y + p * 2);
+        _ctx.lineTo(x + S * 0.42, y + p * 2);
+        _ctx.closePath();
+        _ctx.fill();
+        _ctx.fillStyle = '#384048';
+        _ctx.fillRect(x + p * 2, y + p * 5, p, p);
+        _ctx.fillRect(x + p * 5, y + p * 6, p, p);
+    }
+
+    function drawMountainBase(x, y, S, row, col) {
+        _ctx.fillStyle = '#485050';
+        _ctx.fillRect(x, y, S, S);
+        const p = S / 8;
+        _ctx.fillStyle = '#404848';
+        for (let i = 0; i < 8; i++)
+            for (let j = 0; j < 8; j++) {
+                const v = seed(row * 8 + i + 400, col * 8 + j + 400);
+                if (v < 0.2) { _ctx.fillStyle = '#384040'; _ctx.fillRect(x + j * p, y + i * p, p, p); }
+                else if (v > 0.8) { _ctx.fillStyle = '#586060'; _ctx.fillRect(x + j * p, y + i * p, p, p); }
+            }
+        _ctx.fillStyle = '#354040';
+        _ctx.fillRect(x + p * 2, y + p * 3, p * 3, p);
+    }
+
+    function drawGear(x, y, S, row, col, gt) {
+        drawFactoryWall(x, y, S);
+        const p = S / 8;
+        const t = (gt || 0) / 1000;
+        const cx = x + S / 2, cy = y + S / 2;
+        const r = S * 0.32;
+        _ctx.save();
+        _ctx.translate(cx, cy);
+        _ctx.rotate(t * 0.5);
+        _ctx.fillStyle = '#c89030';
+        for (let i = 0; i < 8; i++) {
+            const a = (i / 8) * Math.PI * 2;
+            _ctx.fillRect(-p * 0.4, -r - p, p * 0.8, p);
+            _ctx.save();
+            _ctx.rotate(a);
+            _ctx.fillRect(-p * 0.4, -r - p, p * 0.8, p);
+            _ctx.restore();
+        }
+        _ctx.beginPath();
+        _ctx.arc(0, 0, r, 0, Math.PI * 2);
+        _ctx.fillStyle = '#b08020';
+        _ctx.fill();
+        _ctx.beginPath();
+        _ctx.arc(0, 0, r * 0.5, 0, Math.PI * 2);
+        _ctx.fillStyle = '#3a3030';
+        _ctx.fill();
+        _ctx.beginPath();
+        _ctx.arc(0, 0, r * 0.2, 0, Math.PI * 2);
+        _ctx.fillStyle = '#c89030';
+        _ctx.fill();
+        _ctx.restore();
+    }
+
+    function drawCoalPile(x, y, S, row, col) {
+        drawDirtGround(x, y, S, row, col);
+        const p = S / 8;
+        _ctx.fillStyle = '#181818';
+        _ctx.beginPath();
+        _ctx.arc(x + S / 2, y + S * 0.55, S * 0.35, 0, Math.PI * 2);
+        _ctx.fill();
+        _ctx.fillStyle = '#282828';
+        _ctx.beginPath();
+        _ctx.arc(x + S * 0.45, y + S * 0.5, S * 0.2, 0, Math.PI * 2);
+        _ctx.fill();
+        _ctx.fillStyle = '#101010';
+        _ctx.fillRect(x + p * 4, y + p * 5, p * 2, p);
+        _ctx.fillStyle = '#383838';
+        _ctx.fillRect(x + p * 2, y + p * 3, p, p);
+    }
+
+    function drawIronFence(x, y, S, row, col) {
+        drawDirtGround(x, y, S, row, col);
+        const p = S / 8;
+        _ctx.fillStyle = '#303030';
+        _ctx.fillRect(x, y + p * 3, S, p * 0.5);
+        _ctx.fillRect(x, y + p * 5, S, p * 0.5);
+        for (let j = 1; j < 8; j += 2) {
+            _ctx.fillStyle = '#383838';
+            _ctx.fillRect(x + j * p, y + p * 2, p * 0.6, p * 5);
+            _ctx.fillStyle = '#404040';
+            _ctx.fillRect(x + j * p, y + p * 2, p * 0.6, p * 0.6);
+        }
+    }
+
+    function drawIndustrialLamp(x, y, S, row, col, gt) {
+        drawDirtGround(x, y, S, row, col);
+        const p = S / 8;
+        const t = (gt || 0) / 1000;
+        _ctx.fillStyle = '#303030';
+        _ctx.fillRect(x + p * 3, y + p * 3, p * 2, p * 5);
+        _ctx.fillStyle = '#383838';
+        _ctx.fillRect(x + p * 2, y + p * 7, p * 4, p);
+        _ctx.fillStyle = '#282828';
+        _ctx.fillRect(x + p * 2, y + p * 2, p * 4, p * 2);
+        const flicker = Math.sin(t * 8 + col) * 0.15 + 0.85;
+        _ctx.fillStyle = 'rgba(255,180,50,' + (0.7 * flicker) + ')';
+        _ctx.beginPath();
+        _ctx.arc(x + p * 4, y + p * 2, p * 1.5, 0, Math.PI * 2);
+        _ctx.fill();
+        _ctx.fillStyle = 'rgba(255,220,100,' + (0.5 * flicker) + ')';
+        _ctx.beginPath();
+        _ctx.arc(x + p * 4, y + p * 2, p, 0, Math.PI * 2);
+        _ctx.fill();
+    }
+
+    function drawWarehouse(x, y, S) {
+        _ctx.fillStyle = '#4a3828';
+        _ctx.fillRect(x, y, S, S);
+        const p = S / 8;
+        _ctx.fillStyle = '#3a2818';
+        for (let i = 0; i < 8; i++) {
+            _ctx.fillStyle = i % 2 === 0 ? '#3a2818' : '#4a3828';
+            _ctx.fillRect(x, y + i * p, S, p);
+        }
+        _ctx.fillStyle = '#302010';
+        _ctx.fillRect(x + p * 3, y + p, 1, p * 6);
+        _ctx.fillRect(x + p * 6, y + p, 1, p * 6);
+        _ctx.fillStyle = '#c8a030';
+        _ctx.fillRect(x + p * 2, y + p * 3, p, p);
+        _ctx.fillRect(x + p * 5, y + p * 5, p, p);
+    }
+
+    function drawSteamPipe(x, y, S, row, col) {
+        drawFactoryWall(x, y, S);
+        const p = S / 8;
+        _ctx.fillStyle = '#606868';
+        _ctx.fillRect(x, y + p * 2, S, p * 2);
+        _ctx.fillStyle = '#707878';
+        _ctx.fillRect(x, y + p * 2, S, p * 0.5);
+        _ctx.fillStyle = '#505858';
+        _ctx.fillRect(x, y + p * 4 - p * 0.5, S, p * 0.5);
+        _ctx.fillStyle = '#808888';
+        for (let j = 2; j < 8; j += 3) {
+            _ctx.fillRect(x + j * p, y + p * 1.5, p, p * 3);
+        }
+    }
+
+    function drawAnvil(x, y, S, row, col) {
+        drawDirtGround(x, y, S, row, col);
+        const p = S / 8;
+        _ctx.fillStyle = '#404040';
+        _ctx.fillRect(x + p * 2, y + p * 5, p * 4, p * 2);
+        _ctx.fillStyle = '#505050';
+        _ctx.fillRect(x + p * 1, y + p * 3, p * 6, p * 2);
+        _ctx.fillStyle = '#585858';
+        _ctx.fillRect(x + p * 1, y + p * 3, p * 6, p);
+        _ctx.fillStyle = '#606060';
+        _ctx.fillRect(x + p * 0, y + p * 3, p * 2, p);
+        _ctx.fillRect(x + p * 5, y + p * 3, p * 3, p);
+        _ctx.fillStyle = '#383838';
+        _ctx.fillRect(x + p * 3, y + p * 6, p * 2, p);
+    }
+
+    function drawBarrel(x, y, S, row, col) {
+        drawDirtGround(x, y, S, row, col);
+        const p = S / 8;
+        _ctx.fillStyle = '#604020';
+        _ctx.beginPath();
+        _ctx.ellipse(x + S / 2, y + S / 2, p * 2.5, p * 3, 0, 0, Math.PI * 2);
+        _ctx.fill();
+        _ctx.fillStyle = '#503018';
+        _ctx.fillRect(x + p * 2, y + p * 2, p * 4, p * 4);
+        _ctx.fillStyle = '#808080';
+        _ctx.fillRect(x + p * 2, y + p * 2.5, p * 4, p * 0.4);
+        _ctx.fillRect(x + p * 2, y + p * 5, p * 4, p * 0.4);
+        _ctx.fillStyle = '#705028';
+        _ctx.fillRect(x + p * 3, y + p * 3, p * 2, p * 2);
+    }
+
+    function drawCrane(x, y, S, row, col) {
+        drawDirtGround(x, y, S, row, col);
+        const p = S / 8;
+        _ctx.fillStyle = '#505050';
+        _ctx.fillRect(x + p * 3, y + p * 2, p * 2, p * 6);
+        _ctx.fillStyle = '#606060';
+        _ctx.fillRect(x + p * 2, y + p * 7, p * 4, p);
+        _ctx.fillStyle = '#585858';
+        _ctx.fillRect(x + p, y + p, p * 6, p);
+        _ctx.fillRect(x + p, y + p, p, p * 2);
+        _ctx.fillStyle = '#c89030';
+        _ctx.fillRect(x + p, y + p * 3, p * 0.5, p * 4);
+        _ctx.fillStyle = '#b08020';
+        _ctx.fillRect(x + p * 0.5, y + p * 6, p * 1.5, p);
+    }
+
+    function drawRailCurveNE(x, y, S, row, col) {
+        drawDirtGround(x, y, S, row, col);
+        const p = S / 8;
+        _ctx.fillStyle = '#604828';
+        for (let i = 0; i < 6; i++) {
+            const angle = (i / 5) * Math.PI / 2;
+            const cx = x + Math.cos(angle) * p * 3 + p * 4;
+            const cy = y + S - Math.sin(angle) * p * 3 - p * 4;
+            _ctx.fillRect(cx - p * 0.2, cy - p * 0.2, p * 0.4, p * 0.4);
+        }
+        _ctx.fillStyle = '#484048';
+        _ctx.beginPath();
+        _ctx.arc(x, y + S, p * 6, -Math.PI / 2, 0);
+        _ctx.lineWidth = p;
+        _ctx.strokeStyle = '#484048';
+        _ctx.stroke();
+        _ctx.beginPath();
+        _ctx.arc(x, y + S, p * 3, -Math.PI / 2, 0);
+        _ctx.stroke();
+    }
+
+    function drawRailCurveSE(x, y, S, row, col) {
+        drawDirtGround(x, y, S, row, col);
+        const p = S / 8;
+        _ctx.fillStyle = '#484048';
+        _ctx.beginPath();
+        _ctx.arc(x, y, p * 6, 0, Math.PI / 2);
+        _ctx.lineWidth = p;
+        _ctx.strokeStyle = '#484048';
+        _ctx.stroke();
+        _ctx.beginPath();
+        _ctx.arc(x, y, p * 3, 0, Math.PI / 2);
+        _ctx.stroke();
+    }
+
+    const ANIMATED_IND = {41: true, 47: true, 52: true};
+
     const DRAW_FN = {
         1: drawGrass, 2: drawPath, 3: drawWater, 4: drawWall,
         5: drawWallTop, 6: drawRoof, 7: drawDoor, 8: drawWindow,
@@ -596,7 +1029,15 @@ window.RPGTiles = (function() {
         21: drawBench, 22: drawWell, 23: drawCrates, 24: drawFireplace,
         25: drawBookshelf, 26: drawCliff, 27: drawCliffTop, 28: drawWaterfall,
         29: drawRock, 30: drawGrass2, 31: drawGrass3, 32: drawBridge,
-        33: drawCobble, 34: drawStatue, 35: drawFence
+        33: drawCobble, 34: drawStatue, 35: drawFence,
+        36: drawDirtGround, 37: drawFactoryWall, 38: drawFactoryRoof,
+        39: drawFactoryDoor, 40: drawFactoryWindow, 41: drawSmokestack,
+        42: drawRailH, 43: drawRailV, 44: drawRailCross,
+        45: drawDock, 46: drawPineTree, 47: drawMountain,
+        48: drawMountainBase, 49: drawGear, 50: drawCoalPile,
+        51: drawIronFence, 52: drawIndustrialLamp, 53: drawWarehouse,
+        54: drawSteamPipe, 55: drawAnvil, 56: drawBarrel,
+        57: drawCrane, 58: drawRailCurveNE, 59: drawRailCurveSE
     };
 
     function drawTile(ctx, C, id, x, y, row, col, gt, TS) {

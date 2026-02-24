@@ -10,13 +10,25 @@ const RPGMaps = (function() {
         FIREPLACE: 24, BOOKSHELF: 25,
         CLIFF: 26, CLIFF_TOP: 27, WATERFALL: 28, ROCK: 29,
         GRASS2: 30, GRASS3: 31, BRIDGE: 32,
-        COBBLE: 33, STATUE: 34, FENCE: 35
+        COBBLE: 33, STATUE: 34, FENCE: 35,
+        DIRT: 36, FACTORY_WALL: 37, FACTORY_ROOF: 38,
+        FACTORY_DOOR: 39, FACTORY_WINDOW: 40, SMOKESTACK: 41,
+        RAIL_H: 42, RAIL_V: 43, RAIL_CROSS: 44,
+        DOCK: 45, PINE_TREE: 46, MOUNTAIN: 47,
+        MOUNTAIN_BASE: 48, GEAR: 49, COAL_PILE: 50,
+        IRON_FENCE: 51, IND_LAMP: 52, WAREHOUSE: 53,
+        STEAM_PIPE: 54, ANVIL: 55, BARREL: 56,
+        CRANE: 57, RAIL_CURVE_NE: 58, RAIL_CURVE_SE: 59
     };
 
     const SOLID = [T.TREE, T.WALL, T.WALL_TOP, T.ROOF, T.WINDOW, T.WATER, T.HEDGE,
         T.CHEST, T.SIGN, T.FOUNTAIN, T.STALL, T.WELL, T.LAMP, T.BENCH, T.CRATES,
         T.FIREPLACE, T.BOOKSHELF, T.CLIFF, T.CLIFF_TOP, T.WATERFALL, T.ROCK,
-        T.STATUE, T.FENCE];
+        T.STATUE, T.FENCE,
+        T.FACTORY_WALL, T.FACTORY_ROOF, T.FACTORY_WINDOW, T.SMOKESTACK,
+        T.PINE_TREE, T.MOUNTAIN, T.MOUNTAIN_BASE, T.GEAR, T.COAL_PILE,
+        T.IRON_FENCE, T.IND_LAMP, T.WAREHOUSE, T.STEAM_PIPE, T.ANVIL,
+        T.BARREL, T.CRANE];
 
     function fill(tiles, r1, c1, r2, c2, t) {
         for (let r = r1; r <= r2; r++)
@@ -529,10 +541,332 @@ const RPGMaps = (function() {
         };
     }
 
+    function placeFactory(tiles, sr, sc, w, h, hasSmoke) {
+        for (let c = sc; c < sc + w; c++) {
+            tiles[sr][c] = T.FACTORY_ROOF;
+            tiles[sr + 1][c] = T.FACTORY_ROOF;
+        }
+        if (hasSmoke) {
+            tiles[sr][sc + Math.floor(w / 2)] = T.SMOKESTACK;
+            if (w >= 7) tiles[sr][sc + w - 2] = T.SMOKESTACK;
+        }
+        for (let r = sr + 2; r < sr + h; r++)
+            for (let c = sc; c < sc + w; c++) tiles[r][c] = T.FACTORY_WALL;
+        const dc = sc + Math.floor(w / 2);
+        tiles[sr + h - 1][dc] = T.FACTORY_DOOR;
+        if (w >= 5) {
+            tiles[sr + 2][sc + 1] = T.FACTORY_WINDOW;
+            tiles[sr + 2][sc + w - 2] = T.FACTORY_WINDOW;
+        }
+        if (w >= 7) {
+            tiles[sr + 3][sc + 1] = T.FACTORY_WINDOW;
+            tiles[sr + 3][sc + w - 2] = T.FACTORY_WINDOW;
+        }
+    }
+
+    function placeRailH(tiles, r, c1, c2) {
+        for (let c = c1; c <= c2; c++) tiles[r][c] = T.RAIL_H;
+    }
+
+    function placeRailV(tiles, c, r1, r2) {
+        for (let r = r1; r <= r2; r++) tiles[r][c] = T.RAIL_V;
+    }
+
+    function scatterIndustrial(tiles, r1, c1, r2, c2, t, chance) {
+        for (let r = r1; r <= r2; r++)
+            for (let c = c1; c <= c2; c++)
+                if (tiles[r][c] === T.DIRT && Math.random() < chance) tiles[r][c] = t;
+    }
+
+    function createIronBasin() {
+        const W = 80;
+        const H = 70;
+        const tiles = [];
+        for (let r = 0; r < H; r++) {
+            tiles[r] = [];
+            for (let c = 0; c < W; c++) tiles[r][c] = T.DIRT;
+        }
+
+        for (let c = 0; c < W; c++) { tiles[0][c] = T.MOUNTAIN; tiles[1][c] = T.MOUNTAIN; tiles[2][c] = T.MOUNTAIN_BASE; }
+        for (let c = 0; c < W; c++) { tiles[3][c] = T.MOUNTAIN_BASE; }
+        for (let c = 0; c < 8; c++) { tiles[3][c] = T.MOUNTAIN; tiles[4][c] = T.MOUNTAIN_BASE; }
+        for (let c = W - 8; c < W; c++) { tiles[3][c] = T.MOUNTAIN; tiles[4][c] = T.MOUNTAIN_BASE; }
+        for (let r = 0; r < 6; r++) { tiles[r][0] = T.MOUNTAIN; tiles[r][1] = T.MOUNTAIN; }
+        for (let r = 0; r < 6; r++) { tiles[r][W-1] = T.MOUNTAIN; tiles[r][W-2] = T.MOUNTAIN; }
+
+        for (let r = 4; r < 12; r++) { tiles[r][0] = T.PINE_TREE; tiles[r][1] = T.PINE_TREE; tiles[r][2] = T.PINE_TREE; }
+        for (let r = 4; r < 12; r++) { tiles[r][W-1] = T.PINE_TREE; tiles[r][W-2] = T.PINE_TREE; tiles[r][W-3] = T.PINE_TREE; }
+        for (let r = 12; r < 25; r++) { tiles[r][0] = T.PINE_TREE; tiles[r][1] = T.PINE_TREE; }
+        for (let r = 12; r < 25; r++) { tiles[r][W-1] = T.PINE_TREE; tiles[r][W-2] = T.PINE_TREE; }
+
+        placeTreeCluster(tiles, 5, 3, 4, 6);
+        placeTreeCluster(tiles, 5, W - 7, 4, 6);
+        placeTreeCluster(tiles, 14, 3, 3, 4);
+        placeTreeCluster(tiles, 14, W - 6, 3, 4);
+        for (let r = 5; r < 12; r++)
+            for (let c = 3; c < 8; c++)
+                if (tiles[r][c] === T.DIRT && Math.random() < 0.3) tiles[r][c] = T.PINE_TREE;
+        for (let r = 5; r < 12; r++)
+            for (let c = W - 8; c < W - 3; c++)
+                if (tiles[r][c] === T.DIRT && Math.random() < 0.3) tiles[r][c] = T.PINE_TREE;
+
+        for (let c = 0; c < W; c++) {
+            for (let r = H - 6; r < H; r++) tiles[r][c] = T.WATER;
+        }
+        for (let c = 15; c < 65; c++) tiles[H - 7][c] = T.WATER;
+        fill(tiles, H - 8, 10, H - 7, 14, T.DOCK);
+        fill(tiles, H - 8, 20, H - 7, 30, T.DOCK);
+        fill(tiles, H - 8, 35, H - 7, 45, T.DOCK);
+        fill(tiles, H - 8, 50, H - 7, 60, T.DOCK);
+        fill(tiles, H - 8, 65, H - 7, 70, T.DOCK);
+
+        tiles[H - 9][12] = T.CRANE;
+        tiles[H - 9][25] = T.CRANE;
+        tiles[H - 9][40] = T.CRANE;
+        tiles[H - 9][55] = T.CRANE;
+        tiles[H - 9][68] = T.CRANE;
+
+        fill(tiles, H - 12, 8, H - 9, 13, T.COBBLE);
+        fill(tiles, H - 12, 18, H - 9, 32, T.COBBLE);
+        fill(tiles, H - 12, 48, H - 9, 62, T.COBBLE);
+        fill(tiles, H - 12, 67, H - 9, 72, T.COBBLE);
+
+        placeBuilding(tiles, H - 14, 8, 6, 4);
+        placeBuilding(tiles, H - 14, 18, 7, 4, true);
+        placeBuilding(tiles, H - 14, 28, 5, 4);
+        placeBuilding(tiles, H - 14, 48, 7, 4, true);
+        placeBuilding(tiles, H - 14, 58, 6, 4);
+        placeBuilding(tiles, H - 14, 67, 6, 4);
+
+        placeFactory(tiles, 6, 12, 8, 5, true);
+        placeFactory(tiles, 6, 30, 7, 5, true);
+        placeFactory(tiles, 6, 45, 9, 5, true);
+        placeFactory(tiles, 6, 62, 7, 5, true);
+
+        placeFactory(tiles, 14, 20, 6, 4, false);
+        placeFactory(tiles, 14, 42, 8, 5, true);
+
+        placeFactory(tiles, 24, 8, 7, 5, true);
+        placeFactory(tiles, 24, 20, 9, 6, true);
+        placeFactory(tiles, 24, 44, 8, 5, true);
+        placeFactory(tiles, 24, 63, 7, 5, true);
+
+        placeFactory(tiles, 32, 18, 6, 4, false);
+        placeFactory(tiles, 32, 42, 7, 4, true);
+        placeFactory(tiles, 32, 63, 6, 4, false);
+
+        placeFactory(tiles, 40, 8, 8, 5, true);
+        placeFactory(tiles, 40, 20, 7, 4, false);
+        placeFactory(tiles, 40, 44, 9, 5, true);
+        placeFactory(tiles, 40, 63, 7, 5, true);
+
+        placeFactory(tiles, 47, 18, 7, 5, true);
+        placeFactory(tiles, 47, 44, 6, 4, false);
+        placeFactory(tiles, 47, 63, 7, 5, true);
+
+        hPath(tiles, 20, 8, 72, 3);
+        hPath(tiles, 35, 8, 72, 3);
+        hPath(tiles, 50, 8, 72, 3);
+        vPath(tiles, 15, 6, 55, 3);
+        vPath(tiles, 38, 6, 55, 3);
+        vPath(tiles, 60, 6, 55, 3);
+
+        placeRailH(tiles, 12, 8, 72);
+        placeRailH(tiles, 13, 8, 72);
+        placeRailH(tiles, 31, 10, 70);
+        placeRailH(tiles, 46, 10, 70);
+
+        placeRailV(tiles, 25, 13, 46);
+        placeRailV(tiles, 55, 13, 46);
+
+        tiles[13][25] = T.RAIL_CROSS; tiles[12][25] = T.RAIL_CROSS;
+        tiles[13][55] = T.RAIL_CROSS; tiles[12][55] = T.RAIL_CROSS;
+        tiles[31][25] = T.RAIL_CROSS; tiles[31][55] = T.RAIL_CROSS;
+        tiles[46][25] = T.RAIL_CROSS; tiles[46][55] = T.RAIL_CROSS;
+
+        fill(tiles, 25, 33, 30, 44, T.COBBLE);
+        fill(tiles, 26, 34, 29, 43, T.STONE_FLOOR);
+        tiles[27][38] = T.FOUNTAIN; tiles[27][39] = T.FOUNTAIN;
+        tiles[28][38] = T.FOUNTAIN; tiles[28][39] = T.FOUNTAIN;
+        tiles[26][34] = T.IND_LAMP; tiles[26][43] = T.IND_LAMP;
+        tiles[29][34] = T.IND_LAMP; tiles[29][43] = T.IND_LAMP;
+        tiles[26][36] = T.BENCH; tiles[26][41] = T.BENCH;
+        tiles[29][36] = T.BENCH; tiles[29][41] = T.BENCH;
+
+        tiles[14][15] = T.COAL_PILE; tiles[14][17] = T.COAL_PILE;
+        tiles[14][63] = T.COAL_PILE; tiles[14][65] = T.COAL_PILE;
+        tiles[31][10] = T.COAL_PILE; tiles[31][12] = T.COAL_PILE;
+        tiles[31][68] = T.COAL_PILE; tiles[31][70] = T.COAL_PILE;
+        tiles[46][10] = T.COAL_PILE; tiles[46][12] = T.COAL_PILE;
+
+        tiles[22][10] = T.BARREL; tiles[22][12] = T.BARREL;
+        tiles[22][68] = T.BARREL; tiles[22][70] = T.BARREL;
+        tiles[37][15] = T.BARREL; tiles[37][17] = T.BARREL;
+        tiles[37][63] = T.BARREL; tiles[37][65] = T.BARREL;
+
+        tiles[22][30] = T.ANVIL; tiles[22][50] = T.ANVIL;
+        tiles[37][30] = T.ANVIL; tiles[37][50] = T.ANVIL;
+
+        tiles[7][20] = T.GEAR; tiles[7][40] = T.GEAR; tiles[7][60] = T.GEAR;
+        tiles[25][15] = T.GEAR; tiles[25][65] = T.GEAR;
+        tiles[40][20] = T.GEAR; tiles[40][60] = T.GEAR;
+
+        for (let c = 8; c <= 13; c++) tiles[18][c] = T.IRON_FENCE;
+        for (let c = 67; c <= 72; c++) tiles[18][c] = T.IRON_FENCE;
+        for (let c = 8; c <= 13; c++) tiles[44][c] = T.IRON_FENCE;
+        for (let c = 67; c <= 72; c++) tiles[44][c] = T.IRON_FENCE;
+
+        tiles[12][15] = T.IND_LAMP; tiles[12][38] = T.IND_LAMP; tiles[12][60] = T.IND_LAMP;
+        tiles[23][15] = T.IND_LAMP; tiles[23][65] = T.IND_LAMP;
+        tiles[38][15] = T.IND_LAMP; tiles[38][38] = T.IND_LAMP; tiles[38][65] = T.IND_LAMP;
+        tiles[53][15] = T.IND_LAMP; tiles[53][38] = T.IND_LAMP; tiles[53][65] = T.IND_LAMP;
+
+        tiles[H - 10][15] = T.IND_LAMP; tiles[H - 10][25] = T.IND_LAMP;
+        tiles[H - 10][40] = T.IND_LAMP; tiles[H - 10][55] = T.IND_LAMP;
+        tiles[H - 10][68] = T.IND_LAMP;
+
+        tiles[H - 11][20] = T.CRATES; tiles[H - 11][22] = T.CRATES;
+        tiles[H - 11][50] = T.CRATES; tiles[H - 11][52] = T.CRATES;
+        tiles[H - 11][58] = T.CRATES; tiles[H - 11][60] = T.CRATES;
+
+        tiles[H - 11][35] = T.BARREL; tiles[H - 11][37] = T.BARREL;
+        tiles[H - 11][42] = T.BARREL; tiles[H - 11][44] = T.BARREL;
+
+        tiles[3][39] = T.DIRT; tiles[3][40] = T.DIRT;
+        tiles[2][39] = T.MOUNTAIN_BASE; tiles[2][40] = T.MOUNTAIN_BASE;
+
+        tiles[H - 7][39] = T.PORTAL; tiles[H - 7][40] = T.PORTAL;
+
+        tiles[12][39] = T.SIGN; tiles[12][40] = T.SIGN;
+        tiles[H - 9][30] = T.SIGN; tiles[H - 9][50] = T.SIGN;
+
+        const collision = makeCollision(tiles, W, H);
+
+        const npcs = [
+            {
+                x: 39, y: 27, name: 'Factory Foreman',
+                spriteType: 'npc', color: '#886644', facing: 'down', stationary: true, spriteId: 0,
+                dialogue: ["Welcome to The Iron Basin!", "This is the heart of industrial progress.", "Every factory here teaches you about operations, supply chains, and production.", "Speak with the specialists to learn!"],
+                action: 'operations', route: '/scenarios/Operations'
+            },
+            {
+                x: 16, y: 11, name: 'Steel Mill Supervisor',
+                spriteType: 'npc', color: '#cc6633', facing: 'up', spriteId: 1,
+                dialogue: ["The steel mill runs day and night.", "Managing production schedules is critical.", "One bottleneck can halt the entire operation!"],
+                action: 'operations', route: '/scenarios/Operations'
+            },
+            {
+                x: 33, y: 11, name: 'Chief Engineer',
+                spriteType: 'npc', color: '#3366aa', facing: 'up', spriteId: 2,
+                dialogue: ["Engineering is the backbone of industry.", "I can teach you about process optimization.", "Efficiency separates the profitable from the bankrupt."],
+                action: 'strategy', route: '/scenarios/Strategy'
+            },
+            {
+                x: 49, y: 11, name: 'Power Plant Manager',
+                spriteType: 'npc', color: '#aa4444', facing: 'up', spriteId: 3,
+                dialogue: ["Steam power drives our factories!", "Energy management is a crucial business skill.", "Too much waste means lost profits."],
+                action: 'operations', route: '/scenarios/Operations'
+            },
+            {
+                x: 65, y: 11, name: 'Mining Foreman',
+                spriteType: 'npc', color: '#665544', facing: 'up', spriteId: 4,
+                dialogue: ["The mines supply our raw materials.", "Resource extraction requires careful planning.", "Safety and efficiency must go hand in hand."],
+                action: 'operations', route: '/scenarios/Operations'
+            },
+            {
+                x: 12, y: 27, name: 'Accountant',
+                spriteType: 'npc', color: '#334455', facing: 'right', spriteId: 5,
+                dialogue: ["Every penny counts in this business!", "I track all the factory finances.", "Profit margins, cost analysis, capital allocation...", "Let me show you the books."],
+                action: 'finance', route: '/scenarios/Finance'
+            },
+            {
+                x: 68, y: 27, name: 'Logistics Manager',
+                spriteType: 'npc', color: '#558844', facing: 'left', spriteId: 6,
+                dialogue: ["Moving goods from factory to market...", "That's what logistics is all about.", "Rail, ship, or cart - each has its trade-offs."],
+                action: 'operations', route: '/scenarios/Operations'
+            },
+            {
+                x: 23, y: 37, name: 'Inventor',
+                spriteType: 'npc', color: '#997733', facing: 'down', spriteId: 7,
+                dialogue: ["I've been working on a new steam engine design!", "Innovation drives industry forward.", "Would you like to learn about product development?"],
+                action: 'strategy', route: '/scenarios/Strategy'
+            },
+            {
+                x: 50, y: 37, name: 'Union Representative',
+                spriteType: 'npc', color: '#884444', facing: 'down', spriteId: 8,
+                dialogue: ["Workers' rights matter!", "Managing your workforce fairly leads to better outcomes.", "Happy workers are productive workers."],
+                action: 'hr', route: '/scenarios/Human Resources'
+            },
+            {
+                x: 39, y: 53, name: 'Railroad Engineer',
+                spriteType: 'npc', color: '#445566', facing: 'up', spriteId: 9,
+                dialogue: ["The railroad connects all our operations.", "Scheduling trains is like managing any supply chain.", "Timing and coordination are everything!"],
+                action: 'operations', route: '/scenarios/Operations'
+            },
+            {
+                x: 25, y: H - 10, name: 'Dock Master',
+                spriteType: 'npc', color: '#446688', facing: 'up', stationary: true, spriteId: 10,
+                dialogue: ["Ships come and go with raw materials and finished goods.", "International trade is the lifeblood of industry.", "Let me teach you about import/export management."],
+                action: 'marketing', route: '/scenarios/Marketing'
+            },
+            {
+                x: 55, y: H - 10, name: 'Shipping Clerk',
+                spriteType: 'npc', color: '#668844', facing: 'up', stationary: true, spriteId: 11,
+                dialogue: ["Tracking shipments, managing inventory...", "The paperwork never ends!", "But good record-keeping prevents costly mistakes."],
+                action: 'finance', route: '/scenarios/Finance'
+            },
+            {
+                x: 38, y: 15, name: 'Safety Inspector',
+                spriteType: 'npc', color: '#cc8833', facing: 'down', spriteId: 12,
+                dialogue: ["Safety regulations protect workers AND your bottom line.", "An accident shuts down production for days.", "Investing in safety pays for itself."],
+                action: 'legal', route: '/scenarios/Legal'
+            },
+            {
+                x: 15, y: 37, name: 'Blacksmith',
+                spriteType: 'npc', color: '#554433', facing: 'right', spriteId: 13,
+                dialogue: ["I forge the tools that keep the factories running.", "Quality equipment means quality output.", "Let me show you my finest work."],
+                action: 'shop', route: '/inventory'
+            },
+            {
+                x: 65, y: 37, name: 'Merchant',
+                spriteType: 'npc', color: '#887744', facing: 'left', spriteId: 14,
+                dialogue: ["I trade goods between The Iron Basin and other regions.", "Buy low, sell high - the oldest rule in business!", "Check my wares, you might find something useful."],
+                action: 'shop', route: '/inventory'
+            },
+            {
+                x: 39, y: 38, name: 'Bank Manager',
+                spriteType: 'npc', color: '#223344', facing: 'down', stationary: true, spriteId: 15,
+                dialogue: ["The Industrial Bank finances the growth of this basin.", "Loans, investments, interest rates...", "Understanding capital is essential for any tycoon.", "Come discuss your financial strategy."],
+                action: 'finance', route: '/scenarios/Finance'
+            }
+        ];
+
+        return {
+            name: 'The Iron Basin',
+            width: W, height: H,
+            tiles, collision,
+            spawnX: 39, spawnY: 25,
+            npcs,
+            transitions: [
+                { x: 39, y: 3, target: 'hub', spawnX: 39, spawnY: 62 },
+                { x: 40, y: 3, target: 'hub', spawnX: 40, spawnY: 62 },
+                { x: 39, y: H - 7, target: 'hub', spawnX: 39, spawnY: 5 },
+                { x: 40, y: H - 7, target: 'hub', spawnX: 40, spawnY: 5 }
+            ],
+            interactables: [
+                { x: 39, y: 12, name: 'Factory Notice', dialogue: ["THE IRON BASIN - Industrial District", "Master the art of manufacturing and trade.", "Visit each factory to learn different business skills!"] },
+                { x: 40, y: 12, name: 'Production Board', dialogue: ["Daily Production Targets", "Steel Mill: 500 tons", "Textile Factory: 2000 yards", "Assembly Plant: 150 units"] },
+                { x: 30, y: H - 9, name: 'Shipping Schedule', dialogue: ["HARBOR SHIPPING SCHEDULE", "Morning: Raw materials arrive from overseas.", "Afternoon: Finished goods depart.", "Evening: Maintenance and inventory."] },
+                { x: 50, y: H - 9, name: 'Trade Manifest', dialogue: ["TRADE MANIFEST", "Exports: Steel, Textiles, Machinery", "Imports: Coal, Lumber, Cotton", "Balance: Favorable this quarter."] }
+            ]
+        };
+    }
+
     function getMap(name) {
         switch(name) {
             case 'hub': return createHubTown();
             case 'market_district': return createMarketDistrict();
+            case 'iron_basin': return createIronBasin();
             default: return createHubTown();
         }
     }

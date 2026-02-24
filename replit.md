@@ -109,6 +109,12 @@ I prefer iterative development, with a focus on delivering functional, well-test
   - Market District: 4 market areas with stalls, central plaza, buildings, gardens, water features, 8 NPCs
   - Terrain variation system: grass variants, scattered flowers/rocks, deterministic seeding
 - **No-Password Single Player**: Removed password authentication, players create/load without passwords
+- **Industrial Age Expansion - The Iron Basin**:
+  - 24 new procedural tile types (IDs 36-59): dirt, factory wall/roof/door/window, smokestack (animated smoke), railroad tracks (H/V/cross/curves), dock, pine tree, mountain/mountain base, gear (animated rotation), coal pile, iron fence, industrial lamp (animated flicker), warehouse, steam pipe, anvil, barrel, crane
+  - Iron Basin map (80x70 tiles): mountains across top, pine forests flanking sides, factory district with 18+ factories, railway network with cross-junctions, harbor/docks along bottom, central town plaza with fountain
+  - 16 industrial-era NPCs covering all business disciplines (Operations, Finance, Strategy, HR, Marketing, Legal)
+  - World routing: players selecting "Industrial" world spawn in iron_basin map
+  - Industrial Age asset spritesheets: `industrial_characters.png`, `industrial_npcs.png`, `iron_basin_map.png`
 
 ## External Dependencies
 - **PostgreSQL:** Relational database for all game data persistence.

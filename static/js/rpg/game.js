@@ -155,7 +155,11 @@ const Game = (function() {
                     quarter: playerData.fiscal_quarter || 1
                 } : {}
             });
-            const map = RPGMaps.getMap('hub');
+            let mapName = 'hub';
+            if (playerData && (playerData.chosen_world === 'Industrial' || playerData.world === 'Industrial')) {
+                mapName = 'iron_basin';
+            }
+            const map = RPGMaps.getMap(mapName);
             RPGEngine.loadMap(map);
         }
         if (prev === 'WORLD' && s !== 'WORLD' && s !== 'PAUSE_MENU' && s !== 'BATTLE') {
