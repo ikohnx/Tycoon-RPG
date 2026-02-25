@@ -3,7 +3,7 @@ const RPGEngine = (function() {
     const SCALE = 2;
     const TS = TILE * SCALE;
     const STEP_DURATION = 180;
-    const SPRITE_H = 80;
+    const SPRITE_H = TS + 16;
     const SPRITE_YOFF = SPRITE_H - TS;
 
     let canvas, ctx;

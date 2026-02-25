@@ -97,7 +97,7 @@ const Game = (function() {
         setupTouch();
         fetchCSRF();
         fetchPlayers();
-        setState('TITLE');
+        setState('LOADING');
         running = true;
         lastTime = performance.now();
         requestAnimationFrame(loop);
@@ -120,6 +120,10 @@ const Game = (function() {
     }
 
     function update(dt) {
+        if (currentState === 'LOADING') {
+            updateLoading();
+            return;
+        }
         if (currentState === 'WORLD') {
             RPGEngine.setOnScreenControls(onScreenControls);
             RPGEngine.externalUpdate(dt, gameTime);
@@ -433,10 +437,44 @@ const Game = (function() {
     }
 
 
+    function updateLoading() {
+        const tilesReady = RPGTiles.isLoaded();
+        const spritesReady = RPGSprites.isLoaded();
+        if (tilesReady && spritesReady) {
+            setState('TITLE');
+        }
+    }
+
     function renderLoading() {
         const cx = canvas.width / 2;
         const cy = canvas.height / 2;
-        drawText('LOADING...', cx, cy, '#f0d850', 14, 'center');
+
+        drawText('BUSINESS TYCOON RPG', cx, cy - 60, '#f0d850', 16, 'center');
+
+        const tp = RPGTiles.getLoadProgress();
+        const sp = RPGSprites.getLoadProgress();
+        const loaded = tp.loaded + sp.loaded;
+        const total = tp.total + sp.total;
+        const pct = total > 0 ? loaded / total : 0;
+
+        const barW = 300;
+        const barH = 20;
+        const barX = cx - barW / 2;
+        const barY = cy - barH / 2;
+
+        ctx.fillStyle = '#181840';
+        ctx.fillRect(barX - 2, barY - 2, barW + 4, barH + 4);
+        ctx.strokeStyle = '#6060a0';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(barX - 2, barY - 2, barW + 4, barH + 4);
+
+        const grd = ctx.createLinearGradient(barX, barY, barX + barW * pct, barY);
+        grd.addColorStop(0, '#4080e0');
+        grd.addColorStop(1, '#60c0f0');
+        ctx.fillStyle = grd;
+        ctx.fillRect(barX, barY, barW * pct, barH);
+
+        drawText('Loading... ' + Math.floor(pct * 100) + '%', cx, barY + barH + 25, '#8080c0', 9, 'center');
     }
 
     function renderTitle() {
@@ -550,8 +588,9 @@ const Game = (function() {
     function renderTitleBackground() {
         const w = canvas.width;
         const h = canvas.height;
-        const cols = Math.ceil(w / 48) + 1;
-        const rows = Math.ceil(h / 48) + 1;
+        const tileSize = 32;
+        const cols = Math.ceil(w / tileSize) + 1;
+        const rows = Math.ceil(h / tileSize) + 1;
 
         if (!_titleScene || _titleScene.length !== rows || _titleScene[0].length !== cols) {
             _titleScene = buildTitleScene(cols, rows);
@@ -559,7 +598,7 @@ const Game = (function() {
 
         for (let r = 0; r < rows; r++) {
             for (let c = 0; c < cols; c++) {
-                RPGTiles.drawTile(ctx, C, _titleScene[r][c], c * 48, r * 48, r, c, gameTime, 48);
+                RPGTiles.drawTile(ctx, C, _titleScene[r][c], c * tileSize, r * tileSize, r, c, gameTime, tileSize);
             }
         }
 

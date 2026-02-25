@@ -53,7 +53,7 @@ window.RPGSprites = (function() {
         const img = SPRITE_IMAGES[spriteName];
 
         const spriteW = TS + 16;
-        const spriteH = TS + (SPRITE_YOFF || 0) + 24;
+        const spriteH = spriteW;
 
         const bob = moving ? Math.sin((frame || 0) * Math.PI / 2) * 2 : 0;
         const breathe = !moving ? Math.sin(gt / 700) * 0.5 : 0;
@@ -61,7 +61,7 @@ window.RPGSprites = (function() {
 
         ctx.fillStyle = 'rgba(0,0,0,0.2)';
         ctx.beginPath();
-        ctx.ellipse(x + TS / 2, y + TS - 2, 14, 4, 0, 0, Math.PI * 2);
+        ctx.ellipse(x + TS / 2, y + TS - 2, TS * 0.35, TS * 0.12, 0, 0, Math.PI * 2);
         ctx.fill();
 
         if (img && img.complete && img.naturalWidth > 0) {
