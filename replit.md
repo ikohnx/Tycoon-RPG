@@ -79,10 +79,11 @@ I prefer iterative development, with a focus on delivering functional, well-test
 ### Key Technical Details
 - **Database**: PostgreSQL with connection pooling (ThreadedConnectionPool, 2-20 connections)
 - **Security**: bcrypt password hashing, CSRF via Flask-WTF, JSON API uses X-CSRFToken header
-- **2D Engine**: HTML5 Canvas, 16px tiles at 3x scale (48px), FF-style grid movement (180ms steps)
-- **Sprite System**: 8 archetypes (merchant, scholar, elder, warrior, scout, noble, artisan, mystic), 6 skin tones, 8 hair colors/styles
+- **2D Engine**: HTML5 Canvas, 16px tiles at 2x scale (32px), FF-style grid movement (180ms steps)
+- **Sprite System**: 8 modern archetypes + 4 industrial characters (ind_accountant, ind_foreman, ind_engineer, ind_inventor); world-specific hero sprites
+- **Character Selection**: 6-step creation wizard: Name → World → Industry → Career → Character Appearance → Confirm
 - **Battle System**: Prodigy-style turn-based combat where business scenarios ARE the battles (correct answer = attack, wrong = take damage)
-- **Game Flow**: Title Screen → Character Creation → World Exploration → NPC Interaction → Battle (scenario questions) → Victory/Defeat
+- **Game Flow**: Title Screen → Character Creation (with appearance picker) → World Exploration → NPC Interaction → Battle (scenario questions) → Victory/Defeat
 - **url_for references**: Use blueprint prefix (e.g., `url_for('auth.index')`, `url_for('core.hub')`)
 
 ## Recent Changes (Feb 2026)

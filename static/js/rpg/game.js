@@ -12,7 +12,7 @@ const Game = (function() {
     let csrfToken = '';
 
     const titleState = {};
-    const charSelectState = { step: 0, name: '', nameActive: false, cursorBlink: 0, worldIndex: 0, industryIndex: 0, careerIndex: 0 };
+    const charSelectState = { step: 0, name: '', nameActive: false, cursorBlink: 0, worldIndex: 0, industryIndex: 0, careerIndex: 0, characterIndex: 0 };
     const loginState = { playerId: null, playerName: '', password: '', active: false, error: '' };
     let titleCursor = 0;
     let titlePlayerCursor = 0;
@@ -71,6 +71,16 @@ const Game = (function() {
         'Sci-Fi': ['Space Mining', 'Cybernetics', 'Terraforming', 'AI Services']
     };
     const CAREERS = ['entrepreneur', 'executive', 'consultant', 'investor'];
+
+    function getCharacterOptions(world) {
+        if (world === 'Industrial') return RPGSprites.IND_CHARACTER_KEYS;
+        return ['hero', 'merchant', 'scholar', 'warrior'];
+    }
+
+    function getCharacterNames(world) {
+        if (world === 'Industrial') return RPGSprites.IND_CHARACTER_NAMES;
+        return ['Hero', 'Merchant', 'Scholar', 'Warrior'];
+    }
 
     const C = RPGColors.C;
 
@@ -156,9 +166,11 @@ const Game = (function() {
                 } : {}
             });
             let mapName = 'hub';
-            if (playerData && (playerData.chosen_world === 'Industrial' || playerData.world === 'Industrial')) {
+            const pWorld = playerData ? (playerData.chosen_world || playerData.world || 'Modern') : 'Modern';
+            if (pWorld === 'Industrial') {
                 mapName = 'iron_basin';
             }
+            RPGSprites.setActiveHero(pWorld, playerData ? (playerData.character_index || 0) : 0);
             const map = RPGMaps.getMap(mapName);
             RPGEngine.loadMap(map);
         }
@@ -297,14 +309,17 @@ const Game = (function() {
 
     async function createPlayer(name, password, world, industry, career) {
         try {
+            const charIdx = charSelectState.characterIndex || 0;
             const r = await fetch('/api/create_player', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-                body: JSON.stringify({ name, password, world, industry, career_path: career })
+                body: JSON.stringify({ name, password, world, industry, career_path: career, character_index: charIdx })
             });
             const d = await r.json();
             if (d.success) {
                 playerData = d.player;
+                playerData.character_index = charIdx;
+                playerData.chosen_world = world;
                 setState('WORLD');
             } else {
                 charSelectState.error = d.error || 'Failed to create character';
@@ -664,7 +679,7 @@ const Game = (function() {
 
         let y = panelY + 30;
 
-        const steps = ['Name', 'World', 'Industry', 'Career', 'Confirm'];
+        const steps = ['Name', 'World', 'Industry', 'Career', 'Character', 'Confirm'];
         for (let i = 0; i < steps.length; i++) {
             const active = i === charSelectState.step;
             const done = i < charSelectState.step;
@@ -730,15 +745,58 @@ const Game = (function() {
                 y += 34;
             }
         } else if (charSelectState.step === 4) {
+            const world = WORLDS[charSelectState.worldIndex];
+            const charKeys = getCharacterOptions(world);
+            const charNames = getCharacterNames(world);
+            drawText('Choose your character:', panelX + 20, y, '#c0c0e0', 10);
+            y += 26;
+
+            const previewSize = 72;
+            const spacing = 12;
+            const totalW = charKeys.length * (previewSize + spacing) - spacing;
+            const startX = cx - totalW / 2;
+
+            for (let i = 0; i < charKeys.length; i++) {
+                const sel = i === charSelectState.characterIndex;
+                const px = startX + i * (previewSize + spacing);
+
+                if (sel) {
+                    ctx.strokeStyle = '#f0d850';
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(px - 4, y - 4, previewSize + 8, previewSize + 8);
+                    ctx.fillStyle = 'rgba(240,216,80,0.1)';
+                    ctx.fillRect(px - 4, y - 4, previewSize + 8, previewSize + 8);
+                } else {
+                    ctx.strokeStyle = '#484888';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(px - 2, y - 2, previewSize + 4, previewSize + 4);
+                }
+
+                RPGSprites.drawCharacterPreview(ctx, charKeys[i], px, y, previewSize, previewSize);
+            }
+
+            y += previewSize + 16;
+            const selName = charNames[charSelectState.characterIndex] || 'Unknown';
+            drawText(selName, cx, y, '#f0d850', 12, 'center');
+            y += 24;
+            drawText('Use LEFT/RIGHT to browse, ENTER to select', cx, y, '#5050a0', 8, 'center');
+        } else if (charSelectState.step === 5) {
             drawText('Confirm your character:', panelX + 20, y, '#c0c0e0', 10);
             y += 30;
             const world = WORLDS[charSelectState.worldIndex];
             const industry = (INDUSTRIES[world] || ['General'])[charSelectState.industryIndex];
             const career = CAREERS[charSelectState.careerIndex];
+            const charNames = getCharacterNames(world);
             drawText('Name: ' + charSelectState.name, panelX + 30, y, '#fff', 10); y += 24;
             drawText('World: ' + world, panelX + 30, y, '#fff', 10); y += 24;
             drawText('Industry: ' + industry, panelX + 30, y, '#fff', 10); y += 24;
-            drawText('Career: ' + career.charAt(0).toUpperCase() + career.slice(1), panelX + 30, y, '#fff', 10); y += 40;
+            drawText('Career: ' + career.charAt(0).toUpperCase() + career.slice(1), panelX + 30, y, '#fff', 10); y += 24;
+            drawText('Character: ' + (charNames[charSelectState.characterIndex] || 'Hero'), panelX + 30, y, '#fff', 10); y += 16;
+
+            const charKeys = getCharacterOptions(world);
+            const previewKey = charKeys[charSelectState.characterIndex];
+            RPGSprites.drawCharacterPreview(ctx, previewKey, cx - 36, y, 72, 72);
+            y += 84;
 
             ctx.fillStyle = 'rgba(80,80,160,0.3)';
             ctx.fillRect(panelX + 20, y - 10, panelW - 40, 30);
@@ -776,15 +834,24 @@ const Game = (function() {
         } else if (charSelectState.step === 3) {
             if (key === 'ArrowUp' || key === 'w') charSelectState.careerIndex = Math.max(0, charSelectState.careerIndex - 1);
             else if (key === 'ArrowDown' || key === 's') charSelectState.careerIndex = Math.min(CAREERS.length - 1, charSelectState.careerIndex + 1);
-            else if (key === 'Enter' || key === ' ') charSelectState.step = 4;
+            else if (key === 'Enter' || key === ' ') { charSelectState.step = 4; charSelectState.characterIndex = 0; }
             else if (key === 'Escape') charSelectState.step = 2;
         } else if (charSelectState.step === 4) {
+            const world = WORLDS[charSelectState.worldIndex];
+            const charKeys = getCharacterOptions(world);
+            if (key === 'ArrowLeft' || key === 'a') charSelectState.characterIndex = Math.max(0, charSelectState.characterIndex - 1);
+            else if (key === 'ArrowRight' || key === 'd') charSelectState.characterIndex = Math.min(charKeys.length - 1, charSelectState.characterIndex + 1);
+            else if (key === 'ArrowUp' || key === 'w') charSelectState.characterIndex = Math.max(0, charSelectState.characterIndex - 1);
+            else if (key === 'ArrowDown' || key === 's') charSelectState.characterIndex = Math.min(charKeys.length - 1, charSelectState.characterIndex + 1);
+            else if (key === 'Enter' || key === ' ') charSelectState.step = 5;
+            else if (key === 'Escape') charSelectState.step = 3;
+        } else if (charSelectState.step === 5) {
             if (key === 'Enter' || key === ' ') {
                 const world = WORLDS[charSelectState.worldIndex];
                 const industry = (INDUSTRIES[world] || ['General'])[charSelectState.industryIndex];
                 const career = CAREERS[charSelectState.careerIndex];
                 createPlayer(charSelectState.name.trim(), 'pass', world, industry, career);
-            } else if (key === 'Escape') charSelectState.step = 3;
+            } else if (key === 'Escape') charSelectState.step = 4;
         }
     }
 
@@ -796,7 +863,7 @@ const Game = (function() {
         const panelY = 80;
 
         let y = panelY + 30;
-        y += 22 * 5 + 10 + 1 + 16;
+        y += 22 * 6 + 10 + 1 + 16;
 
         if (charSelectState.step === 0) {
             promptForName();
@@ -831,12 +898,29 @@ const Game = (function() {
                 if (mx >= panelX + 20 && mx <= panelX + panelW - 20 && my >= y - 10 && my <= y + 20) {
                     charSelectState.careerIndex = i;
                     charSelectState.step = 4;
+                    charSelectState.characterIndex = 0;
                     return;
                 }
                 y += 34;
             }
         } else if (charSelectState.step === 4) {
-            y += 30 + 24 * 4 + 16;
+            const world = WORLDS[charSelectState.worldIndex];
+            const charKeys = getCharacterOptions(world);
+            y += 26;
+            const previewSize = 72;
+            const spacing = 12;
+            const totalW = charKeys.length * (previewSize + spacing) - spacing;
+            const startX = cx - totalW / 2;
+            for (let i = 0; i < charKeys.length; i++) {
+                const px = startX + i * (previewSize + spacing);
+                if (mx >= px - 4 && mx <= px + previewSize + 4 && my >= y - 4 && my <= y + previewSize + 4) {
+                    charSelectState.characterIndex = i;
+                    charSelectState.step = 5;
+                    return;
+                }
+            }
+        } else if (charSelectState.step === 5) {
+            y += 30 + 24 * 5 + 16 + 72 + 12;
             if (mx >= panelX + 20 && mx <= panelX + panelW - 20 && my >= y - 10 && my <= y + 20) {
                 const world = WORLDS[charSelectState.worldIndex];
                 const industry = (INDUSTRIES[world] || ['General'])[charSelectState.industryIndex];

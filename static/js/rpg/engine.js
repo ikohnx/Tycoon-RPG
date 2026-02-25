@@ -1,6 +1,6 @@
 const RPGEngine = (function() {
     const TILE = 16;
-    const SCALE = 3;
+    const SCALE = 2;
     const TS = TILE * SCALE;
     const STEP_DURATION = 180;
     const SPRITE_H = 80;

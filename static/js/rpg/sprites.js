@@ -1,8 +1,12 @@
 window.RPGSprites = (function() {
     const ARCHETYPE_KEYS = ['merchant','scholar','elder','warrior','scout','noble','artisan','mystic'];
 
+    const IND_CHARACTER_KEYS = ['ind_accountant','ind_foreman','ind_engineer','ind_inventor'];
+    const IND_CHARACTER_NAMES = ['Accountant', 'Foreman', 'Engineer', 'Inventor'];
+
     const SPRITE_IMAGES = {};
-    const SPRITE_NAMES = ['hero','merchant','scholar','elder','warrior','scout','noble','artisan','mystic'];
+    const SPRITE_NAMES = ['hero','merchant','scholar','elder','warrior','scout','noble','artisan','mystic',
+        'ind_accountant','ind_foreman','ind_engineer','ind_inventor'];
     let imagesLoaded = 0;
     let totalImages = SPRITE_NAMES.length;
     let allLoaded = false;
@@ -30,9 +34,22 @@ window.RPGSprites = (function() {
         return ARCHETYPE_KEYS[(spriteId || 0) % ARCHETYPE_KEYS.length];
     }
 
+    function getHeroSpriteName(world, characterIndex) {
+        if (world === 'Industrial' && characterIndex >= 0 && characterIndex < IND_CHARACTER_KEYS.length) {
+            return IND_CHARACTER_KEYS[characterIndex];
+        }
+        return 'hero';
+    }
+
+    let activeHeroSprite = 'hero';
+
+    function setActiveHero(world, characterIndex) {
+        activeHeroSprite = getHeroSpriteName(world, characterIndex);
+    }
+
     function drawSprite(ctx, gt, type, x, y, facing, frame, moving, color, spriteId, TS, SPRITE_YOFF) {
         const isHero = type === 'hero';
-        const spriteName = isHero ? 'hero' : getArchetypeName(spriteId);
+        const spriteName = isHero ? activeHeroSprite : getArchetypeName(spriteId);
         const img = SPRITE_IMAGES[spriteName];
 
         const spriteW = TS + 16;
@@ -108,6 +125,23 @@ window.RPGSprites = (function() {
         ctx.fillRect(cx + 2, sy + 63, 4, 10);
     }
 
+    function drawCharacterPreview(ctx, spriteName, x, y, w, h) {
+        const img = SPRITE_IMAGES[spriteName];
+        if (img && img.complete && img.naturalWidth > 0) {
+            ctx.save();
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(img, x, y, w, h);
+            ctx.restore();
+        } else {
+            ctx.fillStyle = '#303060';
+            ctx.fillRect(x, y, w, h);
+            ctx.fillStyle = '#8080c0';
+            ctx.font = '10px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText('?', x + w / 2, y + h / 2 + 4);
+        }
+    }
+
     function buildNPCPal(color, spriteId) {
         return { archName: getArchetypeName(spriteId) };
     }
@@ -118,9 +152,13 @@ window.RPGSprites = (function() {
 
     return {
         drawSprite: drawSprite,
+        drawCharacterPreview: drawCharacterPreview,
+        setActiveHero: setActiveHero,
         buildNPCPal: buildNPCPal,
         getArchetype: getArchetype,
         ARCHETYPE_KEYS: ARCHETYPE_KEYS,
+        IND_CHARACTER_KEYS: IND_CHARACTER_KEYS,
+        IND_CHARACTER_NAMES: IND_CHARACTER_NAMES,
         isLoaded: function() { return allLoaded; },
         getLoadProgress: function() { return { loaded: imagesLoaded, total: totalImages }; }
     };
