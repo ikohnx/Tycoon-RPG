@@ -80,8 +80,14 @@ const RPGEngine = (function() {
     }
 
     function resizeCanvas() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        const dpr = window.devicePixelRatio || 1;
+        const cssW = window.innerWidth;
+        const cssH = window.innerHeight;
+        canvas.width = cssW * dpr;
+        canvas.height = cssH * dpr;
+        canvas.style.width = cssW + 'px';
+        canvas.style.height = cssH + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         ctx.imageSmoothingEnabled = false;
     }
 
@@ -146,8 +152,8 @@ const RPGEngine = (function() {
             player.tileY = sy; player.py = sy * TS;
             player.stepping = false;
         }
-        camera.x = player.px - canvas.width / 2 + TS / 2;
-        camera.y = player.py - canvas.height / 2 + TS / 2;
+        camera.x = player.px - window.innerWidth / 2 + TS / 2;
+        camera.y = player.py - window.innerHeight / 2 + TS / 2;
         clampCamera();
     }
 
@@ -324,8 +330,10 @@ const RPGEngine = (function() {
     }
 
     function updateCamera(dt) {
-        const tx = player.px - canvas.width / 2 + TS / 2;
-        const ty = player.py - canvas.height / 2 + TS / 2;
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const tx = player.px - vw / 2 + TS / 2;
+        const ty = player.py - vh / 2 + TS / 2;
         camera.x += (tx - camera.x) * 0.12;
         camera.y += (ty - camera.y) * 0.12;
         clampCamera();
@@ -333,12 +341,14 @@ const RPGEngine = (function() {
 
     function clampCamera() {
         if (!currentMap) return;
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
         const mw = currentMap.width * TS;
         const mh = currentMap.height * TS;
-        camera.x = Math.max(0, Math.min(mw - canvas.width, camera.x));
-        camera.y = Math.max(0, Math.min(mh - canvas.height, camera.y));
-        if (mw < canvas.width) camera.x = (mw - canvas.width) / 2;
-        if (mh < canvas.height) camera.y = (mh - canvas.height) / 2;
+        camera.x = Math.max(0, Math.min(mw - vw, camera.x));
+        camera.y = Math.max(0, Math.min(mh - vh, camera.y));
+        if (mw < vw) camera.x = (mw - vw) / 2;
+        if (mh < vh) camera.y = (mh - vh) / 2;
     }
 
     function checkTransitions() {
@@ -430,8 +440,10 @@ const RPGEngine = (function() {
     }
 
     function render() {
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
         ctx.fillStyle = '#000';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillRect(0, 0, vw, vh);
         if (!currentMap) return;
 
         ctx.save();
@@ -449,10 +461,12 @@ const RPGEngine = (function() {
     }
 
     function renderTiles() {
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
         const sc = Math.max(0, Math.floor(camera.x / TS) - 1);
-        const ec = Math.min(currentMap.width - 1, Math.ceil((camera.x + canvas.width) / TS) + 1);
+        const ec = Math.min(currentMap.width - 1, Math.ceil((camera.x + vw) / TS) + 1);
         const sr = Math.max(0, Math.floor(camera.y / TS) - 1);
-        const er = Math.min(currentMap.height - 1, Math.ceil((camera.y + canvas.height) / TS) + 1);
+        const er = Math.min(currentMap.height - 1, Math.ceil((camera.y + vh) / TS) + 1);
         for (let r = sr; r <= er; r++) {
             for (let c = sc; c <= ec; c++) {
                 RPGTiles.drawTile(ctx, RPGColors.C, currentMap.tiles[r][c], c * TS, r * TS, r, c, gt, TS);
@@ -462,10 +476,12 @@ const RPGEngine = (function() {
 
     function renderOverlay() {
         if (!currentMap.overlay) return;
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
         const sc = Math.max(0, Math.floor(camera.x / TS) - 1);
-        const ec = Math.min(currentMap.width - 1, Math.ceil((camera.x + canvas.width) / TS) + 1);
+        const ec = Math.min(currentMap.width - 1, Math.ceil((camera.x + vw) / TS) + 1);
         const sr = Math.max(0, Math.floor(camera.y / TS) - 1);
-        const er = Math.min(currentMap.height - 1, Math.ceil((camera.y + canvas.height) / TS) + 1);
+        const er = Math.min(currentMap.height - 1, Math.ceil((camera.y + vh) / TS) + 1);
         for (let r = sr; r <= er; r++) {
             for (let c = sc; c <= ec; c++) {
                 const t = currentMap.overlay[r] ? currentMap.overlay[r][c] : 0;
@@ -612,67 +628,124 @@ const RPGEngine = (function() {
     }
 
     function renderHUD() {
-        const h = 44;
+        const cw = window.innerWidth;
+        const s = Math.max(0.5, Math.min(1.4, Math.min(cw, window.innerHeight) / 700));
+        const isNarrow = cw < 500;
+        const h = Math.round(isNarrow ? 60 : 44 * s);
         const grd = ctx.createLinearGradient(0, 0, 0, h);
         grd.addColorStop(0, '#101080');
         grd.addColorStop(0.5, '#080848');
         grd.addColorStop(1, '#040430');
         ctx.fillStyle = grd;
-        ctx.fillRect(0, 0, canvas.width, h);
+        ctx.fillRect(0, 0, cw, h);
         ctx.fillStyle = '#b0b0d0';
-        ctx.fillRect(0, h - 2, canvas.width, 2);
+        ctx.fillRect(0, h - 2, cw, 2);
         ctx.fillStyle = '#484888';
-        ctx.fillRect(0, h - 3, canvas.width, 1);
+        ctx.fillRect(0, h - 3, cw, 1);
         ctx.fillStyle = '#e8e8f8';
-        ctx.fillRect(0, 0, canvas.width, 1);
+        ctx.fillRect(0, 0, cw, 1);
 
-        ctx.font = 'bold 12px "Press Start 2P", monospace';
+        const fs = (base) => Math.max(6, Math.round(base * s));
         ctx.textBaseline = 'middle';
         ctx.shadowColor = '#000030';
         ctx.shadowOffsetX = 1;
         ctx.shadowOffsetY = 1;
 
-        let xp = 12;
-        const ym = h / 2;
+        if (isNarrow) {
+            let xp = 8;
+            const row1Y = 14;
+            const row2Y = 38;
+            const barW = Math.round(40 * s);
+            const barH = Math.round(8 * s);
 
-        if (hudData.capital !== undefined) {
-            ctx.fillStyle = C.hg;
-            ctx.fillText('G', xp, ym);
-            ctx.fillStyle = '#fff';
-            ctx.font = '11px "Press Start 2P", monospace';
-            ctx.fillText(Number(hudData.capital).toLocaleString(), xp + 16, ym);
-            xp += 110;
-        }
-        ctx.font = 'bold 10px "Press Start 2P", monospace';
-        if (hudData.morale !== undefined) {
-            ctx.fillStyle = C.hgr;
-            ctx.fillText('MOR', xp, ym - 6);
-            drawBar(xp + 38, ym - 12, 55, 9, hudData.morale / 100, C.hgr, '#104010');
-            xp += 100;
-        }
-        if (hudData.brand !== undefined) {
-            ctx.fillStyle = C.hr;
-            ctx.fillText('BRD', xp, ym - 6);
-            drawBar(xp + 38, ym - 12, 55, 9, hudData.brand / 100, C.hr, '#401010');
-            xp += 100;
-        }
-        if (hudData.energy !== undefined) {
-            ctx.fillStyle = '#f0a030';
-            ctx.fillText('EN', xp, ym + 8);
-            drawBar(xp + 28, ym + 2, 55, 9, hudData.energy / 100, '#f0a030', '#402810');
-            xp += 90;
-        }
-        if (hudData.quarter !== undefined) {
-            ctx.fillStyle = C.hbl;
-            ctx.font = 'bold 10px "Press Start 2P", monospace';
-            ctx.fillText('Q' + hudData.quarter, xp, ym);
-        }
-        if (currentMap && currentMap.name) {
-            ctx.fillStyle = '#d0d0e0';
-            ctx.font = '10px "Press Start 2P", monospace';
-            ctx.textAlign = 'right';
-            ctx.fillText(currentMap.name, canvas.width - 12, ym);
-            ctx.textAlign = 'left';
+            ctx.font = 'bold ' + fs(10) + 'px "Press Start 2P", monospace';
+            if (hudData.capital !== undefined) {
+                ctx.fillStyle = C.hg;
+                ctx.fillText('G', xp, row1Y);
+                ctx.fillStyle = '#fff';
+                ctx.font = fs(9) + 'px "Press Start 2P", monospace';
+                ctx.fillText(Number(hudData.capital).toLocaleString(), xp + 14, row1Y);
+                xp += Math.round(85 * s);
+            }
+            ctx.font = 'bold ' + fs(8) + 'px "Press Start 2P", monospace';
+            if (hudData.morale !== undefined) {
+                ctx.fillStyle = C.hgr;
+                ctx.fillText('MOR', xp, row1Y);
+                drawBar(xp + Math.round(30 * s), row1Y - barH / 2, barW, barH, hudData.morale / 100, C.hgr, '#104010');
+                xp += Math.round(75 * s);
+            }
+            if (hudData.quarter !== undefined) {
+                ctx.fillStyle = C.hbl;
+                ctx.fillText('Q' + hudData.quarter, xp, row1Y);
+            }
+
+            xp = 8;
+            if (hudData.brand !== undefined) {
+                ctx.fillStyle = C.hr;
+                ctx.fillText('BRD', xp, row2Y);
+                drawBar(xp + Math.round(30 * s), row2Y - barH / 2, barW, barH, hudData.brand / 100, C.hr, '#401010');
+                xp += Math.round(75 * s);
+            }
+            if (hudData.energy !== undefined) {
+                ctx.fillStyle = '#f0a030';
+                ctx.fillText('EN', xp, row2Y);
+                drawBar(xp + Math.round(22 * s), row2Y - barH / 2, barW, barH, hudData.energy / 100, '#f0a030', '#402810');
+                xp += Math.round(70 * s);
+            }
+            if (currentMap && currentMap.name) {
+                ctx.fillStyle = '#d0d0e0';
+                ctx.font = fs(8) + 'px "Press Start 2P", monospace';
+                ctx.textAlign = 'right';
+                ctx.fillText(currentMap.name, cw - 8, row2Y);
+                ctx.textAlign = 'left';
+            }
+        } else {
+            ctx.font = 'bold ' + fs(12) + 'px "Press Start 2P", monospace';
+            let xp = 12;
+            const ym = h / 2;
+            const barW = Math.round(55 * s);
+            const barH = Math.round(9 * s);
+            const lblOff = Math.round(38 * s);
+
+            if (hudData.capital !== undefined) {
+                ctx.fillStyle = C.hg;
+                ctx.fillText('G', xp, ym);
+                ctx.fillStyle = '#fff';
+                ctx.font = fs(11) + 'px "Press Start 2P", monospace';
+                ctx.fillText(Number(hudData.capital).toLocaleString(), xp + Math.round(16 * s), ym);
+                xp += Math.round(110 * s);
+            }
+            ctx.font = 'bold ' + fs(10) + 'px "Press Start 2P", monospace';
+            if (hudData.morale !== undefined) {
+                ctx.fillStyle = C.hgr;
+                ctx.fillText('MOR', xp, ym - 6);
+                drawBar(xp + lblOff, ym - 12, barW, barH, hudData.morale / 100, C.hgr, '#104010');
+                xp += Math.round(100 * s);
+            }
+            if (hudData.brand !== undefined) {
+                ctx.fillStyle = C.hr;
+                ctx.fillText('BRD', xp, ym - 6);
+                drawBar(xp + lblOff, ym - 12, barW, barH, hudData.brand / 100, C.hr, '#401010');
+                xp += Math.round(100 * s);
+            }
+            if (hudData.energy !== undefined) {
+                ctx.fillStyle = '#f0a030';
+                ctx.fillText('EN', xp, ym + 8);
+                drawBar(xp + Math.round(28 * s), ym + 2, barW, barH, hudData.energy / 100, '#f0a030', '#402810');
+                xp += Math.round(90 * s);
+            }
+            if (hudData.quarter !== undefined) {
+                ctx.fillStyle = C.hbl;
+                ctx.font = 'bold ' + fs(10) + 'px "Press Start 2P", monospace';
+                ctx.fillText('Q' + hudData.quarter, xp, ym);
+            }
+            if (currentMap && currentMap.name) {
+                ctx.fillStyle = '#d0d0e0';
+                ctx.font = fs(10) + 'px "Press Start 2P", monospace';
+                ctx.textAlign = 'right';
+                ctx.fillText(currentMap.name, cw - 12, ym);
+                ctx.textAlign = 'left';
+            }
         }
         ctx.shadowColor = 'transparent'; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
     }
@@ -688,8 +761,10 @@ const RPGEngine = (function() {
 
     function renderDialogue() {
         if (!currentDialogue) return;
-        const m = 16, dh = 120;
-        const dx = m, dy = canvas.height - dh - m, dw = canvas.width - m * 2;
+        const cw = window.innerWidth;
+        const ch = window.innerHeight;
+        const m = 16, dh = Math.max(100, Math.round(120 * Math.max(0.6, Math.min(1.2, Math.min(cw, ch) / 700))));
+        const dx = m, dy = ch - dh - m, dw = cw - m * 2;
         drawFFBox(dx, dy, dw, dh);
         if (currentDialogue.speaker) {
             const nw = Math.max(100, currentDialogue.speaker.length * 10 + 24);
@@ -720,8 +795,10 @@ const RPGEngine = (function() {
     }
 
     function renderChoiceBox() {
-        const bw = 180, bh = 24 + choiceOptions.length * 28;
-        const bx = canvas.width - bw - 24, by = canvas.height - 120 - 24 - bh;
+        const cw = window.innerWidth;
+        const ch = window.innerHeight;
+        const bw = Math.min(180, cw - 40), bh = 24 + choiceOptions.length * 28;
+        const bx = cw - bw - 24, by = ch - 120 - 24 - bh;
         drawFFBox(bx, by, bw, bh);
         ctx.font = '11px "Press Start 2P", monospace';
         ctx.shadowColor = '#000030'; ctx.shadowOffsetX = 1; ctx.shadowOffsetY = 1;
@@ -767,7 +844,7 @@ const RPGEngine = (function() {
         if (!screenFlash) return;
         ctx.fillStyle = screenFlash.color;
         ctx.globalAlpha = screenFlash.timer / screenFlash.maxTimer;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
         ctx.globalAlpha = 1;
     }
 

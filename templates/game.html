@@ -24,31 +24,31 @@
             image-rendering: pixelated; image-rendering: crisp-edges;
         }
         #dpad {
-            position: fixed; bottom: 30px; left: 24px;
-            width: 150px; height: 150px; z-index: 200; display: flex;
+            position: fixed; bottom: max(20px, env(safe-area-inset-bottom, 0px) + 16px); left: max(16px, env(safe-area-inset-left, 0px) + 8px);
+            width: clamp(100px, 22vmin, 150px); height: clamp(100px, 22vmin, 150px); z-index: 200; display: none;
             opacity: 0.85;
         }
         .dpad-btn {
-            position: absolute; width: 48px; height: 48px;
+            position: absolute; width: 33%; height: 33%;
             background: linear-gradient(180deg, #303080 0%, #181850 100%);
             border: 2px solid #8080c0; border-radius: 4px;
-            color: #c0c0e0; font-size: 18px;
+            color: #c0c0e0; font-size: clamp(12px, 3vmin, 18px);
             display: flex; align-items: center; justify-content: center;
             cursor: pointer; touch-action: none;
             box-shadow: 0 2px 4px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.15);
         }
         .dpad-btn:active, .dpad-btn.pressed { background: linear-gradient(180deg, #4040a0 0%, #282870 100%); border-color: #a0a0e0; }
-        #dpad-up { top: 0; left: 51px; }
-        #dpad-down { bottom: 0; left: 51px; }
-        #dpad-left { top: 51px; left: 0; }
-        #dpad-right { top: 51px; right: 0; }
-        .dpad-center { position: absolute; top: 51px; left: 51px; width: 48px; height: 48px; background: #202060; border-radius: 4px; }
-        #action-buttons { position: fixed; bottom: 40px; right: 24px; z-index: 200; display: flex; flex-direction: column; align-items: center; opacity: 0.85; }
+        #dpad-up { top: 0; left: 33.5%; }
+        #dpad-down { bottom: 0; left: 33.5%; }
+        #dpad-left { top: 33.5%; left: 0; }
+        #dpad-right { top: 33.5%; right: 0; }
+        .dpad-center { position: absolute; top: 33.5%; left: 33.5%; width: 33%; height: 33%; background: #202060; border-radius: 4px; }
+        #action-buttons { position: fixed; bottom: max(30px, env(safe-area-inset-bottom, 0px) + 20px); right: max(16px, env(safe-area-inset-right, 0px) + 8px); z-index: 200; display: none; flex-direction: column; align-items: center; opacity: 0.85; }
         .action-btn {
-            width: 56px; height: 56px;
+            width: clamp(40px, 8vmin, 56px); height: clamp(40px, 8vmin, 56px);
             background: linear-gradient(180deg, #303080 0%, #181850 100%);
             border: 2px solid #8080c0; border-radius: 50%;
-            color: #e0e0f0; font-size: 11px; font-weight: bold;
+            color: #e0e0f0; font-size: clamp(9px, 2vmin, 11px); font-weight: bold;
             cursor: pointer; touch-action: none; margin: 4px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.15);
         }
@@ -126,12 +126,12 @@
         <button class="action-btn" id="btn-cancel">B</button>
     </div>
 
-    <script src="/static/js/rpg/colors.js?v=3"></script>
-    <script src="/static/js/rpg/tiles.js?v=3"></script>
-    <script src="/static/js/rpg/sprites.js?v=3"></script>
-    <script src="/static/js/rpg/engine.js?v=3"></script>
-    <script src="/static/js/rpg/maps.js?v=3"></script>
-    <script src="/static/js/rpg/game.js?v=3"></script>
+    <script src="/static/js/rpg/colors.js?v=4"></script>
+    <script src="/static/js/rpg/tiles.js?v=4"></script>
+    <script src="/static/js/rpg/sprites.js?v=4"></script>
+    <script src="/static/js/rpg/engine.js?v=4"></script>
+    <script src="/static/js/rpg/maps.js?v=4"></script>
+    <script src="/static/js/rpg/game.js?v=4"></script>
     <script>
         window.addEventListener('load', () => {
             Game.init('game-canvas');

@@ -84,6 +84,45 @@ const Game = (function() {
 
     const C = RPGColors.C;
 
+    let ui = {};
+    let dpr = 1;
+    let isMobile = false;
+
+    function calcUI() {
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        const minDim = Math.min(w, h);
+        const s = Math.max(0.45, Math.min(1.4, minDim / 700));
+        isMobile = ('ontouchstart' in window) || window.innerWidth < 768;
+
+        ui = {
+            s: s,
+            fs: (base) => Math.max(6, Math.round(base * s)),
+            pad: Math.round(16 * s),
+            titlePanelW: Math.min(Math.round(320 * s), w - 30),
+            charPanelW: Math.min(Math.round(400 * s), w - 24),
+            battleBarW: Math.min(Math.round(200 * s), (w / 2) - 50),
+            resultBoxW: Math.min(Math.round(400 * s), w - 30),
+            resultBoxH: Math.min(Math.round(250 * s), h - 60),
+            loadBarW: Math.min(Math.round(300 * s), w - 40),
+            loadBarH: Math.round(20 * s),
+            titleY: Math.round(h * 0.12),
+            subtitleY: Math.round(h * 0.12 + 35 * s),
+            taglineY: Math.round(h * 0.12 + 70 * s),
+            menuStartY: Math.round(h * 0.12 + 105 * s),
+            menuBtnH: Math.round(50 * s),
+            menuGap: Math.round(10 * s),
+            listItemH: Math.round(40 * s),
+            stepH: Math.round(22 * s),
+            optionH: Math.round(34 * s),
+            previewSize: Math.max(48, Math.min(Math.round(72 * s), Math.floor((w - 80) / 5))),
+            previewSpacing: Math.round(12 * s),
+            confirmPreview: Math.max(48, Math.round(72 * s)),
+            pauseMenuW: Math.min(Math.round(240 * s), w - 30),
+        };
+        return ui;
+    }
+
     function init(canvasId) {
         canvas = document.getElementById(canvasId);
         if (!canvas) return;
@@ -95,6 +134,7 @@ const Game = (function() {
         window.addEventListener('keyup', onKeyUp);
         canvas.addEventListener('click', onClick);
         setupTouch();
+        updateTouchVisibility();
         fetchCSRF();
         fetchPlayers();
         setState('LOADING');
@@ -104,9 +144,26 @@ const Game = (function() {
     }
 
     function resize() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        dpr = window.devicePixelRatio || 1;
+        const cssW = window.innerWidth;
+        const cssH = window.innerHeight;
+        canvas.width = cssW * dpr;
+        canvas.height = cssH * dpr;
+        canvas.style.width = cssW + 'px';
+        canvas.style.height = cssH + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         ctx.imageSmoothingEnabled = false;
+        calcUI();
+        updateTouchVisibility();
+        _titleScene = null;
+    }
+
+    function updateTouchVisibility() {
+        const dpad = document.getElementById('dpad');
+        const btns = document.getElementById('action-buttons');
+        const show = isMobile || ('ontouchstart' in window);
+        if (dpad) dpad.style.display = show ? 'flex' : 'none';
+        if (btns) btns.style.display = show ? 'flex' : 'none';
     }
 
     function loop(ts) {
@@ -140,7 +197,7 @@ const Game = (function() {
 
     function render() {
         ctx.fillStyle = '#000';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
 
         switch (currentState) {
             case 'LOADING': renderLoading(); break;
@@ -446,10 +503,12 @@ const Game = (function() {
     }
 
     function renderLoading() {
-        const cx = canvas.width / 2;
-        const cy = canvas.height / 2;
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        const cx = w / 2;
+        const cy = h / 2;
 
-        drawText('BUSINESS TYCOON RPG', cx, cy - 60, '#f0d850', 16, 'center');
+        drawText('BUSINESS TYCOON RPG', cx, cy - 60 * ui.s, '#f0d850', ui.fs(16), 'center');
 
         const tp = RPGTiles.getLoadProgress();
         const sp = RPGSprites.getLoadProgress();
@@ -457,8 +516,8 @@ const Game = (function() {
         const total = tp.total + sp.total;
         const pct = total > 0 ? loaded / total : 0;
 
-        const barW = 300;
-        const barH = 20;
+        const barW = ui.loadBarW;
+        const barH = ui.loadBarH;
         const barX = cx - barW / 2;
         const barY = cy - barH / 2;
 
@@ -474,41 +533,39 @@ const Game = (function() {
         ctx.fillStyle = grd;
         ctx.fillRect(barX, barY, barW * pct, barH);
 
-        drawText('Loading... ' + Math.floor(pct * 100) + '%', cx, barY + barH + 25, '#8080c0', 9, 'center');
+        drawText('Loading... ' + Math.floor(pct * 100) + '%', cx, barY + barH + 25, '#8080c0', ui.fs(9), 'center');
     }
 
     function renderTitle() {
-        const cx = canvas.width / 2;
-        const w = canvas.width;
-        const h = canvas.height;
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        const cx = w / 2;
 
         renderTitleBackground();
 
-        drawText('BUSINESS TYCOON', cx, 80, '#f0d850', 20, 'center');
-        drawText('R P G', cx, 115, '#c0a030', 16, 'center');
+        drawText('BUSINESS TYCOON', cx, ui.titleY, '#f0d850', ui.fs(20), 'center');
+        drawText('R P G', cx, ui.subtitleY, '#c0a030', ui.fs(16), 'center');
 
-        ctx.fillStyle = '#8080c0';
-        ctx.font = '9px "Press Start 2P", monospace';
-        ctx.textAlign = 'center';
-        ctx.fillText('Master Business Skills Through Adventure', cx, 150);
-        ctx.textAlign = 'left';
+        drawText('Master Business Skills Through Adventure', cx, ui.taglineY, '#8080c0', ui.fs(9), 'center');
 
-        const panelW = 320;
+        const panelW = ui.titlePanelW;
         const panelX = cx - panelW / 2;
-        let panelY = 185;
+        const btnH = ui.menuBtnH;
+        let panelY = ui.menuStartY;
 
-        drawFFBox(panelX, panelY, panelW, 50);
-        if (titleCursor === 0) drawCursor(panelX + 14, panelY + 25);
-        drawText('NEW ADVENTURE', panelX + 32, panelY + 25, titleCursor === 0 ? '#fff' : '#a0a0c0', 12);
+        drawFFBox(panelX, panelY, panelW, btnH);
+        if (titleCursor === 0) drawCursor(panelX + 14, panelY + btnH / 2);
+        drawText('NEW ADVENTURE', panelX + 32, panelY + btnH / 2, titleCursor === 0 ? '#fff' : '#a0a0c0', ui.fs(12));
 
-        panelY += 60;
-        drawFFBox(panelX, panelY, panelW, 50);
-        if (titleCursor === 1) drawCursor(panelX + 14, panelY + 25);
-        drawText('CONTINUE QUEST', panelX + 32, panelY + 25, titleCursor === 1 ? '#fff' : '#a0a0c0', 12);
+        panelY += btnH + ui.menuGap;
+        drawFFBox(panelX, panelY, panelW, btnH);
+        if (titleCursor === 1) drawCursor(panelX + 14, panelY + btnH / 2);
+        drawText('CONTINUE QUEST', panelX + 32, panelY + btnH / 2, titleCursor === 1 ? '#fff' : '#a0a0c0', ui.fs(12));
 
         if (titleCursor === 1 && allPlayers.length > 0) {
-            const listY = panelY + 60;
-            const listH = Math.min(allPlayers.length * 40 + 20, h - listY - 40);
+            const listY = panelY + btnH + ui.menuGap;
+            const itemH = ui.listItemH;
+            const listH = Math.min(allPlayers.length * itemH + 20, h - listY - 40);
             drawFFBox(panelX, listY, panelW, listH);
 
             ctx.save();
@@ -516,36 +573,36 @@ const Game = (function() {
             ctx.rect(panelX + 4, listY + 4, panelW - 8, listH - 8);
             ctx.clip();
 
-            const visibleCount = Math.floor((listH - 20) / 40);
+            const visibleCount = Math.floor((listH - 20) / itemH);
             if (titlePlayerCursor >= titleScrollOffset + visibleCount) titleScrollOffset = titlePlayerCursor - visibleCount + 1;
             if (titlePlayerCursor < titleScrollOffset) titleScrollOffset = titlePlayerCursor;
 
             for (let i = titleScrollOffset; i < allPlayers.length && i < titleScrollOffset + visibleCount; i++) {
                 const p = allPlayers[i];
-                const iy = listY + 14 + (i - titleScrollOffset) * 40;
+                const iy = listY + 14 + (i - titleScrollOffset) * itemH;
                 if (i === titlePlayerCursor) {
                     ctx.fillStyle = 'rgba(80,80,160,0.3)';
-                    ctx.fillRect(panelX + 8, iy - 8, panelW - 16, 36);
+                    ctx.fillRect(panelX + 8, iy - 8, panelW - 16, itemH - 4);
                     drawCursor(panelX + 14, iy + 10);
                 }
-                drawText(p.player_name || 'Player', panelX + 32, iy + 4, i === titlePlayerCursor ? '#fff' : '#c0c0e0', 10);
-                drawText((p.chosen_world || p.world || 'Modern') + ' / ' + (p.chosen_industry || p.industry || ''), panelX + 32, iy + 22, '#6868a0', 8);
-                drawText('$' + Number(p.total_cash || p.cash || 0).toLocaleString(), panelX + panelW - 24, iy + 4, '#e8c020', 9, 'right');
+                drawText(p.player_name || 'Player', panelX + 32, iy + 4, i === titlePlayerCursor ? '#fff' : '#c0c0e0', ui.fs(10));
+                drawText((p.chosen_world || p.world || 'Modern') + ' / ' + (p.chosen_industry || p.industry || ''), panelX + 32, iy + 22, '#6868a0', ui.fs(8));
+                drawText('$' + Number(p.total_cash || p.cash || 0).toLocaleString(), panelX + panelW - 24, iy + 4, '#e8c020', ui.fs(9), 'right');
                 ctx.textAlign = 'left';
             }
             ctx.restore();
 
             if (allPlayers.length > visibleCount) {
-                if (titleScrollOffset > 0) drawText('\u25B2', panelX + panelW - 20, listY + 10, '#8080c0', 8);
-                if (titleScrollOffset + visibleCount < allPlayers.length) drawText('\u25BC', panelX + panelW - 20, listY + listH - 12, '#8080c0', 8);
+                if (titleScrollOffset > 0) drawText('\u25B2', panelX + panelW - 20, listY + 10, '#8080c0', ui.fs(8));
+                if (titleScrollOffset + visibleCount < allPlayers.length) drawText('\u25BC', panelX + panelW - 20, listY + listH - 12, '#8080c0', ui.fs(8));
             }
         } else if (titleCursor === 1 && allPlayers.length === 0) {
-            const listY = panelY + 60;
-            drawFFBox(panelX, listY, panelW, 50);
-            drawText('No saved games found', panelX + 20, listY + 25, '#6868a0', 9);
+            const listY = panelY + btnH + ui.menuGap;
+            drawFFBox(panelX, listY, panelW, btnH);
+            drawText('No saved games found', panelX + 20, listY + btnH / 2, '#6868a0', ui.fs(9));
         }
 
-        drawText('Click or use \u25B2\u25BC + ENTER', cx, h - 30, '#4848a0', 8, 'center');
+        drawText(isMobile ? 'Tap to select' : 'Click or use \u25B2\u25BC + ENTER', cx, h - 30, '#4848a0', ui.fs(8), 'center');
     }
 
     let _titleScene = null;
@@ -586,8 +643,8 @@ const Game = (function() {
     }
 
     function renderTitleBackground() {
-        const w = canvas.width;
-        const h = canvas.height;
+        const w = window.innerWidth;
+        const h = window.innerHeight;
         const tileSize = 32;
         const cols = Math.ceil(w / tileSize) + 1;
         const rows = Math.ceil(h / tileSize) + 1;
@@ -667,18 +724,21 @@ const Game = (function() {
     }
 
     function handleTitleClick(mx, my) {
-        const cx = canvas.width / 2;
-        const panelW = 320;
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        const cx = w / 2;
+        const panelW = ui.titlePanelW;
         const panelX = cx - panelW / 2;
-        const firstPanelY = 185;
-        const secondPanelY = firstPanelY + 60;
+        const btnH = ui.menuBtnH;
+        const firstPanelY = ui.menuStartY;
+        const secondPanelY = firstPanelY + btnH + ui.menuGap;
 
         if (mx >= panelX && mx <= panelX + panelW) {
-            if (my >= firstPanelY && my <= firstPanelY + 50) {
+            if (my >= firstPanelY && my <= firstPanelY + btnH) {
                 titleCursor = 0;
                 handleTitleKey('Enter');
                 return;
-            } else if (my >= secondPanelY && my <= secondPanelY + 50) {
+            } else if (my >= secondPanelY && my <= secondPanelY + btnH) {
                 if (titleCursor !== 1) {
                     titleCursor = 1;
                     return;
@@ -687,11 +747,12 @@ const Game = (function() {
         }
 
         if (titleCursor === 1 && allPlayers.length > 0) {
-            const listY = secondPanelY + 60;
-            const listH = Math.min(allPlayers.length * 40 + 20, canvas.height - listY - 40);
-            const visibleCount = Math.floor((listH - 20) / 40);
+            const listY = secondPanelY + btnH + ui.menuGap;
+            const itemH = ui.listItemH;
+            const listH = Math.min(allPlayers.length * itemH + 20, h - listY - 40);
+            const visibleCount = Math.floor((listH - 20) / itemH);
             for (let i = titleScrollOffset; i < allPlayers.length && i < titleScrollOffset + visibleCount; i++) {
-                const iy = listY + 14 + (i - titleScrollOffset) * 40;
+                const iy = listY + 14 + (i - titleScrollOffset) * itemH;
                 if (my >= iy - 8 && my <= iy + 28 && mx >= panelX && mx <= panelX + panelW) {
                     titlePlayerCursor = i;
                     loginPlayer(allPlayers[i].player_id);
@@ -703,95 +764,102 @@ const Game = (function() {
 
 
     function renderCharSelect() {
-        const cx = canvas.width / 2;
-        const h = canvas.height;
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        const cx = w / 2;
 
         renderTitleBackground();
 
-        drawText('CREATE CHARACTER', cx, 50, '#f0d850', 16, 'center');
+        drawText('CREATE CHARACTER', cx, Math.round(h * 0.06), '#f0d850', ui.fs(16), 'center');
 
-        const panelW = 400;
+        const panelW = ui.charPanelW;
         const panelX = cx - panelW / 2;
-        const panelY = 80;
-        const panelH = h - 120;
+        const panelY = Math.round(h * 0.1);
+        const panelH = h - panelY - Math.round(40 * ui.s);
         drawFFBox(panelX, panelY, panelW, panelH);
 
-        let y = panelY + 30;
+        let y = panelY + Math.round(20 * ui.s);
+        const stepFS = ui.fs(9);
+        const stepGap = ui.stepH;
+        const optFS = ui.fs(11);
+        const optGap = ui.optionH;
+        const labelFS = ui.fs(10);
+        const inPad = Math.round(20 * ui.s);
 
         const steps = ['Name', 'World', 'Industry', 'Career', 'Character', 'Confirm'];
         for (let i = 0; i < steps.length; i++) {
             const active = i === charSelectState.step;
             const done = i < charSelectState.step;
-            drawText((done ? '\u2713 ' : (i + 1) + '. ') + steps[i], panelX + 20, y, active ? '#f0d850' : (done ? '#40a040' : '#5050a0'), 9);
-            y += 22;
+            drawText((done ? '\u2713 ' : (i + 1) + '. ') + steps[i], panelX + inPad, y, active ? '#f0d850' : (done ? '#40a040' : '#5050a0'), stepFS);
+            y += stepGap;
         }
 
-        y += 10;
+        y += Math.round(8 * ui.s);
         ctx.fillStyle = '#484888';
         ctx.fillRect(panelX + 16, y, panelW - 32, 1);
-        y += 16;
+        y += Math.round(12 * ui.s);
 
         if (charSelectState.step === 0) {
-            drawText('Enter your name:', panelX + 20, y, '#c0c0e0', 10);
-            y += 30;
-            drawFFBox(panelX + 20, y - 10, panelW - 40, 36);
+            drawText('Enter your name:', panelX + inPad, y, '#c0c0e0', labelFS);
+            y += Math.round(26 * ui.s);
+            drawFFBox(panelX + inPad, y - 10, panelW - inPad * 2, Math.round(36 * ui.s));
             if (charSelectState.name) {
-                drawText(charSelectState.name, panelX + 32, y + 8, '#fff', 12);
+                drawText(charSelectState.name, panelX + inPad + 12, y + 8, '#fff', ui.fs(12));
             } else {
-                drawText('(click to type)', panelX + 32, y + 8, '#5050a0', 10);
+                drawText('(tap to type)', panelX + inPad + 12, y + 8, '#5050a0', labelFS);
             }
-            y += 50;
-            drawText('Click anywhere to enter your name', panelX + 20, y, '#5050a0', 8);
+            y += Math.round(50 * ui.s);
+            drawText(isMobile ? 'Tap to enter your name' : 'Click anywhere to enter your name', panelX + inPad, y, '#5050a0', ui.fs(8));
         } else if (charSelectState.step === 1) {
-            drawText('Choose your world:', panelX + 20, y, '#c0c0e0', 10);
-            y += 30;
+            drawText('Choose your world:', panelX + inPad, y, '#c0c0e0', labelFS);
+            y += Math.round(26 * ui.s);
             for (let i = 0; i < WORLDS.length; i++) {
                 const sel = i === charSelectState.worldIndex;
                 if (sel) {
                     ctx.fillStyle = 'rgba(80,80,160,0.3)';
-                    ctx.fillRect(panelX + 20, y - 10, panelW - 40, 30);
-                    drawCursor(panelX + 24, y + 5);
+                    ctx.fillRect(panelX + inPad, y - 10, panelW - inPad * 2, Math.round(28 * ui.s));
+                    drawCursor(panelX + inPad + 4, y + 5);
                 }
-                drawText(WORLDS[i], panelX + 44, y + 5, sel ? '#fff' : '#8080c0', 11);
-                y += 34;
+                drawText(WORLDS[i], panelX + inPad + 24, y + 5, sel ? '#fff' : '#8080c0', optFS);
+                y += optGap;
             }
         } else if (charSelectState.step === 2) {
             const world = WORLDS[charSelectState.worldIndex];
             const industries = INDUSTRIES[world] || ['General'];
-            drawText('Choose industry (' + world + '):', panelX + 20, y, '#c0c0e0', 10);
-            y += 30;
+            drawText('Industry (' + world + '):', panelX + inPad, y, '#c0c0e0', labelFS);
+            y += Math.round(26 * ui.s);
             for (let i = 0; i < industries.length; i++) {
                 const sel = i === charSelectState.industryIndex;
                 if (sel) {
                     ctx.fillStyle = 'rgba(80,80,160,0.3)';
-                    ctx.fillRect(panelX + 20, y - 10, panelW - 40, 30);
-                    drawCursor(panelX + 24, y + 5);
+                    ctx.fillRect(panelX + inPad, y - 10, panelW - inPad * 2, Math.round(28 * ui.s));
+                    drawCursor(panelX + inPad + 4, y + 5);
                 }
-                drawText(industries[i], panelX + 44, y + 5, sel ? '#fff' : '#8080c0', 11);
-                y += 34;
+                drawText(industries[i], panelX + inPad + 24, y + 5, sel ? '#fff' : '#8080c0', optFS);
+                y += optGap;
             }
         } else if (charSelectState.step === 3) {
-            drawText('Choose career path:', panelX + 20, y, '#c0c0e0', 10);
-            y += 30;
+            drawText('Choose career path:', panelX + inPad, y, '#c0c0e0', labelFS);
+            y += Math.round(26 * ui.s);
             for (let i = 0; i < CAREERS.length; i++) {
                 const sel = i === charSelectState.careerIndex;
                 if (sel) {
                     ctx.fillStyle = 'rgba(80,80,160,0.3)';
-                    ctx.fillRect(panelX + 20, y - 10, panelW - 40, 30);
-                    drawCursor(panelX + 24, y + 5);
+                    ctx.fillRect(panelX + inPad, y - 10, panelW - inPad * 2, Math.round(28 * ui.s));
+                    drawCursor(panelX + inPad + 4, y + 5);
                 }
-                drawText(CAREERS[i].charAt(0).toUpperCase() + CAREERS[i].slice(1), panelX + 44, y + 5, sel ? '#fff' : '#8080c0', 11);
-                y += 34;
+                drawText(CAREERS[i].charAt(0).toUpperCase() + CAREERS[i].slice(1), panelX + inPad + 24, y + 5, sel ? '#fff' : '#8080c0', optFS);
+                y += optGap;
             }
         } else if (charSelectState.step === 4) {
             const world = WORLDS[charSelectState.worldIndex];
             const charKeys = getCharacterOptions(world);
             const charNames = getCharacterNames(world);
-            drawText('Choose your character:', panelX + 20, y, '#c0c0e0', 10);
-            y += 26;
+            drawText('Choose your character:', panelX + inPad, y, '#c0c0e0', labelFS);
+            y += Math.round(22 * ui.s);
 
-            const previewSize = 72;
-            const spacing = 12;
+            const previewSize = ui.previewSize;
+            const spacing = ui.previewSpacing;
             const totalW = charKeys.length * (previewSize + spacing) - spacing;
             const startX = cx - totalW / 2;
 
@@ -817,45 +885,49 @@ const Game = (function() {
                 RPGSprites.drawCharacterPreview(ctx, charKeys[i], px, y, previewSize, previewSize);
             }
 
-            y += previewSize + 16;
+            y += previewSize + Math.round(14 * ui.s);
             const selName = charNames[charSelectState.characterIndex] || 'Unknown';
-            drawText(selName, cx, y, '#f0d850', 12, 'center');
-            y += 24;
-            drawText('Use LEFT/RIGHT to browse, ENTER to select', cx, y, '#5050a0', 8, 'center');
+            drawText(selName, cx, y, '#f0d850', ui.fs(12), 'center');
+            y += Math.round(20 * ui.s);
+            drawText(isMobile ? 'Swipe or tap to select' : 'Use LEFT/RIGHT to browse, ENTER to select', cx, y, '#5050a0', ui.fs(8), 'center');
         } else if (charSelectState.step === 5) {
-            drawText('Confirm your character:', panelX + 20, y, '#c0c0e0', 10);
-            y += 30;
+            drawText('Confirm your character:', panelX + inPad, y, '#c0c0e0', labelFS);
+            y += Math.round(24 * ui.s);
             const world = WORLDS[charSelectState.worldIndex];
             const industry = (INDUSTRIES[world] || ['General'])[charSelectState.industryIndex];
             const career = CAREERS[charSelectState.careerIndex];
             const charNames = getCharacterNames(world);
-            drawText('Name: ' + charSelectState.name, panelX + 30, y, '#fff', 10); y += 24;
-            drawText('World: ' + world, panelX + 30, y, '#fff', 10); y += 24;
-            drawText('Industry: ' + industry, panelX + 30, y, '#fff', 10); y += 24;
-            drawText('Career: ' + career.charAt(0).toUpperCase() + career.slice(1), panelX + 30, y, '#fff', 10); y += 24;
-            drawText('Character: ' + (charNames[charSelectState.characterIndex] || 'Hero'), panelX + 30, y, '#fff', 10); y += 16;
+            const infoFS = ui.fs(10);
+            const infoGap = Math.round(22 * ui.s);
+            drawText('Name: ' + charSelectState.name, panelX + inPad + 10, y, '#fff', infoFS); y += infoGap;
+            drawText('World: ' + world, panelX + inPad + 10, y, '#fff', infoFS); y += infoGap;
+            drawText('Industry: ' + industry, panelX + inPad + 10, y, '#fff', infoFS); y += infoGap;
+            drawText('Career: ' + career.charAt(0).toUpperCase() + career.slice(1), panelX + inPad + 10, y, '#fff', infoFS); y += infoGap;
+            drawText('Character: ' + (charNames[charSelectState.characterIndex] || 'Hero'), panelX + inPad + 10, y, '#fff', infoFS); y += Math.round(14 * ui.s);
 
             const charKeys = getCharacterOptions(world);
             const previewKey = charKeys[charSelectState.characterIndex];
+            const cpSize = ui.confirmPreview;
+            const cpHalf = Math.round(cpSize / 2);
             ctx.fillStyle = '#0a0a30';
-            ctx.fillRect(cx - 36, y, 72, 72);
+            ctx.fillRect(cx - cpHalf, y, cpSize, cpSize);
             ctx.strokeStyle = '#484888';
             ctx.lineWidth = 1;
-            ctx.strokeRect(cx - 38, y - 2, 76, 76);
-            RPGSprites.drawCharacterPreview(ctx, previewKey, cx - 36, y, 72, 72);
-            y += 84;
+            ctx.strokeRect(cx - cpHalf - 2, y - 2, cpSize + 4, cpSize + 4);
+            RPGSprites.drawCharacterPreview(ctx, previewKey, cx - cpHalf, y, cpSize, cpSize);
+            y += cpSize + Math.round(12 * ui.s);
 
             ctx.fillStyle = 'rgba(80,80,160,0.3)';
-            ctx.fillRect(panelX + 20, y - 10, panelW - 40, 30);
-            drawCursor(panelX + 24, y + 5);
-            drawText('START ADVENTURE', panelX + 44, y + 5, '#f0d850', 12);
+            ctx.fillRect(panelX + inPad, y - 10, panelW - inPad * 2, Math.round(30 * ui.s));
+            drawCursor(panelX + inPad + 4, y + 5);
+            drawText('START ADVENTURE', panelX + inPad + 24, y + 5, '#f0d850', ui.fs(12));
         }
 
         if (charSelectState.error) {
-            drawText(charSelectState.error, cx, h - 50, '#e84040', 9, 'center');
+            drawText(charSelectState.error, cx, h - Math.round(50 * ui.s), '#e84040', ui.fs(9), 'center');
         }
 
-        drawText('Click to select   ESC to go back', cx, h - 20, '#4848a0', 8, 'center');
+        drawText(isMobile ? 'Tap to select' : 'Click to select   ESC to go back', cx, h - 20, '#4848a0', ui.fs(8), 'center');
     }
 
     function handleCharSelectKey(key) {
@@ -903,59 +975,62 @@ const Game = (function() {
     }
 
     function handleCharSelectClick(mx, my) {
-        const cx = canvas.width / 2;
-        const h = canvas.height;
-        const panelW = 400;
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        const cx = w / 2;
+        const panelW = ui.charPanelW;
         const panelX = cx - panelW / 2;
-        const panelY = 80;
+        const panelY = Math.round(h * 0.1);
+        const inPad = Math.round(20 * ui.s);
+        const optGap = ui.optionH;
 
-        let y = panelY + 30;
-        y += 22 * 6 + 10 + 1 + 16;
+        let y = panelY + Math.round(20 * ui.s);
+        y += ui.stepH * 6 + Math.round(8 * ui.s) + 1 + Math.round(12 * ui.s);
 
         if (charSelectState.step === 0) {
             promptForName();
             return;
         } else if (charSelectState.step === 1) {
-            y += 30;
+            y += Math.round(26 * ui.s);
             for (let i = 0; i < WORLDS.length; i++) {
-                if (mx >= panelX + 20 && mx <= panelX + panelW - 20 && my >= y - 10 && my <= y + 20) {
+                if (mx >= panelX + inPad && mx <= panelX + panelW - inPad && my >= y - 10 && my <= y + 20) {
                     charSelectState.worldIndex = i;
                     charSelectState.step = 2;
                     charSelectState.industryIndex = 0;
                     return;
                 }
-                y += 34;
+                y += optGap;
             }
         } else if (charSelectState.step === 2) {
             const world = WORLDS[charSelectState.worldIndex];
             const industries = INDUSTRIES[world] || ['General'];
-            y += 30;
+            y += Math.round(26 * ui.s);
             for (let i = 0; i < industries.length; i++) {
-                if (mx >= panelX + 20 && mx <= panelX + panelW - 20 && my >= y - 10 && my <= y + 20) {
+                if (mx >= panelX + inPad && mx <= panelX + panelW - inPad && my >= y - 10 && my <= y + 20) {
                     charSelectState.industryIndex = i;
                     charSelectState.step = 3;
                     charSelectState.careerIndex = 0;
                     return;
                 }
-                y += 34;
+                y += optGap;
             }
         } else if (charSelectState.step === 3) {
-            y += 30;
+            y += Math.round(26 * ui.s);
             for (let i = 0; i < CAREERS.length; i++) {
-                if (mx >= panelX + 20 && mx <= panelX + panelW - 20 && my >= y - 10 && my <= y + 20) {
+                if (mx >= panelX + inPad && mx <= panelX + panelW - inPad && my >= y - 10 && my <= y + 20) {
                     charSelectState.careerIndex = i;
                     charSelectState.step = 4;
                     charSelectState.characterIndex = 0;
                     return;
                 }
-                y += 34;
+                y += optGap;
             }
         } else if (charSelectState.step === 4) {
             const world = WORLDS[charSelectState.worldIndex];
             const charKeys = getCharacterOptions(world);
-            y += 26;
-            const previewSize = 72;
-            const spacing = 12;
+            y += Math.round(22 * ui.s);
+            const previewSize = ui.previewSize;
+            const spacing = ui.previewSpacing;
             const totalW = charKeys.length * (previewSize + spacing) - spacing;
             const startX = cx - totalW / 2;
             for (let i = 0; i < charKeys.length; i++) {
@@ -967,8 +1042,10 @@ const Game = (function() {
                 }
             }
         } else if (charSelectState.step === 5) {
-            y += 30 + 24 * 5 + 16 + 72 + 12;
-            if (mx >= panelX + 20 && mx <= panelX + panelW - 20 && my >= y - 10 && my <= y + 20) {
+            const infoGap = Math.round(22 * ui.s);
+            const cpSize = ui.confirmPreview;
+            y += Math.round(24 * ui.s) + infoGap * 5 + Math.round(14 * ui.s) + cpSize + Math.round(12 * ui.s);
+            if (mx >= panelX + inPad && mx <= panelX + panelW - inPad && my >= y - 10 && my <= y + 20) {
                 const world = WORLDS[charSelectState.worldIndex];
                 const industry = (INDUSTRIES[world] || ['General'])[charSelectState.industryIndex];
                 const career = CAREERS[charSelectState.careerIndex];
@@ -979,32 +1056,33 @@ const Game = (function() {
 
 
     function renderLogin() {
-        const cx = canvas.width / 2;
-        const h = canvas.height;
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        const cx = w / 2;
 
         renderTitleBackground();
 
-        drawText('LOGIN', cx, 80, '#f0d850', 16, 'center');
+        drawText('LOGIN', cx, Math.round(h * 0.12), '#f0d850', ui.fs(16), 'center');
 
-        const panelW = 360;
+        const panelW = Math.min(Math.round(360 * ui.s), w - 30);
         const panelX = cx - panelW / 2;
-        const panelY = 120;
-        drawFFBox(panelX, panelY, panelW, 200);
+        const panelY = Math.round(h * 0.2);
+        drawFFBox(panelX, panelY, panelW, Math.round(200 * ui.s));
 
-        let y = panelY + 30;
-        drawText('Welcome back, ' + loginState.playerName, panelX + 20, y, '#c0c0e0', 10);
-        y += 40;
-        drawText('Enter password:', panelX + 20, y, '#c0c0e0', 10);
-        y += 30;
-        drawFFBox(panelX + 20, y - 10, panelW - 40, 36);
+        let y = panelY + Math.round(30 * ui.s);
+        drawText('Welcome back, ' + loginState.playerName, panelX + 20, y, '#c0c0e0', ui.fs(10));
+        y += Math.round(40 * ui.s);
+        drawText('Enter password:', panelX + 20, y, '#c0c0e0', ui.fs(10));
+        y += Math.round(30 * ui.s);
+        drawFFBox(panelX + 20, y - 10, panelW - 40, Math.round(36 * ui.s));
         const passDisplay = '*'.repeat(loginState.password.length) + (Math.floor(charSelectState.cursorBlink / 400) % 2 === 0 ? '_' : '');
-        drawText(passDisplay, panelX + 32, y + 8, '#fff', 12);
+        drawText(passDisplay, panelX + 32, y + 8, '#fff', ui.fs(12));
 
         if (loginState.error) {
-            drawText(loginState.error, cx, panelY + 170, '#e84040', 9, 'center');
+            drawText(loginState.error, cx, panelY + Math.round(170 * ui.s), '#e84040', ui.fs(9), 'center');
         }
 
-        drawText('ENTER to login   ESC to go back', cx, h - 30, '#4848a0', 8, 'center');
+        drawText('ENTER to login   ESC to go back', cx, h - 30, '#4848a0', ui.fs(8), 'center');
     }
 
     function handleLoginKey(key) {
@@ -1019,50 +1097,56 @@ const Game = (function() {
     const PAUSE_ITEMS = ['Status', 'Skills', 'Items', 'Resume', 'Save & Quit'];
 
     function renderPauseMenu() {
+        const w = window.innerWidth;
+        const h = window.innerHeight;
         ctx.fillStyle = 'rgba(0,0,20,0.75)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillRect(0, 0, w, h);
 
-        const menuW = 240;
-        const menuH = PAUSE_ITEMS.length * 36 + 30;
-        const menuX = 40;
-        const menuY = 60;
+        const menuW = ui.pauseMenuW;
+        const itemGap = Math.round(36 * ui.s);
+        const menuH = PAUSE_ITEMS.length * itemGap + Math.round(30 * ui.s);
+        const menuX = Math.round(20 * ui.s);
+        const menuY = Math.round(40 * ui.s);
         drawFFBox(menuX, menuY, menuW, menuH);
 
-        drawText('MENU', menuX + menuW / 2, menuY + 20, '#f0d850', 14, 'center');
+        drawText('MENU', menuX + menuW / 2, menuY + Math.round(20 * ui.s), '#f0d850', ui.fs(14), 'center');
         ctx.textAlign = 'left';
 
         for (let i = 0; i < PAUSE_ITEMS.length; i++) {
-            const iy = menuY + 46 + i * 36;
+            const iy = menuY + Math.round(46 * ui.s) + i * itemGap;
             if (i === pauseCursor) {
                 ctx.fillStyle = 'rgba(80,80,160,0.3)';
-                ctx.fillRect(menuX + 8, iy - 8, menuW - 16, 30);
+                ctx.fillRect(menuX + 8, iy - 8, menuW - 16, Math.round(30 * ui.s));
                 drawCursor(menuX + 16, iy + 7);
             }
-            drawText(PAUSE_ITEMS[i], menuX + 36, iy + 7, i === pauseCursor ? '#fff' : '#a0a0c0', 11);
+            drawText(PAUSE_ITEMS[i], menuX + 36, iy + 7, i === pauseCursor ? '#fff' : '#a0a0c0', ui.fs(11));
         }
 
-        const infoX = menuX + menuW + 20;
-        const infoW = canvas.width - infoX - 40;
-        if (infoW > 200) {
+        const infoX = menuX + menuW + Math.round(16 * ui.s);
+        const infoW = w - infoX - Math.round(20 * ui.s);
+        if (infoW > Math.round(150 * ui.s)) {
             const infoH = menuH;
             drawFFBox(infoX, menuY, infoW, infoH);
+            const infoFS = ui.fs(10);
+            const infoSmFS = ui.fs(9);
+            const infoGap = Math.round(24 * ui.s);
 
             if (pauseCursor === 0 && playerData) {
-                let y = menuY + 30;
-                drawText('Name: ' + (playerData.name || 'Hero'), infoX + 20, y, '#fff', 10); y += 24;
-                drawText('Title: ' + (playerData.job_title || 'Apprentice'), infoX + 20, y, '#c0c0e0', 9); y += 24;
-                drawText('Gold: ' + Number(playerData.cash || 0).toLocaleString(), infoX + 20, y, '#e8c020', 10); y += 24;
-                drawText('Reputation: ' + (playerData.reputation || 0), infoX + 20, y, '#50a0f0', 10); y += 24;
+                let y = menuY + Math.round(30 * ui.s);
+                drawText('Name: ' + (playerData.name || 'Hero'), infoX + 20, y, '#fff', infoFS); y += infoGap;
+                drawText('Title: ' + (playerData.job_title || 'Apprentice'), infoX + 20, y, '#c0c0e0', infoSmFS); y += infoGap;
+                drawText('Gold: ' + Number(playerData.cash || 0).toLocaleString(), infoX + 20, y, '#e8c020', infoFS); y += infoGap;
+                drawText('Reputation: ' + (playerData.reputation || 0), infoX + 20, y, '#50a0f0', infoFS); y += infoGap;
             } else if (pauseCursor === 1 && playerData && playerData.disciplines) {
-                let y = menuY + 30;
-                drawText('Business Skills', infoX + 20, y, '#f0d850', 10); y += 30;
+                let y = menuY + Math.round(30 * ui.s);
+                drawText('Business Skills', infoX + 20, y, '#f0d850', infoFS); y += Math.round(30 * ui.s);
                 for (const [name, d] of Object.entries(playerData.disciplines)) {
-                    drawText(name, infoX + 20, y, '#c0c0e0', 9);
-                    drawText('Lv.' + (d.level || 1), infoX + infoW - 60, y, '#50a0f0', 9);
-                    y += 22;
+                    drawText(name, infoX + 20, y, '#c0c0e0', infoSmFS);
+                    drawText('Lv.' + (d.level || 1), infoX + infoW - Math.round(60 * ui.s), y, '#50a0f0', infoSmFS);
+                    y += Math.round(22 * ui.s);
                 }
             } else {
-                drawText('Select an option', infoX + 20, menuY + 50, '#5050a0', 9);
+                drawText('Select an option', infoX + 20, menuY + Math.round(50 * ui.s), '#5050a0', infoSmFS);
             }
         }
     }
@@ -1086,11 +1170,12 @@ const Game = (function() {
     }
 
     function handlePauseClick(mx, my) {
-        const menuX = 40;
-        const menuW = 240;
-        const menuY = 60;
+        const menuX = Math.round(20 * ui.s);
+        const menuW = ui.pauseMenuW;
+        const menuY = Math.round(40 * ui.s);
+        const itemGap = Math.round(36 * ui.s);
         for (let i = 0; i < PAUSE_ITEMS.length; i++) {
-            const iy = menuY + 46 + i * 36;
+            const iy = menuY + Math.round(46 * ui.s) + i * itemGap;
             if (mx >= menuX && mx <= menuX + menuW && my >= iy - 8 && my <= iy + 28) {
                 pauseCursor = i;
                 handlePauseKey('Enter');
@@ -1146,8 +1231,8 @@ const Game = (function() {
 
     function renderBattle() {
         if (!battleState) return;
-        const w = canvas.width;
-        const h = canvas.height;
+        const w = window.innerWidth;
+        const h = window.innerHeight;
         const shake = battleState.shakeTimer > 0 ? (Math.random() - 0.5) * 6 : 0;
 
         ctx.save();
@@ -1173,8 +1258,8 @@ const Game = (function() {
             ctx.globalAlpha = 1;
         }
 
-        const battleTS = 96;
-        const battleYOFF = 64;
+        const battleTS = Math.round(96 * ui.s);
+        const battleYOFF = Math.round(64 * ui.s);
         const playerSpriteX = w * 0.18;
         const playerSpriteY = h * 0.28;
         RPGSprites.drawSprite(ctx, gameTime, 'hero', playerSpriteX, playerSpriteY, 'right', 0, false, undefined, undefined, battleTS, battleYOFF);
@@ -1183,15 +1268,18 @@ const Game = (function() {
         const enemySpriteY = h * 0.24;
         RPGSprites.drawSprite(ctx, gameTime, 'npc', enemySpriteX, enemySpriteY, 'left', 0, false, '#cc4444', (battleState.discipline || '').length, battleTS, battleYOFF);
 
-        const barW = 200;
-        const barH = 16;
-        drawFFBox(20, 20, barW + 40, 60);
-        drawText(playerData ? playerData.name || 'Hero' : 'Hero', 30, 36, '#fff', 10);
-        drawHealthBar(30, 50, barW, barH, battleState.playerHP, battleState.playerMaxHP, '#40c040');
+        const barW = ui.battleBarW;
+        const barH = Math.round(16 * ui.s);
+        const boxPad = Math.round(10 * ui.s);
+        const boxH = Math.round(60 * ui.s);
+        drawFFBox(boxPad, boxPad, barW + Math.round(40 * ui.s), boxH);
+        drawText(playerData ? playerData.name || 'Hero' : 'Hero', boxPad + 10, boxPad + Math.round(16 * ui.s), '#fff', ui.fs(10));
+        drawHealthBar(boxPad + 10, boxPad + Math.round(30 * ui.s), barW, barH, battleState.playerHP, battleState.playerMaxHP, '#40c040');
 
-        drawFFBox(w - barW - 60, 20, barW + 40, 60);
-        drawText(battleState.enemyName, w - barW - 50, 36, '#fff', 10);
-        drawHealthBar(w - barW - 50, 50, barW, barH, battleState.enemyHP, battleState.enemyMaxHP, '#e04040');
+        const eBoxW = barW + Math.round(40 * ui.s);
+        drawFFBox(w - eBoxW - boxPad, boxPad, eBoxW, boxH);
+        drawText(battleState.enemyName, w - eBoxW - boxPad + 10, boxPad + Math.round(16 * ui.s), '#fff', ui.fs(10));
+        drawHealthBar(w - eBoxW - boxPad + 10, boxPad + Math.round(30 * ui.s), barW, barH, battleState.enemyHP, battleState.enemyMaxHP, '#e04040');
 
         if (battleState.phase === 'question') {
             renderBattleQuestion();
@@ -1220,22 +1308,22 @@ const Game = (function() {
         ctx.strokeStyle = '#a0a0d0';
         ctx.lineWidth = 1;
         ctx.strokeRect(x, y, w, h);
-        drawText(hp + '/' + maxHp, x + w / 2, y + h / 2, '#fff', 8, 'center');
+        drawText(hp + '/' + maxHp, x + w / 2, y + h / 2, '#fff', ui.fs(8), 'center');
         ctx.textAlign = 'left';
     }
 
     function renderBattleQuestion() {
-        const w = canvas.width;
-        const h = canvas.height;
-        const qBoxH = Math.min(h * 0.45, 300);
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        const qBoxH = Math.min(h * 0.45, Math.round(300 * ui.s));
         const qBoxY = h - qBoxH - 10;
         const qBoxW = w - 20;
         drawFFBox(10, qBoxY, qBoxW, qBoxH);
 
-        let y = qBoxY + 24;
+        let y = qBoxY + Math.round(20 * ui.s);
         if (battleState.question && battleState.question.scenario_text) {
-            y = wrapText(battleState.question.scenario_text, 30, y, qBoxW - 60, 20, '#c0c0e0', 9);
-            y += 30;
+            y = wrapText(battleState.question.scenario_text, 30, y, qBoxW - 60, Math.round(18 * ui.s), '#c0c0e0', ui.fs(9));
+            y += Math.round(24 * ui.s);
         }
 
         if (battleState.choices.length > 0) {
@@ -1243,23 +1331,23 @@ const Game = (function() {
                 const sel = i === battleState.choiceIndex;
                 if (sel) {
                     ctx.fillStyle = 'rgba(80,80,160,0.3)';
-                    ctx.fillRect(20, y - 8, qBoxW - 40, 26);
+                    ctx.fillRect(20, y - 8, qBoxW - 40, Math.round(26 * ui.s));
                     drawCursor(26, y + 5);
                 }
                 const choiceKey = battleState.choices[i];
                 const choiceText = battleState.question.choices[choiceKey] || choiceKey;
                 const displayText = choiceKey.toUpperCase() + ': ' + (typeof choiceText === 'string' ? choiceText : (choiceText.text || choiceKey));
-                wrapText(displayText, 46, y + 5, qBoxW - 80, 18, sel ? '#fff' : '#8080c0', 9);
-                y += 30;
+                wrapText(displayText, 46, y + 5, qBoxW - 80, Math.round(18 * ui.s), sel ? '#fff' : '#8080c0', ui.fs(9));
+                y += Math.round(30 * ui.s);
             }
         }
     }
 
     function renderBattleResult() {
-        const w = canvas.width;
-        const h = canvas.height;
-        const rBoxW = 400;
-        const rBoxH = 250;
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        const rBoxW = ui.resultBoxW;
+        const rBoxH = ui.resultBoxH;
         const rBoxX = (w - rBoxW) / 2;
         const rBoxY = (h - rBoxH) / 2;
         drawFFBox(rBoxX, rBoxY, rBoxW, rBoxH);
@@ -1268,18 +1356,18 @@ const Game = (function() {
         const r = battleState.result;
         const isWin = r.success;
 
-        let y = rBoxY + 30;
-        drawText(isWin ? 'VICTORY!' : 'DEFEATED', rBoxX + rBoxW / 2, y, isWin ? '#f0d850' : '#e84040', 16, 'center');
-        y += 30;
+        let y = rBoxY + Math.round(30 * ui.s);
+        drawText(isWin ? 'VICTORY!' : 'DEFEATED', rBoxX + rBoxW / 2, y, isWin ? '#f0d850' : '#e84040', ui.fs(16), 'center');
+        y += Math.round(30 * ui.s);
 
         if (r.feedback) {
-            y = wrapText(r.feedback, rBoxX + 20, y, rBoxW - 40, 18, '#c0c0e0', 9);
-            y += 30;
+            y = wrapText(r.feedback, rBoxX + 20, y, rBoxW - 40, Math.round(18 * ui.s), '#c0c0e0', ui.fs(9));
+            y += Math.round(30 * ui.s);
         }
-        if (r.exp_gained) { drawText('+' + r.exp_gained + ' EXP', rBoxX + rBoxW / 2, y, '#40d840', 11, 'center'); y += 24; }
-        if (r.cash_change) { drawText((r.cash_change > 0 ? '+' : '') + r.cash_change + ' Gold', rBoxX + rBoxW / 2, y, '#e8c020', 11, 'center'); y += 24; }
+        if (r.exp_gained) { drawText('+' + r.exp_gained + ' EXP', rBoxX + rBoxW / 2, y, '#40d840', ui.fs(11), 'center'); y += Math.round(24 * ui.s); }
+        if (r.cash_change) { drawText((r.cash_change > 0 ? '+' : '') + r.cash_change + ' Gold', rBoxX + rBoxW / 2, y, '#e8c020', ui.fs(11), 'center'); y += Math.round(24 * ui.s); }
 
-        drawText('Press ENTER to continue', rBoxX + rBoxW / 2, rBoxY + rBoxH - 24, '#5050a0', 8, 'center');
+        drawText(isMobile ? 'Tap to continue' : 'Press ENTER to continue', rBoxX + rBoxW / 2, rBoxY + rBoxH - Math.round(24 * ui.s), '#5050a0', ui.fs(8), 'center');
         ctx.textAlign = 'left';
     }
 
@@ -1307,25 +1395,28 @@ const Game = (function() {
             return;
         }
         if (battleState.phase === 'question' && battleState.choices.length > 0) {
-            const w = canvas.width;
-            const h = canvas.height;
-            const qBoxH = Math.min(h * 0.45, 300);
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            const qBoxH = Math.min(h * 0.45, Math.round(300 * ui.s));
             const qBoxY = h - qBoxH - 10;
             const qBoxW = w - 20;
 
-            let y = qBoxY + 24;
+            let y = qBoxY + Math.round(20 * ui.s);
             if (battleState.question && battleState.question.scenario_text) {
-                const textLines = Math.ceil(battleState.question.scenario_text.length / Math.floor((qBoxW - 60) / 8));
-                y += textLines * 20 + 30;
+                const charW = ui.fs(9) * 0.65;
+                const charsPerLine = Math.max(1, Math.floor((qBoxW - 60) / charW));
+                const textLines = Math.ceil(battleState.question.scenario_text.length / charsPerLine);
+                y += textLines * Math.round(18 * ui.s) + Math.round(24 * ui.s);
             }
 
+            const choiceGap = Math.round(30 * ui.s);
             for (let i = 0; i < battleState.choices.length; i++) {
                 if (mx >= 20 && mx <= 20 + qBoxW - 40 && my >= y - 8 && my <= y + 22) {
                     battleState.choiceIndex = i;
                     submitBattleChoice();
                     return;
                 }
-                y += 30;
+                y += choiceGap;
             }
         }
     }
@@ -1344,11 +1435,11 @@ const Game = (function() {
                 if (d.result.success) {
                     battleState.enemyHP = 0;
                     battleState.flashTimer = 300;
-                    spawnParticles(canvas.width * 0.7, canvas.height * 0.35, '#f0d850', 20);
+                    spawnParticles(window.innerWidth * 0.7, window.innerHeight * 0.35, '#f0d850', 20);
                 } else {
                     battleState.playerHP = Math.max(10, battleState.playerHP - 30);
                     battleState.shakeTimer = 300;
-                    spawnParticles(canvas.width * 0.2, canvas.height * 0.4, '#e84040', 15);
+                    spawnParticles(window.innerWidth * 0.2, window.innerHeight * 0.4, '#e84040', 15);
                 }
                 battleState.phase = 'result';
                 if (d.stats) playerData = { ...playerData, ...d.stats };

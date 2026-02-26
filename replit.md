@@ -119,6 +119,16 @@ I prefer iterative development, with a focus on delivering functional, well-test
   - World routing: players selecting "Industrial" world spawn in iron_basin map
   - Industrial Age asset spritesheets: `industrial_characters.png`, `industrial_npcs.png`, `iron_basin_map.png`
 
+- **Mobile Responsive Canvas UI**:
+  - DPI-aware canvas sizing using `devicePixelRatio` with `ctx.setTransform(dpr, ...)` for crisp rendering on Retina displays
+  - Responsive `calcUI()` system calculates all sizes relative to screen dimensions (scale factor `s = minDim / 700`)
+  - All rendering functions use responsive values: `ui.fs(base)` for fonts, `ui.titlePanelW`, `ui.charPanelW` etc. for dimensions
+  - HUD splits into 2-row layout on screens narrower than 500px (row 1: gold, morale, quarter; row 2: brand, energy, map name)
+  - Touch controls (d-pad + A/B buttons) hidden on desktop, visible on mobile/touch devices
+  - D-pad uses `clamp()` CSS for responsive sizing, safe-area insets for notched phones
+  - Click coordinates use CSS pixel space (matching `setTransform` drawing space)
+  - All `canvas.width/height` references replaced with `window.innerWidth/Height` for CSS coordinate consistency
+
 ## External Dependencies
 - **PostgreSQL:** Relational database for all game data persistence.
 - **Flask-WTF:** Used for CSRF protection in web forms.
