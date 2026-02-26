@@ -799,12 +799,15 @@ const Game = (function() {
                 const sel = i === charSelectState.characterIndex;
                 const px = startX + i * (previewSize + spacing);
 
+                ctx.fillStyle = '#0a0a30';
+                ctx.fillRect(px, y, previewSize, previewSize);
+
                 if (sel) {
                     ctx.strokeStyle = '#f0d850';
                     ctx.lineWidth = 3;
                     ctx.strokeRect(px - 4, y - 4, previewSize + 8, previewSize + 8);
-                    ctx.fillStyle = 'rgba(240,216,80,0.1)';
-                    ctx.fillRect(px - 4, y - 4, previewSize + 8, previewSize + 8);
+                    ctx.fillStyle = 'rgba(240,216,80,0.15)';
+                    ctx.fillRect(px, y, previewSize, previewSize);
                 } else {
                     ctx.strokeStyle = '#484888';
                     ctx.lineWidth = 1;
@@ -834,6 +837,11 @@ const Game = (function() {
 
             const charKeys = getCharacterOptions(world);
             const previewKey = charKeys[charSelectState.characterIndex];
+            ctx.fillStyle = '#0a0a30';
+            ctx.fillRect(cx - 36, y, 72, 72);
+            ctx.strokeStyle = '#484888';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(cx - 38, y - 2, 76, 76);
             RPGSprites.drawCharacterPreview(ctx, previewKey, cx - 36, y, 72, 72);
             y += 84;
 
